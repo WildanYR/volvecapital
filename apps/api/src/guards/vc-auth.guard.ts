@@ -115,6 +115,11 @@ export class VcAuthGuard implements CanActivate {
       if (!tenant_id) {
         throw new NotFoundException('Missing tenant id');
       }
+
+      if (payload.role !== 'ADMIN' && tenant_id !== payload.tenant_id) {
+        throw new UnauthorizedException('Tenant mismatch');
+      }
+
       req.tenant_id = tenant_id;
 
       return true;
