@@ -187,7 +187,7 @@ export class ProductService {
         );
       }
 
-      await product.update({ ...updateProductDto });
+      await product.update({ ...updateProductDto }, { transaction });
       await transaction.commit();
       return product;
     }

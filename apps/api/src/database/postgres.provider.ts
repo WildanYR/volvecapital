@@ -111,7 +111,10 @@ export class PostgresProvider {
     if (!this.sequelize) {
       throw new Error('database connection not estabilished');
     }
-    await this.sequelize.query(`SET search_path TO ${schema}`, {
+    if (!/^[\w-]+$/.test(schema)) {
+      throw new Error('invalid schema name');
+    }
+    await this.sequelize.query(`SET search_path TO "${schema}"`, {
       transaction,
     });
   }

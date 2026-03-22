@@ -101,6 +101,7 @@ export class TransactionService {
         order: !pagination?.order_by ? [['created_at', 'DESC']] : order,
         limit,
         offset,
+        distinct: true,
         include: [
           {
             model: TransactionItem,
