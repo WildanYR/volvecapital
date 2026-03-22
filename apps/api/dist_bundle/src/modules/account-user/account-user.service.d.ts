@@ -1,0 +1,37 @@
+import { Transaction as DbTransaction } from 'sequelize';
+import { AccountProfile } from 'src/database/models/account-profile.model';
+import { AccountUser } from 'src/database/models/account-user.model';
+import { Account } from 'src/database/models/account.model';
+import { ProductVariant } from 'src/database/models/product-variant.model';
+import { TransactionItem } from 'src/database/models/transaction-item.model';
+import { Transaction } from 'src/database/models/transaction.model';
+import { PostgresProvider } from 'src/database/postgres.provider';
+import { AppLoggerService } from '../logger/logger.service';
+import { TaskQueueService } from '../task-queue/task-queue.service';
+import { TeleNotifierService } from '../tele-notifier/tele-notifier.service';
+import { PaginationProvider } from '../utility/pagination.provider';
+import { SnowflakeIdProvider } from '../utility/snowflake-id.provider';
+import { BaseGetAllUrlQuery } from '../utility/types/base-get-all-url-query.type';
+import { CreateAccountUserDto } from './dto/create-account-user.dto';
+import { UpdateAccountUserDto } from './dto/update-account-user.dto';
+import { IAccountUserGetFilter } from './filter/account-user-get.filter';
+export declare class AccountUserService {
+    private readonly logger;
+    private readonly paginationProvider;
+    private readonly snowflakeIdProvider;
+    private readonly postgresProvider;
+    private readonly taskQueueService;
+    private readonly teleNotifierService;
+    private readonly accountRepository;
+    private readonly accountUserRepository;
+    private readonly accountProfileRepository;
+    private readonly transactionRepository;
+    private readonly transactionItemRepository;
+    private readonly productVariantRepository;
+    constructor(logger: AppLoggerService, paginationProvider: PaginationProvider, snowflakeIdProvider: SnowflakeIdProvider, postgresProvider: PostgresProvider, taskQueueService: TaskQueueService, teleNotifierService: TeleNotifierService, accountRepository: typeof Account, accountUserRepository: typeof AccountUser, accountProfileRepository: typeof AccountProfile, transactionRepository: typeof Transaction, transactionItemRepository: typeof TransactionItem, productVariantRepository: typeof ProductVariant);
+    findAll(tenantId: string, pagination?: BaseGetAllUrlQuery, filter?: IAccountUserGetFilter): Promise<import("../utility/types/pagination.type").IPaginationResponse<AccountUser>>;
+    findOne(tenantId: string, accountUserId: string): Promise<AccountUser>;
+    create(tenantId: string, createAccountUserDto: CreateAccountUserDto, dbTransaction?: DbTransaction): Promise<AccountUser>;
+    update(tenantId: string, accountUserId: string, updateAccountUserDto: UpdateAccountUserDto): Promise<AccountUser | null>;
+    remove(tenantId: string, accountUserId: string): Promise<void>;
+}

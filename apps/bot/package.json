@@ -1,0 +1,37 @@
+{
+  "name": "@volvecapital/bot",
+  "type": "module",
+  "version": "2.5.0",
+  "author": "WildanYR",
+  "main": "dist/index.js",
+  "scripts": {
+    "start": "node dist/index.js",
+    "start:dev": "node build/index.js",
+    "clean": "rimraf build dist",
+    "dev": "tsx src/index.ts",
+    "build:ts": "esbuild src/index.ts --bundle --platform=node --format=esm --target=node22 --outfile=build/index.js --external:./node_modules/*",
+    "build:obfuscate": "javascript-obfuscator ./build --output ./dist",
+    "build": "npm run clean && npm run build:ts && npm run build:obfuscate",
+    "lint": "eslint . --fix"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.4.1",
+    "js-toml": "^1.0.2",
+    "js-yaml": "^4.1.0",
+    "node-cron": "^4.2.1",
+    "patchright": "^1.56.1",
+    "winston": "^3.18.3",
+    "yoctocolors": "^2.1.2"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^24.9.1",
+    "@volvecapital/eslint-config": "workspace:^",
+    "esbuild": "^0.25.11",
+    "javascript-obfuscator": "^4.1.1",
+    "rimraf": "^6.0.1",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  }
+}

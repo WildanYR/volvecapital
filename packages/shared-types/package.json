@@ -1,0 +1,10 @@
+{
+  "name": "@volvecapital/shared",
+  "type": "module",
+  "private": true,
+  "packageManager": "pnpm@10.26.2",
+  "exports": {
+    "./types": "./src/types/index.ts",
+    "./constants": "./src/constants/index.ts"
+  }
+}

@@ -1,0 +1,43 @@
+import { AccountModifier } from 'src/database/models/account-modifier.model';
+import { AccountProfile } from 'src/database/models/account-profile.model';
+import { AccountUser } from 'src/database/models/account-user.model';
+import { Account } from 'src/database/models/account.model';
+import { PostgresProvider } from 'src/database/postgres.provider';
+import { TaskQueueService } from '../task-queue/task-queue.service';
+import { DateConverterProvider } from '../utility/date-converter.provider';
+import { PaginationProvider } from '../utility/pagination.provider';
+import { BaseGetAllUrlQuery } from '../utility/types/base-get-all-url-query.type';
+import { CreateAccountDto } from './dto/create-account.dto';
+import { FreezeAccountDto } from './dto/freeze-account.dto';
+import { UpdateAccountModifierDto } from './dto/update-account-modifier.dto';
+import { UpdateAccountDto } from './dto/update-account.dto';
+import { IAccountGetFilter } from './filter/account-get.filter';
+import { ModifierTaskData } from './types/modifier-task-data.type';
+export declare class AccountService {
+    private readonly paginationProvider;
+    private readonly dateConverterProvider;
+    private readonly postgresProvider;
+    private readonly taskQueueService;
+    private readonly accountRepository;
+    private readonly accountProfileRepository;
+    private readonly accountModifierRepository;
+    private readonly accountUserRepository;
+    constructor(paginationProvider: PaginationProvider, dateConverterProvider: DateConverterProvider, postgresProvider: PostgresProvider, taskQueueService: TaskQueueService, accountRepository: typeof Account, accountProfileRepository: typeof AccountProfile, accountModifierRepository: typeof AccountModifier, accountUserRepository: typeof AccountUser);
+    findAll(tenantId: string, pagination?: BaseGetAllUrlQuery, filter?: IAccountGetFilter): Promise<import("../utility/types/pagination.type").IPaginationResponse<Account>>;
+    findOne(tenantId: string, accountId: string): Promise<Account>;
+    create(tenantId: string, createAccountDto: CreateAccountDto): Promise<Account | null>;
+    update(tenantId: string, accountId: string, updateAccountDto: UpdateAccountDto): Promise<Account>;
+    updateAccountModifier(tenantId: string, accountId: string, updateAccountModifierDto: UpdateAccountModifierDto): Promise<void>;
+    remove(tenantId: string, accountId: string): Promise<void>;
+    registerModifierToTaskQueue(tenantId: string, account: Account, modifiers: ModifierTaskData[]): Promise<void>;
+    freezeAccount(tenantId: string, accountId: string, freezeAccountDto: FreezeAccountDto): Promise<Account>;
+    clearFreezeAccount(tenantId: string, accountId: string): Promise<void>;
+    countStatusAccount(tenantId: string, product_variant_id?: string): Promise<{
+        accounts_with_slots: number;
+        accounts_full: number;
+        profiles_available: number;
+        accounts_disabled_or_frozen: number;
+        profiles_locked_but_has_slot: number;
+        accounts_expiring_today: number;
+    }>;
+}

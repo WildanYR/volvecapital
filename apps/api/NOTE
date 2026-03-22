@@ -1,0 +1,29 @@
+TODO:
+
+✅ clear akun di FE tidak mengubah status akunnya ke enable
+
+✅ ubah tampailan dibawah user di profil akun untuk menampilkan waktu berakhir bukan waktu mendaftar
+
+✅ password list kepanjangan ke samping
+
+✅ tampilkan semua data di akun card
+
+✅ tampilkan preview 1 email di items transaksi
+
+- UI di email dan platform produk ubah jadi tabel agar lebih mudah dilihat
+
+FREEZE:
+
+- buat fungsi freeze, set status = freeze, set freeze timeout dengan date, masukkan ke task queue
+- reset freeze jika = clear freeze, delete akun
+-
+
+query yang mungkin akan digunakan suatu saat:
+finalize Daily Product Sales Limit 3
+WITH calculated_sales AS ( SELECT p.yesterday_local AS "date", 'daily' AS "type", pv.id AS product_variant_id, COUNT(ti.id) AS items_sold FROM \_params p JOIN transaction t ON t.created_at >= p.yesterday_start_utc AND t.created_at < p.today_start_utc JOIN transaction_item ti ON ti.transaction_id = t.id JOIN account_user au ON ti.account_user_id = au.id JOIN account a ON au.account_id = a.id JOIN product_variant pv ON a.product_variant_id = pv.id GROUP BY p.yesterday_local, pv.id ) INSERT INTO product_sales_statistics ("date", "type", product_variant_id, items_sold) SELECT \* FROM calculated_sales ORDER BY items_sold DESC, product_variant_id ASC LIMIT 3 ON CONFLICT ("date", "type", product_variant_id) DO UPDATE SET items_sold = EXCLUDED.items_sold;
+
+finalize Daily Peak Hour limit 3
+WITH calculated_hours AS ( SELECT p.yesterday_local AS "date", 'daily' AS "type", EXTRACT(HOUR FROM (t.created_at AT TIME ZONE 'Asia/Jakarta'))::SMALLINT AS "hour", COUNT(t.id) AS transaction_count FROM \_params p JOIN transaction t ON t.created_at >= p.yesterday_start_utc AND t.created_at < p.today_start_utc GROUP BY p.yesterday_local, "hour" ) INSERT INTO peak_hour_statistics ("date", "type", "hour", transaction_count) SELECT \* FROM calculated_hours ORDER BY transaction_count DESC, "hour" ASC LIMIT 3 ON CONFLICT ("date", "type", "hour") DO UPDATE SET transaction_count = EXCLUDED.transaction_count;
+
+finalize Daily Platform limit 3
+WITH calculated_platforms AS ( SELECT p.yesterday_local AS "date", 'daily' AS "type", t.platform AS platform, COUNT(t.id) AS transaction_count FROM \_params p JOIN transaction t ON t.created_at >= p.yesterday_start_utc AND t.created_at < p.today_start_utc GROUP BY p.yesterday_local, t.platform ) INSERT INTO platform_statistics ("date", "type", platform, transaction_count) SELECT \* FROM calculated_platforms ORDER BY transaction_count DESC, platform ASC LIMIT 3 ON CONFLICT ("date", "type", platform) DO UPDATE SET transaction_count = EXCLUDED.transaction_count;

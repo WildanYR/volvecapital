@@ -1,0 +1,17 @@
+{
+  "name": "volvecapital",
+  "version": "2.5.0",
+  "description": "Manajemen Persewaan Akun",
+  "scripts": {
+    "dev": "pnpm run -r --parallel --aggregate-output dev",
+    "build": "pnpm run -r build",
+    "test": "pnpm run -r --parallel test",
+    "lint": "pnpm run -r --parallel lint"
+  },
+  "author": "WildanYR",
+  "license": "AGPL-3.0-only",
+  "packageManager": "pnpm@10.26.2",
+  "devDependencies": {
+    "eslint": "^9.39.2"
+  }
+}

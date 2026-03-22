@@ -1,0 +1,14 @@
+/node_modules
+/dist
+/dist-final
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+.DS_Store
+.env
+build
+browser-session
+logs
+config.toml
+store.sqlite

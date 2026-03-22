@@ -1,0 +1,1 @@
+{"enable": true, "email_from": ["info@@account.netflix.com"], "webhook_url": "https://tunnel-api.wildanyr.my.id/email-forward"}

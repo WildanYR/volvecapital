@@ -1,0 +1,1 @@
+export type EventHandler<T = unknown> = (data: T) => void | Promise<void>;
