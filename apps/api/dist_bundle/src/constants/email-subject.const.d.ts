@@ -1,2 +1,0 @@
-export declare const NETFLIX_OTP = "NETFLIX_OTP";
-export declare const NETFLIX_REQ_RESET_PASSWORD = "NETFLIX_REQ_RESET_PASSWORD";

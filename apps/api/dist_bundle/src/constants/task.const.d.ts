@@ -1,3 +1,0 @@
-export declare const NETFLIX_RESET_PASSWORD = "NETFLIX_RESET_PASSWORD";
-export declare const SUBS_END_NOTIFY = "SUBS_END_NOTIFY";
-export declare const UNFREEZE_ACCOUNT = "UNFREEZE_ACCOUNT";
