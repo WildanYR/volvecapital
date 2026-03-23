@@ -130,26 +130,34 @@ export class Logger {
     }
 
     private async sendLogToDb(level: string, context: string, message: string, stack?: string) {
-        const headers = authHeaders(this.authCredentials)
-        const url = `${this.baseApiUrl}/log`
+        try {
+            const headers = authHeaders(this.authCredentials);
+            const url = `${this.baseApiUrl}/log`;
 
-        const res = await fetch(url, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify({
-                level,
-                context,
-                message,
-                stack,
-                created_at: new Date()
-            })
-        })
+            const res = await fetch(url, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({
+                    level,
+                    context,
+                    message,
+                    stack,
+                    created_at: new Date()
+                })
+            });
 
-        if (!res.ok) {
-            const data = await res.json() as { message?: string };
+            if (!res.ok) {
+                const data = await res.json() as { message?: string };
+                this.winston.log({
+                    level: 'error',
+                    message: data.message || 'Failed to Log to DB',
+                    instanceId: 'LogToDb'
+                });
+            }
+        } catch (err) {
             this.winston.log({
                 level: 'error',
-                message: data.message || 'Failed to Log to DB',
+                message: `sendLogToDb network error: ${err instanceof Error ? err.message : 'Unknown'}`,
                 instanceId: 'LogToDb'
             });
         }

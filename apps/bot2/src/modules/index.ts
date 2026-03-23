@@ -28,12 +28,6 @@ export function getRegisteredModuleNames(): string[] {
     return Array.from(moduleRegistry.keys());
 }
 
-/**
- * Check if a module is registered
- */
-export function isModuleRegistered(name: string): boolean {
-    return moduleRegistry.has(name);
-}
 
 // =============================================================================
 // Register built-in modules here

@@ -1,12 +1,5 @@
-import { AuthCredentials } from "../../core/auth.js";
+import { AuthCredentials, authHeaders } from "../../core/auth.js";
 
-function authHeaders(credentials: AuthCredentials): Record<string, string> {
-  return {
-    'Content-Type': 'application/json',
-    'Authorization': `VC ${credentials.token}`,
-    'x-tenant-id': credentials.tenantId,
-  };
-}
 
 export async function updateNetflixAccountStatus(
   apiBaseUrl: string,

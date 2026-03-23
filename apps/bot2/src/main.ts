@@ -3,6 +3,7 @@
  */
 
 import { resolve } from 'node:path';
+import { getProjectRoot } from './utils/path.js';
 import { ConfigLoader } from './core/ConfigLoader.js';
 import { Database } from './core/Database.js';
 import { Logger } from './core/Logger.js';
@@ -31,7 +32,7 @@ class Application {
             console.log(`Configuration loaded: ${this.config.app.name}`);
 
             // 2. Initialize database
-            const dbPath = resolve(process.cwd(), 'storage', 'database.sqlite');
+            const dbPath = resolve(getProjectRoot(), 'storage', 'database.sqlite');
             this.db = new Database(dbPath);
             this.db.initSystemTables();
             console.log('Database initialized');
@@ -132,9 +133,8 @@ class Application {
             await instance.init();
 
             // Register with task manager
-            this.taskManager.registerModule(moduleConfig.name, instance, moduleConfig.module);
-            this.logger.info(`Module loaded: ${moduleConfig.name} (${moduleConfig.module})`);
-        }
+            this.taskManager.registerModule(moduleConfig.name, instance, moduleConfig.module, moduleConfig.loop_interval);
+            this.logger.info(`Module loaded: ${moduleConfig.name} (${moduleConfig.module})`);        }
     }
 
     private setupShutdownHandlers(): void {
@@ -145,10 +145,10 @@ class Application {
                 // Stop components in reverse order
                 this.connector.disconnect();
                 await this.taskManager.stop();
+                this.logger.info('Shutdown complete');
                 await this.logger.close();
                 this.db.close();
 
-                this.logger.info('Shutdown complete');
                 process.exit(0);
             } catch (error) {
                 console.error('Error during shutdown:', error);

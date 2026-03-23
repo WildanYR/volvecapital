@@ -5,14 +5,7 @@
 import { FetchFailedError, TransactionExistNoAccountError } from './errors.js';
 import { ProductPlatform, TransactionAccountPayload, AccountUser, FailedAccountUser, AccountProfile, Account } from './types/api.type.js';
 import type { AuthCredentials } from '../../core/auth.js';
-
-function authHeaders(credentials: AuthCredentials): Record<string, string> {
-  return {
-    'Content-Type': 'application/json',
-    'Authorization': `VC ${credentials.token}`,
-    'x-tenant-id': credentials.tenantId,
-  };
-}
+import { authHeaders } from '../../core/auth.js';
 
 /**
  * Check product names against platform products

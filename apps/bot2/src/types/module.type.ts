@@ -10,11 +10,6 @@ export interface ModuleDependencies {
   authCredentials: AuthCredentials;
 }
 
-export interface ModuleRegistryEntry {
-  name: string;
-  factory: ModuleFactory;
-}
-
 export type ModuleFactory = (
   deps: ModuleDependencies,
   instanceId: string,

@@ -12,10 +12,3 @@ export interface LogContext {
   instanceId?: string;
   [key: string]: unknown;
 }
-
-export interface LogEntry {
-  level: LogLevel;
-  message: string;
-  timestamp: Date;
-  context?: LogContext;
-}

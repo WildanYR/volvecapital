@@ -7,13 +7,14 @@ import { resolve } from 'node:path';
 import { load as parseToml } from 'js-toml';
 import { AppConfig, ModuleConfig, ApiConfig } from '../types/config.type.js';
 import { LogLevel } from '../types/logger.type.js';
+import { getProjectRoot } from '../utils/path.js';
 
 export class ConfigLoader {
     private config: AppConfig | null = null;
     private configPath: string;
 
     constructor(configPath?: string) {
-        this.configPath = configPath || resolve(process.cwd(), 'config.toml');
+        this.configPath = configPath || resolve(getProjectRoot(), 'config.toml');
     }
 
     /**
@@ -104,6 +105,7 @@ export class ConfigLoader {
             task_timeout_ms: section['task_timeout_ms'],
             default_loop_interval: section['default_loop_interval'] as number | undefined,
             api_base_url: section['api_base_url'],
+            browser_recycle_interval_minutes: section['browser_recycle_interval_minutes'] as number | undefined,
         };
     }
 

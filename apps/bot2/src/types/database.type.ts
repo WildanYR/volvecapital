@@ -1,4 +1,3 @@
-import { LogLevel } from "./logger.type.js";
 import { TaskStatus } from "./task.type.js";
 
 export interface KVStoreRow {
@@ -19,13 +18,4 @@ export interface TaskRow {
   started_at: string | null;
   completed_at: string | null;
   error: string | null;
-}
-
-export interface LogRow {
-  id: number;
-  module_instance_id: string | null;
-  level: LogLevel;
-  message: string;
-  timestamp: string;
-  synced: number;  // 0 or 1
 }

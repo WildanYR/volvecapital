@@ -184,7 +184,13 @@ export class NetflixModule extends BaseModule {
       throw error; // Re-throw to fail the task in TaskManager
     } finally {
       await page.close();
-      await this.cleanup(); // Closes context
+      // Save and close only the context used by this task, not all contexts
+      await this.saveSession(contextName);
+      const ctx = this.getContextByName(contextName);
+      if (ctx) {
+        await ctx.close();
+        this.invalidateContext(contextName);
+      }
     }
   }
 }

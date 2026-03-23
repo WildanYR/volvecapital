@@ -16,8 +16,8 @@ import {
     getStorageStatePath,
     closeContext,
 } from '../utils/browser.js';
-import { ModuleConfig } from '../types/config.type.js';
-import { Task } from '../types/task.type.js';
+import type { ModuleConfig } from '../types/config.type.js';
+import type { Task } from '../types/task.type.js';
 
 export abstract class BaseModule {
     protected db: Database;

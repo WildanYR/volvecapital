@@ -6,7 +6,8 @@ import { io, type Socket } from 'socket.io-client';
 import type { TaskManager } from './TaskManager.js';
 import type { Logger } from './Logger.js';
 import type { EventBus } from './EventBus.js';
-import { AppConfig, ConnectorConfig } from '../types/config.type.js';
+import { AppConfig } from '../types/config.type.js';
+import type { ConnectorConfig } from '../types/config.type.js';
 import { TaskInput, TaskSource } from '../types/task.type.js';
 import type { AuthCredentials } from './auth.js';
 import { ConnectorConnectErrorData, DispatchTaskData, EventData, RejectTaskData, TaskDoneData } from '../types/connector.type.js';
@@ -151,7 +152,6 @@ export class Connector {
      * Unified handler untuk trigger dan scheduled tasks
      */
     private handleTaskDispatch(data: DispatchTaskData): void {
-        console.log('task dispatch', { data })
         try {
             this.logger.info(`Received task-dispatch: ${data.taskId} for module ${data.module}`);
 
