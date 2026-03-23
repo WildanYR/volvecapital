@@ -57,8 +57,8 @@ export class StatisticService {
         .toReversed();
 
       const productStatistic = await this.productSatisticRepository.findAll({
-        where: { date: { [Op.between]: [startOfMonth, endOfMonth] } },
-        order: [['date', 'DESC']],
+        where: { date: { [Op.between]: [startOfMonth, endOfMonth] }, type: 'monthly' },
+        order: [['items_sold', 'DESC']],
         transaction,
       });
       const productVariantIds = [
@@ -111,11 +111,13 @@ export class StatisticService {
       }
 
       const platformStatistic = await this.platformStatisticRepository.findAll({
-        where: { date: { [Op.between]: [startOfMonth, endOfMonth] } },
+        where: { date: { [Op.between]: [startOfMonth, endOfMonth] }, type: 'monthly' },
+        order: [['transaction_count', 'DESC']],
         transaction,
       });
       const peakHourStatistic = await this.peakHourStatisticRepository.findAll({
-        where: { date: { [Op.between]: [startOfMonth, endOfMonth] } },
+        where: { date: { [Op.between]: [startOfMonth, endOfMonth] }, type: 'monthly' },
+        order: [['hour', 'ASC']],
         transaction,
       });
       await transaction.commit();

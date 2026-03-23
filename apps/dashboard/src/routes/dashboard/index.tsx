@@ -1,5 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
+import { PeakHourChart } from '@/dashboard/components/chart/peak-hour-chart'
+import { PlatformList } from '@/dashboard/components/chart/platform-list'
+import { ProductSales } from '@/dashboard/components/chart/product-sales'
 import RevenueChart from '@/dashboard/components/chart/revenue-chart'
 import {
   Card,
@@ -107,6 +110,30 @@ function RouteComponent() {
                           </CardHeader>
                           <CardContent>
                             <RevenueChart data={allStatistic.revenue} />
+                          </CardContent>
+                        </Card>
+                        <Card className="col-span-full lg:col-span-1">
+                          <CardHeader>
+                            <CardTitle>Transaksi per Platform</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <PlatformList data={allStatistic.platform} />
+                          </CardContent>
+                        </Card>
+                        <Card className="col-span-full lg:col-span-1">
+                          <CardHeader>
+                            <CardTitle>Jam Sibuk (Peak Hour)</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <PeakHourChart data={allStatistic.peakHour} />
+                          </CardContent>
+                        </Card>
+                        <Card className="col-span-full">
+                          <CardHeader>
+                            <CardTitle>Produk Terlaris</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <ProductSales data={allStatistic.product} />
                           </CardContent>
                         </Card>
                       </div>
