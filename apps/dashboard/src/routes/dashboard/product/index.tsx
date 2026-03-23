@@ -107,7 +107,7 @@ function RouteComponent() {
 
   const { data: products, isLoading: isFetchProductLoading } = useQuery({
     queryKey: ['product', searchParam],
-    queryFn: () => productService.getAllProduct(searchParam),
+    queryFn: ({ signal }) => productService.getAllProduct({ ...searchParam, signal }),
   })
 
   const productVariantCreateMutation = useMutation({

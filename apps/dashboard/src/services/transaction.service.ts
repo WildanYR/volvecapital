@@ -2,7 +2,7 @@ import type { Account, AccountProfile } from './account.service'
 import type { GetAllServiceFn } from '@/dashboard/types/get-all-service.type'
 import { toast } from 'sonner'
 import { z } from 'zod'
-import { generateApiFetch } from '@/dashboard/lib/api-fetch.util'
+import { generateApiFetch, parseApiResponse } from '@/dashboard/lib/api-fetch.util'
 import { convertStringToMetadataObject } from '@/dashboard/lib/metadata-converter'
 import { BaseQueryParamsSchema } from '@/dashboard/types/get-all-service.type'
 
@@ -82,7 +82,7 @@ export function TransactionServiceGenerator(apiUrl: string, accessToken: string,
       params,
     )
     if (!response.ok) {
-      const errorData = await response.json()
+      const errorData = await parseApiResponse(response)
       const errorMessage = Array.isArray(errorData.message)
         ? errorData.message[0]
         : errorData.message

@@ -107,7 +107,7 @@ function RouteComponent() {
   const { data: transactions, isLoading: isFetchTransactionLoading } = useQuery(
     {
       queryKey: ['transaction', searchParam],
-      queryFn: () => transactionService.getAllTransaction(searchParam),
+      queryFn: ({ signal }) => transactionService.getAllTransaction({ ...searchParam, signal }),
     },
   )
 

@@ -1,5 +1,5 @@
 import z from 'zod'
-import { generateApiFetch } from '@/dashboard/lib/api-fetch.util'
+import { generateApiFetch, parseApiResponse } from '@/dashboard/lib/api-fetch.util'
 
 export const AllStatisticFilterSchema = z.object({
   year: z.string().optional(),
@@ -56,16 +56,17 @@ export interface AllStatistic {
 export function statisticServiceGenerator(apiUrl: string, accessToken: string, tenantId: string) {
   const getAllStatistic = async (
     filter?: AllStatisticFilter,
+    signal?: AbortSignal,
   ): Promise<AllStatistic> => {
     const response = await generateApiFetch(
       apiUrl,
       accessToken,
       tenantId,
       '/statistic',
-      { filter },
+      { filter, signal },
     )
     if (!response.ok) {
-      const errorData = await response.json()
+      const errorData = await parseApiResponse(response)
       const errorMessage = Array.isArray(errorData.message)
         ? errorData.message[0]
         : errorData.message

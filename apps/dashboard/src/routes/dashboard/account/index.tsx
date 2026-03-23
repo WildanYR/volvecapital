@@ -50,7 +50,7 @@ import {
   Warehouse,
   X,
 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { toast } from 'sonner'
 import { useDebouncedCallback } from 'use-debounce'
 import { AccountStatus } from '@/dashboard/components/account-status'
@@ -156,7 +156,8 @@ function RouteComponent() {
     = useState<boolean>(false)
   const [dialogFreezeOpen, setDialogFreezeOpen] = useState<boolean>(false)
 
-  const [selectedAccount, setSelectedAccount] = useState<Account>()
+  const [selectedAccountState, setSelectedAccount] = useState<Account>()
+  
   const [selectedAccountProfile, setSelectedAccountProfile]
     = useState<AccountProfile>()
   const [selectedEmail, setSelectedEmail] = useState<Email>()
@@ -168,24 +169,19 @@ function RouteComponent() {
 
   const { data: accounts, isLoading: isFetchAccountLoading } = useQuery({
     queryKey: ['account', searchParam],
-    queryFn: () => accountService.getAllAccount(searchParam),
+    queryFn: ({ signal }) => accountService.getAllAccount({ ...searchParam, signal }),
 
   })
 
-  useEffect(() => {
-    if (accounts?.items.length && selectedAccount) {
-      const freshData = accounts.items.find(v => v.id === selectedAccount.id)
-      if (freshData && JSON.stringify(freshData) !== JSON.stringify(selectedAccount)) {
-        setSelectedAccount(freshData)
-      }
-    }
-  }, [accounts])
+  const selectedAccount = selectedAccountState 
+    ? (accounts?.items?.find(v => v.id === selectedAccountState.id) ?? selectedAccountState)
+    : undefined
 
   const { data: countAccounts, isLoading: isFetchCountAccountsLoading }
     = useQuery({
       queryKey: ['countAccount', searchParam.product_variant_id],
-      queryFn: () =>
-        accountService.countStatusAccount(searchParam.product_variant_id),
+      queryFn: ({ signal }) =>
+        accountService.countStatusAccount(searchParam.product_variant_id, signal),
     })
 
   const accountEditMutation = useMutation({

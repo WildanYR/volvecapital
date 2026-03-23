@@ -1,6 +1,6 @@
 import type { GetAllServiceFn } from '../types/get-all-service.type'
 import { z } from 'zod'
-import { generateApiFetch } from '../lib/api-fetch.util'
+import { generateApiFetch, parseApiResponse } from '../lib/api-fetch.util'
 import { BaseQueryParamsSchema } from '../types/get-all-service.type'
 
 export const LogsFilterSchema = z.object({
@@ -30,7 +30,7 @@ export function LogsServiceGenerator(apiUrl: string, accessToken: string, tenant
   const getLogs: GetAllServiceFn<Logs, LogsFilter> = async (params) => {
     const response = await generateApiFetch(apiUrl, accessToken, tenantId, '/log', params)
     if (!response.ok) {
-      const errorData = await response.json()
+      const errorData = await parseApiResponse(response)
       const errorMessage = Array.isArray(errorData.message)
         ? errorData.message[0]
         : errorData.message

@@ -29,7 +29,7 @@ function RouteComponent() {
 
   const { data: allStatistic, isLoading: isFetchStatisticLoading } = useQuery({
     queryKey: ['allStatistic'],
-    queryFn: () => statisticService.getAllStatistic(),
+    queryFn: ({ signal }) => statisticService.getAllStatistic(undefined, signal),
   })
 
   return (

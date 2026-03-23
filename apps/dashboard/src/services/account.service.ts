@@ -3,7 +3,7 @@ import type { ProductVariant } from './product.service'
 import type { MetadataObject } from '@/dashboard/lib/metadata-converter'
 import type { GetAllServiceFn } from '@/dashboard/types/get-all-service.type'
 import { z } from 'zod'
-import { generateApiFetch } from '@/dashboard/lib/api-fetch.util'
+import { generateApiFetch, parseApiResponse } from '@/dashboard/lib/api-fetch.util'
 import { convertStringToMetadataObject } from '@/dashboard/lib/metadata-converter'
 import { BaseQueryParamsSchema } from '@/dashboard/types/get-all-service.type'
 
@@ -159,7 +159,7 @@ export function AccountServiceGenerator(apiUrl: string, accessToken: string, ten
       params,
     )
     if (!response.ok) {
-      const errorData = await response.json()
+      const errorData = await parseApiResponse(response)
       const errorMessage = Array.isArray(errorData.message)
         ? errorData.message[0]
         : errorData.message
@@ -209,12 +209,13 @@ export function AccountServiceGenerator(apiUrl: string, accessToken: string, ten
     }
   }
 
-  const getAccountById = async (accountId: string): Promise<Account> => {
+  const getAccountById = async (accountId: string, signal?: AbortSignal): Promise<Account> => {
     const response = await generateApiFetch(
       apiUrl,
       accessToken,
       tenantId,
       `/account/${accountId}`,
+      { signal },
     )
     if (!response.ok) {
       const errorData = await response.json()
@@ -537,13 +538,14 @@ export function AccountServiceGenerator(apiUrl: string, accessToken: string, ten
 
   const countStatusAccount = async (
     productVariantId?: string,
+    signal?: AbortSignal,
   ): Promise<CountStatusAccount> => {
     const response = await generateApiFetch(
       apiUrl,
       accessToken,
       tenantId,
       '/account/count',
-      productVariantId ? { product_variant_id: productVariantId } : undefined,
+      productVariantId ? { product_variant_id: productVariantId, signal } : { signal },
     )
     if (!response.ok) {
       const errorData = await response.json()

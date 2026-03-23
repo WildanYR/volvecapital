@@ -21,5 +21,5 @@ export interface IPaginateOrderResponse<T> {
 }
 
 export type GetAllServiceFn<TData, TFilter> = (
-  params: BaseQueryParams & { filter?: TFilter },
+  params: BaseQueryParams & { filter?: TFilter, signal?: AbortSignal },
 ) => Promise<IPaginateOrderResponse<TData>>
