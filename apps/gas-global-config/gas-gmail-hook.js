@@ -1,3 +1,4 @@
+const APP_ID = "GANTI_DENGAN_APP_ID_VOLVECAPITAL"
 const API_URL = "https://api.volve-capital.com"
 const BATCH_SIZE = 15
 const PROP_KEY_LAST_RUN = 'last_run'
@@ -202,7 +203,7 @@ function processEmails() {
     return;
   }
 
-  const payloadString = JSON.stringify({ emails: emailPayloads });
+  const payloadString = JSON.stringify({ tenant: APP_ID, emails: emailPayloads });
   const isPayloadSent = sendPayload(payloadString);
 
   if (isPayloadSent) {

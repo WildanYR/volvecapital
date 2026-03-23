@@ -4,6 +4,7 @@ import { NETFLIX_OTP, NETFLIX_REQ_RESET_PASSWORD } from 'src/constants/email-sub
 import { EmailSubject } from 'src/database/models/email-subject.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
 import { AppLoggerService } from '../logger/logger.service';
+import { SyslogService } from '../logger/syslog.service';
 import { SocketGateway } from '../socket/socket.gateway';
 import { EmailParser } from '../utility/email-parser.provider';
 import { RecieveEmailDto } from './dto/recieve-email.dto';
@@ -12,13 +13,13 @@ import { RecieveEmailDto } from './dto/recieve-email.dto';
 export class EmailForwardService {
   constructor(
     private readonly logger: AppLoggerService,
+    private readonly syslog: SyslogService,
     private readonly emailParser: EmailParser,
     private readonly socketGateway: SocketGateway,
     private readonly postgresProvider: PostgresProvider,
     @Inject(EMAIL_SUBJECT_REPOSITORY) private readonly emailSubjectRepository: typeof EmailSubject
   ) {}
 
-  // TODO: save email in database.
   async recieveEmail(payload: RecieveEmailDto) {
     const transaction = await this.postgresProvider.transaction();
     try {
@@ -51,6 +52,7 @@ export class EmailForwardService {
               }
 
               if (data && context) {
+                await this.syslog.logToDb(payload.tenant, { context: 'RECIEVE_EMAIL', level: 'INFO', message: `${context}: ${data}` });
                 const sanitizeEmail = this.emailParser.sanitizeEmail(e.from);
                 const eventName = `${sanitizeEmail}:${context}`;
                 this.socketGateway.sendEvent(eventName, {
