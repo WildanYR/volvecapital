@@ -26,7 +26,7 @@ function RouteComponent() {
 
   const { data: email, isLoading: isFetchEmailLoading } = useQuery({
     queryKey: ['email', id],
-    queryFn: () => emailService.getEmailById(id),
+    queryFn: ({ signal }) => emailService.getEmailById(id, signal),
   })
 
   const mutation = useMutation({

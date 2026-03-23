@@ -41,16 +41,30 @@ export async function generateApiFetch<T extends Record<string, any>>(
   accessToken: string,
   tenantId: string,
   endpoint: string,
-  params?: BaseQueryParams & T,
+  params?: BaseQueryParams & T & { signal?: AbortSignal },
   fetchInit?: RequestInit,
 ) {
-  const url = generateApiUrl(apiUrl, endpoint, params)
+  const { signal, ...restParams } = params || {}
+  const url = generateApiUrl(apiUrl, endpoint, Object.keys(restParams).length > 0 ? restParams : undefined)
 
   const token = `VC ${accessToken}`
   const headers = fetchInit?.headers
     ? { ...fetchInit.headers, 'authorization': token, 'x-tenant-id': tenantId }
     : { 'authorization': token, 'x-tenant-id': tenantId }
 
-  const response = await fetch(url, { ...fetchInit, headers })
+  const response = await fetch(url, { ...fetchInit, headers, signal: signal || fetchInit?.signal })
   return response
+}
+
+export async function parseApiResponse(response: Response) {
+  const contentType = response.headers.get('content-type')
+  if (contentType && contentType.includes('application/json')) {
+    try {
+      return await response.json()
+    }
+    catch {
+      return { message: response.statusText }
+    }
+  }
+  return { message: await response.text() || response.statusText }
 }

@@ -27,7 +27,7 @@ function RouteComponent() {
   const { data: platformProduct, isLoading: isFetchPlatformProductLoading }
     = useQuery({
       queryKey: ['platform-product', id],
-      queryFn: () => platformProductService.getPlatformProductById(id),
+      queryFn: ({ signal }) => platformProductService.getPlatformProductById(id, signal),
     })
 
   const mutation = useMutation({

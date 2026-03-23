@@ -68,7 +68,7 @@ function RouteComponent() {
 
   const { data: emails, isLoading: isFetchEmailLoading } = useQuery({
     queryKey: ['email', searchParam],
-    queryFn: () => emailService.getAllEmail(searchParam),
+    queryFn: ({ signal }) => emailService.getAllEmail({ ...searchParam, signal }),
   })
 
   const deleteMutation = useMutation({

@@ -81,7 +81,7 @@ function RouteComponent() {
   const { data: platformProducts, isLoading: isFetchPlatformProductLoading }
     = useQuery({
       queryKey: ['platform-product', searchParam],
-      queryFn: () => platformProductService.getAllPlatformProduct(searchParam),
+      queryFn: ({ signal }) => platformProductService.getAllPlatformProduct({ ...searchParam, signal }),
     })
 
   const deleteMutation = useMutation({

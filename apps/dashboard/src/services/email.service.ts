@@ -1,6 +1,6 @@
 import type { GetAllServiceFn } from '@/dashboard/types/get-all-service.type'
 import { z } from 'zod'
-import { generateApiFetch } from '@/dashboard/lib/api-fetch.util'
+import { generateApiFetch, parseApiResponse } from '@/dashboard/lib/api-fetch.util'
 import { BaseQueryParamsSchema } from '@/dashboard/types/get-all-service.type'
 
 export const EmailFilterSchema = z.object({
@@ -40,7 +40,7 @@ export function EmailServiceGenerator(apiUrl: string, accessToken: string, tenan
       params,
     )
     if (!response.ok) {
-      const errorData = await response.json()
+      const errorData = await parseApiResponse(response)
       const errorMessage = Array.isArray(errorData.message)
         ? errorData.message[0]
         : errorData.message
@@ -50,12 +50,13 @@ export function EmailServiceGenerator(apiUrl: string, accessToken: string, tenan
     return response.json()
   }
 
-  const getEmailById = async (emailId: string): Promise<Email> => {
+  const getEmailById = async (emailId: string, signal?: AbortSignal): Promise<Email> => {
     const response = await generateApiFetch(
       apiUrl,
       accessToken,
       tenantId,
       `/email/${emailId}`,
+      { signal },
     )
     if (!response.ok) {
       const errorData = await response.json()

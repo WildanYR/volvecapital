@@ -5,7 +5,7 @@ import { useAppForm } from '@/dashboard/hooks/form.hook'
 
 export const AccountEditFormSchema = z.object({
   email_id: z.string().nonempty(),
-  account_password: z.string().nonempty(),
+  account_password: z.string(),
   subscription_expiry: z.date().optional(),
   status: z.string(),
   billing: z.string(),

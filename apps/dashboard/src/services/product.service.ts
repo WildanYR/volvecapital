@@ -1,6 +1,6 @@
 import type { GetAllServiceFn } from '@/dashboard/types/get-all-service.type'
 import { z } from 'zod'
-import { generateApiFetch } from '@/dashboard/lib/api-fetch.util'
+import { generateApiFetch, parseApiResponse } from '@/dashboard/lib/api-fetch.util'
 import { largestWholeUnit } from '@/dashboard/lib/time-converter.util'
 import { BaseQueryParamsSchema } from '@/dashboard/types/get-all-service.type'
 
@@ -87,7 +87,7 @@ export function ProductServiceGenerator(apiUrl: string, accessToken: string, ten
       params,
     )
     if (!response.ok) {
-      const errorData = await response.json()
+      const errorData = await parseApiResponse(response)
       const errorMessage = Array.isArray(errorData.message)
         ? errorData.message[0]
         : errorData.message
@@ -143,12 +143,13 @@ export function ProductServiceGenerator(apiUrl: string, accessToken: string, ten
     return response.json()
   }
 
-  const getProductById = async (productId: string): Promise<Product> => {
+  const getProductById = async (productId: string, signal?: AbortSignal): Promise<Product> => {
     const response = await generateApiFetch(
       apiUrl,
       accessToken,
       tenantId,
       `/product/${productId}`,
+      { signal },
     )
     if (!response.ok) {
       const errorData = await response.json()

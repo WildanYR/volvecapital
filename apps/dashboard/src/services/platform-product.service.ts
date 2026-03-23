@@ -1,7 +1,7 @@
 import type { ProductVariant } from './product.service'
 import type { GetAllServiceFn } from '@/dashboard/types/get-all-service.type'
 import { z } from 'zod'
-import { generateApiFetch } from '@/dashboard/lib/api-fetch.util'
+import { generateApiFetch, parseApiResponse } from '@/dashboard/lib/api-fetch.util'
 import { BaseQueryParamsSchema } from '@/dashboard/types/get-all-service.type'
 
 export const PlatformProductFilterSchema = z.object({
@@ -53,7 +53,7 @@ export function PlatformProductServiceGenerator(apiUrl: string, accessToken: str
       params,
     )
     if (!response.ok) {
-      const errorData = await response.json()
+      const errorData = await parseApiResponse(response)
       const errorMessage = Array.isArray(errorData.message)
         ? errorData.message[0]
         : errorData.message
@@ -63,12 +63,13 @@ export function PlatformProductServiceGenerator(apiUrl: string, accessToken: str
     return response.json()
   }
 
-  const getPlatformProductById = async (platformProductId: string) => {
+  const getPlatformProductById = async (platformProductId: string, signal?: AbortSignal) => {
     const response = await generateApiFetch(
       apiUrl,
       accessToken,
       tenantId,
       `/platform-product/${platformProductId}`,
+      { signal },
     )
     if (!response.ok) {
       const errorData = await response.json()
