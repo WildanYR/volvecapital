@@ -52,7 +52,7 @@ export class EmailForwardService {
               }
 
               if (data && context) {
-                await this.syslog.logToDb(payload.tenant, { context: 'RECIEVE_EMAIL', level: 'INFO', message: `${context}: ${data}` });
+                await this.syslog.logToDb(payload.tenant, { context: 'RecieveEmail', level: 'INFO', message: `${e.from} (${context}): ${data}` });
                 const sanitizeEmail = this.emailParser.sanitizeEmail(e.from);
                 const eventName = `${sanitizeEmail}:${context}`;
                 this.socketGateway.sendEvent(eventName, {
