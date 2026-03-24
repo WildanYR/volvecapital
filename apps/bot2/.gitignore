@@ -15,6 +15,7 @@ session_data/
 # Environment
 .env
 .env.local
+config.toml
 
 # IDE
 .vscode/

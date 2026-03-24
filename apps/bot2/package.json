@@ -1,12 +1,12 @@
 {
   "name": "@volvecapital/bot2",
-  "main": "dist/main.js",
+  "main": "dist/bundle/index.js",
   "type": "module",
   "packageManager": "pnpm@10.28.2",
   "scripts": {
     "dev": "tsx watch src/main.ts",
-    "build": "ncc build src/main.ts -m -o dist",
-    "start": "node dist/main.js",
+    "build": "node scripts/build.mjs",
+    "start": "node dist/bundle/index.js",
     "test": "vitest run",
     "test:watch": "vitest"
   },

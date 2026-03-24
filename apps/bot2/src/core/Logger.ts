@@ -10,6 +10,7 @@ import { resolve } from 'node:path';
 import { LoggerConfig } from '../types/config.type.js';
 import { LogContext, LogLevel, LogToDbOptions } from '../types/logger.type.js';
 import { AuthCredentials, authHeaders } from './auth.js';
+import { getProjectRoot } from '../utils/path.js';
 
 const { combine, timestamp, printf, errors } = format;
 
@@ -25,7 +26,7 @@ export class Logger {
         this.baseApiUrl = baseApiUrl;
 
         // Ensure log directory exists
-        const logDir = resolve(process.cwd(), 'storage', 'logs');
+        const logDir = resolve(getProjectRoot(), 'storage', 'logs');
         if (!existsSync(logDir)) {
             mkdirSync(logDir, { recursive: true });
         }
