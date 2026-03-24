@@ -9,6 +9,7 @@ const distRoot = resolve(appRoot, 'dist');
 const bundleRoot = resolve(distRoot, 'bundle');
 const sourcePackagePath = resolve(appRoot, 'package.json');
 const configExamplePath = resolve(appRoot, 'config.example.toml');
+const readmePath = resolve(scriptDir, 'README.md');
 
 function pruneBundleArtifacts(rootDir) {
   for (const entry of readdirSync(rootDir)) {
@@ -76,4 +77,8 @@ writeFileSync(
 
 if (existsSync(configExamplePath)) {
   copyFileSync(configExamplePath, resolve(distRoot, 'config.toml'));
+}
+
+if (existsSync(readmePath)) {
+  copyFileSync(readmePath, resolve(distRoot, 'README.md'));
 }
