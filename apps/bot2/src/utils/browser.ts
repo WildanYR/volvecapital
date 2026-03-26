@@ -20,7 +20,7 @@ function shouldBlockResource(resourceType: string): boolean {
 
 // Default launch options
 const DEFAULT_LAUNCH_OPTIONS: LaunchOptions = {
-    headless: true,
+    headless: false,
     channel: 'chrome',
     args: [
         '--disable-blink-features=AutomationControlled',
@@ -128,6 +128,10 @@ export async function closeContext(context: BrowserContext): Promise<void> {
 let globalBrowser: Browser | null = null;
 let lastLaunchOptions: LaunchOptions = {};
 
+export function configureBrowserLaunchOptions(options: LaunchOptions): void {
+    lastLaunchOptions = { ...lastLaunchOptions, ...options };
+}
+
 // Auto-restart state
 let isIntentionalClose = false;
 let isRestarting = false;
@@ -233,7 +237,7 @@ export async function getGlobalBrowser(options?: LaunchOptions): Promise<Browser
 
     // Save options for restart
     if (options) {
-        lastLaunchOptions = options;
+        configureBrowserLaunchOptions(options);
     }
 
     // Launch new global browser

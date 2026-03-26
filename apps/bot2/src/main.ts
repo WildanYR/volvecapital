@@ -13,6 +13,7 @@ import { Connector } from './core/Connector.js';
 import { getModuleFactory, getRegisteredModuleNames } from './modules/index.js';
 import { getAuthCredentials, type AuthCredentials } from './core/auth.js';
 import type { AppConfig } from './types/config.type.js';
+import { configureBrowserLaunchOptions } from './utils/browser.js';
 
 class Application {
     private config!: AppConfig;
@@ -30,6 +31,7 @@ class Application {
             const configLoader = new ConfigLoader();
             this.config = configLoader.load();
             console.log(`Configuration loaded: ${this.config.app.name}`);
+            configureBrowserLaunchOptions({ headless: this.config.app.headless });
 
             // 2. Initialize database
             const dbPath = resolve(getProjectRoot(), 'storage', 'database.sqlite');

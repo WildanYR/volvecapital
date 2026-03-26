@@ -3,6 +3,7 @@ api_base_url = "https://api.volve-capital.com" # DO NOT CHANGE THIS LINE
 name = "CHANGE_THIS_TO_YOUR_DESIRED_BOT_NAME"
 max_concurrent_tasks = 3
 task_timeout_ms = 300000
+headless = false # false = headed browser, true = headless browser
 
 [api]
 app_id = "CHANGE_THIS_TO_YOUR_APP_ID"

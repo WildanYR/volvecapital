@@ -13,6 +13,7 @@ export interface AppConfig {
     name: string;
     max_concurrent_tasks: number;
     task_timeout_ms: number;
+    headless?: boolean;
     default_loop_interval?: number;  // default interval untuk loop modules (ms)
     api_base_url: string;  // base URL for API server
     browser_recycle_interval_minutes?: number;  // interval untuk global browser recycle (menit), default 60

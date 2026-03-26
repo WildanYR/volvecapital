@@ -95,6 +95,10 @@ export class ConfigLoader {
             throw new Error('[app.task_timeout_ms] must be a number >= 1000');
         }
 
+        if (section['headless'] !== undefined && typeof section['headless'] !== 'boolean') {
+            throw new Error('[app.headless] must be a boolean');
+        }
+
         if (typeof section['api_base_url'] !== 'string' || !section['api_base_url']) {
             throw new Error('[app.api_base_url] is required');
         }
@@ -103,6 +107,7 @@ export class ConfigLoader {
             name: section['name'],
             max_concurrent_tasks: section['max_concurrent_tasks'],
             task_timeout_ms: section['task_timeout_ms'],
+            headless: section['headless'] as boolean | undefined ?? false,
             default_loop_interval: section['default_loop_interval'] as number | undefined,
             api_base_url: section['api_base_url'],
             browser_recycle_interval_minutes: section['browser_recycle_interval_minutes'] as number | undefined,
