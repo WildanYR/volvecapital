@@ -7,17 +7,6 @@ import { existsSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { getProjectRoot } from './path.js';
 
-const BLOCKED_RESOURCE_TYPES = new Set([
-    'image',
-    'media',
-    'manifest',
-    'texttrack',
-]);
-
-function shouldBlockResource(resourceType: string): boolean {
-    return BLOCKED_RESOURCE_TYPES.has(resourceType);
-}
-
 // Default launch options
 const DEFAULT_LAUNCH_OPTIONS: LaunchOptions = {
     headless: false,
@@ -48,7 +37,6 @@ export async function createContext(
         userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         locale: 'id-ID',
         timezoneId: 'Asia/Jakarta',
-        serviceWorkers: 'block',
     };
 
     // Load storage state if exists
@@ -56,19 +44,7 @@ export async function createContext(
         contextOptions.storageState = storageStatePath;
     }
 
-    const context = await browser.newContext(contextOptions);
-
-    await context.route('**/*', (route) => {
-        const resourceType = route.request().resourceType();
-
-        if (shouldBlockResource(resourceType)) {
-            return route.abort();
-        }
-
-        return route.continue();
-    });
-
-    return context;
+    return browser.newContext(contextOptions);
 }
 
 /**
