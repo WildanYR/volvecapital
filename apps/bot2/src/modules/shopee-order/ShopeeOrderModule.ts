@@ -171,8 +171,8 @@ export class ShopeeOrderModule extends BaseModule {
       }
     }
 
-    // Enqueue processable orders
-    const processableOrders = this.getProcessableOrders();
+    // Claim queued orders before enqueueing so the same orderId is only scheduled once.
+    const processableOrders = this.claimQueuedOrdersForEnqueue();
     for (const order of processableOrders) {
       this.enqueueTask('processOrder', { orderId: order.orderId, status: order.status });
     }
@@ -192,6 +192,23 @@ export class ShopeeOrderModule extends BaseModule {
       orderId: string;
       status: OrderStatus;
     };
+
+    const currentOrder = this.getOrder(orderId);
+    if (!currentOrder) {
+      this.logger.warn(`Skipping order ${orderId}: order record tidak ditemukan`);
+      return;
+    }
+
+    if (currentOrder.status === 'success' || currentOrder.status === 'failed') {
+      this.logger.info(`Skipping order ${orderId}: status sudah ${currentOrder.status}`);
+      return;
+    }
+
+    if (!this.claimOrderForProcessing(orderId)) {
+      const latestStatus = this.getOrder(orderId)?.status || currentOrder.status;
+      this.logger.info(`Skipping order ${orderId}: sudah diklaim task lain (status: ${latestStatus})`);
+      return;
+    }
 
     this.logger.info(`Processing order ${orderId}`);
 
@@ -656,12 +673,53 @@ export class ShopeeOrderModule extends BaseModule {
     );
   }
 
-  private getProcessableOrders(): OrderRecord[] {
-    return this.db.all<OrderRecord>(
-      `SELECT * FROM orders 
-       WHERE module_instance_id = ? 
-       AND status = 'queued'`,
-      [this.instanceId]
+  private claimQueuedOrdersForEnqueue(): OrderRecord[] {
+    return this.db.transaction(() => {
+      const queuedOrders = this.db.all<OrderRecord>(
+        `SELECT * FROM orders
+         WHERE module_instance_id = ?
+         AND status = 'queued'`,
+        [this.instanceId]
+      );
+
+      if (!queuedOrders.length) {
+        return [];
+      }
+
+      this.db.run(
+        `UPDATE orders
+         SET status = 'enqueued'
+         WHERE module_instance_id = ?
+         AND status = 'queued'`,
+        [this.instanceId]
+      );
+
+      return queuedOrders.map((order) => ({
+        ...order,
+        status: 'enqueued' as const,
+      }));
+    });
+  }
+
+  private claimOrderForProcessing(orderId: string): boolean {
+    const result = this.db.run(
+      `UPDATE orders
+       SET status = 'processing'
+       WHERE module_instance_id = ?
+       AND orderId = ?
+       AND status = 'enqueued'`,
+      [this.instanceId, orderId]
+    );
+
+    return result.changes > 0;
+  }
+
+  private getOrder(orderId: string): OrderRecord | undefined {
+    return this.db.get<OrderRecord>(
+      `SELECT * FROM orders
+       WHERE module_instance_id = ?
+       AND orderId = ?`,
+      [this.instanceId, orderId]
     );
   }
 

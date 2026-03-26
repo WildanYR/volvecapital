@@ -1,4 +1,4 @@
-export type OrderStatus = 'queued' | 'processing' | 'success' | 'failed';
+export type OrderStatus = 'queued' | 'enqueued' | 'processing' | 'success' | 'failed';
 
 export interface OrderRecord {
   module_instance_id: string;
