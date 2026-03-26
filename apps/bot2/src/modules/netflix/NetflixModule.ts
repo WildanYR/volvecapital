@@ -167,7 +167,7 @@ export class NetflixModule extends BaseModule {
           {
             level: 'NEED_ACTION',
             context: 'ResetNetflixPassword',
-            customMessage: `⚠️ Berhasil reset password netflix\ntapi gagal update data di app\n\nSilahkan clear dan ubah password manual pada email tersebut.\nPassword baru: ${newPassword}`
+            customMessage: `⚠️ Berhasil reset password netflix\ntapi gagal update data di app\n\nSilahkan clear dan ubah password manual pada email tersebut.\nEmail: ${email}\nPassword baru: ${newPassword}`
           });
       }
 
