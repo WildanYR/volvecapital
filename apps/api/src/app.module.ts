@@ -17,7 +17,6 @@ import { AccountProfileModule } from './modules/account-profile/account-profile.
 import { AccountUserModule } from './modules/account-user/account-user.module';
 import { AccountModule } from './modules/account/account.module';
 import { CronModule } from './modules/cron/cron.module';
-import { EmailForwardModule } from './modules/email-forward/email-forward.module';
 import { EmailModule } from './modules/email/email.module';
 import { AppLoggerModule } from './modules/logger/logger.module';
 import { PlatformProductModule } from './modules/platform-product/platform-product.module';
@@ -72,7 +71,6 @@ import { UtilityModule } from './modules/utility/utility.module';
     AccountUserModule,
     TransactionModule,
     StatisticModule,
-    EmailForwardModule,
   ],
   controllers: [AppController],
   providers: [{ provide: APP_GUARD, useClass: VcAuthGuard }, AppService],
