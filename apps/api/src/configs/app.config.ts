@@ -6,5 +6,10 @@ export function AppConfig() {
       port: process.env.PORT ? Number.parseInt(process.env.PORT) : 3000,
       url: process.env.APP_URL ?? 'http://localhost:3000',
     },
+    socket: {
+      baseUrl: process.env.SOCKET_APP_BASE_URL ?? 'http://localhost:3100',
+      internalSecret: process.env.SOCKET_INTERNAL_SECRET,
+      testModuleEnabled: process.env.SOCKET_TEST_MODULE_ENABLED === 'true',
+    },
   };
 }

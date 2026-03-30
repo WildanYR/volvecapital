@@ -18,7 +18,7 @@ interface GetStatusPayload {
 }
 
 export class Connector {
-    private apiBaseUrl: string;
+    private socketBaseUrl: string;
     private appName: string;
     private config: ConnectorConfig;
     private authCredentials: AuthCredentials;
@@ -30,14 +30,13 @@ export class Connector {
     private isConnected: boolean = false;
 
     constructor(
-        apiBaseUrl: string,
         config: AppConfig,
         authCredentials: AuthCredentials,
         taskManager: TaskManager,
         logger: Logger,
         eventBus: EventBus
     ) {
-        this.apiBaseUrl = apiBaseUrl;
+        this.socketBaseUrl = new URL('/ws', config.app.api_base_url).toString();
         this.appName = config.app.name;
         this.config = config.connector;
         this.authCredentials = authCredentials;
@@ -56,9 +55,9 @@ export class Connector {
         }
 
         return new Promise((resolve, reject) => {
-            this.logger.info(`Connecting to server: ${this.apiBaseUrl}`);
+            this.logger.info(`Connecting to server: ${this.socketBaseUrl}`);
 
-            this.socket = io(this.apiBaseUrl, {
+            this.socket = io(this.socketBaseUrl, {
                 auth: {
                     token: this.authCredentials.token,
                 },
@@ -154,6 +153,14 @@ export class Connector {
     private handleTaskDispatch(data: DispatchTaskData): void {
         try {
             this.logger.info(`Received task-dispatch: ${data.taskId} for module ${data.module}`);
+
+            if (!data.module) {
+                this.emitTaskReject({
+                    taskId: data.taskId,
+                    message: 'Module is required',
+                });
+                return;
+            }
 
             // Find module instance by module name
             const result = this.taskManager.getModuleInstanceByModuleName(data.module);

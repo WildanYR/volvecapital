@@ -67,7 +67,6 @@ class Application {
 
             // 7. Initialize connector
             this.connector = new Connector(
-                this.config.app.api_base_url,
                 this.config,
                 this.authCredentials,
                 this.taskManager,

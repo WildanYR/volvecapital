@@ -1,3 +1,4 @@
+import * as process from 'node:process';
 import { CacheModule } from '@nestjs/cache-manager';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
@@ -23,6 +24,7 @@ import { PlatformProductModule } from './modules/platform-product/platform-produ
 import { ProductVariantModule } from './modules/product-variant/product-variant.module';
 import { ProductModule } from './modules/product/product.module';
 import { RedisModule } from './modules/redis/redis.module';
+import { SocketTestModule } from './modules/socket-test/socket-test.module';
 import { SocketModule } from './modules/socket/socket.module';
 import { StatisticModule } from './modules/statistic/statistic.module';
 import { TaskQueueModule } from './modules/task-queue/task-queue.module';
@@ -60,6 +62,7 @@ import { UtilityModule } from './modules/utility/utility.module';
     TenantModule,
     TaskQueueModule,
     SocketModule,
+    ...(process.env.SOCKET_TEST_MODULE_ENABLED === 'true' ? [SocketTestModule] : []),
     EmailModule,
     ProductModule,
     ProductVariantModule,
