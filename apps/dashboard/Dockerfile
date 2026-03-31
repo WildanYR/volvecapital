@@ -2,8 +2,11 @@ FROM node:24-alpine AS builder
 
 WORKDIR /app
 
+ARG VITE_MASTER_URL=http://localhost:3000
+
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
+ENV VITE_MASTER_URL=$VITE_MASTER_URL
 
 RUN corepack enable
 
