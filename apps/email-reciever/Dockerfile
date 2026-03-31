@@ -22,7 +22,9 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-COPY --from=builder /app/apps/email-reciever/dist_bundle ./dist_bundle
+COPY --chown=node:node --from=builder /app/apps/email-reciever/dist_bundle ./dist_bundle
+
+RUN mkdir -p /app/dist_bundle/logs
 
 USER node
 
