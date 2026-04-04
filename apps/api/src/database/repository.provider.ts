@@ -4,6 +4,7 @@ import {
   ACCOUNT_PROFILE_REPOSITORY,
   ACCOUNT_REPOSITORY,
   ACCOUNT_USER_REPOSITORY,
+  EMAIL_MESSAGE_REPOSITORY,
   EMAIL_REPOSITORY,
   EMAIL_SUBJECT_REPOSITORY,
   PEAK_HOUR_STATISTICS_REPOSITORY,
@@ -24,6 +25,7 @@ import { AccountModifier } from './models/account-modifier.model';
 import { AccountProfile } from './models/account-profile.model';
 import { AccountUser } from './models/account-user.model';
 import { Account } from './models/account.model';
+import { EmailMessage } from './models/email-message.model';
 import { EmailSubject } from './models/email-subject.model';
 import { Email } from './models/email.model';
 import { PeakHourStatistics } from './models/peak-hour-statistics.model';
@@ -45,6 +47,7 @@ export const RepositoryProvider: Provider[] = [
   { provide: TELE_NOTIFIER_REPOSITORY, useValue: TeleNotifier },
   { provide: TASK_QUEUE_REPOSITORY, useValue: TaskQueue },
   { provide: EMAIL_REPOSITORY, useValue: Email },
+  { provide: EMAIL_MESSAGE_REPOSITORY, useValue: EmailMessage },
   { provide: PRODUCT_REPOSITORY, useValue: Product },
   { provide: PRODUCT_VARIANT_REPOSITORY, useValue: ProductVariant },
   { provide: PLATFORM_PRODUCT_REPOSITORY, useValue: PlatformProduct },

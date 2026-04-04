@@ -18,6 +18,7 @@ import { AccountUserModule } from './modules/account-user/account-user.module';
 import { AccountModule } from './modules/account/account.module';
 import { CronModule } from './modules/cron/cron.module';
 import { EmailModule } from './modules/email/email.module';
+import { EmailMessageModule } from './modules/email-message/email-message.module';
 import { AppLoggerModule } from './modules/logger/logger.module';
 import { PlatformProductModule } from './modules/platform-product/platform-product.module';
 import { ProductVariantModule } from './modules/product-variant/product-variant.module';
@@ -63,6 +64,7 @@ import { UtilityModule } from './modules/utility/utility.module';
     SocketModule,
     ...(process.env.SOCKET_TEST_MODULE_ENABLED === 'true' ? [SocketTestModule] : []),
     EmailModule,
+    EmailMessageModule,
     ProductModule,
     ProductVariantModule,
     PlatformProductModule,

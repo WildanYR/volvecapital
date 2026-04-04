@@ -7,6 +7,7 @@ import { AccountModifier } from './models/account-modifier.model';
 import { AccountProfile } from './models/account-profile.model';
 import { AccountUser } from './models/account-user.model';
 import { Account } from './models/account.model';
+import { EmailMessage } from './models/email-message.model';
 import { EmailSubject } from './models/email-subject.model';
 import { Email } from './models/email.model';
 import { PeakHourStatistics } from './models/peak-hour-statistics.model';
@@ -60,6 +61,7 @@ export class PostgresProvider {
         TeleNotifier,
         TaskQueue,
         Email,
+        EmailMessage,
         Product,
         ProductVariant,
         PlatformProduct,
