@@ -12,6 +12,10 @@ export const up: MigrationFn<MigrationContext> = async ({ context }) => {
         autoIncrement: true,
         type: DataTypes.BIGINT,
       },
+      tenant_id: {
+        allowNull: false,
+        type: DataTypes.STRING,
+      },
       from_email: {
         allowNull: false,
         type: DataTypes.STRING,

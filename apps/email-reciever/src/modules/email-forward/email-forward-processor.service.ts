@@ -61,6 +61,7 @@ export class EmailForwardProcessorService {
                 }
 
                 await this.emailMessageRepository.create({
+                  tenant_id: payload.tenant,
                   from_email: e.from,
                   subject: e.subject,
                   email_date: e.date,

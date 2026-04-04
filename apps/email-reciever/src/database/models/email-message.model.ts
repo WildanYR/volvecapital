@@ -11,6 +11,7 @@ import {
 
 export interface EmailMessageAttributes {
   id: string;
+  tenant_id: string;
   from_email: string;
   subject: string;
   email_date: Date;
@@ -34,6 +35,10 @@ export class EmailMessage extends Model<
   @AutoIncrement
   @Column(DataType.BIGINT)
   declare id: string;
+
+  @AllowNull(false)
+  @Column(DataType.STRING)
+  declare tenant_id: string;
 
   @AllowNull(false)
   @Column(DataType.STRING)
