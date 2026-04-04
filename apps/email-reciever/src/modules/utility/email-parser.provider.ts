@@ -6,10 +6,10 @@ export class EmailParser {
     return email.replace(/[.@]/g, '_');
   }
 
-  extractNetflixResetLink(emailText: string) {
+  extractNetflixUrl(emailText: string) {
     const cleanText = emailText.replace(/[\u200C-\u200F]/g, '').trim();
 
-    const linkMatch = cleanText.match(/https:\/\/www\.netflix\.com\/password[^\s>\]]+/);
+    const linkMatch = cleanText.match(/https:\/\/www\.netflix\.com\/(?:password|account\/update-primary-location|account\/travel\/verify|verifyemail|YourAccount)[^\s>\]]*/);
     const resetLink = linkMatch ? linkMatch[0] : null;
 
     return resetLink;

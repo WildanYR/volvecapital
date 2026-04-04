@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { EMAIL_MESSAGE_REPOSITORY, EMAIL_SUBJECT_REPOSITORY } from 'src/constants/database.const';
-import { NETFLIX_OTP, NETFLIX_REQ_RESET_PASSWORD } from 'src/constants/email-subject.const';
+import { NETFLIX_CANCELLATION, NETFLIX_HOUSE_CHANGE, NETFLIX_OTP, NETFLIX_REQ_RESET_PASSWORD, NETFLIX_TRAVEL_OTP, NETFLIX_VERIFY_EMAIL } from 'src/constants/email-subject.const';
 import { EmailMessage } from 'src/database/models/email-message.model';
 import { EmailSubject } from 'src/database/models/email-subject.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
@@ -11,6 +11,8 @@ import { RecieveEmailDto } from './dto/recieve-email.dto';
 
 @Injectable()
 export class EmailForwardProcessorService {
+  private netflixUrls = [NETFLIX_REQ_RESET_PASSWORD, NETFLIX_TRAVEL_OTP, NETFLIX_HOUSE_CHANGE, NETFLIX_VERIFY_EMAIL, NETFLIX_CANCELLATION];
+
   constructor(
     private readonly logger: AppLoggerService,
     private readonly emailParser: EmailParser,
@@ -49,8 +51,8 @@ export class EmailForwardProcessorService {
                 context = NETFLIX_OTP;
               }
 
-              if (es.dataValues.context === NETFLIX_REQ_RESET_PASSWORD) {
-                data = this.emailParser.extractNetflixResetLink(e.text);
+              if (this.netflixUrls.includes(es.dataValues.context)) {
+                data = this.emailParser.extractNetflixUrl(e.text);
                 context = NETFLIX_REQ_RESET_PASSWORD;
               }
 
