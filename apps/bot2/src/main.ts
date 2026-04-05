@@ -14,9 +14,11 @@ import { getModuleFactory, getRegisteredModuleNames } from './modules/index.js';
 import { getAuthCredentials, type AuthCredentials } from './core/auth.js';
 import type { AppConfig } from './types/config.type.js';
 import { configureBrowserLaunchOptions } from './utils/browser.js';
+import { buildApiBaseUrl } from './utils/api-url.js';
 
 class Application {
     private config!: AppConfig;
+    private apiBaseUrl!: string;
     private db!: Database;
     private logger!: Logger;
     private eventBus!: EventBus;
@@ -32,6 +34,7 @@ class Application {
             this.config = configLoader.load();
             console.log(`Configuration loaded: ${this.config.app.name}`);
             configureBrowserLaunchOptions({ headless: this.config.app.headless });
+            this.apiBaseUrl = buildApiBaseUrl(this.config.app.api_base_url);
 
             // 2. Initialize database
             const dbPath = resolve(getProjectRoot(), 'storage', 'database.sqlite');
@@ -42,14 +45,14 @@ class Application {
             // 3. Get auth credentials (from DB or fetch from API)
             this.authCredentials = await getAuthCredentials(
                 this.db,
-                this.config.app.api_base_url,
+                this.apiBaseUrl,
                 this.config.api.app_id,
                 this.config.api.app_secret
             );
             console.log('Auth credentials obtained');
 
             // 4. Initialize logger (no longer needs database)
-            this.logger = new Logger(this.config.logger, this.authCredentials, this.config.app.api_base_url);
+            this.logger = new Logger(this.config.logger, this.authCredentials, this.apiBaseUrl);
             this.logger.info(`Starting ${this.config.app.name}...`);
 
             // 5. Initialize event bus
@@ -122,7 +125,7 @@ class Application {
                     logger: this.logger,
                     eventBus: this.eventBus,
                     taskManager: this.taskManager,
-                    apiBaseUrl: this.config.app.api_base_url,
+                    apiBaseUrl: this.apiBaseUrl,
                     authCredentials: this.authCredentials,
                 },
                 moduleConfig.name,

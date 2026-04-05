@@ -11,6 +11,7 @@ import type { ConnectorConfig } from '../types/config.type.js';
 import { TaskInput, TaskSource } from '../types/task.type.js';
 import type { AuthCredentials } from './auth.js';
 import { ConnectorConnectErrorData, DispatchTaskData, EventData, RejectTaskData, TaskDoneData } from '../types/connector.type.js';
+import { buildSocketBaseUrl } from '../utils/api-url.js';
 
 interface GetStatusPayload {
     requestId: string;
@@ -36,7 +37,7 @@ export class Connector {
         logger: Logger,
         eventBus: EventBus
     ) {
-        this.socketBaseUrl = new URL('/ws', config.app.api_base_url).toString();
+        this.socketBaseUrl = buildSocketBaseUrl(config.app.api_base_url);
         this.appName = config.app.name;
         this.config = config.connector;
         this.authCredentials = authCredentials;

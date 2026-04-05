@@ -8,6 +8,7 @@ import { load as parseToml } from 'js-toml';
 import { AppConfig, ModuleConfig, ApiConfig } from '../types/config.type.js';
 import { LogLevel } from '../types/logger.type.js';
 import { getProjectRoot } from '../utils/path.js';
+import { normalizeApiBaseHost } from '../utils/api-url.js';
 
 export class ConfigLoader {
     private config: AppConfig | null = null;
@@ -103,13 +104,15 @@ export class ConfigLoader {
             throw new Error('[app.api_base_url] is required');
         }
 
+        const apiBaseHost = normalizeApiBaseHost(section['api_base_url']);
+
         return {
             name: section['name'],
             max_concurrent_tasks: section['max_concurrent_tasks'],
             task_timeout_ms: section['task_timeout_ms'],
             headless: section['headless'] as boolean | undefined ?? false,
             default_loop_interval: section['default_loop_interval'] as number | undefined,
-            api_base_url: section['api_base_url'],
+            api_base_url: apiBaseHost,
             browser_recycle_interval_minutes: section['browser_recycle_interval_minutes'] as number | undefined,
         };
     }

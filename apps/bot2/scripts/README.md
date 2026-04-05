@@ -11,7 +11,7 @@ Before starting the app, prepare the target machine first.
 ## Setup
 
 1. Open a terminal in this folder.
-2. Review and update `config.toml` before running the app.
+2. Review and update `config.toml` before running the app. Set `[app].api_base_url` to a hostname or `host:port` only, without `https://`, `wss://`, or any path.
 3. Install dependencies:
 
 ```bash
