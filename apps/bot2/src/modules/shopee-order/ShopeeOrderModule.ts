@@ -39,6 +39,7 @@ import {
   getAturPengirimanButton,
   getBuyerUsername,
   getProductList,
+  getProductMeta,
   getProductName,
   getProductQty,
   getTotalPriceCard,
@@ -256,21 +257,31 @@ export class ShopeeOrderModule extends BaseModule {
         const chatInput = await this.ensureChatOpen(page);
 
         // Request accounts from server
-        const platformProducts = await checkProductNames(this.apiBaseUrl, this.authCredentials, products.map((p) => p.name));
-        const productList: { id: string; name: string }[] = [];
+        const platformProducts = await checkProductNames(
+          this.apiBaseUrl,
+          this.authCredentials,
+          products.map(p => ({ name: p.name, variant: p.variant })),
+        );
+        const productList: { id: string; name: string; variant?: string }[] = [];
 
-        for (const pp of platformProducts) {
+        for (const [index, pp] of platformProducts.entries()) {
+          const sourceProduct = products[index];
+
           if (!pp.isFound) {
             this.logger.warn(
-              `${orderId}: ${pp.name} tidak terdaftar di produk platform aplikasi`
+              `${orderId}: ${pp.name}${pp.variant ? ` (${pp.variant})` : ''} tidak terdaftar di produk platform aplikasi`
+            );
+          } else if (!pp.product_variant_id) {
+            this.logger.warn(
+              `${orderId}: ${pp.name}${pp.variant ? ` (${pp.variant})` : ''} tidak memiliki product variant id`
             );
           } else {
-            for (const p of products) {
-              if (pp.name === p.name) {
-                for (let i = 0; i < p.qty; i++) {
-                  productList.push({ id: pp.product_variant_id, name: pp.name });
-                }
-              }
+            for (let i = 0; i < sourceProduct.qty; i++) {
+              productList.push({
+                id: pp.product_variant_id,
+                name: pp.name,
+                variant: pp.variant,
+              });
             }
           }
         }
@@ -531,7 +542,7 @@ export class ShopeeOrderModule extends BaseModule {
     }
   }
 
-  private async extractProducts(page: Page): Promise<{ name: string; qty: number }[]> {
+  private async extractProducts(page: Page): Promise<{ name: string; qty: number; variant?: string }[]> {
     const productRowLocator = getProductList(page);
 
     try {
@@ -548,13 +559,19 @@ export class ShopeeOrderModule extends BaseModule {
 
     const productsWithInvalid = await Promise.all(
       allProductRows.map(async (pr) => {
-        const [productName, productQty] = await Promise.all([
+        const [productName, productVariant, productQty] = await Promise.all([
           getProductName(pr).first().textContent({ timeout: 1000 }).catch(() => null),
+          getProductMeta(pr).first().textContent({ timeout: 1000 }).catch(() => null),
           getProductQty(pr).first().textContent({ timeout: 1000 }).catch(() => null),
         ]);
 
+        const normalizedVariant = productVariant
+          ?.replace(/^Variasi:\s*/i, '')
+          .trim();
+
         return {
           name: productName?.trim() ?? '',
+          variant: normalizedVariant || undefined,
           qty: productQty ? parseInt(productQty.trim().replace(/\D+/g, '')) : 0,
         };
       })

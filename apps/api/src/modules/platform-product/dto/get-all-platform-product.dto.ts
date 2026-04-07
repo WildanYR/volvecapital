@@ -12,5 +12,9 @@ export class GetAllPlatformProductQueryUrlDto extends BaseGetAllUrlQueryDto {
 
   @IsOptional()
   @IsString()
+  variant?: string;
+
+  @IsOptional()
+  @IsString()
   product_variant_id?: string;
 }

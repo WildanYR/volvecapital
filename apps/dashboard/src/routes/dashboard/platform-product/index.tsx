@@ -23,6 +23,7 @@ import {
   Card,
   CardAction,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
 } from '@/dashboard/components/ui/card'
@@ -69,6 +70,7 @@ function RouteComponent() {
   const [filter, setFilter] = useState<PlatformProductFilter>({
     name: searchParam.name ?? '',
     platform: searchParam.platform ?? '',
+    variant: searchParam.variant ?? '',
     platform_product_id: searchParam.platform_product_id ?? '',
     product_variant_id: searchParam.product_variant_id ?? '',
   })
@@ -120,9 +122,15 @@ function RouteComponent() {
   }
 
   const handleSearchPlatformProduct = useDebouncedCallback((value: string) => {
-    setFilter({ ...filter, name: value })
+    setFilter(prev => ({ ...prev, name: value }))
     const name = value || undefined
     navigate({ search: prev => ({ ...prev, name, page: 1 }), replace: true })
+  }, 700)
+
+  const handleSearchVariant = useDebouncedCallback((value: string) => {
+    setFilter(prev => ({ ...prev, variant: value }))
+    const variant = value || undefined
+    navigate({ search: prev => ({ ...prev, variant, page: 1 }), replace: true })
   }, 700)
 
   const handleSortChange = (value: string) => {
@@ -174,6 +182,12 @@ function RouteComponent() {
           placeholder="Cari Produk Platform..."
           onChange={e => handleSearchPlatformProduct(e.target.value)}
         />
+        <Input
+          type="text"
+          defaultValue={filter.variant}
+          placeholder="Cari Variant..."
+          onChange={e => handleSearchVariant(e.target.value)}
+        />
         <div className="flex items-center gap-2 w-full md:w-min">
           <p className="text-sm">Urutkan:</p>
           <Select defaultValue={sort} onValueChange={handleSortChange}>
@@ -214,6 +228,9 @@ function RouteComponent() {
                       <CardTitle>
                         <p>{platformProduct.name}</p>
                       </CardTitle>
+                      <CardDescription>
+                        <p>{platformProduct.variant ?? ''}</p>
+                      </CardDescription>
                       <CardAction>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>

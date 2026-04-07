@@ -5,6 +5,7 @@ import { useAppForm } from '@/dashboard/hooks/form.hook'
 export const PlatformProductFormSchema = z.object({
   name: z.string().nonempty(),
   platform: z.string().nonempty(),
+  variant: z.string(),
   platform_product_id: z.string(),
   product_variant_id: z.string(),
 })
@@ -29,6 +30,7 @@ export function PlatformProductForm({
     defaultValues: {
       name: initialData?.name ?? '',
       platform: initialData?.platform ?? '',
+      variant: initialData?.variant ?? '',
       platform_product_id: initialData?.platform_product_id ?? '',
       product_variant_id: initialData?.product_variant_id ?? '',
     },
@@ -53,6 +55,15 @@ export function PlatformProductForm({
               <field.TextField
                 label="Nama Produk"
                 placeholder="masukkan nama produk sesuai nama di platform..."
+              />
+            )}
+          />
+          <form.AppField
+            name="variant"
+            children={field => (
+              <field.TextField
+                label="Variant (opsional)"
+                placeholder="masukkan variant sesuai platform..."
               />
             )}
           />

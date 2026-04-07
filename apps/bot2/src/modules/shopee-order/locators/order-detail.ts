@@ -35,6 +35,9 @@ export const getProductList = (page: Page) =>
 export const getProductName = (locator: Locator) =>
   locator.locator('.product-name');
 
+export const getProductMeta = (locator: Locator) =>
+  locator.locator('.product-meta div');
+
 export const getProductQty = (locator: Locator) =>
   locator.locator('.qty');
 

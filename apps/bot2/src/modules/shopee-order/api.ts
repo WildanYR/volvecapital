@@ -3,7 +3,7 @@
  */
 
 import { FetchFailedError, TransactionExistNoAccountError } from './errors.js';
-import { ProductPlatform, TransactionAccountPayload, AccountUser, FailedAccountUser, AccountProfile, Account } from './types/api.type.js';
+import { ProductLookupItem, ProductPlatform, TransactionAccountPayload, AccountUser, FailedAccountUser, AccountProfile, Account } from './types/api.type.js';
 import type { AuthCredentials } from '../../core/auth.js';
 import { authHeaders } from '../../core/auth.js';
 
@@ -13,16 +13,18 @@ import { authHeaders } from '../../core/auth.js';
 export async function checkProductNames(
   apiBaseUrl: string,
   credentials: AuthCredentials,
-  productNames: string[]
+  products: ProductLookupItem[]
 ): Promise<ProductPlatform[]> {
   const headers = authHeaders(credentials);
-  const url = new URL(`${apiBaseUrl}/platform-product/by-names`);
-  url.searchParams.append('platform', 'Shopee');
-  url.searchParams.append('names', productNames.join(','));
+  const url = `${apiBaseUrl}/platform-product/resolve`;
 
-  const res = await fetch(url.toString(), {
-    method: 'GET',
+  const res = await fetch(url, {
+    method: 'POST',
     headers,
+    body: JSON.stringify({
+      platform: 'Shopee',
+      items: products,
+    }),
   });
 
   if (!res.ok) {

@@ -1,8 +1,14 @@
 export interface ProductPlatform {
   name: string;
-  product_variant_id: string;
+  variant?: string;
+  product_variant_id?: string;
   id?: string;
   isFound?: boolean;
+}
+
+export interface ProductLookupItem {
+  name: string;
+  variant?: string;
 }
 
 export interface TransactionAccountPayload {
