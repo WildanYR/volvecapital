@@ -16,7 +16,6 @@ import {
   REVENUE_STATISTICS_REPOSITORY,
   SYSLOG_REPOSITORY,
   TASK_QUEUE_REPOSITORY,
-  TELE_NOTIFIER_REPOSITORY,
   TENANT_REPOSITORY,
   TRANSACTION_ITEM_REPOSITORY,
   TRANSACTION_REPOSITORY,
@@ -37,14 +36,12 @@ import { Product } from './models/product.model';
 import { RevenueStatistics } from './models/revenue-statistics.model';
 import { Syslog } from './models/syslog.model';
 import { TaskQueue } from './models/task-queue.model';
-import { TeleNotifier } from './models/tele-notifier.model';
 import { Tenant } from './models/tenant.model';
 import { TransactionItem } from './models/transaction-item.model';
 import { Transaction } from './models/transaction.model';
 
 export const RepositoryProvider: Provider[] = [
   { provide: TENANT_REPOSITORY, useValue: Tenant },
-  { provide: TELE_NOTIFIER_REPOSITORY, useValue: TeleNotifier },
   { provide: TASK_QUEUE_REPOSITORY, useValue: TaskQueue },
   { provide: EMAIL_REPOSITORY, useValue: Email },
   { provide: EMAIL_MESSAGE_REPOSITORY, useValue: EmailMessage },

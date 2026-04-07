@@ -9,7 +9,6 @@ import { AppService } from './app.service';
 import { AppConfig } from './configs/app.config';
 import { DatabaseConfig } from './configs/database.config';
 import { RedisConfig } from './configs/redis.config';
-import { TelegramConfig } from './configs/telegram.config';
 import { TokenConfig } from './configs/token.config';
 import { DatabaseModule } from './database/database.module';
 import { VcAuthGuard } from './guards/vc-auth.guard';
@@ -17,8 +16,8 @@ import { AccountProfileModule } from './modules/account-profile/account-profile.
 import { AccountUserModule } from './modules/account-user/account-user.module';
 import { AccountModule } from './modules/account/account.module';
 import { CronModule } from './modules/cron/cron.module';
-import { EmailModule } from './modules/email/email.module';
 import { EmailMessageModule } from './modules/email-message/email-message.module';
+import { EmailModule } from './modules/email/email.module';
 import { AppLoggerModule } from './modules/logger/logger.module';
 import { PlatformProductModule } from './modules/platform-product/platform-product.module';
 import { ProductVariantModule } from './modules/product-variant/product-variant.module';
@@ -29,7 +28,6 @@ import { SocketModule } from './modules/socket/socket.module';
 import { StatisticModule } from './modules/statistic/statistic.module';
 import { TaskQueueModule } from './modules/task-queue/task-queue.module';
 import { TeleNotifierModule } from './modules/tele-notifier/tele-notifier.module';
-import { TelegramModule } from './modules/telegram/telegram.module';
 import { TenantModule } from './modules/tenant/tenant.module';
 import { TransactionModule } from './modules/transaction/transaction.module';
 import { UtilityModule } from './modules/utility/utility.module';
@@ -44,7 +42,6 @@ import { UtilityModule } from './modules/utility/utility.module';
         TokenConfig,
         RedisConfig,
         DatabaseConfig,
-        TelegramConfig,
       ],
     }),
     DatabaseModule,
@@ -57,7 +54,6 @@ import { UtilityModule } from './modules/utility/utility.module';
     }),
     ScheduleModule.forRoot(),
     CronModule,
-    TelegramModule,
     TeleNotifierModule,
     TenantModule,
     TaskQueueModule,

@@ -19,7 +19,6 @@ import { Product } from './models/product.model';
 import { RevenueStatistics } from './models/revenue-statistics.model';
 import { Syslog } from './models/syslog.model';
 import { TaskQueue } from './models/task-queue.model';
-import { TeleNotifier } from './models/tele-notifier.model';
 import { Tenant } from './models/tenant.model';
 import { TransactionItem } from './models/transaction-item.model';
 import { Transaction as TransactionModel } from './models/transaction.model';
@@ -58,7 +57,6 @@ export class PostgresProvider {
       });
       this.sequelize.addModels([
         Tenant,
-        TeleNotifier,
         TaskQueue,
         Email,
         EmailMessage,
