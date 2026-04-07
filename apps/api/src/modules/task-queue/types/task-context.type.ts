@@ -16,9 +16,11 @@ export interface AccountSubsEndNotifyPayload {
 }
 
 export interface NetflixResetPasswordPayload {
+  // Payload-level identifier. This is not Account.id.
   id: string;
   email: string;
   password: string;
   newPassword: string;
+  // Canonical account identifier used for /account/:id updates.
   accountId: string;
 }

@@ -157,6 +157,9 @@ export class NetflixModule extends BaseModule {
 
       // 4. send status to server
       try {
+        if (!payload.accountId) {
+          throw new Error('Netflix reset payload missing accountId');
+        }
         await updateNetflixAccountStatus(this.apiBaseUrl, this.authCredentials, payload.accountId, payload.newPassword)
       } catch (error) {
         this.logger.error(

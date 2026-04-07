@@ -485,6 +485,7 @@ export class AccountUserService {
               status: 'QUEUED',
               payload: JSON.stringify({
                 id: accountUser.dataValues.id,
+                accountId: accountUser.dataValues.account.id,
                 email: accountUser.dataValues.account.email.email,
                 password: accountUser.dataValues.account.account_password,
                 newPassword,
