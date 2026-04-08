@@ -565,13 +565,19 @@ export class ShopeeOrderModule extends BaseModule {
           getProductQty(pr).first().textContent({ timeout: 1000 }).catch(() => null),
         ]);
 
-        const normalizedVariant = productVariant
-          ?.replace(/^Variasi:\s*/i, '')
-          .trim();
+        let normalizedVariant;
+
+        if (productVariant?.trim().toLowerCase().startsWith('variasi:')) {
+          normalizedVariant = productVariant
+            .replace(/^Variasi:\s*/i, '')
+            .trim();
+        } else {
+          normalizedVariant = undefined;
+        }
 
         return {
           name: productName?.trim() ?? '',
-          variant: normalizedVariant || undefined,
+          variant: normalizedVariant,
           qty: productQty ? parseInt(productQty.trim().replace(/\D+/g, '')) : 0,
         };
       })
