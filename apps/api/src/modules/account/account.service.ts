@@ -110,7 +110,20 @@ export class AccountService {
         {
           model: ProductVariant,
           as: 'product_variant',
-          include: [{ model: Product, as: 'product' }],
+          where: {
+            ...(filter?.product_id && { product_id: filter.product_id }),
+          },
+          include: [
+            {
+              model: Product,
+              as: 'product',
+              where: {
+                ...(filter?.product_slug && { slug: filter.product_slug }),
+              },
+              required: !!filter?.product_slug,
+            },
+          ],
+          required: !!filter?.product_id || !!filter?.product_slug,
         },
         {
           model: AccountProfile,
@@ -661,25 +674,33 @@ export class AccountService {
     }
   }
 
-  async countStatusAccount(tenantId: string, product_variant_id?: string) {
+  async countStatusAccount(tenantId: string, filter?: { product_variant_id?: string, product_id?: string, product_slug?: string }) {
     const transaction = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema(tenantId, transaction);
 
       // 1. Setup Dynamic Filter
-      // Kita siapkan potongan query dan replacement object
       const replacements: any = {};
-      let accountFilterSql = ''; // Untuk query disabled
-      let cteFilterSql = ''; // Untuk query CTE utama
+      let accountFilterSql = '';
+      let cteFilterSql = '';
 
-      if (product_variant_id) {
-        replacements.variantId = product_variant_id;
+      if (filter?.product_variant_id) {
+        replacements.variantId = filter.product_variant_id;
+        accountFilterSql += ' AND product_variant_id = :variantId';
+        cteFilterSql += ' AND a.product_variant_id = :variantId';
+      }
 
-        // Filter untuk Query 1 (tabel langsung)
-        accountFilterSql = 'AND product_variant_id = :variantId';
+      if (filter?.product_id) {
+        replacements.productId = filter.product_id;
+        accountFilterSql += ' AND product_variant_id IN (SELECT id FROM product_variant WHERE product_id = :productId)';
+        cteFilterSql += ' AND a.product_variant_id IN (SELECT id FROM product_variant WHERE product_id = :productId)';
+      }
 
-        // Filter untuk Query 2 (alias 'a' di dalam CTE)
-        cteFilterSql = 'AND a.product_variant_id = :variantId';
+      if (filter?.product_slug) {
+        replacements.productSlug = filter.product_slug;
+        const subquery = '(SELECT id FROM product_variant WHERE product_id = (SELECT id FROM product WHERE slug = :productSlug))';
+        accountFilterSql += ` AND product_variant_id IN ${subquery}`;
+        cteFilterSql += ` AND a.product_variant_id IN ${subquery}`;
       }
 
       // 2. Query Akun Disable/Freeze (Output 4)

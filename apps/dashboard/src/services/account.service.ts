@@ -10,6 +10,8 @@ import { BaseQueryParamsSchema } from '@/dashboard/types/get-all-service.type'
 export const AccountFilterSchema = z.object({
   email_id: z.string().optional(),
   product_variant_id: z.string().optional(),
+  product_id: z.string().optional(),
+  product_slug: z.string().optional(),
   status: z.string().optional(),
   email: z.string().optional(),
   user: z.string().optional(),
@@ -537,7 +539,7 @@ export function AccountServiceGenerator(apiUrl: string, accessToken: string, ten
   }
 
   const countStatusAccount = async (
-    productVariantId?: string,
+    filter?: { product_variant_id?: string, product_id?: string, product_slug?: string },
     signal?: AbortSignal,
   ): Promise<CountStatusAccount> => {
     const response = await generateApiFetch(
@@ -545,7 +547,7 @@ export function AccountServiceGenerator(apiUrl: string, accessToken: string, ten
       accessToken,
       tenantId,
       '/account/count',
-      productVariantId ? { product_variant_id: productVariantId, signal } : { signal },
+      { ...filter, signal },
     )
     if (!response.ok) {
       const errorData = await response.json()

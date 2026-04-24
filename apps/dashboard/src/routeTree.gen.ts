@@ -25,6 +25,7 @@ import { Route as DashboardPlatformProductIdRouteImport } from './routes/dashboa
 import { Route as DashboardEmailCreateRouteImport } from './routes/dashboard/email/create'
 import { Route as DashboardEmailIdRouteImport } from './routes/dashboard/email/$id'
 import { Route as DashboardAccountCreateRouteImport } from './routes/dashboard/account/create'
+import { Route as DashboardAccountSlugRouteImport } from './routes/dashboard/account/$slug'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -111,12 +112,18 @@ const DashboardAccountCreateRoute = DashboardAccountCreateRouteImport.update({
   path: '/account/create',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
+const DashboardAccountSlugRoute = DashboardAccountSlugRouteImport.update({
+  id: '/account/$slug',
+  path: '/account/$slug',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRouteRouteWithChildren
   '/login': typeof LoginRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/dashboard/account/$slug': typeof DashboardAccountSlugRoute
   '/dashboard/account/create': typeof DashboardAccountCreateRoute
   '/dashboard/email/$id': typeof DashboardEmailIdRoute
   '/dashboard/email/create': typeof DashboardEmailCreateRoute
@@ -134,6 +141,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/dashboard': typeof DashboardIndexRoute
+  '/dashboard/account/$slug': typeof DashboardAccountSlugRoute
   '/dashboard/account/create': typeof DashboardAccountCreateRoute
   '/dashboard/email/$id': typeof DashboardEmailIdRoute
   '/dashboard/email/create': typeof DashboardEmailCreateRoute
@@ -153,6 +161,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRouteRouteWithChildren
   '/login': typeof LoginRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/dashboard/account/$slug': typeof DashboardAccountSlugRoute
   '/dashboard/account/create': typeof DashboardAccountCreateRoute
   '/dashboard/email/$id': typeof DashboardEmailIdRoute
   '/dashboard/email/create': typeof DashboardEmailCreateRoute
@@ -173,6 +182,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/login'
     | '/dashboard/'
+    | '/dashboard/account/$slug'
     | '/dashboard/account/create'
     | '/dashboard/email/$id'
     | '/dashboard/email/create'
@@ -190,6 +200,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/dashboard'
+    | '/dashboard/account/$slug'
     | '/dashboard/account/create'
     | '/dashboard/email/$id'
     | '/dashboard/email/create'
@@ -208,6 +219,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/login'
     | '/dashboard/'
+    | '/dashboard/account/$slug'
     | '/dashboard/account/create'
     | '/dashboard/email/$id'
     | '/dashboard/email/create'
@@ -342,11 +354,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardAccountCreateRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
+    '/dashboard/account/$slug': {
+      id: '/dashboard/account/$slug'
+      path: '/account/$slug'
+      fullPath: '/dashboard/account/$slug'
+      preLoaderRoute: typeof DashboardAccountSlugRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
   }
 }
 
 interface DashboardRouteRouteChildren {
   DashboardIndexRoute: typeof DashboardIndexRoute
+  DashboardAccountSlugRoute: typeof DashboardAccountSlugRoute
   DashboardAccountCreateRoute: typeof DashboardAccountCreateRoute
   DashboardEmailIdRoute: typeof DashboardEmailIdRoute
   DashboardEmailCreateRoute: typeof DashboardEmailCreateRoute
@@ -363,6 +383,7 @@ interface DashboardRouteRouteChildren {
 
 const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardIndexRoute: DashboardIndexRoute,
+  DashboardAccountSlugRoute: DashboardAccountSlugRoute,
   DashboardAccountCreateRoute: DashboardAccountCreateRoute,
   DashboardEmailIdRoute: DashboardEmailIdRoute,
   DashboardEmailCreateRoute: DashboardEmailCreateRoute,

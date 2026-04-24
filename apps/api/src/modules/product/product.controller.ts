@@ -38,6 +38,11 @@ export class ProductController {
     return this.productService.findAll(request.tenant_id!, pagination, filter);
   }
 
+  @Get('pooling-stats')
+  getPoolingStats(@Request() request: AppRequest) {
+    return this.productService.getPoolingStats(request.tenant_id!);
+  }
+
   @Get(':id')
   findById(@Param('id') id: string, @Request() request: AppRequest) {
     return this.productService.findOne(request.tenant_id!, id);

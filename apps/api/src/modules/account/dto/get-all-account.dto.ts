@@ -12,6 +12,14 @@ export class GetAllAccountQueryUrlDto extends BaseGetAllUrlQueryDto {
 
   @IsOptional()
   @IsString()
+  product_id: string;
+
+  @IsOptional()
+  @IsString()
+  product_slug: string;
+
+  @IsOptional()
+  @IsString()
   status: string;
 
   @IsOptional()

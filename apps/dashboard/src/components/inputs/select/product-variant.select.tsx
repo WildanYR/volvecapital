@@ -27,10 +27,12 @@ export function ProductVariantSelect({
   selectedItem,
   onSelect,
   disabled,
+  productSlug,
 }: {
   selectedItem?: ProductVariant
   onSelect: (selected?: ProductVariant) => void
   disabled?: boolean
+  productSlug?: string
 }) {
   const auth = useAuth()
   const productService = ProductServiceGenerator(
@@ -43,6 +45,7 @@ export function ProductVariantSelect({
   const [params, setParams] = useState<GetProductVariantsParams>({
     name: '',
     product: '',
+    product_slug: productSlug ?? '',
     page: 1,
   })
 
@@ -102,12 +105,14 @@ export function ProductVariantSelect({
         <DialogHeader>
           <DialogTitle>Pilih Varian Produk</DialogTitle>
           <div className="flex flex-col md:flex-row justify-center items-center gap-4">
-            <Input
-              type="text"
-              defaultValue={params.product}
-              placeholder="Cari Produk..."
-              onChange={e => handleSearchProduct(e.target.value)}
-            />
+            {!productSlug && (
+              <Input
+                type="text"
+                defaultValue={params.product}
+                placeholder="Cari Produk..."
+                onChange={e => handleSearchProduct(e.target.value)}
+              />
+            )}
             <Input
               type="text"
               defaultValue={params.name}

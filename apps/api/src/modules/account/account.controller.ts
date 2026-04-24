@@ -42,12 +42,15 @@ export class AccountController {
   @Get('/count')
   countStatusAccount(
     @Query('product_variant_id') productVariantId: string,
+    @Query('product_id') productId: string,
+    @Query('product_slug') productSlug: string,
     @Request() request: AppRequest,
   ) {
-    return this.accountService.countStatusAccount(
-      request.tenant_id!,
-      productVariantId,
-    );
+    return this.accountService.countStatusAccount(request.tenant_id!, {
+      product_variant_id: productVariantId,
+      product_id: productId,
+      product_slug: productSlug,
+    });
   }
 
   @Get(':id')

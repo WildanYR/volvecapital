@@ -32,11 +32,13 @@ export function AccountUserForm({
   isPending,
   initialData,
   submitButtonText,
+  productSlug,
 }: {
   onSubmit: (values: AccountUserFormSubmitData) => void
   isPending: boolean
   initialData?: AccountUserFormInitialData
   submitButtonText?: string
+  productSlug?: string
 }) {
   const form = useAppForm({
     validators: { onSubmit: AccountUserFormSchema },
@@ -101,6 +103,7 @@ export function AccountUserForm({
                 label="Varian Produk"
                 initialData={initialData?.product_variant}
                 disabled={!!initialData && !!initialData.product_variant_id}
+                productSlug={productSlug}
               />
             )}
           />
