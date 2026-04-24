@@ -16,7 +16,6 @@ import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
 import { Route as DashboardTransactionIndexRouteImport } from './routes/dashboard/transaction/index'
 import { Route as DashboardProductIndexRouteImport } from './routes/dashboard/product/index'
 import { Route as DashboardPlatformProductIndexRouteImport } from './routes/dashboard/platform-product/index'
-import { Route as DashboardLogsIndexRouteImport } from './routes/dashboard/logs/index'
 import { Route as DashboardEmailIndexRouteImport } from './routes/dashboard/email/index'
 import { Route as DashboardAccountIndexRouteImport } from './routes/dashboard/account/index'
 import { Route as DashboardTransactionCreateRouteImport } from './routes/dashboard/transaction/create'
@@ -64,11 +63,6 @@ const DashboardPlatformProductIndexRoute =
     path: '/platform-product/',
     getParentRoute: () => DashboardRouteRoute,
   } as any)
-const DashboardLogsIndexRoute = DashboardLogsIndexRouteImport.update({
-  id: '/logs/',
-  path: '/logs/',
-  getParentRoute: () => DashboardRouteRoute,
-} as any)
 const DashboardEmailIndexRoute = DashboardEmailIndexRouteImport.update({
   id: '/email/',
   path: '/email/',
@@ -132,7 +126,6 @@ export interface FileRoutesByFullPath {
   '/dashboard/transaction/create': typeof DashboardTransactionCreateRoute
   '/dashboard/account': typeof DashboardAccountIndexRoute
   '/dashboard/email': typeof DashboardEmailIndexRoute
-  '/dashboard/logs': typeof DashboardLogsIndexRoute
   '/dashboard/platform-product': typeof DashboardPlatformProductIndexRoute
   '/dashboard/product': typeof DashboardProductIndexRoute
   '/dashboard/transaction': typeof DashboardTransactionIndexRoute
@@ -150,7 +143,6 @@ export interface FileRoutesByTo {
   '/dashboard/transaction/create': typeof DashboardTransactionCreateRoute
   '/dashboard/account': typeof DashboardAccountIndexRoute
   '/dashboard/email': typeof DashboardEmailIndexRoute
-  '/dashboard/logs': typeof DashboardLogsIndexRoute
   '/dashboard/platform-product': typeof DashboardPlatformProductIndexRoute
   '/dashboard/product': typeof DashboardProductIndexRoute
   '/dashboard/transaction': typeof DashboardTransactionIndexRoute
@@ -170,7 +162,6 @@ export interface FileRoutesById {
   '/dashboard/transaction/create': typeof DashboardTransactionCreateRoute
   '/dashboard/account/': typeof DashboardAccountIndexRoute
   '/dashboard/email/': typeof DashboardEmailIndexRoute
-  '/dashboard/logs/': typeof DashboardLogsIndexRoute
   '/dashboard/platform-product/': typeof DashboardPlatformProductIndexRoute
   '/dashboard/product/': typeof DashboardProductIndexRoute
   '/dashboard/transaction/': typeof DashboardTransactionIndexRoute
@@ -191,7 +182,6 @@ export interface FileRouteTypes {
     | '/dashboard/transaction/create'
     | '/dashboard/account'
     | '/dashboard/email'
-    | '/dashboard/logs'
     | '/dashboard/platform-product'
     | '/dashboard/product'
     | '/dashboard/transaction'
@@ -209,7 +199,6 @@ export interface FileRouteTypes {
     | '/dashboard/transaction/create'
     | '/dashboard/account'
     | '/dashboard/email'
-    | '/dashboard/logs'
     | '/dashboard/platform-product'
     | '/dashboard/product'
     | '/dashboard/transaction'
@@ -228,7 +217,6 @@ export interface FileRouteTypes {
     | '/dashboard/transaction/create'
     | '/dashboard/account/'
     | '/dashboard/email/'
-    | '/dashboard/logs/'
     | '/dashboard/platform-product/'
     | '/dashboard/product/'
     | '/dashboard/transaction/'
@@ -289,13 +277,6 @@ declare module '@tanstack/react-router' {
       path: '/platform-product'
       fullPath: '/dashboard/platform-product'
       preLoaderRoute: typeof DashboardPlatformProductIndexRouteImport
-      parentRoute: typeof DashboardRouteRoute
-    }
-    '/dashboard/logs/': {
-      id: '/dashboard/logs/'
-      path: '/logs'
-      fullPath: '/dashboard/logs'
-      preLoaderRoute: typeof DashboardLogsIndexRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
     '/dashboard/email/': {
@@ -375,7 +356,6 @@ interface DashboardRouteRouteChildren {
   DashboardTransactionCreateRoute: typeof DashboardTransactionCreateRoute
   DashboardAccountIndexRoute: typeof DashboardAccountIndexRoute
   DashboardEmailIndexRoute: typeof DashboardEmailIndexRoute
-  DashboardLogsIndexRoute: typeof DashboardLogsIndexRoute
   DashboardPlatformProductIndexRoute: typeof DashboardPlatformProductIndexRoute
   DashboardProductIndexRoute: typeof DashboardProductIndexRoute
   DashboardTransactionIndexRoute: typeof DashboardTransactionIndexRoute
@@ -392,7 +372,6 @@ const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardTransactionCreateRoute: DashboardTransactionCreateRoute,
   DashboardAccountIndexRoute: DashboardAccountIndexRoute,
   DashboardEmailIndexRoute: DashboardEmailIndexRoute,
-  DashboardLogsIndexRoute: DashboardLogsIndexRoute,
   DashboardPlatformProductIndexRoute: DashboardPlatformProductIndexRoute,
   DashboardProductIndexRoute: DashboardProductIndexRoute,
   DashboardTransactionIndexRoute: DashboardTransactionIndexRoute,

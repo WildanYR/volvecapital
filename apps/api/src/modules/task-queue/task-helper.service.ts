@@ -7,7 +7,6 @@ import { PostgresProvider } from 'src/database/postgres.provider';
 import { AppLoggerService } from '../logger/logger.service';
 import { SyslogService } from '../logger/syslog.service';
 import { SocketGateway } from '../socket/socket.gateway';
-import { TeleNotifierService } from '../tele-notifier/tele-notifier.service';
 import { EmailParser } from '../utility/email-parser.provider';
 import { AccountSubsEndNotifyPayload, AccountUnfreezePayload, NetflixResetPasswordPayload } from './types/task-context.type';
 
@@ -17,7 +16,6 @@ export class TaskHelperService {
     private readonly logger: AppLoggerService,
     private readonly emailParser: EmailParser,
     private readonly sysLogService: SyslogService,
-    private readonly teleNotifierService: TeleNotifierService,
     private readonly socketGateway: SocketGateway,
     private readonly postgresProvider: PostgresProvider,
     @Inject(ACCOUNT_REPOSITORY) private readonly accountRepository: typeof Account
@@ -43,7 +41,6 @@ export class TaskHelperService {
   }
 
   async accountSubsEndNotify(tenantId: string, payload: AccountSubsEndNotifyPayload) {
-    this.teleNotifierService.sendNotification(tenantId, payload);
     this.sysLogService.logToDb(tenantId, { level: 'REMINDER', context: 'AccountSubsEnd', message: payload.message });
   }
 
@@ -79,7 +76,6 @@ export class TaskHelperService {
     catch (error) {
       await transaction.rollback();
       this.logger.error(error.message, error.stack, 'TaskProcessorNetflixResetPassword');
-      await this.teleNotifierService.sendNotification(tenantId, { context: 'NEED_ACTION', message: `[${tenantId}]\n\nReset Password Netflix Gagal pada email: ${payload.email}.\n\n${error.message}` });
     }
   }
 }
