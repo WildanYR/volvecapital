@@ -29,6 +29,7 @@ function getInitialData(data?: Product): ProductFormSubmitData {
           interval: '',
           interval_unit: 'millisecond',
           copy_template: '',
+          price: '0',
         },
       ],
     }
@@ -44,6 +45,7 @@ function getInitialData(data?: Product): ProductFormSubmitData {
       cooldown: v.cooldown.toString(),
       cooldown_unit: v.cooldown_unit as TimeUnit,
       copy_template: v.copy_template || '',
+      price: v.price?.toString() ?? '0',
     }
   })
 
@@ -93,6 +95,7 @@ export function ProductForm({
           cooldown: cooldown.toString(),
           cooldown_unit: 'millisecond' as TimeUnit,
           copy_template: v.copy_template,
+          price: v.price,
         }
       })
       onSubmit({ name: value.name, variants })
@@ -151,6 +154,16 @@ export function ProductForm({
                         />
                       )}
                     />
+                    <form.AppField
+                      name={`variants[${i}].price`}
+                      children={subfield => (
+                        <subfield.TextField
+                          label="Harga (Rp)"
+                          type="number"
+                          placeholder="contoh: 50000"
+                        />
+                      )}
+                    />
                     <DurationFieldGroup
                       form={form}
                       fields={{
@@ -205,6 +218,7 @@ export function ProductForm({
                       cooldown: '',
                       cooldown_unit: 'millisecond',
                       copy_template: '',
+                      price: '0',
                     })}
                   className="w-full cursor-pointer"
                 >

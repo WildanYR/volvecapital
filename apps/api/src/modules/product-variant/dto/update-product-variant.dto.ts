@@ -22,6 +22,10 @@ export class UpdateProductVariantDto {
   copy_template?: string;
 
   @IsOptional()
+  @IsNumber()
+  price: number;
+
+  @IsOptional()
   @IsString()
   product_id: string;
 }

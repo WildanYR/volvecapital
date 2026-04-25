@@ -38,6 +38,7 @@ export function ProductVariantForm({
       cooldown: initialData?.cooldown.toString() ?? '',
       cooldown_unit: initialData?.cooldown_unit ?? 'millisecond',
       copy_template: initialData?.copy_template ?? '',
+      price: initialData?.price?.toString() ?? '0',
     },
     onSubmit: ({ value }) => {
       const duration = convertTimeUnit(
@@ -83,6 +84,16 @@ export function ProductVariantForm({
               <field.TextField
                 label="Nama"
                 placeholder="masukkan nama varian produk..."
+              />
+            )}
+          />
+          <form.AppField
+            name="price"
+            children={field => (
+              <field.TextField
+                label="Harga (Rp)"
+                type="number"
+                placeholder="contoh: 50000"
               />
             )}
           />

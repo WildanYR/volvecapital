@@ -14,6 +14,7 @@ import {
   Mail,
   Package,
   Receipt,
+  Ticket,
   User,
 } from 'lucide-react'
 import { Button } from '@/dashboard/components/ui/button'
@@ -57,6 +58,11 @@ const navGroups = [
     title: 'Transaksi',
     items: [
       { title: 'Transaksi', url: '/dashboard/transaction', icon: Receipt },
+      {
+        title: 'Voucher Generator',
+        url: '/dashboard/voucher-generator',
+        icon: Ticket,
+      },
     ],
   },
   {

@@ -17,6 +17,7 @@ import { useAuth } from '@/dashboard/context-providers/auth.provider'
 import { formatRupiah } from '@/dashboard/lib/currency.util'
 import { formatDateIdStandard } from '@/dashboard/lib/time-converter.util'
 import { statisticServiceGenerator } from '@/dashboard/services/statistic.service'
+import { LowStockAlert } from '@/dashboard/components/low-stock-alert'
 
 export const Route = createFileRoute('/dashboard/')({
   component: RouteComponent,
@@ -43,6 +44,9 @@ function RouteComponent() {
             Dashboard
           </h1>
         </div>
+        
+        <LowStockAlert />
+
         {isFetchStatisticLoading
           ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

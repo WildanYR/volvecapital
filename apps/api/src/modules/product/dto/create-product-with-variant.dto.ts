@@ -28,6 +28,10 @@ class ProductVariantDto {
   @IsOptional()
   @IsString()
   copy_template?: string;
+
+  @IsNotEmpty()
+  @IsNumber()
+  price: number;
 }
 
 export class CreateProductWithVariantDto {

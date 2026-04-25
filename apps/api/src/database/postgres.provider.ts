@@ -21,6 +21,7 @@ import { TaskQueue } from './models/task-queue.model';
 import { Tenant } from './models/tenant.model';
 import { TransactionItem } from './models/transaction-item.model';
 import { Transaction as TransactionModel } from './models/transaction.model';
+import { Voucher } from './models/voucher.model';
 
 @Injectable()
 export class PostgresProvider {
@@ -73,6 +74,7 @@ export class PostgresProvider {
         PlatformStatistics,
         EmailSubject,
         Syslog,
+        Voucher,
       ]);
     }
     else {

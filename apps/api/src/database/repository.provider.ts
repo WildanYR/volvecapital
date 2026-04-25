@@ -19,6 +19,7 @@ import {
   TRANSACTION_ITEM_REPOSITORY,
   TRANSACTION_REPOSITORY,
   EMAIL_MESSAGE_REPOSITORY,
+  VOUCHER_REPOSITORY,
 } from 'src/constants/database.const';
 import { AccountModifier } from './models/account-modifier.model';
 import { AccountProfile } from './models/account-profile.model';
@@ -27,6 +28,7 @@ import { Account } from './models/account.model';
 import { EmailSubject } from './models/email-subject.model';
 import { EmailMessage } from './models/email-message.model';
 import { Email } from './models/email.model';
+import { Voucher } from './models/voucher.model';
 import { PeakHourStatistics } from './models/peak-hour-statistics.model';
 import { PlatformProduct } from './models/platform-product.model';
 import { PlatformStatistics } from './models/platform-statistics.model';
@@ -62,5 +64,6 @@ export const RepositoryProvider: Provider[] = [
   { provide: PLATFORM_STATISTICS_REPOSITORY, useValue: PlatformStatistics },
   { provide: EMAIL_SUBJECT_REPOSITORY, useValue: EmailSubject },
   { provide: EMAIL_MESSAGE_REPOSITORY, useValue: EmailMessage },
+  { provide: VOUCHER_REPOSITORY, useValue: Voucher },
   { provide: SYSLOG_REPOSITORY, useValue: Syslog },
 ];

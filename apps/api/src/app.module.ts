@@ -9,6 +9,9 @@ import { AppConfig } from './configs/app.config';
 import { DatabaseConfig } from './configs/database.config';
 import { RedisConfig } from './configs/redis.config';
 import { TokenConfig } from './configs/token.config';
+import { VoucherConfig } from './configs/voucher.config';
+import { MidtransConfig } from './configs/midtrans.config';
+import { MailConfig } from './configs/mail.config';
 import { DatabaseModule } from './database/database.module';
 import { VcAuthGuard } from './guards/vc-auth.guard';
 import { AccountProfileModule } from './modules/account-profile/account-profile.module';
@@ -28,6 +31,8 @@ import { TaskQueueModule } from './modules/task-queue/task-queue.module';
 import { TenantModule } from './modules/tenant/tenant.module';
 import { TransactionModule } from './modules/transaction/transaction.module';
 import { UtilityModule } from './modules/utility/utility.module';
+import { PublicModule } from './modules/public/public.module';
+import { VoucherModule } from './modules/voucher/voucher.module';
 
 @Module({
   imports: [
@@ -39,6 +44,9 @@ import { UtilityModule } from './modules/utility/utility.module';
         TokenConfig,
         RedisConfig,
         DatabaseConfig,
+        VoucherConfig,
+        MidtransConfig,
+        MailConfig,
       ],
     }),
     DatabaseModule,
@@ -64,6 +72,8 @@ import { UtilityModule } from './modules/utility/utility.module';
     TransactionModule,
     StatisticModule,
     EmailForwardModule,
+    PublicModule,
+    VoucherModule,
   ],
   controllers: [AppController],
   providers: [{ provide: APP_GUARD, useClass: VcAuthGuard }, AppService],

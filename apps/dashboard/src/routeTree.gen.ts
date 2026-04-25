@@ -13,6 +13,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as DashboardRouteRouteImport } from './routes/dashboard/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
+import { Route as DashboardVoucherGeneratorIndexRouteImport } from './routes/dashboard/voucher-generator/index'
 import { Route as DashboardTransactionIndexRouteImport } from './routes/dashboard/transaction/index'
 import { Route as DashboardProductIndexRouteImport } from './routes/dashboard/product/index'
 import { Route as DashboardPlatformProductIndexRouteImport } from './routes/dashboard/platform-product/index'
@@ -49,6 +50,12 @@ const DashboardIndexRoute = DashboardIndexRouteImport.update({
   path: '/',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
+const DashboardVoucherGeneratorIndexRoute =
+  DashboardVoucherGeneratorIndexRouteImport.update({
+    id: '/voucher-generator/',
+    path: '/voucher-generator/',
+    getParentRoute: () => DashboardRouteRoute,
+  } as any)
 const DashboardTransactionIndexRoute =
   DashboardTransactionIndexRouteImport.update({
     id: '/transaction/',
@@ -151,6 +158,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/platform-product': typeof DashboardPlatformProductIndexRoute
   '/dashboard/product': typeof DashboardProductIndexRoute
   '/dashboard/transaction': typeof DashboardTransactionIndexRoute
+  '/dashboard/voucher-generator': typeof DashboardVoucherGeneratorIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -171,6 +179,7 @@ export interface FileRoutesByTo {
   '/dashboard/platform-product': typeof DashboardPlatformProductIndexRoute
   '/dashboard/product': typeof DashboardProductIndexRoute
   '/dashboard/transaction': typeof DashboardTransactionIndexRoute
+  '/dashboard/voucher-generator': typeof DashboardVoucherGeneratorIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -193,6 +202,7 @@ export interface FileRoutesById {
   '/dashboard/platform-product/': typeof DashboardPlatformProductIndexRoute
   '/dashboard/product/': typeof DashboardProductIndexRoute
   '/dashboard/transaction/': typeof DashboardTransactionIndexRoute
+  '/dashboard/voucher-generator/': typeof DashboardVoucherGeneratorIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -216,6 +226,7 @@ export interface FileRouteTypes {
     | '/dashboard/platform-product'
     | '/dashboard/product'
     | '/dashboard/transaction'
+    | '/dashboard/voucher-generator'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -236,6 +247,7 @@ export interface FileRouteTypes {
     | '/dashboard/platform-product'
     | '/dashboard/product'
     | '/dashboard/transaction'
+    | '/dashboard/voucher-generator'
   id:
     | '__root__'
     | '/'
@@ -257,6 +269,7 @@ export interface FileRouteTypes {
     | '/dashboard/platform-product/'
     | '/dashboard/product/'
     | '/dashboard/transaction/'
+    | '/dashboard/voucher-generator/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -293,6 +306,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/dashboard/'
       preLoaderRoute: typeof DashboardIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/voucher-generator/': {
+      id: '/dashboard/voucher-generator/'
+      path: '/voucher-generator'
+      fullPath: '/dashboard/voucher-generator'
+      preLoaderRoute: typeof DashboardVoucherGeneratorIndexRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
     '/dashboard/transaction/': {
@@ -420,6 +440,7 @@ interface DashboardRouteRouteChildren {
   DashboardPlatformProductIndexRoute: typeof DashboardPlatformProductIndexRoute
   DashboardProductIndexRoute: typeof DashboardProductIndexRoute
   DashboardTransactionIndexRoute: typeof DashboardTransactionIndexRoute
+  DashboardVoucherGeneratorIndexRoute: typeof DashboardVoucherGeneratorIndexRoute
 }
 
 const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
@@ -439,6 +460,7 @@ const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardPlatformProductIndexRoute: DashboardPlatformProductIndexRoute,
   DashboardProductIndexRoute: DashboardProductIndexRoute,
   DashboardTransactionIndexRoute: DashboardTransactionIndexRoute,
+  DashboardVoucherGeneratorIndexRoute: DashboardVoucherGeneratorIndexRoute,
 }
 
 const DashboardRouteRouteWithChildren = DashboardRouteRoute._addFileChildren(

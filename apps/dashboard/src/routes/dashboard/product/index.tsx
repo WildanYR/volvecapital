@@ -195,6 +195,7 @@ function RouteComponent() {
       duration: Number.parseInt(value.duration),
       interval: Number.parseInt(value.interval),
       cooldown: Number.parseInt(value.cooldown),
+      price: Number.parseInt(value.price),
       copy_template: value.copy_template ? value.copy_template : undefined,
     }
     if (productVariantFormMode === 'CREATE') {
@@ -479,6 +480,13 @@ function RouteComponent() {
                                   </DropdownMenuItem>
                                 </DropdownMenuContent>
                               </DropdownMenu>
+                            </div>
+                            <div className="flex justify-between items-center text-muted-foreground">
+                              <div className="space-y-1 w-full px-3 border-l-2 border-secondary">
+                                <p className="text-sm font-semibold text-primary">
+                                  Rp {variant.price?.toLocaleString('id-ID') ?? '–'}
+                                </p>
+                              </div>
                             </div>
                             <div className="flex justify-between items-center text-muted-foreground">
                               <div className="space-y-1 w-full px-3 border-l-2 border-secondary">

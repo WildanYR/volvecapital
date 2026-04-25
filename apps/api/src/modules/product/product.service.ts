@@ -186,9 +186,17 @@ export class ProductService {
       );
 
       const variantData = createProductWithVariantDto.variants.map(
-        variant => ({ ...variant, product_id: product.id }),
+        variant => ({
+          name: variant.name,
+          duration: variant.duration,
+          interval: variant.interval,
+          cooldown: variant.cooldown,
+          price: variant.price,
+          copy_template: variant.copy_template,
+          product_id: product.id,
+        }),
       );
-      await this.productVariantRepository.bulkCreate(variantData, {
+      await this.productVariantRepository.bulkCreate(variantData as any, {
         transaction,
       });
       const newProduct = await this.productRepository.findOne({

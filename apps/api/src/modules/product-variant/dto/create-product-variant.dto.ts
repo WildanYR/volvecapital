@@ -22,6 +22,10 @@ export class CreateProductVariantDto {
   copy_template?: string;
 
   @IsNotEmpty()
+  @IsNumber()
+  price: number;
+
+  @IsNotEmpty()
   @IsString()
   product_id: string;
 }
