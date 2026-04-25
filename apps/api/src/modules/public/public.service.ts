@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Inject,
   Injectable,
+  Logger,
   NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
@@ -34,6 +35,8 @@ import { RedeemVoucherDto } from './dto/redeem-voucher.dto';
 
 @Injectable()
 export class PublicService {
+  private readonly logger = new Logger('PublicService');
+
   constructor(
     private readonly postgresProvider: PostgresProvider,
     private readonly configService: ConfigService,
@@ -108,16 +111,34 @@ export class PublicService {
         throw new NotFoundException('Produk varian tidak ditemukan');
       }
 
-      // 2. Check stock availability
-      const stockCount = await this.accountRepository.count({
+      // 2. Check stock availability (Profile-based)
+      const accounts = await this.accountRepository.findAll({
         where: {
           product_variant_id: dto.product_variant_id,
-          status: 'ready',
+          status: { [Op.ne]: 'disable' },
           subscription_expiry: { [Op.gt]: new Date() },
+          freeze_until: null,
         },
+        include: [{ model: AccountProfile, as: 'profile', where: { allow_generate: true } }],
         transaction,
       });
-      if (stockCount === 0) {
+
+      let totalAvailableSlots = 0;
+      for (const account of accounts) {
+        const profiles = (account as any).profile || [];
+        for (const profile of profiles) {
+          const activeUsers = await this.accountUserRepository.count({
+            where: { account_profile_id: profile.id, status: 'active' },
+            transaction,
+          });
+          const available = profile.max_user - activeUsers;
+          if (available > 0) {
+            totalAvailableSlots += available;
+          }
+        }
+      }
+
+      if (totalAvailableSlots === 0) {
         throw new ServiceUnavailableException(
           'Stok habis, silahkan hubungi admin',
         );
@@ -167,7 +188,19 @@ export class PublicService {
         custom_field2: tenantId,
       };
 
-      const snapToken = await this.requestMidtransSnapToken(midtransPayload);
+      const { token: snapToken, redirect_url: paymentUrl } = await this.requestMidtransSnapToken(midtransPayload);
+
+      // Send invoice email (non-blocking)
+      this.logger.log(`[CreatePayment] Triggering invoice email for ${dto.buyer_email}`);
+      this.sendInvoiceEmail(
+        dto.buyer_email,
+        dto.buyer_name,
+        paymentUrl,
+        `${(variant as any).product?.name ?? 'Produk'} - ${variant.name}`,
+        grossAmount,
+      ).catch((err) => {
+        this.logger.error(`[CreatePayment] Failed to send invoice email: ${err.message}`);
+      });
 
       // 6. Create transaction record
       const txn = await this.transactionRepository.create(
@@ -223,7 +256,7 @@ export class PublicService {
 
   // ─── MIDTRANS SNAP TOKEN REQUEST ─────────────────────────────────────────────
 
-  private async requestMidtransSnapToken(payload: object): Promise<string> {
+  private async requestMidtransSnapToken(payload: object): Promise<{ token: string; redirect_url: string }> {
     const serverKey = this.configService.get<string>('midtrans.serverKey') ?? '';
     const isProduction = this.configService.get<boolean>('midtrans.isProduction');
     const baseUrl = isProduction
@@ -252,7 +285,10 @@ export class PublicService {
           try {
             const parsed = JSON.parse(data);
             if (parsed.token) {
-              resolve(parsed.token);
+              resolve({
+                token: parsed.token,
+                redirect_url: parsed.redirect_url,
+              });
             }
             else {
               reject(new Error(`Midtrans error: ${JSON.stringify(parsed)}`));
@@ -281,6 +317,7 @@ export class PublicService {
 
       const voucher = await this.voucherRepository.findOne({
         where: { payment_id: order_id },
+        include: [{ model: ProductVariant, as: 'product_variant', include: [{ model: Product, as: 'product' }] }],
         transaction,
       });
       if (!voucher) {
@@ -296,7 +333,9 @@ export class PublicService {
           || transaction_status === 'cancel'
           || transaction_status === 'deny';
 
-      if (isPaid) {
+      let shouldSendEmail = false;
+      if (isPaid && voucher.payment_status !== 'PAID') {
+        shouldSendEmail = true;
         await voucher.update({ payment_status: 'PAID' }, { transaction });
       }
       else if (isExpiredOrFailed) {
@@ -307,10 +346,25 @@ export class PublicService {
       }
 
       await transaction.commit();
+
+      if (shouldSendEmail) {
+        const productName = `${(voucher.product_variant as any)?.product?.name ?? 'Produk'} - ${voucher.product_variant?.name ?? ''}`;
+        this.logger.log(`[PaymentNotify] Sending confirmation email for voucher ${voucher.id} to ${voucher.buyer_email}`);
+        this.sendPaymentConfirmationEmail(
+          voucher.buyer_email,
+          voucher.buyer_name,
+          voucher.id,
+          productName,
+        ).catch((err) => {
+          this.logger.error(`[PaymentNotify] Failed to send email for voucher ${voucher.id}: ${err.message}`);
+        });
+      }
+
       return { ok: true };
     }
     catch (error) {
-      await transaction.rollback();
+      if (transaction) await transaction.rollback();
+      this.logger.error(`[PaymentNotify] Error handling notify: ${error.message}`);
       throw error;
     }
   }
@@ -409,12 +463,13 @@ export class PublicService {
 
       const variant = voucher.product_variant!;
 
-      // 2. Find available account
-      const account = await this.accountRepository.findOne({
+      // 2. Find available account & profile slot
+      const accounts = await this.accountRepository.findAll({
         where: {
           product_variant_id: voucher.product_variant_id,
-          status: 'ready',
+          status: { [Op.ne]: 'disable' },
           subscription_expiry: { [Op.gt]: new Date() },
+          freeze_until: null,
         },
         include: [
           { model: Email, as: 'email' },
@@ -422,39 +477,36 @@ export class PublicService {
             model: AccountProfile,
             as: 'profile',
             where: { allow_generate: true },
-            required: false,
           },
         ],
         transaction,
       });
 
-      if (!account) {
-        throw new ServiceUnavailableException(
-          'Maaf, stok akun sedang habis. Hubungi admin.',
-        );
-      }
-
-      // 3. Find available profile slot
-      const profiles: AccountProfile[] = (account as any).profile ?? [];
+      let chosenAccount: Account | null = null;
       let chosenProfile: AccountProfile | null = null;
 
-      for (const profile of profiles) {
-        const activeUsers = await this.accountUserRepository.count({
-          where: {
-            account_profile_id: profile.id,
-            status: 'active',
-          },
-          transaction,
-        });
-        if (activeUsers < profile.max_user) {
-          chosenProfile = profile;
-          break;
+      for (const account of accounts) {
+        const profiles: AccountProfile[] = (account as any).profile ?? [];
+        for (const profile of profiles) {
+          const activeUsers = await this.accountUserRepository.count({
+            where: {
+              account_profile_id: profile.id,
+              status: 'active',
+            },
+            transaction,
+          });
+          if (activeUsers < profile.max_user) {
+            chosenAccount = account;
+            chosenProfile = profile;
+            break;
+          }
         }
+        if (chosenProfile) break;
       }
 
-      if (!chosenProfile) {
+      if (!chosenAccount || !chosenProfile) {
         throw new ServiceUnavailableException(
-          'Maaf, semua slot akun penuh. Hubungi admin.',
+          'Maaf, stok akun sedang habis atau semua slot penuh. Hubungi admin.',
         );
       }
 
@@ -467,7 +519,7 @@ export class PublicService {
         {
           name: voucher.buyer_name,
           status: 'active',
-          account_id: account.id,
+          account_id: chosenAccount.id,
           account_profile_id: chosenProfile.id,
           expired_at: expiredAt,
         },
@@ -488,8 +540,8 @@ export class PublicService {
       await transaction.commit();
 
       // 7. Send WA notification (non-blocking)
-      const accountEmail = (account as any).email?.email ?? '';
-      const accountPassword = account.account_password;
+      const accountEmail = (chosenAccount as any).email?.email ?? '';
+      const accountPassword = chosenAccount.account_password;
       const profileName = chosenProfile.name;
       const copyTemplate = variant.copy_template;
 
@@ -540,20 +592,38 @@ export class PublicService {
         low_stock: boolean;
       }[] = [];
       for (const variant of variants) {
-        const count = await this.accountRepository.count({
+        const accounts = await this.accountRepository.findAll({
           where: {
             product_variant_id: variant.id,
-            status: 'ready',
+            status: { [Op.ne]: 'disable' },
             subscription_expiry: { [Op.gt]: new Date() },
+            freeze_until: null,
           },
+          include: [{ model: AccountProfile, as: 'profile', where: { allow_generate: true } }],
           transaction,
         });
+
+        let totalAvailableSlots = 0;
+        for (const account of accounts) {
+          const profiles = (account as any).profile || [];
+          for (const profile of profiles) {
+            const activeUsers = await this.accountUserRepository.count({
+              where: { account_profile_id: profile.id, status: 'active' },
+              transaction,
+            });
+            const available = profile.max_user - activeUsers;
+            if (available > 0) {
+              totalAvailableSlots += available;
+            }
+          }
+        }
+
         result.push({
           product_variant_id: variant.id,
           product_name: (variant as any).product?.name ?? '',
           variant_name: variant.name,
-          stock: count,
-          low_stock: count <= threshold,
+          stock: totalAvailableSlots,
+          low_stock: totalAvailableSlots <= threshold,
         });
       }
 
@@ -625,6 +695,102 @@ export class PublicService {
         </div>
         <p>Kode Voucher: <code>${voucherCode}</code></p>
         <p style="font-size: 12px; color: #777; margin-top: 30px;">Terima kasih telah berlangganan di Volve Capital!</p>
+      </div>`,
+    });
+  }
+
+  // ─── SEND PAYMENT CONFIRMATION EMAIL ───────────────────────────────────────
+
+  private async sendPaymentConfirmationEmail(
+    email: string,
+    buyerName: string,
+    voucherCode: string,
+    productName: string,
+  ): Promise<void> {
+    const host = this.configService.get<string>('mail.host');
+    const port = this.configService.get<number>('mail.port');
+    const user = this.configService.get<string>('mail.user');
+    const pass = this.configService.get<string>('mail.pass');
+    const from = this.configService.get<string>('mail.from');
+
+    if (!host || !user || !pass) {
+      console.warn(`[Email] Missing configuration (host:${!!host}, user:${!!user}, pass:${!!pass})`);
+      return;
+    }
+
+    const transporter = nodemailer.createTransport({
+      host,
+      port,
+      auth: { user, pass },
+    });
+
+    await transporter.sendMail({
+      from: `"Volve Capital" <${from}>`,
+      to: email,
+      subject: `Pembayaran Berhasil! Kode Voucher: ${voucherCode}`,
+      text: `Halo ${buyerName}! 🎉\n\nPembayaran kamu untuk ${productName} telah berhasil dikonfirmasi.\n\nBerikut adalah kode voucher kamu:\n${voucherCode}\n\nSilakan gunakan kode ini untuk aktivasi akun kamu di website kami.\n\nTerima kasih! 🙏`,
+      html: `<div style="font-family: sans-serif; line-height: 1.6; color: #333;">
+        <h2 style="color: #4CAF50;">Pembayaran Berhasil! 🎉</h2>
+        <p>Halo <strong>${buyerName}</strong>,</p>
+        <p>Terima kasih telah melakukan pembelian di Volve Capital. Pembayaran untuk <strong>${productName}</strong> telah kami terima.</p>
+        <div style="background: #f4f4f4; padding: 20px; border-radius: 10px; margin: 20px 0; text-align: center;">
+          <p style="margin: 5px 0;">Kode Voucher Anda:</p>
+          <h1 style="color: #FFB800; margin: 10px 0; letter-spacing: 2px;">${voucherCode}</h1>
+        </div>
+        <p>Silakan gunakan kode di atas untuk melakukan aktivasi akun Anda melalui halaman redeem kami.</p>
+        <p style="font-size: 12px; color: #777; margin-top: 30px;">Jika Anda membutuhkan bantuan, silakan hubungi admin kami.</p>
+      </div>`,
+    });
+  }
+
+  // ─── SEND INVOICE EMAIL ────────────────────────────────────────────────────
+
+  private async sendInvoiceEmail(
+    email: string,
+    buyerName: string,
+    paymentUrl: string,
+    productName: string,
+    amount: number,
+  ): Promise<void> {
+    const host = this.configService.get<string>('mail.host');
+    const port = this.configService.get<number>('mail.port');
+    const user = this.configService.get<string>('mail.user');
+    const pass = this.configService.get<string>('mail.pass');
+    const from = this.configService.get<string>('mail.from');
+
+    if (!host || !user || !pass) return;
+
+    const transporter = nodemailer.createTransport({
+      host,
+      port,
+      auth: { user, pass },
+    });
+
+    const amountFormatted = new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      maximumFractionDigits: 0,
+    }).format(amount);
+
+    await transporter.sendMail({
+      from: `"Volve Capital" <${from}>`,
+      to: email,
+      subject: `Invoice Pembayaran ${productName}`,
+      text: `Halo ${buyerName}! 👋\n\nTerima kasih telah memesan ${productName}.\n\nTotal Pembayaran: ${amountFormatted}\n\nSilakan selesaikan pembayaran melalui link berikut:\n${paymentUrl}\n\nLink ini akan kadaluarsa dalam 24 jam.\n\nTerima kasih! 🙏`,
+      html: `<div style="font-family: sans-serif; line-height: 1.6; color: #333;">
+        <h2 style="color: #2196F3;">Invoice Pembayaran 👋</h2>
+        <p>Halo <strong>${buyerName}</strong>,</p>
+        <p>Terima kasih telah melakukan pemesanan di Volve Capital. Berikut adalah detail pesanan Anda:</p>
+        <div style="background: #f4f4f4; padding: 20px; border-radius: 10px; margin: 20px 0;">
+          <p style="margin: 5px 0;">📦 <strong>Produk:</strong> ${productName}</p>
+          <p style="margin: 5px 0;">💰 <strong>Total:</strong> ${amountFormatted}</p>
+        </div>
+        <p>Silakan klik tombol di bawah ini untuk menyelesaikan pembayaran Anda:</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${paymentUrl}" style="background: #2196F3; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">Bayar Sekarang</a>
+        </div>
+        <p style="font-size: 13px; color: #777;">Atau salin link berikut ke browser Anda:<br><code>${paymentUrl}</code></p>
+        <p style="font-size: 12px; color: #777; margin-top: 30px;">Jika Anda sudah membayar, silakan abaikan email ini.</p>
       </div>`,
     });
   }
