@@ -19,6 +19,7 @@ import {
   TRANSACTION_ITEM_REPOSITORY,
   TRANSACTION_REPOSITORY,
   VOUCHER_REPOSITORY,
+  TENANT_SETTING_REPOSITORY,
 } from 'src/constants/database.const';
 import { AccountProfile } from 'src/database/models/account-profile.model';
 import { AccountUser } from 'src/database/models/account-user.model';
@@ -29,6 +30,7 @@ import { Product } from 'src/database/models/product.model';
 import { TransactionItem } from 'src/database/models/transaction-item.model';
 import { Transaction } from 'src/database/models/transaction.model';
 import { Voucher } from 'src/database/models/voucher.model';
+import { TenantSetting } from 'src/database/models/tenant-setting.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { RedeemVoucherDto } from './dto/redeem-voucher.dto';
@@ -56,7 +58,28 @@ export class PublicService {
     private readonly transactionItemRepository: typeof TransactionItem,
     @Inject(VOUCHER_REPOSITORY)
     private readonly voucherRepository: typeof Voucher,
+    @Inject(TENANT_SETTING_REPOSITORY)
+    private readonly tenantSettingRepository: typeof TenantSetting,
   ) {}
+
+  async getSettings(tenantId: string) {
+    const transaction = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema(tenantId, transaction);
+      const settings = await this.tenantSettingRepository.findAll({ transaction });
+      
+      const result: Record<string, string> = {};
+      settings.forEach(s => {
+        result[s.key] = s.value;
+      });
+
+      await transaction.commit();
+      return result;
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
 
   // ─── LIST PRODUCTS ──────────────────────────────────────────────────────────
 

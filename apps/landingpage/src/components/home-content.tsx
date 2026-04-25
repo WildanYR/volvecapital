@@ -32,7 +32,7 @@ export function HomeContent({ initialProducts, tenantId }: HomeContentProps) {
     <main className="w-full bg-[#050505]">
       <Navbar />
       <Hero />
-      <div className="flex flex-col gap-0">
+      <div className="flex flex-col gap-0 mb-32">
         <DecisionSplit />
         <Steps />
         <ProductGrid products={initialProducts} onSelectVariant={handleSelectVariant} />

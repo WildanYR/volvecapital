@@ -3,6 +3,7 @@ import { Outfit } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 import { BackgroundBlobs } from "@/components/background-blobs";
+import { WhatsAppFloating } from "@/components/whatsapp-floating";
 
 const outfit = Outfit({
   variable: "--font-outfit",
@@ -34,6 +35,7 @@ export default function RootLayout({
         <Providers>
           <BackgroundBlobs />
           {children}
+          <WhatsAppFloating />
         </Providers>
       </body>
     </html>

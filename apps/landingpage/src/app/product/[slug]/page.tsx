@@ -94,7 +94,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
     <main className="min-h-screen flex flex-col pt-32 pb-20">
       <Navbar />
 
-      <div className="container mx-auto max-w-6xl px-6">
+      <div className="container mx-auto max-w-6xl px-6 mb-32">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
           {/* Left Side: Product Info & Selection */}
           <div className="space-y-10">

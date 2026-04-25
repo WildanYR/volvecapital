@@ -33,6 +33,7 @@ import { TransactionModule } from './modules/transaction/transaction.module';
 import { UtilityModule } from './modules/utility/utility.module';
 import { PublicModule } from './modules/public/public.module';
 import { VoucherModule } from './modules/voucher/voucher.module';
+import { SettingModule } from './modules/setting/setting.module';
 
 @Module({
   imports: [
@@ -74,6 +75,7 @@ import { VoucherModule } from './modules/voucher/voucher.module';
     EmailForwardModule,
     PublicModule,
     VoucherModule,
+    SettingModule,
   ],
   controllers: [AppController],
   providers: [{ provide: APP_GUARD, useClass: VcAuthGuard }, AppService],

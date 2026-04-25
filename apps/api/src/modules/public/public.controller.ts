@@ -43,6 +43,14 @@ export class PublicController {
     return this.publicService.getProducts(tenantId);
   }
 
+  @Get('settings')
+  getSettings(@Headers() headers: any) {
+    const host = headers.host || '';
+    const xTenantId = headers['x-tenant-id'];
+    const tenantId = this.getTenantId(host, xTenantId);
+    return this.publicService.getSettings(tenantId);
+  }
+
   @Post('payment/create')
   createPayment(
     @Headers() headers: any,

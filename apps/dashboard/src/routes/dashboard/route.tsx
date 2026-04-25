@@ -72,6 +72,12 @@ const navGroups = [
       { title: 'Email Message', url: '/dashboard/email-message', icon: Inbox },
     ],
   },
+  {
+    title: 'Settings',
+    items: [
+      { title: 'Landing Page', url: '/dashboard/setting', icon: House },
+    ],
+  },
 ]
 
 export const Route = createFileRoute('/dashboard')({

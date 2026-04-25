@@ -46,9 +46,9 @@ export function Footer() {
           <div>
             <h4 className="text-white font-black uppercase tracking-widest text-xs mb-6">Legalitas</h4>
             <ul className="space-y-4">
-              <li><Link href="#" className="text-gray-500 hover:text-white transition-colors text-sm">Syarat & Ketentuan</Link></li>
-              <li><Link href="#" className="text-gray-500 hover:text-white transition-colors text-sm">Kebijakan Privasi</Link></li>
-              <li><Link href="#" className="text-gray-500 hover:text-white transition-colors text-sm">Disclaimer</Link></li>
+              <li><Link href="/terms" className="text-gray-500 hover:text-white transition-colors text-sm">Syarat & Ketentuan</Link></li>
+              <li><Link href="/privacy" className="text-gray-500 hover:text-white transition-colors text-sm">Kebijakan Privasi</Link></li>
+              <li><Link href="/disclaimer" className="text-gray-500 hover:text-white transition-colors text-sm">Disclaimer</Link></li>
             </ul>
           </div>
         </div>

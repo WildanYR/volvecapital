@@ -23,7 +23,7 @@ export default function ProductPage() {
     <main className="min-h-screen flex flex-col pt-32 pb-20">
       <Navbar />
 
-      <div className="container mx-auto max-w-6xl px-6">
+      <div className="container mx-auto max-w-6xl px-6 mb-32">
         <div className="text-center mb-16">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
