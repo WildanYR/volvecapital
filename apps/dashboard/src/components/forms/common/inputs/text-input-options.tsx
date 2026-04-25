@@ -4,11 +4,17 @@ import { useEffect, useRef, useState } from 'react'
 import { Button } from '@/dashboard/components/ui/button'
 import { Input } from '@/dashboard/components/ui/input'
 import { Label } from '@/dashboard/components/ui/label'
-import { Popover, PopoverAnchor, PopoverContent } from '@/dashboard/components/ui/popover'
+import {
+  Popover,
+  PopoverAnchor,
+  PopoverContent,
+} from '@/dashboard/components/ui/popover'
 import { ErrorDisplay } from '../error-display'
 
-interface TextInputOptionsProps
-  extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
+interface TextInputOptionsProps extends Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  'onChange'
+> {
   label: string
   onChange: (value: string) => void
   errors?: any
@@ -61,6 +67,7 @@ export function TextInputOptions({
 
   const onSelectItem = (v: string) => {
     onChange(v)
+    setOpen(false)
   }
 
   const onDeleteItem = (v: string) => {
@@ -109,7 +116,8 @@ export function TextInputOptions({
               <Button
                 type="button"
                 variant="ghost"
-                onClick={() => {
+                onPointerDown={(e) => {
+                  e.preventDefault()
                   onSelectItem(item)
                 }}
                 className="flex-1 justify-start cursor-pointer"
@@ -118,7 +126,8 @@ export function TextInputOptions({
               </Button>
               <Button
                 variant="ghost"
-                onClick={() => {
+                onPointerDown={(e) => {
+                  e.preventDefault()
                   onDeleteItem(item)
                 }}
                 className="text-destructive cursor-pointer"
