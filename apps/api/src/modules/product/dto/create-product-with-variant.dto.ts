@@ -29,6 +29,10 @@ class ProductVariantDto {
   @IsString()
   copy_template?: string;
 
+  @IsOptional()
+  @IsString()
+  description?: string;
+
   @IsNotEmpty()
   @IsNumber()
   price: number;

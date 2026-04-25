@@ -19,6 +19,10 @@ export class CreateProductVariantDto {
 
   @IsOptional()
   @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsString()
   copy_template?: string;
 
   @IsNotEmpty()

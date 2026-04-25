@@ -19,6 +19,10 @@ export class UpdateProductVariantDto {
 
   @IsOptional()
   @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsString()
   copy_template?: string;
 
   @IsOptional()

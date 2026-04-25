@@ -110,19 +110,27 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
               <motion.h1 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="text-5xl md:text-7xl font-black text-white mb-6 tracking-tight"
+                className="text-5xl md:text-7xl font-black text-foreground mb-6 tracking-tight"
               >
                 {product.name}
               </motion.h1>
-              <motion.p 
+              <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="text-gray-400 text-lg leading-relaxed max-w-lg"
+                className="text-foreground/60 text-base md:text-lg leading-relaxed max-w-lg space-y-2"
               >
-                Nikmati akses premium tanpa batas dengan kualitas terbaik. 
-                Pilih paket yang paling sesuai dengan kebutuhan hiburan Anda.
-              </motion.p>
+                {selectedVariant?.description ? (
+                  selectedVariant.description.split('\n').map((line, i) => (
+                    <p key={i}>{line}</p>
+                  ))
+                ) : (
+                  <p>
+                    Nikmati akses premium tanpa batas dengan kualitas terbaik. 
+                    Pilih paket yang paling sesuai dengan kebutuhan hiburan Anda.
+                  </p>
+                )}
+              </motion.div>
             </div>
 
             <div className="space-y-4">

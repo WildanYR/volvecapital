@@ -45,6 +45,7 @@ function RouteComponent() {
         cooldown: Number.parseInt(v.cooldown),
         price: Number.parseInt(v.price),
         copy_template: v.copy_template || undefined,
+        description: v.description || undefined,
       })),
     }
     mutation.mutate(payload)

@@ -61,7 +61,7 @@ export class VoucherService {
           id: orderId,
           customer: dto.buyer_name,
           platform: 'dashboard',
-          total_price: 0, // Manual is often handled outside
+          total_price: variant.price, // Uses variant price instead of 0
         },
         { transaction },
       );

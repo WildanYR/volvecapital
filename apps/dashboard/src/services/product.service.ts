@@ -38,6 +38,7 @@ export interface ProductVariant {
   cooldown_unit: string
   price: number
   copy_template?: string
+  description?: string
   product_id: string
   product?: {
     id: string
@@ -69,6 +70,7 @@ export interface CreateProductVariantPayload {
   cooldown: number
   price: number
   copy_template?: string
+  description?: string
 }
 
 export interface CreateProductPayload {
@@ -84,6 +86,7 @@ export interface UpdateProductVariantPayload {
   cooldown?: number
   price?: number
   copy_template?: string
+  description?: string
 }
 
 export interface UpdateProductPayload {

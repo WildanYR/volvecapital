@@ -193,6 +193,7 @@ export class ProductService {
           cooldown: variant.cooldown,
           price: variant.price,
           copy_template: variant.copy_template,
+          description: variant.description,
           product_id: product.id,
         }),
       );

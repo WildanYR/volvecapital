@@ -197,6 +197,7 @@ function RouteComponent() {
       cooldown: Number.parseInt(value.cooldown),
       price: Number.parseInt(value.price),
       copy_template: value.copy_template ? value.copy_template : undefined,
+      description: value.description ? value.description : undefined,
     }
     if (productVariantFormMode === 'CREATE') {
       productVariantCreateMutation.mutate({

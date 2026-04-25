@@ -1,0 +1,1 @@
+http://localhost:3000/dashboard/voucher-generator ketika saya generate voucher manual lewat sini dan user me redeem voucher nya, dibagian transaksi ini harganya kok ditulis 0 ya? aku kamu memperbaiki ini supaya harga otomatis sesuai dengan produk varian nya

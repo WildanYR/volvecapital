@@ -10,5 +10,6 @@ export const ProductVariantFormSchema = z.object({
   cooldown: z.string().nonempty(),
   cooldown_unit: TimeUnitEnum,
   copy_template: z.string(),
+  description: z.string().optional(),
   price: z.string().nonempty('Harga wajib diisi').refine(v => !Number.isNaN(Number(v)) && Number(v) >= 0, 'Harga harus berupa angka positif'),
 })

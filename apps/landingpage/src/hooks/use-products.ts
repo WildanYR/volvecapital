@@ -7,6 +7,8 @@ export interface ProductVariant {
   price: number
   duration: number
   duration_unit: string
+  copy_template?: string
+  description?: string
 }
 
 export interface Product {

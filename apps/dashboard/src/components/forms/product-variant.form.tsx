@@ -38,6 +38,7 @@ export function ProductVariantForm({
       cooldown: initialData?.cooldown.toString() ?? '',
       cooldown_unit: initialData?.cooldown_unit ?? 'millisecond',
       copy_template: initialData?.copy_template ?? '',
+      description: initialData?.description ?? '',
       price: initialData?.price?.toString() ?? '0',
     },
     onSubmit: ({ value }) => {
@@ -94,6 +95,15 @@ export function ProductVariantForm({
                 label="Harga (Rp)"
                 type="number"
                 placeholder="contoh: 50000"
+              />
+            )}
+          />
+          <form.AppField
+            name="description"
+            children={field => (
+              <field.TextareaField
+                label="Deskripsi (Opsional)"
+                placeholder="Masukkan deskripsi varian (contoh: ✓ 1 Bulan Akses Netflix)..."
               />
             )}
           />
