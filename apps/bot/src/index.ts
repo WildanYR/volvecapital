@@ -55,12 +55,13 @@ async function main() {
 
 main().catch((error) => {
   const config = getConfig();
+  const appId = config?.appId?.toUpperCase() || 'UNKNOWN';
   logger.error(
-    `🛑 **(${config.appId.toUpperCase()})** Fatal: ${(error as Error).message}. Bot Berhenti`,
+    `🛑 **(${appId})** Fatal: ${(error as Error).message}. Bot Berhenti`,
     (error as Error).stack,
     {
       notifyContext: 'ERROR',
-      notifyMessage: `🛑 **(${config.appId.toUpperCase()})**\nFatal: ${(error as Error).message}. Bot Berhenti`,
+      notifyMessage: `🛑 **(${appId})**\nFatal: ${(error as Error).message}. Bot Berhenti`,
     },
   );
 });

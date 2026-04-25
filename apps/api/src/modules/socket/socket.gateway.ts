@@ -316,6 +316,21 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect, 
     event.delete(clientId);
   }
 
+  getConnection(clientId: string) {
+    const conn = this.connections.get(clientId);
+    if (!conn) {
+      return undefined;
+    }
+
+    return {
+      name: conn.name,
+      type: conn.type,
+      tenant_id: conn.tenant_id,
+      inflight: conn.inflight,
+      connectedAt: conn.connectedAt,
+    };
+  }
+
   private getAvailableBot(tenantId: string) {
     const candidates = Array.from(this.connections.values()).filter(
       c => c.tenant_id === tenantId && c.type === 'BOT',
