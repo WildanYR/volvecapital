@@ -9,6 +9,7 @@ import {
   Blocks,
   FileText,
   House,
+  Inbox,
   LogOut,
   Mail,
   Package,
@@ -62,6 +63,7 @@ const navGroups = [
     title: 'System',
     items: [
       { title: 'Logs', url: '/dashboard/logs', icon: FileText },
+      { title: 'Email Message', url: '/dashboard/email-message', icon: Inbox },
     ],
   },
 ]
