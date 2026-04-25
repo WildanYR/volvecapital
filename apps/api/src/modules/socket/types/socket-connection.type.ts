@@ -1,7 +1,9 @@
+import type { Socket } from 'socket.io';
+
 export type SocketConnectionType = 'BOT' | 'WEB';
 
 export interface SocketConnection {
-  id: string;
+  socket: Socket;
   name: string;
   tenant_id: string;
   type: SocketConnectionType;

@@ -17,6 +17,7 @@ import {
 export interface ProductAttributes {
   id: string;
   name: string;
+  slug: string;
   variants?: ProductVariantAttributes[];
   created_at: Date;
   updated_at: Date;
@@ -41,6 +42,13 @@ export class Product extends Model<
   @AllowNull(false)
   @Column(DataType.STRING)
   declare name: string;
+
+  @AllowNull(false)
+  @Column({
+    type: DataType.STRING,
+    unique: true,
+  })
+  declare slug: string;
 
   @HasMany(() => ProductVariant)
   declare variants?: ProductVariant[];

@@ -7,7 +7,6 @@ import { BaseQueryParamsSchema } from '@/dashboard/types/get-all-service.type'
 export const PlatformProductFilterSchema = z.object({
   name: z.string().optional(),
   platform: z.string().optional(),
-  variant: z.string().optional(),
   platform_product_id: z.string().optional(),
   product_variant_id: z.string().optional(),
 })
@@ -22,7 +21,6 @@ export interface PlatformProduct {
   id: string
   name: string
   platform: string
-  variant?: string | null
   platform_product_id?: string
   product_variant_id: string
   product_variant: ProductVariant
@@ -31,7 +29,6 @@ export interface PlatformProduct {
 export interface CreatePlatformProductPayload {
   name: string
   platform: string
-  variant?: string | null
   platform_product_id?: string
   product_variant_id: string
 }
@@ -39,7 +36,6 @@ export interface CreatePlatformProductPayload {
 export interface UpdatePlatformProductPayload {
   name?: string
   platform?: string
-  variant?: string | null
   platform_product_id?: string
   product_variant_id?: string
 }

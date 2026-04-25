@@ -9,10 +9,12 @@ export function ProductVariantSelectField({
   label,
   initialData,
   disabled,
+  productSlug,
 }: {
   label: string
   initialData?: ProductVariant
   disabled?: boolean
+  productSlug?: string
 }) {
   const field = useFieldContext<string>()
   const [selected, setSelected] = useState<ProductVariant | undefined>(
@@ -31,6 +33,7 @@ export function ProductVariantSelectField({
         selectedItem={selected}
         onSelect={handleSelected}
         disabled={disabled}
+        productSlug={productSlug}
       />
       <ErrorDisplay errors={field.state.meta.errors} />
     </div>

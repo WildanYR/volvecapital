@@ -104,7 +104,7 @@ function RouteComponent() {
                             </div>
                           </CardContent>
                         </Card>
-                        <Card>
+                        <Card className="col-span-full">
                           <CardHeader>
                             <CardTitle>Grafik Revenue</CardTitle>
                           </CardHeader>
@@ -112,15 +112,7 @@ function RouteComponent() {
                             <RevenueChart data={allStatistic.revenue} />
                           </CardContent>
                         </Card>
-                        <Card>
-                          <CardHeader>
-                            <CardTitle>Jam Sibuk (Peak Hour)</CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            <PeakHourChart data={allStatistic.peakHour} />
-                          </CardContent>
-                        </Card>
-                        <Card>
+                        <Card className="col-span-full lg:col-span-1">
                           <CardHeader>
                             <CardTitle>Transaksi per Platform</CardTitle>
                           </CardHeader>
@@ -128,7 +120,15 @@ function RouteComponent() {
                             <PlatformList data={allStatistic.platform} />
                           </CardContent>
                         </Card>
-                        <Card>
+                        <Card className="col-span-full lg:col-span-1">
+                          <CardHeader>
+                            <CardTitle>Jam Sibuk (Peak Hour)</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <PeakHourChart data={allStatistic.peakHour} />
+                          </CardContent>
+                        </Card>
+                        <Card className="col-span-full">
                           <CardHeader>
                             <CardTitle>Produk Terlaris</CardTitle>
                           </CardHeader>

@@ -20,11 +20,13 @@ export function AccountEditForm({
   isPending,
   initialData,
   submitButtonText,
+  productSlug,
 }: {
   onSubmit: (values: AccountEditFormSubmitData) => void
   isPending: boolean
   initialData?: Account
   submitButtonText?: string
+  productSlug?: string
 }) {
   const form = useAppForm({
     validators: { onSubmit: AccountEditFormSchema },
@@ -101,6 +103,7 @@ export function AccountEditForm({
               <field.ProductVariantSelectField
                 label="Varian Produk"
                 initialData={initialData?.product_variant}
+                productSlug={productSlug}
               />
             )}
           />

@@ -45,7 +45,6 @@ function RouteComponent() {
   const handleSubmit = (values: PlatformProductFormSubmitData) => {
     mutation.mutate({
       ...values,
-      variant: values.variant.trim() || null,
       product_variant_id: values.product_variant_id,
     })
   }

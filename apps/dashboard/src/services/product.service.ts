@@ -11,6 +11,7 @@ export const ProductFilterSchema = z.object({
 export const ProductVariantFilterSchema = z.object({
   name: z.string().optional(),
   product: z.string().optional(),
+  product_slug: z.string().optional(),
 })
 
 export type ProductFilter = z.infer<typeof ProductFilterSchema>
@@ -46,7 +47,17 @@ export interface ProductVariant {
 export interface Product {
   id: string
   name: string
+  slug: string
   variants: Array<ProductVariant>
+}
+
+export interface ProductPoolingStats {
+  id: string
+  name: string
+  slug: string
+  total: number
+  active: number
+  expired: number
 }
 
 export interface CreateProductVariantPayload {
@@ -60,6 +71,7 @@ export interface CreateProductVariantPayload {
 
 export interface CreateProductPayload {
   name: string
+  slug?: string
   variants: Array<CreateProductVariantPayload>
 }
 
@@ -99,6 +111,7 @@ export function ProductServiceGenerator(apiUrl: string, accessToken: string, ten
       ? (data.items as Array<Product>).map(p => ({
           id: p.id,
           name: p.name,
+          slug: p.slug,
           variants: p.variants.map((v) => {
             const [duration, duration_unit] = largestWholeUnit(v.duration)
             const [interval, interval_unit] = largestWholeUnit(v.interval)
@@ -120,6 +133,25 @@ export function ProductServiceGenerator(apiUrl: string, accessToken: string, ten
       ...data,
       items: products,
     }
+  }
+
+  const getPoolingStats = async (signal?: AbortSignal): Promise<ProductPoolingStats[]> => {
+    const response = await generateApiFetch(
+      apiUrl,
+      accessToken,
+      tenantId,
+      '/product/pooling-stats',
+      { signal },
+    )
+    if (!response.ok) {
+      const errorData = await response.json()
+      const errorMessage = Array.isArray(errorData.message)
+        ? errorData.message[0]
+        : errorData.message
+      throw new Error(errorMessage || 'Failed to fetch product pooling stats')
+    }
+
+    return response.json()
   }
 
   const getAllProductVariant: GetAllServiceFn<
@@ -336,6 +368,7 @@ export function ProductServiceGenerator(apiUrl: string, accessToken: string, ten
 
   return {
     getAllProduct,
+    getPoolingStats,
     getAllProductVariant,
     getProductById,
     createNewProduct,

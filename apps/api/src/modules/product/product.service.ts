@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Op, WhereOptions } from 'sequelize';
+import { Op, QueryTypes, WhereOptions } from 'sequelize';
 import {
   PRODUCT_REPOSITORY,
   PRODUCT_VARIANT_REPOSITORY,
@@ -46,6 +46,9 @@ export class ProductService {
       if (filter?.name) {
         whereOptions.name = { [Op.iLike]: `%${filter.name}%` };
       }
+      if (filter?.slug) {
+        whereOptions.slug = filter.slug;
+      }
 
       const products = await this.productRepository.findAndCountAll({
         where: whereOptions,
@@ -73,19 +76,27 @@ export class ProductService {
   }
 
   async findOne(tenantId: string, productId: string) {
+    console.log('DEBUG: findOne called with', { tenantId, productId });
     const transaction = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema(tenantId, transaction);
 
+      const where: WhereOptions = /^\d+$/.test(productId)
+        ? { [Op.or]: [{ id: productId }, { slug: productId }] }
+        : { slug: productId };
+
+      console.log('DEBUG: where options', where);
+
       const product = await this.productRepository.findOne({
-        where: { id: productId },
+        where,
         include: [{ model: ProductVariant, as: 'variants' }],
         transaction,
       });
 
       if (!product) {
+        console.log('DEBUG: product not found');
         throw new NotFoundException(
-          `product dengan id: ${productId} tidak ditemukan`,
+          `product dengan id atau slug: ${productId} tidak ditemukan`,
         );
       }
 
@@ -93,9 +104,20 @@ export class ProductService {
       return product;
     }
     catch (error) {
+      console.error('DEBUG: error in findOne', error);
       await transaction.rollback();
       throw error;
     }
+  }
+
+  private slugify(text: string): string {
+    return text
+      .toString()
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/[^\w-]+/g, '')
+      .replace(/--+/g, '-');
   }
 
   async create(tenantId: string, createProductDto: CreateProductDto) {
@@ -104,16 +126,24 @@ export class ProductService {
       await this.postgresProvider.setSchema(tenantId, transaction);
 
       const existingProduct = await this.productRepository.count({
-        where: { name: createProductDto.name },
+        where: {
+          [Op.or]: [
+            { name: createProductDto.name },
+            { slug: createProductDto.slug || this.slugify(createProductDto.name) },
+          ],
+        },
         transaction,
       });
 
       if (existingProduct) {
-        throw new BadRequestException('Produk sudah ada');
+        throw new BadRequestException('Produk atau slug sudah ada');
       }
 
       const newProduct = await this.productRepository.create(
-        { ...createProductDto },
+        {
+          ...createProductDto,
+          slug: createProductDto.slug || this.slugify(createProductDto.name),
+        },
         { transaction },
       );
       await transaction.commit();
@@ -134,16 +164,24 @@ export class ProductService {
       await this.postgresProvider.setSchema(tenantId, transaction);
 
       const existingProduct = await this.productRepository.count({
-        where: { name: createProductWithVariantDto.name },
+        where: {
+          [Op.or]: [
+            { name: createProductWithVariantDto.name },
+            { slug: createProductWithVariantDto.slug || this.slugify(createProductWithVariantDto.name) },
+          ],
+        },
         transaction,
       });
 
       if (existingProduct) {
-        throw new BadRequestException('Produk sudah ada');
+        throw new BadRequestException('Produk atau slug sudah ada');
       }
 
       const product = await this.productRepository.create(
-        { name: createProductWithVariantDto.name },
+        {
+          name: createProductWithVariantDto.name,
+          slug: createProductWithVariantDto.slug || this.slugify(createProductWithVariantDto.name),
+        },
         { transaction },
       );
 
@@ -160,6 +198,41 @@ export class ProductService {
       });
       await transaction.commit();
       return newProduct;
+    }
+    catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
+
+  async getPoolingStats(tenantId: string) {
+    const transaction = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema(tenantId, transaction);
+
+      const stats = await this.postgresProvider.rawQuery(
+        `
+        SELECT 
+          p.id, 
+          p.name, 
+          p.slug,
+          CAST(COUNT(a.id) AS INTEGER) as total,
+          CAST(COUNT(CASE WHEN (a.status IN ('ready', 'active') AND a.subscription_expiry > NOW()) THEN 1 END) AS INTEGER) as active,
+          CAST(COUNT(CASE WHEN (a.status = 'disable' OR a.subscription_expiry <= NOW()) THEN 1 END) AS INTEGER) as expired
+        FROM product p
+        LEFT JOIN product_variant pv ON pv.product_id = p.id
+        LEFT JOIN account a ON a.product_variant_id = pv.id
+        GROUP BY p.id, p.name, p.slug
+        ORDER BY p.name ASC
+        `,
+        {
+          type: QueryTypes.SELECT,
+          transaction,
+        },
+      );
+
+      await transaction.commit();
+      return stats;
     }
     catch (error) {
       await transaction.rollback();

@@ -14,7 +14,6 @@ import { PaginationProvider } from '../utility/pagination.provider';
 import { BaseGetAllUrlQuery } from '../utility/types/base-get-all-url-query.type';
 import { CreatePlatformProductDto } from './dto/create-platform-product.dto';
 import { GetAllPlatformProductByNamesDto } from './dto/get-all-platform-product-by-names.dto';
-import { ResolvePlatformProductDto } from './dto/resolve-platform-product.dto';
 import { UpdatePlatformProductDto } from './dto/update-platform-product.dto';
 import { IPlatformProductGetFilter } from './filter/platform-product-get.filter';
 
@@ -26,11 +25,6 @@ export class PlatformProductService {
     @Inject(PLATFORM_PRODUCT_REPOSITORY)
     private readonly platformProductRepository: typeof PlatformProduct,
   ) {}
-
-  private normalizeVariant(variant?: string | null) {
-    const normalizedVariant = variant?.trim();
-    return normalizedVariant || null;
-  }
 
   async findAll(
     tenantId: string,
@@ -50,9 +44,6 @@ export class PlatformProductService {
       }
       if (filter?.platform) {
         whereOptions.platform = { [Op.iLike]: `%${filter.platform}%` };
-      }
-      if (filter?.variant) {
-        whereOptions.variant = { [Op.iLike]: `%${filter.variant}%` };
       }
       if (filter?.product_variant_id) {
         whereOptions.product_variant_id = filter.product_variant_id;
@@ -184,14 +175,12 @@ export class PlatformProductService {
     const transaction = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema(tenantId, transaction);
-      const variant = this.normalizeVariant(createPlatformProductDto.variant);
 
       const existingPlatformProduct
         = await this.platformProductRepository.count({
           where: {
             name: createPlatformProductDto.name,
             platform: createPlatformProductDto.platform,
-            variant,
             product_variant_id: createPlatformProductDto.product_variant_id,
           },
           transaction,
@@ -204,7 +193,6 @@ export class PlatformProductService {
       const newPlatformProduct = await this.platformProductRepository.create(
         {
           ...createPlatformProductDto,
-          variant,
         },
         { transaction },
       );
@@ -237,43 +225,7 @@ export class PlatformProductService {
         );
       }
 
-      const nextName = updatePlatformProductDto.name ?? platformProduct.name;
-      const nextPlatform
-        = updatePlatformProductDto.platform ?? platformProduct.platform;
-      const nextProductVariantId
-        = updatePlatformProductDto.product_variant_id
-          ?? platformProduct.product_variant_id;
-      const nextVariant = Object.prototype.hasOwnProperty.call(
-        updatePlatformProductDto,
-        'variant',
-      )
-        ? this.normalizeVariant(updatePlatformProductDto.variant)
-        : this.normalizeVariant(platformProduct.variant);
-
-      const existingPlatformProduct
-        = await this.platformProductRepository.count({
-          where: {
-            id: { [Op.ne]: platformProductId },
-            name: nextName,
-            platform: nextPlatform,
-            variant: nextVariant,
-            product_variant_id: nextProductVariantId,
-          },
-          transaction,
-        });
-
-      if (existingPlatformProduct) {
-        throw new BadRequestException('Produk Platform sudah ada');
-      }
-
-      const updatedValues = {
-        ...updatePlatformProductDto,
-        ...(Object.prototype.hasOwnProperty.call(updatePlatformProductDto, 'variant')
-          ? { variant: nextVariant }
-          : {}),
-      };
-
-      await platformProduct.update(updatedValues, { transaction });
+      await platformProduct.update({ ...updatePlatformProductDto });
       await transaction.commit();
       return platformProduct;
     }
@@ -300,58 +252,6 @@ export class PlatformProductService {
       }
       await platformProduct.destroy({ transaction });
       await transaction.commit();
-    }
-    catch (error) {
-      await transaction.rollback();
-      throw error;
-    }
-  }
-
-  async resolve(
-    tenantId: string,
-    resolvePlatformProductDto: ResolvePlatformProductDto,
-  ) {
-    const transaction = await this.postgresProvider.transaction();
-    try {
-      await this.postgresProvider.setSchema(tenantId, transaction);
-
-      const resolvedItems = await Promise.all(
-        resolvePlatformProductDto.items.map(async (item) => {
-          const variant = this.normalizeVariant(item.variant);
-          const where: WhereOptions = {
-            platform: resolvePlatformProductDto.platform,
-            name: item.name,
-          };
-
-          if (variant) {
-            where.variant = variant;
-          }
-
-          const platformProduct = await this.platformProductRepository.findOne({
-            where,
-            transaction,
-          });
-
-          if (!platformProduct) {
-            return {
-              name: item.name,
-              variant: variant ?? undefined,
-              isFound: false,
-            };
-          }
-
-          return {
-            id: platformProduct.id,
-            name: platformProduct.name,
-            variant: platformProduct.variant,
-            product_variant_id: platformProduct.product_variant_id,
-            isFound: true,
-          };
-        }),
-      );
-
-      await transaction.commit();
-      return resolvedItems;
     }
     catch (error) {
       await transaction.rollback();

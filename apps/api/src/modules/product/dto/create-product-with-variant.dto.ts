@@ -35,6 +35,10 @@ export class CreateProductWithVariantDto {
   @IsString()
   name: string;
 
+  @IsOptional()
+  @IsString()
+  slug?: string;
+
   @IsNotEmpty()
   @IsArray()
   @ValidateNested({ each: true })

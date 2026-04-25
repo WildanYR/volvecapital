@@ -16,9 +16,7 @@ import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
 import { Route as DashboardTransactionIndexRouteImport } from './routes/dashboard/transaction/index'
 import { Route as DashboardProductIndexRouteImport } from './routes/dashboard/product/index'
 import { Route as DashboardPlatformProductIndexRouteImport } from './routes/dashboard/platform-product/index'
-import { Route as DashboardLogsIndexRouteImport } from './routes/dashboard/logs/index'
 import { Route as DashboardEmailIndexRouteImport } from './routes/dashboard/email/index'
-import { Route as DashboardEmailMessageIndexRouteImport } from './routes/dashboard/email-message/index'
 import { Route as DashboardAccountIndexRouteImport } from './routes/dashboard/account/index'
 import { Route as DashboardTransactionCreateRouteImport } from './routes/dashboard/transaction/create'
 import { Route as DashboardProductCreateRouteImport } from './routes/dashboard/product/create'
@@ -27,6 +25,7 @@ import { Route as DashboardPlatformProductIdRouteImport } from './routes/dashboa
 import { Route as DashboardEmailCreateRouteImport } from './routes/dashboard/email/create'
 import { Route as DashboardEmailIdRouteImport } from './routes/dashboard/email/$id'
 import { Route as DashboardAccountCreateRouteImport } from './routes/dashboard/account/create'
+import { Route as DashboardAccountSlugRouteImport } from './routes/dashboard/account/$slug'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -65,22 +64,11 @@ const DashboardPlatformProductIndexRoute =
     path: '/platform-product/',
     getParentRoute: () => DashboardRouteRoute,
   } as any)
-const DashboardLogsIndexRoute = DashboardLogsIndexRouteImport.update({
-  id: '/logs/',
-  path: '/logs/',
-  getParentRoute: () => DashboardRouteRoute,
-} as any)
 const DashboardEmailIndexRoute = DashboardEmailIndexRouteImport.update({
   id: '/email/',
   path: '/email/',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
-const DashboardEmailMessageIndexRoute =
-  DashboardEmailMessageIndexRouteImport.update({
-    id: '/email-message/',
-    path: '/email-message/',
-    getParentRoute: () => DashboardRouteRoute,
-  } as any)
 const DashboardAccountIndexRoute = DashboardAccountIndexRouteImport.update({
   id: '/account/',
   path: '/account/',
@@ -124,12 +112,18 @@ const DashboardAccountCreateRoute = DashboardAccountCreateRouteImport.update({
   path: '/account/create',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
+const DashboardAccountSlugRoute = DashboardAccountSlugRouteImport.update({
+  id: '/account/$slug',
+  path: '/account/$slug',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRouteRouteWithChildren
   '/login': typeof LoginRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/dashboard/account/$slug': typeof DashboardAccountSlugRoute
   '/dashboard/account/create': typeof DashboardAccountCreateRoute
   '/dashboard/email/$id': typeof DashboardEmailIdRoute
   '/dashboard/email/create': typeof DashboardEmailCreateRoute
@@ -138,9 +132,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/product/create': typeof DashboardProductCreateRoute
   '/dashboard/transaction/create': typeof DashboardTransactionCreateRoute
   '/dashboard/account': typeof DashboardAccountIndexRoute
-  '/dashboard/email-message': typeof DashboardEmailMessageIndexRoute
   '/dashboard/email': typeof DashboardEmailIndexRoute
-  '/dashboard/logs': typeof DashboardLogsIndexRoute
   '/dashboard/platform-product': typeof DashboardPlatformProductIndexRoute
   '/dashboard/product': typeof DashboardProductIndexRoute
   '/dashboard/transaction': typeof DashboardTransactionIndexRoute
@@ -149,6 +141,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/dashboard': typeof DashboardIndexRoute
+  '/dashboard/account/$slug': typeof DashboardAccountSlugRoute
   '/dashboard/account/create': typeof DashboardAccountCreateRoute
   '/dashboard/email/$id': typeof DashboardEmailIdRoute
   '/dashboard/email/create': typeof DashboardEmailCreateRoute
@@ -157,9 +150,7 @@ export interface FileRoutesByTo {
   '/dashboard/product/create': typeof DashboardProductCreateRoute
   '/dashboard/transaction/create': typeof DashboardTransactionCreateRoute
   '/dashboard/account': typeof DashboardAccountIndexRoute
-  '/dashboard/email-message': typeof DashboardEmailMessageIndexRoute
   '/dashboard/email': typeof DashboardEmailIndexRoute
-  '/dashboard/logs': typeof DashboardLogsIndexRoute
   '/dashboard/platform-product': typeof DashboardPlatformProductIndexRoute
   '/dashboard/product': typeof DashboardProductIndexRoute
   '/dashboard/transaction': typeof DashboardTransactionIndexRoute
@@ -170,6 +161,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRouteRouteWithChildren
   '/login': typeof LoginRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/dashboard/account/$slug': typeof DashboardAccountSlugRoute
   '/dashboard/account/create': typeof DashboardAccountCreateRoute
   '/dashboard/email/$id': typeof DashboardEmailIdRoute
   '/dashboard/email/create': typeof DashboardEmailCreateRoute
@@ -178,9 +170,7 @@ export interface FileRoutesById {
   '/dashboard/product/create': typeof DashboardProductCreateRoute
   '/dashboard/transaction/create': typeof DashboardTransactionCreateRoute
   '/dashboard/account/': typeof DashboardAccountIndexRoute
-  '/dashboard/email-message/': typeof DashboardEmailMessageIndexRoute
   '/dashboard/email/': typeof DashboardEmailIndexRoute
-  '/dashboard/logs/': typeof DashboardLogsIndexRoute
   '/dashboard/platform-product/': typeof DashboardPlatformProductIndexRoute
   '/dashboard/product/': typeof DashboardProductIndexRoute
   '/dashboard/transaction/': typeof DashboardTransactionIndexRoute
@@ -192,6 +182,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/login'
     | '/dashboard/'
+    | '/dashboard/account/$slug'
     | '/dashboard/account/create'
     | '/dashboard/email/$id'
     | '/dashboard/email/create'
@@ -200,9 +191,7 @@ export interface FileRouteTypes {
     | '/dashboard/product/create'
     | '/dashboard/transaction/create'
     | '/dashboard/account'
-    | '/dashboard/email-message'
     | '/dashboard/email'
-    | '/dashboard/logs'
     | '/dashboard/platform-product'
     | '/dashboard/product'
     | '/dashboard/transaction'
@@ -211,6 +200,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/dashboard'
+    | '/dashboard/account/$slug'
     | '/dashboard/account/create'
     | '/dashboard/email/$id'
     | '/dashboard/email/create'
@@ -219,9 +209,7 @@ export interface FileRouteTypes {
     | '/dashboard/product/create'
     | '/dashboard/transaction/create'
     | '/dashboard/account'
-    | '/dashboard/email-message'
     | '/dashboard/email'
-    | '/dashboard/logs'
     | '/dashboard/platform-product'
     | '/dashboard/product'
     | '/dashboard/transaction'
@@ -231,6 +219,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/login'
     | '/dashboard/'
+    | '/dashboard/account/$slug'
     | '/dashboard/account/create'
     | '/dashboard/email/$id'
     | '/dashboard/email/create'
@@ -239,9 +228,7 @@ export interface FileRouteTypes {
     | '/dashboard/product/create'
     | '/dashboard/transaction/create'
     | '/dashboard/account/'
-    | '/dashboard/email-message/'
     | '/dashboard/email/'
-    | '/dashboard/logs/'
     | '/dashboard/platform-product/'
     | '/dashboard/product/'
     | '/dashboard/transaction/'
@@ -304,25 +291,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardPlatformProductIndexRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
-    '/dashboard/logs/': {
-      id: '/dashboard/logs/'
-      path: '/logs'
-      fullPath: '/dashboard/logs'
-      preLoaderRoute: typeof DashboardLogsIndexRouteImport
-      parentRoute: typeof DashboardRouteRoute
-    }
     '/dashboard/email/': {
       id: '/dashboard/email/'
       path: '/email'
       fullPath: '/dashboard/email'
       preLoaderRoute: typeof DashboardEmailIndexRouteImport
-      parentRoute: typeof DashboardRouteRoute
-    }
-    '/dashboard/email-message/': {
-      id: '/dashboard/email-message/'
-      path: '/email-message'
-      fullPath: '/dashboard/email-message'
-      preLoaderRoute: typeof DashboardEmailMessageIndexRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
     '/dashboard/account/': {
@@ -381,11 +354,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardAccountCreateRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
+    '/dashboard/account/$slug': {
+      id: '/dashboard/account/$slug'
+      path: '/account/$slug'
+      fullPath: '/dashboard/account/$slug'
+      preLoaderRoute: typeof DashboardAccountSlugRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
   }
 }
 
 interface DashboardRouteRouteChildren {
   DashboardIndexRoute: typeof DashboardIndexRoute
+  DashboardAccountSlugRoute: typeof DashboardAccountSlugRoute
   DashboardAccountCreateRoute: typeof DashboardAccountCreateRoute
   DashboardEmailIdRoute: typeof DashboardEmailIdRoute
   DashboardEmailCreateRoute: typeof DashboardEmailCreateRoute
@@ -394,9 +375,7 @@ interface DashboardRouteRouteChildren {
   DashboardProductCreateRoute: typeof DashboardProductCreateRoute
   DashboardTransactionCreateRoute: typeof DashboardTransactionCreateRoute
   DashboardAccountIndexRoute: typeof DashboardAccountIndexRoute
-  DashboardEmailMessageIndexRoute: typeof DashboardEmailMessageIndexRoute
   DashboardEmailIndexRoute: typeof DashboardEmailIndexRoute
-  DashboardLogsIndexRoute: typeof DashboardLogsIndexRoute
   DashboardPlatformProductIndexRoute: typeof DashboardPlatformProductIndexRoute
   DashboardProductIndexRoute: typeof DashboardProductIndexRoute
   DashboardTransactionIndexRoute: typeof DashboardTransactionIndexRoute
@@ -404,6 +383,7 @@ interface DashboardRouteRouteChildren {
 
 const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardIndexRoute: DashboardIndexRoute,
+  DashboardAccountSlugRoute: DashboardAccountSlugRoute,
   DashboardAccountCreateRoute: DashboardAccountCreateRoute,
   DashboardEmailIdRoute: DashboardEmailIdRoute,
   DashboardEmailCreateRoute: DashboardEmailCreateRoute,
@@ -412,9 +392,7 @@ const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardProductCreateRoute: DashboardProductCreateRoute,
   DashboardTransactionCreateRoute: DashboardTransactionCreateRoute,
   DashboardAccountIndexRoute: DashboardAccountIndexRoute,
-  DashboardEmailMessageIndexRoute: DashboardEmailMessageIndexRoute,
   DashboardEmailIndexRoute: DashboardEmailIndexRoute,
-  DashboardLogsIndexRoute: DashboardLogsIndexRoute,
   DashboardPlatformProductIndexRoute: DashboardPlatformProductIndexRoute,
   DashboardProductIndexRoute: DashboardProductIndexRoute,
   DashboardTransactionIndexRoute: DashboardTransactionIndexRoute,

@@ -54,10 +54,14 @@ export class ProductVariantService {
             {
               model: Product,
               as: 'product',
-              where:
-                filter?.product && !filter.product_id
-                  ? { name: { [Op.iLike]: `%${filter.product}%` } }
-                  : undefined,
+              where: filter?.product_slug || (filter?.product && !filter.product_id)
+                ? {
+                    ...(filter?.product_slug ? { slug: filter.product_slug } : {}),
+                    ...(filter?.product && !filter.product_id
+                      ? { name: { [Op.iLike]: `%${filter.product}%` } }
+                      : {}),
+                  }
+                : undefined,
             },
           ],
           transaction,

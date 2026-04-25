@@ -1,4 +1,3 @@
-import * as process from 'node:process';
 import { CacheModule } from '@nestjs/cache-manager';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
@@ -16,18 +15,16 @@ import { AccountProfileModule } from './modules/account-profile/account-profile.
 import { AccountUserModule } from './modules/account-user/account-user.module';
 import { AccountModule } from './modules/account/account.module';
 import { CronModule } from './modules/cron/cron.module';
-import { EmailMessageModule } from './modules/email-message/email-message.module';
+import { EmailForwardModule } from './modules/email-forward/email-forward.module';
 import { EmailModule } from './modules/email/email.module';
 import { AppLoggerModule } from './modules/logger/logger.module';
 import { PlatformProductModule } from './modules/platform-product/platform-product.module';
 import { ProductVariantModule } from './modules/product-variant/product-variant.module';
 import { ProductModule } from './modules/product/product.module';
 import { RedisModule } from './modules/redis/redis.module';
-import { SocketTestModule } from './modules/socket-test/socket-test.module';
 import { SocketModule } from './modules/socket/socket.module';
 import { StatisticModule } from './modules/statistic/statistic.module';
 import { TaskQueueModule } from './modules/task-queue/task-queue.module';
-import { TeleNotifierModule } from './modules/tele-notifier/tele-notifier.module';
 import { TenantModule } from './modules/tenant/tenant.module';
 import { TransactionModule } from './modules/transaction/transaction.module';
 import { UtilityModule } from './modules/utility/utility.module';
@@ -54,13 +51,10 @@ import { UtilityModule } from './modules/utility/utility.module';
     }),
     ScheduleModule.forRoot(),
     CronModule,
-    TeleNotifierModule,
     TenantModule,
     TaskQueueModule,
     SocketModule,
-    ...(process.env.SOCKET_TEST_MODULE_ENABLED === 'true' ? [SocketTestModule] : []),
     EmailModule,
-    EmailMessageModule,
     ProductModule,
     ProductVariantModule,
     PlatformProductModule,
@@ -69,6 +63,7 @@ import { UtilityModule } from './modules/utility/utility.module';
     AccountUserModule,
     TransactionModule,
     StatisticModule,
+    EmailForwardModule,
   ],
   controllers: [AppController],
   providers: [{ provide: APP_GUARD, useClass: VcAuthGuard }, AppService],

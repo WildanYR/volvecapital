@@ -19,8 +19,9 @@ export interface MigrationContext {
 }
 
 function createUmzug(schema: string, folder: string) {
+  const globPath = path.join(__dirname, folder, '*.{ts,js}').replace(/\\/g, '/');
   return new Umzug({
-    migrations: { glob: path.join(__dirname, folder, '*.{ts,js}') },
+    migrations: { glob: globPath },
     context: {
       queryInterface: sequelize.getQueryInterface(),
       schema,

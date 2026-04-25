@@ -67,29 +67,37 @@ export class VcAuthGuard implements CanActivate {
     }
 
     let tenant: Tenant | null = null;
-    const transaction = await this.postgresProvider.transaction();
-    try {
-      await this.postgresProvider.setSchema('master', transaction);
-      tenant = await this.tenantRepository.findOne({
-        where: { id: tokenPayload.tenant_id },
-        transaction,
-      });
-      await transaction.commit();
-    }
-    catch (error) {
-      this.logger.error(
-        `Get Tenant from DB Error: ${(error as Error).message}`,
-        (error as Error).stack,
-        'VCAuthGuard',
-      );
-      await transaction.rollback();
-      throw new InternalServerErrorException(
-        'Get tenant from database error',
-      );
+    if (tokenPayload.role !== 'ADMIN') {
+      const transaction = await this.postgresProvider.transaction();
+      try {
+        await this.postgresProvider.setSchema('master', transaction);
+        tenant = await this.tenantRepository.findOne({
+          where: { id: tokenPayload.tenant_id },
+          transaction,
+        });
+        await transaction.commit();
+      }
+      catch (error) {
+        this.logger.error(
+          `Get Tenant from DB Error: ${(error as Error).message}`,
+          (error as Error).stack,
+          'VCAuthGuard',
+        );
+        await transaction.rollback();
+        throw new InternalServerErrorException(
+          'Get tenant from database error',
+        );
+      }
+
+      if (!tenant) {
+        throw new UnauthorizedException('Invalid tenant');
+      }
     }
 
-    const secret = tenant?.dataValues.secret
-      ?? this.configService.get<string>('token.secret');
+    const secret
+      = tokenPayload.role === 'ADMIN'
+        ? this.configService.get<string>('token.secret')
+        : tenant!.dataValues.secret;
 
     if (!secret) {
       throw new UnauthorizedException('Missing secret');
@@ -108,7 +116,7 @@ export class VcAuthGuard implements CanActivate {
         throw new NotFoundException('Missing tenant id');
       }
 
-      if (tenant && tenant_id !== payload.tenant_id) {
+      if (payload.role !== 'ADMIN' && tenant_id !== payload.tenant_id) {
         throw new UnauthorizedException('Tenant mismatch');
       }
 

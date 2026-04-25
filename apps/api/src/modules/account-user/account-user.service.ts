@@ -34,7 +34,6 @@ import { NetflixResetPasswordMetadata } from '../account/types/netflix-reset-pas
 import { AppLoggerService } from '../logger/logger.service';
 import { TaskQueueService } from '../task-queue/task-queue.service';
 import { NetflixResetPasswordPayload } from '../task-queue/types/task-context.type';
-import { TeleNotifierService } from '../tele-notifier/tele-notifier.service';
 import { PaginationProvider } from '../utility/pagination.provider';
 import { SnowflakeIdProvider } from '../utility/snowflake-id.provider';
 import { BaseGetAllUrlQuery } from '../utility/types/base-get-all-url-query.type';
@@ -50,7 +49,6 @@ export class AccountUserService {
     private readonly snowflakeIdProvider: SnowflakeIdProvider,
     private readonly postgresProvider: PostgresProvider,
     private readonly taskQueueService: TaskQueueService,
-    private readonly teleNotifierService: TeleNotifierService,
     @Inject(ACCOUNT_REPOSITORY)
     private readonly accountRepository: typeof Account,
     @Inject(ACCOUNT_USER_REPOSITORY)
@@ -485,7 +483,6 @@ export class AccountUserService {
               status: 'QUEUED',
               payload: JSON.stringify({
                 id: accountUser.dataValues.id,
-                accountId: accountUser.dataValues.account.id,
                 email: accountUser.dataValues.account.email.email,
                 password: accountUser.dataValues.account.account_password,
                 newPassword,
@@ -500,19 +497,6 @@ export class AccountUserService {
             (error as Error).stack,
             'CreateAccountUser',
           );
-          try {
-            await this.teleNotifierService.sendNotification(tenantId, {
-              context: 'NEED_ACTION',
-              message: `[API]\nError saat mendaftarkan Task Queue pada akun ${accountName}\n\nSilahkan refresh modifier pada akun tersebut pada halaman akun di aplikasi`,
-            });
-          }
-          catch (error) {
-            this.logger.error(
-              `Error saat kirim notifikasi telegram: ${(error as Error).message}`,
-              (error as Error).stack,
-              'CreateAccountUser',
-            );
-          }
         }
       }
     }
