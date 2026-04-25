@@ -9,7 +9,11 @@ import { SyslogService } from '../logger/syslog.service';
 import { SocketGateway } from '../socket/socket.gateway';
 import { TeleNotifierService } from '../tele-notifier/tele-notifier.service';
 import { EmailParser } from '../utility/email-parser.provider';
-import { AccountSubsEndNotifyPayload, AccountUnfreezePayload, NetflixResetPasswordPayload } from './types/task-context.type';
+import {
+  AccountSubsEndNotifyPayload,
+  AccountUnfreezePayload,
+  NetflixResetPasswordPayload,
+} from './types/task-context.type';
 
 @Injectable()
 export class TaskHelperService {
@@ -20,7 +24,8 @@ export class TaskHelperService {
     private readonly teleNotifierService: TeleNotifierService,
     private readonly socketGateway: SocketGateway,
     private readonly postgresProvider: PostgresProvider,
-    @Inject(ACCOUNT_REPOSITORY) private readonly accountRepository: typeof Account
+    @Inject(ACCOUNT_REPOSITORY)
+    private readonly accountRepository: typeof Account,
   ) {}
 
   async unfreezeAccount(tenantId: string, payload: AccountUnfreezePayload) {
@@ -31,9 +36,9 @@ export class TaskHelperService {
         where: { id: payload.accountId },
         transaction,
       });
-      if (!account)
-        return;
-      await account.update({ freeze_until: null }, { transaction });
+      if (account) {
+        await account.update({ freeze_until: null }, { transaction });
+      }
       await transaction.commit();
     }
     catch (error) {
@@ -42,20 +47,37 @@ export class TaskHelperService {
     }
   }
 
-  async accountSubsEndNotify(tenantId: string, payload: AccountSubsEndNotifyPayload) {
+  async accountSubsEndNotify(
+    tenantId: string,
+    payload: AccountSubsEndNotifyPayload,
+  ) {
     this.teleNotifierService.sendNotification(tenantId, payload);
-    this.sysLogService.logToDb(tenantId, { level: 'REMINDER', context: 'AccountSubsEnd', message: payload.message });
+    this.sysLogService.logToDb(tenantId, {
+      level: 'REMINDER',
+      context: 'AccountSubsEnd',
+      message: payload.message,
+    });
   }
 
-  async netflixResetPassword(taskId: string, tenantId: string, payload: NetflixResetPasswordPayload) {
+  async netflixResetPassword(
+    taskId: string,
+    tenantId: string,
+    payload: NetflixResetPasswordPayload,
+  ) {
     if (!payload.accountId || !payload.email) {
       const missingFields = [
         !payload.accountId ? 'accountId' : null,
         !payload.email ? 'email' : null,
-      ].filter(Boolean).join(', ');
+      ]
+        .filter(Boolean)
+        .join(', ');
 
       const message = `Skip dispatch NETFLIX_RESET_PASSWORD task ${taskId}: missing required payload field(s): ${missingFields}`;
-      this.logger.error(message, undefined, 'TaskProcessorNetflixResetPassword');
+      this.logger.error(
+        message,
+        undefined,
+        'TaskProcessorNetflixResetPassword',
+      );
       await this.logNetflixDispatchIssue(tenantId, message);
       return;
     }
@@ -66,16 +88,20 @@ export class TaskHelperService {
       await this.postgresProvider.setSchema(tenantId, transaction);
       const account = await this.accountRepository.findOne({
         where: { id: payload.accountId },
-        include: [{
-          model: Email,
-          as: 'email',
-          where: { email: payload.email },
-          required: true,
-        }],
+        include: [
+          {
+            model: Email,
+            as: 'email',
+            where: { email: payload.email },
+            required: true,
+          },
+        ],
         transaction,
       });
       if (!account) {
-        throw new NotFoundException(`Account with id: ${payload.accountId} and email: ${payload.email} not found`);
+        throw new NotFoundException(
+          `Account with id: ${payload.accountId} and email: ${payload.email} not found`,
+        );
       }
       await transaction.commit();
       transactionCommitted = true;
@@ -95,7 +121,11 @@ export class TaskHelperService {
       if (!transactionCommitted) {
         await transaction.rollback();
       }
-      this.logger.error((error as Error).message, (error as Error).stack, 'TaskProcessorNetflixResetPassword');
+      this.logger.error(
+        (error as Error).message,
+        (error as Error).stack,
+        'TaskProcessorNetflixResetPassword',
+      );
       await this.logNetflixDispatchIssue(
         tenantId,
         `[${tenantId}] Reset Password Netflix dispatch failed for accountId: ${payload.accountId}, email: ${payload.email}. ${(error as Error).message}`,

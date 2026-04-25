@@ -119,12 +119,16 @@ export class TaskQueueService {
               attempt: 0,
               ...data,
             },
-            { transaction }
+            { transaction },
           );
         }
 
         const executeAt = new Date(taskQueue.dataValues.execute_at).getTime();
-        redisPipeline.zadd(ZSET_KEY, executeAt, `${TASK_REFERENCE_KEY}:${taskQueue.id}`);
+        redisPipeline.zadd(
+          ZSET_KEY,
+          executeAt,
+          `${TASK_REFERENCE_KEY}:${taskQueue.id}`,
+        );
       }
 
       await redisPipeline.exec();
@@ -153,7 +157,10 @@ export class TaskQueueService {
       }
 
       await taskQueue.destroy({ transaction });
-      await this.redisClient.zrem(ZSET_KEY, `${TASK_REFERENCE_KEY}:${taskQueue.id}`);
+      await this.redisClient.zrem(
+        ZSET_KEY,
+        `${TASK_REFERENCE_KEY}:${taskQueue.id}`,
+      );
       await transaction.commit();
     }
     catch (error) {
@@ -180,20 +187,19 @@ export class TaskQueueService {
         transaction,
       });
 
-      if (!taskQueue.length)
-        throw new NotFoundException(`taskQueue tidak ditemukan`);
+      if (taskQueue.length) {
+        const taskQueueIds = taskQueue.map(t => t.id);
+        await this.taskQueueRepository.destroy({
+          where: { id: taskQueueIds },
+          transaction,
+        });
 
-      const taskQueueIds = taskQueue.map(t => t.id);
-      await this.taskQueueRepository.destroy({
-        where: { id: taskQueueIds },
-        transaction,
-      });
-
-      const redisPipeline = this.redisClient.pipeline();
-      for (const id of taskQueueIds) {
-        redisPipeline.zrem(ZSET_KEY, `${TASK_REFERENCE_KEY}:${id}`);
+        const redisPipeline = this.redisClient.pipeline();
+        for (const id of taskQueueIds) {
+          redisPipeline.zrem(ZSET_KEY, `${TASK_REFERENCE_KEY}:${id}`);
+        }
+        await redisPipeline.exec();
       }
-      await redisPipeline.exec();
 
       await transaction.commit();
     }
