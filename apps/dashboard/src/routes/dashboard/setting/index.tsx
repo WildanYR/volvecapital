@@ -30,10 +30,12 @@ function RouteComponent() {
   })
 
   const [whatsappNumber, setWhatsappNumber] = useState('')
+  const [buyerPortalLimit, setBuyerPortalLimit] = useState('10')
 
   useEffect(() => {
     if (settings) {
       setWhatsappNumber(settings.whatsapp_number || '')
+      setBuyerPortalLimit(settings.BUYER_PORTAL_DAILY_LIMIT || '10')
     }
   }, [settings])
 
@@ -49,9 +51,14 @@ function RouteComponent() {
     },
   })
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSaveWhatsapp = (e: React.FormEvent) => {
     e.preventDefault()
     updateMutation.mutate({ key: 'whatsapp_number', value: whatsappNumber })
+  }
+
+  const handleSavePortalLimit = (e: React.FormEvent) => {
+    e.preventDefault()
+    updateMutation.mutate({ key: 'BUYER_PORTAL_DAILY_LIMIT', value: buyerPortalLimit })
   }
 
   if (isLoading) {
@@ -66,8 +73,42 @@ function RouteComponent() {
     <div className="flex flex-col gap-8 max-w-4xl">
       <div className="flex items-center gap-2">
         <House className="size-6 text-primary" />
-        <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight">Pengaturan Landing Page</h1>
+        <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight">Pengaturan Aplikasi</h1>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Buyer Portal</CardTitle>
+          <CardDescription>Atur konfigurasi portal email buyer, termasuk batasan akses OTP per hari.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSavePortalLimit} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="portal_limit">Batas Refresh OTP Harian per Akun (Kali/Hari)</Label>
+              <div className="flex gap-4">
+                <Input
+                  id="portal_limit"
+                  type="number"
+                  placeholder="10"
+                  value={buyerPortalLimit}
+                  onChange={(e) => setBuyerPortalLimit(e.target.value)}
+                  className="max-w-md"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">Batas maksimal seorang buyer me-refresh atau melihat email baru dalam satu hari.</p>
+            </div>
+
+            <Button disabled={updateMutation.isPending} type="submit" variant="secondary">
+              {updateMutation.isPending ? (
+                <Loader2 className="size-4 animate-spin mr-2" />
+              ) : (
+                <Save className="size-4 mr-2" />
+              )}
+              Simpan Batas Akses
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -75,7 +116,7 @@ function RouteComponent() {
           <CardDescription>Atur nomor WhatsApp yang akan muncul sebagai tombol floating di landing page.</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSave} className="space-y-6">
+          <form onSubmit={handleSaveWhatsapp} className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="whatsapp">Nomor WhatsApp (Tanpa + atau 0 di depan, gunakan kode negara: 62812xxx)</Label>
               <div className="flex gap-4">

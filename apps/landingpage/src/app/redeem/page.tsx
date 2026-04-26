@@ -14,6 +14,7 @@ export default function RedeemPage() {
   const [result, setResult] = useState<any>(null)
   const [copied, setCopied] = useState(false)
   const [accessToken, setAccessToken] = useState<string | null>(null)
+  const [tenantId, setTenantId] = useState<string | null>(null)
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -37,6 +38,7 @@ export default function RedeemPage() {
       const { data } = await api.post('/public/voucher/redeem', { voucher_code: code })
       // Simpan access_token terpisah untuk portal link
       if (data.access_token) setAccessToken(data.access_token)
+      if (data.tenant_id) setTenantId(data.tenant_id)
       setResult({ ...result, voucher: { ...result.voucher, status: 'USED' }, account: data })
       toast.success('Voucher berhasil diredeem!')
     } catch (error: any) {
@@ -184,7 +186,7 @@ export default function RedeemPage() {
                           <p className="text-sm text-gray-400">Pantau kode OTP & link reset Netflix akun Anda secara real-time.</p>
                         </div>
                         <a
-                          href={`${process.env.NEXT_PUBLIC_PORTAL_URL || 'http://localhost:3000'}/portal/${accessToken}`}
+                          href={`${process.env.NEXT_PUBLIC_PORTAL_URL || 'http://localhost:3000'}/portal/${tenantId || 'papapremium'}/${accessToken}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="shrink-0 px-6 py-3 bg-blue-500 hover:bg-blue-400 text-white font-black rounded-xl transition-all flex items-center gap-2 text-sm shadow-[0_6px_20px_rgba(59,130,246,0.3)]"

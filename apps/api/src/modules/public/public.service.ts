@@ -603,6 +603,7 @@ export class PublicService {
         expired_at: expiredAt,
         copy_template: copyTemplate,
         access_token: voucher.access_token,
+        tenant_id: tenantId,
       };
     }
     catch (error) {
@@ -878,7 +879,13 @@ export class PublicService {
         throw new BadRequestException('Masa aktif voucher sudah habis. Akses ditutup.');
       }
 
-      // 3. Check Daily Limit (10x)
+      // 3. Check Daily Limit
+      const limitSetting = await this.tenantSettingRepository.findOne({
+        where: { key: 'BUYER_PORTAL_DAILY_LIMIT' },
+        transaction,
+      });
+      const MAX_ACCESS = limitSetting ? parseInt(limitSetting.value, 10) : 10;
+
       const now = new Date();
       const lastAccess = voucher.last_access_at ? new Date(voucher.last_access_at) : null;
       const isSameDay = lastAccess && 
@@ -887,8 +894,8 @@ export class PublicService {
         lastAccess.getFullYear() === now.getFullYear();
 
       if (isSameDay) {
-        if (voucher.access_count_today >= 10) {
-          throw new BadRequestException('Batas akses harian (10x) tercapai. Silakan coba lagi besok.');
+        if (voucher.access_count_today >= MAX_ACCESS) {
+          throw new BadRequestException(`Batas akses harian (${MAX_ACCESS}x) tercapai. Silakan coba lagi besok.`);
         }
         await voucher.update({ 
           access_count_today: voucher.access_count_today + 1,
@@ -934,8 +941,8 @@ export class PublicService {
         },
         messages,
         limit: {
-          remaining: 10 - (isSameDay ? voucher.access_count_today + 1 : 1),
-          total: 10
+          remaining: MAX_ACCESS - (isSameDay ? voucher.access_count_today + 1 : 1),
+          total: MAX_ACCESS
         }
       };
     } catch (error) {
