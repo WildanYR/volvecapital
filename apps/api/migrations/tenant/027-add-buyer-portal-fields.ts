@@ -5,23 +5,27 @@ import { DataTypes } from 'sequelize';
 export const up: MigrationFn<MigrationContext> = async ({ context }) => {
   const { queryInterface } = context;
 
-  // 1. Add is_public to master.email_subject
-  await queryInterface.addColumn(
-    { schema: 'master', tableName: 'email_subject' },
-    'is_public',
-    {
-      type: DataTypes.BOOLEAN,
-      allowNull: false,
-      defaultValue: false,
-    }
-  );
+  // 1. Add is_public to master.email_subject (Try-catch to prevent error on re-run during tenant loop)
+  try {
+    await queryInterface.addColumn(
+      { schema: 'master', tableName: 'email_subject' },
+      'is_public',
+      {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+      }
+    );
+  } catch (err) {
+    // Already exists or other error we skip
+  }
 
-  // 2. Add fields to tenant schemas
-  const schemas = (await queryInterface.showAllSchemas()) as string[];
-  for (const schema of schemas) {
-    if (['public', 'master', 'information_schema', 'pg_catalog'].includes(schema)) continue;
+  // 2. Add fields to current tenant schema
+  const { schema } = context;
+  if (['public', 'master', 'information_schema', 'pg_catalog'].includes(schema)) return;
 
-    // Add access fields to voucher table
+  // Add access fields to voucher table
+  try {
     await queryInterface.addColumn(
       { schema, tableName: 'voucher' },
       'access_token',
@@ -31,7 +35,9 @@ export const up: MigrationFn<MigrationContext> = async ({ context }) => {
         unique: true,
       }
     );
+  } catch (err) {}
 
+  try {
     await queryInterface.addColumn(
       { schema, tableName: 'voucher' },
       'access_count_today',
@@ -41,7 +47,9 @@ export const up: MigrationFn<MigrationContext> = async ({ context }) => {
         defaultValue: 0,
       }
     );
+  } catch (err) {}
 
+  try {
     await queryInterface.addColumn(
       { schema, tableName: 'voucher' },
       'last_access_at',
@@ -50,7 +58,7 @@ export const up: MigrationFn<MigrationContext> = async ({ context }) => {
         allowNull: true,
       }
     );
-  }
+  } catch (err) {}
 };
 
 export const down: MigrationFn<MigrationContext> = async ({ context }) => {

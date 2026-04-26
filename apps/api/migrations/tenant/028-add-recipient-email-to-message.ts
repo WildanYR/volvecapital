@@ -5,10 +5,10 @@ import { DataTypes } from 'sequelize';
 export const up: MigrationFn<MigrationContext> = async ({ context }) => {
   const { queryInterface } = context;
 
-  const schemas = (await queryInterface.showAllSchemas()) as string[];
-  for (const schema of schemas) {
-    if (['public', 'master', 'information_schema', 'pg_catalog'].includes(schema)) continue;
+  const { schema } = context;
+  if (['public', 'master', 'information_schema', 'pg_catalog'].includes(schema)) return;
 
+  try {
     await queryInterface.addColumn(
       { schema, tableName: 'email_message' },
       'recipient_email',
@@ -17,7 +17,7 @@ export const up: MigrationFn<MigrationContext> = async ({ context }) => {
         allowNull: true,
       }
     );
-  }
+  } catch (err) {}
 };
 
 export const down: MigrationFn<MigrationContext> = async ({ context }) => {
