@@ -97,7 +97,11 @@ function PortalPage() {
   }
 
   const account = data?.account
-  const messages = data?.messages || []
+  const messages = (data?.messages || []).filter((msg: any) => {
+    const emailDate = new Date(msg.email_date)
+    const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000)
+    return emailDate >= fifteenMinutesAgo
+  })
   const limit = data?.limit
 
   return (
