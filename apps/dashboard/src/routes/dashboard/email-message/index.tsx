@@ -76,7 +76,7 @@ function RouteComponent() {
   )
 
   const [filter, setFilter] = useState<EmailMessageFilter>({
-    from_email: searchParam.from_email || '',
+    recipient_email: searchParam.recipient_email || '',
   })
 
   // Queries
@@ -129,13 +129,13 @@ function RouteComponent() {
     onError: () => toast.error('Gagal menghapus subjek email'),
   })
 
-  const handleSearchFromEmail = useDebouncedCallback((value: string) => {
-    setFilter({ from_email: value })
-    const from_email = value || undefined
+  const handleSearchRecipientEmail = useDebouncedCallback((value: string) => {
+    setFilter({ recipient_email: value })
+    const recipient_email = value || undefined
     navigate({
       search: prev => ({
         ...prev,
-        from_email,
+        recipient_email,
         page: 1,
       }),
       replace: true,
@@ -325,9 +325,9 @@ function RouteComponent() {
           <Input
             className="md:max-w-xs h-10"
             type="text"
-            defaultValue={filter.from_email}
-            placeholder="Cari Email Pengirim..."
-            onChange={e => handleSearchFromEmail(e.target.value)}
+            defaultValue={filter.recipient_email}
+            placeholder="Cari Akun Email..."
+            onChange={e => handleSearchRecipientEmail(e.target.value)}
           />
         </div>
 
@@ -349,7 +349,7 @@ function RouteComponent() {
                   <Table>
                     <TableHeader className="bg-secondary text-secondary-foreground">
                       <TableRow className="*:p-4">
-                        <TableHead>From Email</TableHead>
+                        <TableHead>Akun Email</TableHead>
                         <TableHead>Subject</TableHead>
                         <TableHead>Context</TableHead>
                         <TableHead>Parsed Data</TableHead>
@@ -360,7 +360,7 @@ function RouteComponent() {
                     <TableBody>
                       {emailMessages.items.map(emailMessage => (
                         <TableRow key={emailMessage.id} className="*:px-4 *:py-6">
-                          <TableCell className="font-medium">{emailMessage.from_email}</TableCell>
+                          <TableCell className="font-medium">{emailMessage.recipient_email || emailMessage.from_email}</TableCell>
                           <TableCell className="max-w-sm truncate text-muted-foreground">{emailMessage.subject}</TableCell>
                           <TableCell>
                             <span className="text-[11px] font-bold px-3 py-1 bg-accent rounded-md">{emailMessage.parsed_context}</span>

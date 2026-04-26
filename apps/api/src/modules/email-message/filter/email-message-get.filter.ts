@@ -1,3 +1,3 @@
 export interface IEmailMessageGetFilter {
-  from_email?: string;
+  recipient_email?: string;
 }

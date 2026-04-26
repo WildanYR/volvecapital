@@ -4,5 +4,5 @@ import { BaseGetAllUrlQueryDto } from 'src/modules/utility/dto/base-get-all-url-
 export class GetEmailMessageQueryDto extends BaseGetAllUrlQueryDto {
   @IsOptional()
   @IsString()
-  from_email?: string;
+  recipient_email?: string;
 }

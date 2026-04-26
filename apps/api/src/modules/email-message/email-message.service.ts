@@ -35,8 +35,8 @@ export class EmailMessageService {
       const whereOptions: WhereOptions = {
         tenant_id: tenantId,
       };
-      if (filter?.from_email) {
-        whereOptions.from_email = { [Op.iLike]: `%${filter.from_email}%` };
+      if (filter?.recipient_email) {
+        whereOptions.recipient_email = { [Op.iLike]: `%${filter.recipient_email}%` };
       }
 
       const emailMessages = await this.emailMessageRepository.findAndCountAll({

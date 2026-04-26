@@ -4,7 +4,7 @@ import { generateApiFetch, parseApiResponse } from '../lib/api-fetch.util'
 import { BaseQueryParamsSchema } from '../types/get-all-service.type'
 
 export const EmailMessageFilterSchema = z.object({
-  from_email: z.string().optional(),
+  recipient_email: z.string().optional(),
 })
 
 export type EmailMessageFilter = z.infer<typeof EmailMessageFilterSchema>
@@ -19,6 +19,7 @@ export interface EmailMessage {
   id: string
   tenant_id: string
   from_email: string
+  recipient_email: string
   subject: string
   email_date: Date
   parsed_context: string
