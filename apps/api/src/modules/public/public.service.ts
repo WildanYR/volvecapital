@@ -860,6 +860,10 @@ export class PublicService {
                     as: 'account',
                     include: [{ model: Email, as: 'email' }],
                   },
+                  {
+                    model: AccountProfile,
+                    as: 'profile',
+                  },
                 ],
               },
             ],
