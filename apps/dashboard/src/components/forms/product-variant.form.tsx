@@ -40,6 +40,7 @@ export function ProductVariantForm({
       copy_template: initialData?.copy_template ?? '',
       description: initialData?.description ?? '',
       price: initialData?.price?.toString() ?? '0',
+      voucher_expiry_hours: initialData?.voucher_expiry_hours?.toString() ?? '',
     },
     onSubmit: ({ value }) => {
       const duration = convertTimeUnit(
@@ -65,6 +66,7 @@ export function ProductVariantForm({
         interval_unit: 'millisecond' as TimeUnit,
         cooldown: cooldown.toString(),
         cooldown_unit: 'millisecond' as TimeUnit,
+        voucher_expiry_hours: value.voucher_expiry_hours ? Number.parseInt(value.voucher_expiry_hours) : undefined,
       })
     },
   })
@@ -104,6 +106,16 @@ export function ProductVariantForm({
               <field.TextareaField
                 label="Deskripsi (Opsional)"
                 placeholder="Masukkan deskripsi varian (contoh: ✓ 1 Bulan Akses Netflix)..."
+              />
+            )}
+          />
+          <form.AppField
+            name="voucher_expiry_hours"
+            children={field => (
+              <field.TextField
+                label="Masa Berlaku Voucher (Jam)"
+                type="number"
+                placeholder="contoh: 24 (biarkan kosong untuk default)"
               />
             )}
           />

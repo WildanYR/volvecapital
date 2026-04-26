@@ -30,6 +30,7 @@ function getInitialData(data?: Product): ProductFormSubmitData {
           interval_unit: 'millisecond',
           copy_template: '',
           price: '0',
+          voucher_expiry_hours: '',
         },
       ],
     }
@@ -46,6 +47,7 @@ function getInitialData(data?: Product): ProductFormSubmitData {
       cooldown_unit: v.cooldown_unit as TimeUnit,
       copy_template: v.copy_template || '',
       price: v.price?.toString() ?? '0',
+      voucher_expiry_hours: v.voucher_expiry_hours?.toString() ?? '',
     }
   })
 
@@ -96,6 +98,7 @@ export function ProductForm({
           cooldown_unit: 'millisecond' as TimeUnit,
           copy_template: v.copy_template,
           price: v.price,
+          voucher_expiry_hours: v.voucher_expiry_hours,
         }
       })
       onSubmit({ name: value.name, variants })
@@ -164,6 +167,16 @@ export function ProductForm({
                         />
                       )}
                     />
+                    <form.AppField
+                      name={`variants[${i}].voucher_expiry_hours`}
+                      children={subfield => (
+                        <subfield.TextField
+                          label="Masa Berlaku Voucher (Jam)"
+                          type="number"
+                          placeholder="contoh: 24"
+                        />
+                      )}
+                    />
                     <DurationFieldGroup
                       form={form}
                       fields={{
@@ -219,6 +232,7 @@ export function ProductForm({
                       cooldown_unit: 'millisecond',
                       copy_template: '',
                       price: '0',
+                      voucher_expiry_hours: '',
                     })}
                   className="w-full cursor-pointer"
                 >

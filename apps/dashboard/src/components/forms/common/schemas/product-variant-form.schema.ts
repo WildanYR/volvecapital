@@ -12,4 +12,5 @@ export const ProductVariantFormSchema = z.object({
   copy_template: z.string(),
   description: z.string().optional(),
   price: z.string().nonempty('Harga wajib diisi').refine(v => !Number.isNaN(Number(v)) && Number(v) >= 0, 'Harga harus berupa angka positif'),
+  voucher_expiry_hours: z.string().optional().refine(v => !v || (!Number.isNaN(Number(v)) && Number(v) >= 0), 'Harus berupa angka positif'),
 })

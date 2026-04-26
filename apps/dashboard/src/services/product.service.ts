@@ -39,6 +39,7 @@ export interface ProductVariant {
   price: number
   copy_template?: string
   description?: string
+  voucher_expiry_hours?: number
   product_id: string
   product?: {
     id: string
@@ -71,6 +72,7 @@ export interface CreateProductVariantPayload {
   price: number
   copy_template?: string
   description?: string
+  voucher_expiry_hours?: number
 }
 
 export interface CreateProductPayload {
@@ -87,6 +89,7 @@ export interface UpdateProductVariantPayload {
   price?: number
   copy_template?: string
   description?: string
+  voucher_expiry_hours?: number
 }
 
 export interface UpdateProductPayload {

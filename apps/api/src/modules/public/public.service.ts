@@ -191,7 +191,7 @@ export class PublicService {
       }
 
       // 4. Calculate expiry
-      const expiryHours = this.configService.get<number>('voucher.expiryHours') ?? 24;
+      const expiryHours = variant.voucher_expiry_hours ?? this.configService.get<number>('voucher.expiryHours') ?? 24;
       const expiredAt = new Date(Date.now() + expiryHours * 60 * 60 * 1000);
 
       // 5. Build Midtrans order

@@ -5,13 +5,24 @@ import { motion } from 'framer-motion'
 import { CheckCircle2, Copy, Home, MessageSquare, ArrowRight, Sparkles, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
-import { Suspense } from 'react'
+import { Suspense, useState, useEffect } from 'react'
 import { Navbar } from '@/components/navbar'
 import { Footer } from '@/components/footer'
+import { api } from '@/lib/api'
+import { AlertCircle } from 'lucide-react'
 
 function SuccessContent() {
   const searchParams = useSearchParams()
   const code = searchParams.get('voucher') || searchParams.get('code')
+  const [voucherData, setVoucherData] = useState<any>(null)
+
+  useEffect(() => {
+    if (code) {
+      api.get(`/public/voucher/${code}`)
+        .then(res => setVoucherData(res.data.voucher))
+        .catch(err => console.error('Gagal mengambil data voucher:', err))
+    }
+  }, [code])
 
   const copyCode = () => {
     if (code) {
@@ -56,6 +67,24 @@ function SuccessContent() {
               </button>
             </div>
           </div>
+
+          {voucherData?.expired_at && (
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-12 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-3 text-left"
+            >
+              <div className="p-2 bg-red-500/20 rounded-xl">
+                <AlertCircle className="size-5 text-red-500" />
+              </div>
+              <div>
+                <p className="text-xs font-black text-red-500 uppercase tracking-widest mb-0.5">Peringatan Penting</p>
+                <p className="text-sm text-gray-300 font-medium">
+                  Segera klaim voucher Anda sebelum <span className="text-white font-bold">{new Date(voucherData.expired_at).toLocaleString('id-ID', { dateStyle: 'long', timeStyle: 'short' })}</span> agar tidak hangus.
+                </p>
+              </div>
+            </motion.div>
+          )}
 
           <div className="flex flex-col gap-4">
             <Link 

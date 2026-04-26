@@ -27,6 +27,7 @@ export interface ProductVariantAttributes {
   price: number;
   description?: string;
   copy_template?: string;
+  voucher_expiry_hours?: number;
   product_id: string;
   product: ProductAttributes;
   platform_product?: PlatformProductAttributes[];
@@ -81,6 +82,9 @@ export class ProductVariant extends Model<
 
   @Column(DataType.TEXT)
   declare copy_template?: string;
+
+  @Column(DataType.INTEGER)
+  declare voucher_expiry_hours?: number;
 
   @ForeignKey(() => Product)
   @AllowNull(false)

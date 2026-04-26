@@ -59,7 +59,7 @@ export class VoucherService {
       if (!variant) throw new NotFoundException('Varian produk tidak ditemukan');
 
       const voucherCode = this.generateVoucherCode();
-      const expiryHours = this.configService.get<number>('voucher.expiryHours') ?? 168; // 7 days for manual
+      const expiryHours = variant.voucher_expiry_hours ?? this.configService.get<number>('voucher.expiryHours') ?? 168; // fallback to config or 7 days
       const expiredAt = new Date(Date.now() + expiryHours * 60 * 60 * 1000);
 
       const orderId = `M-${tenantId.toUpperCase().substring(0, 3)}-${Date.now()}`;

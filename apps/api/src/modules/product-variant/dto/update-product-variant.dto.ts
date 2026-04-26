@@ -27,6 +27,10 @@ export class UpdateProductVariantDto {
 
   @IsOptional()
   @IsNumber()
+  voucher_expiry_hours?: number;
+
+  @IsOptional()
+  @IsNumber()
   price: number;
 
   @IsOptional()

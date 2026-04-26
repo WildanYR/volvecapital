@@ -25,6 +25,10 @@ export class CreateProductVariantDto {
   @IsString()
   copy_template?: string;
 
+  @IsOptional()
+  @IsNumber()
+  voucher_expiry_hours?: number;
+
   @IsNotEmpty()
   @IsNumber()
   price: number;
