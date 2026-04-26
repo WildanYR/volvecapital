@@ -1,10 +1,11 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
-  PRODUCT_VARIANT_REPOSITORY,
-  TRANSACTION_ITEM_REPOSITORY,
-  TRANSACTION_REPOSITORY,
+  TENANT_REPOSITORY,
   VOUCHER_REPOSITORY,
+  PRODUCT_VARIANT_REPOSITORY,
+  TRANSACTION_REPOSITORY,
+  TRANSACTION_ITEM_REPOSITORY,
 } from 'src/constants/database.const';
 import { ProductVariant } from 'src/database/models/product-variant.model';
 import { Product } from 'src/database/models/product.model';
@@ -12,6 +13,7 @@ import { TransactionItem } from 'src/database/models/transaction-item.model';
 import { Transaction } from 'src/database/models/transaction.model';
 import { Voucher } from 'src/database/models/voucher.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
+import { Tenant } from 'src/database/models/tenant.model';
 import { AccountUser } from 'src/database/models/account-user.model';
 import { Account } from 'src/database/models/account.model';
 import { AccountProfile } from 'src/database/models/account-profile.model';
@@ -31,6 +33,8 @@ export class VoucherService {
     private readonly transactionItemRepository: typeof TransactionItem,
     @Inject(VOUCHER_REPOSITORY)
     private readonly voucherRepository: typeof Voucher,
+    @Inject(TENANT_REPOSITORY)
+    private readonly tenantRepository: typeof Tenant,
   ) {}
 
   private generateVoucherCode(): string {
@@ -223,6 +227,48 @@ export class VoucherService {
       await transaction.rollback();
       console.error(`[VoucherStats] Error for ${tenantId}:`, error);
       throw error;
+    }
+  }
+
+  async autoExpireVouchers() {
+    const masterTransaction = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema('master', masterTransaction);
+      const tenants = await this.tenantRepository.findAll({
+        raw: true,
+        transaction: masterTransaction,
+      });
+      await masterTransaction.commit();
+
+      for (const tenant of tenants) {
+        const transaction = await this.postgresProvider.transaction();
+        try {
+          await this.postgresProvider.setSchema(tenant.id, transaction);
+          
+          const [updatedCount] = await this.voucherRepository.update(
+            { status: 'EXPIRED' },
+            {
+              where: {
+                status: 'UNUSED',
+                expired_at: { [Op.lte]: new Date() },
+              },
+              transaction,
+            },
+          );
+
+          if (updatedCount > 0) {
+            console.log(`[VoucherCron] Expired ${updatedCount} vouchers for tenant ${tenant.id}`);
+          }
+
+          await transaction.commit();
+        } catch (error) {
+          await transaction.rollback();
+          console.error(`[VoucherCron] Error expiring vouchers for tenant ${tenant.id}:`, error.message);
+        }
+      }
+    } catch (error) {
+      await masterTransaction.rollback();
+      console.error(`[VoucherCron] Error fetching tenants:`, error.message);
     }
   }
 }
