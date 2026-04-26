@@ -13,6 +13,7 @@ export default function RedeemPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [result, setResult] = useState<any>(null)
   const [copied, setCopied] = useState(false)
+  const [accessToken, setAccessToken] = useState<string | null>(null)
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -34,6 +35,8 @@ export default function RedeemPage() {
     setIsLoading(true)
     try {
       const { data } = await api.post('/public/voucher/redeem', { voucher_code: code })
+      // Simpan access_token terpisah untuk portal link
+      if (data.access_token) setAccessToken(data.access_token)
       setResult({ ...result, voucher: { ...result.voucher, status: 'USED' }, account: data })
       toast.success('Voucher berhasil diredeem!')
     } catch (error: any) {
@@ -170,6 +173,25 @@ export default function RedeemPage() {
                       <div className="mt-4 p-6 bg-primary/5 rounded-2xl border border-primary/10 border-l-4 border-l-primary">
                         <p className="text-xs font-bold text-gray-500 uppercase tracking-[0.2em] mb-2">Instruksi Penggunaan</p>
                         <p className="text-sm text-gray-300 leading-relaxed font-medium italic">"{result.account.copy_template}"</p>
+                      </div>
+                    )}
+
+                    {/* Buyer Portal Button */}
+                    {accessToken && (
+                      <div className="mt-6 p-5 bg-blue-500/5 rounded-2xl border border-blue-500/20 flex flex-col md:flex-row items-center justify-between gap-4">
+                        <div>
+                          <p className="text-xs font-black text-blue-400 uppercase tracking-[0.2em] mb-1">📧 Portal Email OTP</p>
+                          <p className="text-sm text-gray-400">Pantau kode OTP & link reset Netflix akun Anda secara real-time.</p>
+                        </div>
+                        <a
+                          href={`${process.env.NEXT_PUBLIC_PORTAL_URL || 'http://localhost:3000'}/portal/${accessToken}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="shrink-0 px-6 py-3 bg-blue-500 hover:bg-blue-400 text-white font-black rounded-xl transition-all flex items-center gap-2 text-sm shadow-[0_6px_20px_rgba(59,130,246,0.3)]"
+                        >
+                          <ExternalLink className="size-4" />
+                          Akses Email Saya
+                        </a>
                       </div>
                     )}
                   </div>
