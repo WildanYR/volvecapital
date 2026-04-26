@@ -57,6 +57,7 @@ function RouteComponent() {
   // Search and Pagination State
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState('ALL')
   const [page, setPage] = useState(1)
   const limit = 10
 
@@ -80,8 +81,8 @@ function RouteComponent() {
   })
 
   const { data: vouchersData, isLoading: isVouchersLoading } = useQuery({
-    queryKey: ['vouchers', 'list', page, debouncedSearch],
-    queryFn: () => voucherService.list({ page, limit, search: debouncedSearch }),
+    queryKey: ['vouchers', 'list', page, debouncedSearch, statusFilter],
+    queryFn: () => voucherService.list({ page, limit, search: debouncedSearch, status: statusFilter }),
   })
 
   const generateMutation = useMutation({
@@ -243,14 +244,27 @@ function RouteComponent() {
                 <Ticket className="size-5" />
                 Daftar Voucher
               </CardTitle>
-              <div className="relative w-48 md:w-64">
-                <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
-                <Input 
-                  placeholder="Cari voucher/nama/tlp..." 
-                  className="pl-9 h-9 text-xs"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
+              <div className="flex items-center gap-3">
+                <div className="relative w-48 md:w-64">
+                  <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
+                  <Input 
+                    placeholder="Cari voucher/nama/tlp..." 
+                    className="pl-9 h-9 text-xs"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                  />
+                </div>
+                <Select value={statusFilter} onValueChange={(val) => { setStatusFilter(val); setPage(1) }}>
+                  <SelectTrigger className="h-9 w-[130px] text-xs">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">Semua</SelectItem>
+                    <SelectItem value="UNUSED">Unused</SelectItem>
+                    <SelectItem value="USED">Used</SelectItem>
+                    <SelectItem value="EXPIRED">Expired</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <CardDescription>Menampilkan daftar voucher yang pernah dibuat.</CardDescription>

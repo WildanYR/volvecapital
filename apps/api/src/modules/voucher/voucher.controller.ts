@@ -21,9 +21,10 @@ export class VoucherController {
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 10,
     @Query('search') search?: string,
+    @Query('status') status?: string,
   ) {
     const offset = (page - 1) * limit;
-    return this.voucherService.getVouchers(tenantId, { limit, offset, search });
+    return this.voucherService.getVouchers(tenantId, { limit, offset, search, status });
   }
 
   @Get('statistics')

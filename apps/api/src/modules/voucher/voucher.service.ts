@@ -106,13 +106,17 @@ export class VoucherService {
     }
   }
 
-  async getVouchers(tenantId: string, options: { limit?: number; offset?: number; search?: string } = {}) {
+  async getVouchers(tenantId: string, options: { limit?: number; offset?: number; search?: string; status?: string } = {}) {
     const transaction = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema(tenantId, transaction);
       
-      const { limit = 10, offset = 0, search } = options;
+      const { limit = 10, offset = 0, search, status } = options;
       const where: any = {};
+      
+      if (status && status !== 'ALL') {
+        where.status = status;
+      }
       
       if (search) {
         where[Op.or] = [

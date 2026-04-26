@@ -21,7 +21,7 @@ export function VoucherServiceGenerator(apiUrl: string, accessToken: string, ten
     return response.json()
   }
 
-  const list = async (params: { page?: number; limit?: number; search?: string } = {}) => {
+  const list = async (params: { page?: number; limit?: number; search?: string; status?: string } = {}) => {
     const response = await generateApiFetch(apiUrl, accessToken, tenantId, '/voucher', params)
     if (!response.ok) {
       const errorData = await parseApiResponse(response)
