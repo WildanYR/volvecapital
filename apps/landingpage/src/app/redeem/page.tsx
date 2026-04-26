@@ -25,6 +25,13 @@ export default function RedeemPage() {
     try {
       const { data } = await api.get(`/public/voucher/${code}`)
       setResult(data)
+      if (data?.voucher?.status === 'USED' && data?.voucher?.access_token) {
+        setAccessToken(data.voucher.access_token)
+        setTenantId(data.voucher.tenant_id)
+      } else {
+        setAccessToken(null)
+        setTenantId(null)
+      }
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Kode voucher tidak ditemukan')
     } finally {

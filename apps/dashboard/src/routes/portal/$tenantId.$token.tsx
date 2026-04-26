@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
+import { useState, useEffect } from 'react'
 import { PortalServiceGenerator } from '@/dashboard/services/portal.service'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/dashboard/components/ui/card'
 import { Button } from '@/dashboard/components/ui/button'
@@ -13,7 +14,8 @@ import {
   Calendar,
   User,
   ShieldCheck,
-  CheckCircle2
+  CheckCircle2,
+  Info
 } from 'lucide-react'
 import { formatDistanceToNow, format } from 'date-fns'
 import { id } from 'date-fns/locale'
@@ -35,6 +37,26 @@ function PortalPage() {
     refetchInterval: 30000,
     retry: false,
   })
+
+  const [countdown, setCountdown] = useState(30)
+
+  useEffect(() => {
+    if (isFetching) {
+      setCountdown(30)
+      return
+    }
+
+    const timer = setInterval(() => {
+      setCountdown(prev => {
+        if (prev <= 1) {
+          return 30
+        }
+        return prev - 1
+      })
+    }, 1000)
+
+    return () => clearInterval(timer)
+  }, [isFetching])
 
   if (isLoading) {
     return (
@@ -169,6 +191,22 @@ function PortalPage() {
           </div>
 
           <div className="grid gap-4">
+            <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 flex items-start gap-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
+              <div className="bg-blue-500/20 p-2 rounded-lg mt-0.5 shrink-0">
+                <Info className="size-5 text-blue-400" />
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-bold text-blue-400 uppercase tracking-widest">Peringatan Penting</p>
+                <p className="text-sm text-gray-300">
+                  Setelah Anda me-request link/kode dari aplikasi, mohon tunggu <strong>setidaknya 1 menit</strong>. Sistem kami akan otomatis mengambil pesan tersebut.
+                </p>
+                <p className="text-xs font-mono text-muted-foreground pt-1 flex items-center gap-2">
+                  <RefreshCw className={`size-3 ${countdown < 5 ? 'animate-spin text-primary' : ''}`} />
+                  Refresh otomatis dalam {countdown} detik...
+                </p>
+              </div>
+            </div>
+
             {messages.length === 0 ? (
               <Card className="bg-white/5 border-dashed border-white/10 py-12">
                 <CardContent className="flex flex-col items-center gap-4 text-center">
