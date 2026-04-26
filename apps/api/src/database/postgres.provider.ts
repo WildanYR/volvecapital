@@ -3,7 +3,9 @@ import { ConfigService } from '@nestjs/config';
 import * as pg from 'pg';
 import { QueryOptions, Transaction } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
+import { EMAIL_MESSAGE_REPOSITORY, EMAIL_REPOSITORY, EMAIL_SUBJECT_REPOSITORY, PEAK_HOUR_STATISTICS_REPOSITORY, PLATFORM_PRODUCT_REPOSITORY, PLATFORM_STATISTICS_REPOSITORY, PRODUCT_REPOSITORY, PRODUCT_SALES_STATISTICS_REPOSITORY, PRODUCT_VARIANT_REPOSITORY, REVENUE_STATISTICS_REPOSITORY, SYSLOG_REPOSITORY, TASK_QUEUE_REPOSITORY, TENANT_REPOSITORY, TRANSACTION_ITEM_REPOSITORY, TRANSACTION_REPOSITORY, VOUCHER_REPOSITORY, ACCOUNT_REPOSITORY, ACCOUNT_MODIFIER_REPOSITORY, ACCOUNT_PROFILE_REPOSITORY, ACCOUNT_USER_REPOSITORY, TENANT_SETTING_REPOSITORY } from 'src/constants/database.const';
 import { AccountModifier } from './models/account-modifier.model';
+import { EmailMessage } from './models/email-message.model';
 import { AccountProfile } from './models/account-profile.model';
 import { AccountUser } from './models/account-user.model';
 import { Account } from './models/account.model';
@@ -74,6 +76,7 @@ export class PostgresProvider {
         PeakHourStatistics,
         PlatformStatistics,
         EmailSubject,
+        EmailMessage,
         Syslog,
         Voucher,
         TenantSetting,

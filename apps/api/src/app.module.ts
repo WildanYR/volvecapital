@@ -34,6 +34,8 @@ import { UtilityModule } from './modules/utility/utility.module';
 import { PublicModule } from './modules/public/public.module';
 import { VoucherModule } from './modules/voucher/voucher.module';
 import { SettingModule } from './modules/setting/setting.module';
+import { EmailMessageModule } from './modules/email-message/email-message.module';
+import { EmailSubjectModule } from './modules/email-subject/email-subject.module';
 
 @Module({
   imports: [
@@ -76,6 +78,8 @@ import { SettingModule } from './modules/setting/setting.module';
     PublicModule,
     VoucherModule,
     SettingModule,
+    EmailMessageModule,
+    EmailSubjectModule,
   ],
   controllers: [AppController],
   providers: [{ provide: APP_GUARD, useClass: VcAuthGuard }, AppService],

@@ -21,8 +21,8 @@ export function VoucherServiceGenerator(apiUrl: string, accessToken: string, ten
     return response.json()
   }
 
-  const list = async () => {
-    const response = await generateApiFetch(apiUrl, accessToken, tenantId, '/voucher')
+  const list = async (params: { page?: number; limit?: number; search?: string } = {}) => {
+    const response = await generateApiFetch(apiUrl, accessToken, tenantId, '/voucher', params)
     if (!response.ok) {
       const errorData = await parseApiResponse(response)
       throw new Error(errorData.message || 'Failed to fetch vouchers')
@@ -30,5 +30,14 @@ export function VoucherServiceGenerator(apiUrl: string, accessToken: string, ten
     return response.json()
   }
 
-  return { generate, list }
+  const getStatistics = async () => {
+    const response = await generateApiFetch(apiUrl, accessToken, tenantId, '/voucher/statistics')
+    if (!response.ok) {
+      const errorData = await parseApiResponse(response)
+      throw new Error(errorData.message || 'Failed to fetch voucher statistics')
+    }
+    return response.json()
+  }
+
+  return { generate, list, getStatistics }
 }

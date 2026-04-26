@@ -12,6 +12,11 @@ import { TransactionItem } from 'src/database/models/transaction-item.model';
 import { Transaction } from 'src/database/models/transaction.model';
 import { Voucher } from 'src/database/models/voucher.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
+import { AccountUser } from 'src/database/models/account-user.model';
+import { Account } from 'src/database/models/account.model';
+import { AccountProfile } from 'src/database/models/account-profile.model';
+import { Email } from 'src/database/models/email.model';
+import { Op, QueryTypes } from 'sequelize';
 
 @Injectable()
 export class VoucherService {
@@ -101,26 +106,118 @@ export class VoucherService {
     }
   }
 
-  async getVouchers(tenantId: string) {
+  async getVouchers(tenantId: string, options: { limit?: number; offset?: number; search?: string } = {}) {
     const transaction = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema(tenantId, transaction);
-      const vouchers = await this.voucherRepository.findAll({
+      
+      const { limit = 10, offset = 0, search } = options;
+      const where: any = {};
+      
+      if (search) {
+        where[Op.or] = [
+          { id: { [Op.iLike]: `%${search}%` } },
+          { buyer_name: { [Op.iLike]: `%${search}%` } },
+          { buyer_whatsapp: { [Op.iLike]: `%${search}%` } },
+          { buyer_email: { [Op.iLike]: `%${search}%` } },
+        ];
+      }
+
+      const { rows: items, count: total } = await this.voucherRepository.findAndCountAll({
+        where,
         include: [
           {
             model: ProductVariant,
             as: 'product_variant',
             include: [{ model: Product, as: 'product' }],
           },
+          {
+            model: TransactionItem,
+            as: 'transaction_item',
+            include: [
+              {
+                model: AccountUser,
+                as: 'user',
+                include: [
+                  {
+                    model: Account,
+                    as: 'account',
+                    include: [{ model: Email, as: 'email' }],
+                  },
+                  {
+                    model: AccountProfile,
+                    as: 'profile',
+                  },
+                ],
+              },
+            ],
+          },
         ],
         order: [['created_at', 'DESC']],
-        limit: 50,
+        limit,
+        offset,
         transaction,
       });
+
       await transaction.commit();
-      return vouchers;
+      return { items, total };
     } catch (error) {
       await transaction.rollback();
+      throw error;
+    }
+  }
+
+  async getStatistics(tenantId: string) {
+    const transaction = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema(tenantId, transaction);
+      
+      const [stats]: any = await this.postgresProvider.rawQuery(`
+        SELECT 
+          COUNT(*)::INT as "totalGenerated",
+          COUNT(*) FILTER (WHERE status = 'USED')::INT as "totalRedeemed",
+          COUNT(*) FILTER (WHERE status = 'UNUSED' AND payment_status = 'PAID' AND expired_at > NOW())::INT as "totalTersedia",
+          COUNT(*) FILTER (WHERE status = 'UNUSED')::INT as "totalUnused",
+          COUNT(*) FILTER (WHERE status = 'UNUSED' AND expired_at <= NOW())::INT as "totalKadaluarsa"
+        FROM "voucher"
+      `, { 
+        transaction,
+        type: QueryTypes.SELECT 
+      });
+
+      // Untuk totalAktif (USED aktif + UNUSED belum expired)
+      const [aktifResult]: any = await this.postgresProvider.rawQuery(`
+        SELECT COUNT(*)::INT as "count"
+        FROM "voucher" v
+        LEFT JOIN "transaction_item" ti ON v.transaction_item_id = ti.id
+        LEFT JOIN "account_user" au ON ti.account_user_id = au.id
+        WHERE 
+          (v.status = 'USED' AND (au.expired_at > NOW() OR au.expired_at IS NULL))
+          OR 
+          (v.status = 'UNUSED' AND v.expired_at > NOW())
+      `, { 
+        transaction,
+        type: QueryTypes.SELECT 
+      });
+
+      await transaction.commit();
+
+      const result = {
+        totalGenerated: stats.totalGenerated || 0,
+        totalRedeemed: stats.totalRedeemed || 0,
+        totalTersedia: stats.totalTersedia || 0,
+        totalRedeemedDanTersedia: (stats.totalRedeemed || 0) + (stats.totalTersedia || 0),
+        totalUnused: stats.totalUnused || 0,
+        totalUsed: stats.totalRedeemed || 0,
+        totalAktif: aktifResult.count || 0,
+        totalKadaluarsa: stats.totalKadaluarsa || 0,
+      };
+
+      console.log(`[VoucherStats] ${tenantId} result:`, result);
+      return result;
+    } catch (error) {
+      await transaction.rollback();
+      console.error(`[VoucherStats] Error for ${tenantId}:`, error);
       throw error;
     }
   }

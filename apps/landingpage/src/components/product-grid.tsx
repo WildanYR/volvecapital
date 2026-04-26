@@ -102,7 +102,7 @@ export function ProductGrid({ products, onSelectVariant }: ProductGridProps) {
         >
           <Link 
             href="/product"
-            className="inline-flex items-center gap-3 px-10 py-5 glass border-white/10 text-white font-black rounded-2xl hover:bg-white/5 transition-all uppercase text-sm tracking-widest"
+            className="inline-flex items-center gap-3 px-10 py-5 glass border-white/10 text-white font-black rounded-2xl hover:bg-primary hover:text-black transition-all flex items-center justify-center gap-3 shadow-lg"
           >
             Lihat Semua Layanan
             <ArrowRight className="size-4" />

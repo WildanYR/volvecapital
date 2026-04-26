@@ -4,8 +4,10 @@ import { UtilityModule } from '../utility/utility.module';
 import { EmailForwardController } from './email-forward.controller';
 import { EmailForwardService } from './email-forward.service';
 
+import { DatabaseModule } from 'src/database/database.module';
+
 @Module({
-  imports: [UtilityModule, SocketModule],
+  imports: [DatabaseModule, UtilityModule, SocketModule],
   providers: [EmailForwardService],
   controllers: [EmailForwardController],
 })

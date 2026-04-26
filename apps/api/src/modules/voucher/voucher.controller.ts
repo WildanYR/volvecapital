@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Headers, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Post, Query, UseGuards } from '@nestjs/common';
 import { VcAuthGuard } from 'src/guards/vc-auth.guard';
 import { VoucherService } from './voucher.service';
 
@@ -16,7 +16,18 @@ export class VoucherController {
   }
 
   @Get()
-  async list(@Headers('x-tenant-id') tenantId: string) {
-    return this.voucherService.getVouchers(tenantId);
+  async list(
+    @Headers('x-tenant-id') tenantId: string,
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+    @Query('search') search?: string,
+  ) {
+    const offset = (page - 1) * limit;
+    return this.voucherService.getVouchers(tenantId, { limit, offset, search });
+  }
+
+  @Get('statistics')
+  async statistics(@Headers('x-tenant-id') tenantId: string) {
+    return this.voucherService.getStatistics(tenantId);
   }
 }

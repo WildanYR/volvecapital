@@ -21,6 +21,10 @@ class EmailDataDto {
 }
 
 export class RecieveEmailDto {
+  @IsNotEmpty()
+  @IsString()
+  tenant: string;
+
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => EmailDataDto)

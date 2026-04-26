@@ -9,7 +9,8 @@ export class EmailParser {
   extractNetflixResetLink(emailText: string) {
     const cleanText = emailText.replace(/[\u200C-\u200F]/g, '').trim();
 
-    const linkMatch = cleanText.match(/https:\/\/www\.netflix\.com\/password[^\s>\]]+/);
+    // Mencari link netflix apa saja (password, restart, login, dll)
+    const linkMatch = cleanText.match(/https:\/\/www\.netflix\.com\/[^\s>\]]+/);
     const resetLink = linkMatch ? linkMatch[0] : null;
 
     return resetLink;

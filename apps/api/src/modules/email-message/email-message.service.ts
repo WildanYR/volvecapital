@@ -3,6 +3,7 @@ import { Op, WhereOptions } from 'sequelize';
 import { EMAIL_MESSAGE_REPOSITORY } from 'src/constants/database.const';
 import { EmailMessage } from 'src/database/models/email-message.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
+import { DatabaseModule } from 'src/database/database.module';
 import { PaginationProvider } from '../utility/pagination.provider';
 import { BaseGetAllUrlQuery } from '../utility/types/base-get-all-url-query.type';
 import { IEmailMessageGetFilter } from './filter/email-message-get.filter';
@@ -29,7 +30,11 @@ export class EmailMessageService {
         pagination,
       );
 
-      const whereOptions: WhereOptions = {};
+      console.log(`[DEBUG] Fetching emails for tenant: ${tenantId}, limit: ${limit}, offset: ${offset}`);
+
+      const whereOptions: WhereOptions = {
+        tenant_id: tenantId,
+      };
       if (filter?.from_email) {
         whereOptions.from_email = { [Op.iLike]: `%${filter.from_email}%` };
       }

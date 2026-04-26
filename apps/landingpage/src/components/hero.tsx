@@ -79,7 +79,7 @@ export function Hero() {
             </Link>
             <Link 
               href="/redeem"
-              className="px-12 py-5 glass border-white/10 text-white font-black rounded-2xl hover:bg-white/5 transition-all w-full sm:w-auto flex items-center gap-3 justify-center uppercase text-sm tracking-widest"
+              className="group relative px-12 py-5 bg-green-500 text-black font-black rounded-2xl transition-all hover:scale-105 active:scale-95 flex items-center gap-3 w-full sm:w-auto justify-center shadow-[0_15px_40px_rgba(255,184,0,0.3)]"
             >
               Tukarkan Voucher
             </Link>

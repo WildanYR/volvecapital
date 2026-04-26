@@ -30,6 +30,7 @@ export interface VoucherAttributes {
   payment_status: PaymentStatus;
   product_variant?: ProductVariantAttributes;
   transaction?: TransactionAttributes;
+  used_at?: Date | null;
   created_at: Date;
   updated_at: Date;
 }
@@ -44,6 +45,7 @@ interface VoucherCreationAttributes
     | 'payment_id'
     | 'product_variant'
     | 'transaction'
+    | 'used_at'
     | 'created_at'
     | 'updated_at'
   > {}
@@ -90,6 +92,9 @@ export class Voucher extends Model<VoucherAttributes, VoucherCreationAttributes>
   @Column(DataType.STRING)
   declare payment_id?: string | null;
 
+  @Column(DataType.DATE)
+  declare used_at?: Date | null;
+
   @Column(DataType.STRING)
   declare payment_status: PaymentStatus;
 
@@ -98,4 +103,7 @@ export class Voucher extends Model<VoucherAttributes, VoucherCreationAttributes>
 
   @BelongsTo(() => Transaction, 'transaction_id')
   declare transaction?: Transaction;
+
+  @BelongsTo(() => TransactionItem, 'transaction_item_id')
+  declare transaction_item?: TransactionItem;
 }

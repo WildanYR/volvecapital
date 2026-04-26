@@ -558,7 +558,7 @@ export class PublicService {
       }
 
       // 6. Mark voucher as USED
-      await voucher.update({ status: 'USED' }, { transaction });
+      await voucher.update({ status: 'USED', used_at: new Date() }, { transaction });
 
       await transaction.commit();
 
