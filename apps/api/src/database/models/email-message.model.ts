@@ -15,6 +15,7 @@ export interface EmailMessageAttributes {
   from_email: string;
   subject: string;
   email_date: Date;
+  recipient_email?: string | null;
   parsed_context: string;
   parsed_data: string;
   created_at: Date;
@@ -48,9 +49,11 @@ export class EmailMessage extends Model<
   @Column(DataType.STRING)
   declare subject: string;
 
-  @AllowNull(false)
   @Column(DataType.DATE)
   declare email_date: Date;
+
+  @Column(DataType.STRING)
+  declare recipient_email?: string | null;
 
   @AllowNull(false)
   @Column(DataType.STRING)

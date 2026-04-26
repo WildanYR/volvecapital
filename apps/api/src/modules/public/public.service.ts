@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as https from 'https';
+import * as crypto from 'node:crypto';
 import * as nodemailer from 'nodemailer';
 import { Op } from 'sequelize';
 import {
@@ -20,6 +21,8 @@ import {
   TRANSACTION_REPOSITORY,
   VOUCHER_REPOSITORY,
   TENANT_SETTING_REPOSITORY,
+  EMAIL_MESSAGE_REPOSITORY,
+  EMAIL_SUBJECT_REPOSITORY,
 } from 'src/constants/database.const';
 import { AccountProfile } from 'src/database/models/account-profile.model';
 import { AccountUser } from 'src/database/models/account-user.model';
@@ -30,6 +33,8 @@ import { Product } from 'src/database/models/product.model';
 import { TransactionItem } from 'src/database/models/transaction-item.model';
 import { Transaction } from 'src/database/models/transaction.model';
 import { Voucher } from 'src/database/models/voucher.model';
+import { EmailMessage } from 'src/database/models/email-message.model';
+import { EmailSubject } from 'src/database/models/email-subject.model';
 import { TenantSetting } from 'src/database/models/tenant-setting.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
 import { CreatePaymentDto } from './dto/create-payment.dto';
@@ -60,6 +65,10 @@ export class PublicService {
     private readonly voucherRepository: typeof Voucher,
     @Inject(TENANT_SETTING_REPOSITORY)
     private readonly tenantSettingRepository: typeof TenantSetting,
+    @Inject(EMAIL_MESSAGE_REPOSITORY)
+    private readonly emailMessageRepository: typeof EmailMessage,
+    @Inject(EMAIL_SUBJECT_REPOSITORY)
+    private readonly emailSubjectRepository: typeof EmailSubject,
   ) {}
 
   async getSettings(tenantId: string) {
@@ -557,8 +566,15 @@ export class PublicService {
         );
       }
 
-      // 6. Mark voucher as USED
-      await voucher.update({ status: 'USED', used_at: new Date() }, { transaction });
+      // 6. Mark voucher as USED & Generate Access Token
+      const accessToken = crypto.randomUUID();
+      await voucher.update({ 
+        status: 'USED', 
+        used_at: new Date(),
+        access_token: accessToken,
+        access_count_today: 0,
+        last_access_at: new Date(),
+      }, { transaction });
 
       await transaction.commit();
 
@@ -586,6 +602,7 @@ export class PublicService {
         profile_name: profileName,
         expired_at: expiredAt,
         copy_template: copyTemplate,
+        access_token: voucher.access_token,
       };
     }
     catch (error) {
@@ -816,5 +833,114 @@ export class PublicService {
         <p style="font-size: 12px; color: #777; margin-top: 30px;">Jika Anda sudah membayar, silakan abaikan email ini.</p>
       </div>`,
     });
+  }
+
+  // ─── GET EMAIL ACCESS FOR BUYER ─────────────────────────────────────────────
+
+  async getEmailAccess(tenantId: string, token: string) {
+    const transaction = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema(tenantId, transaction);
+
+      // 1. Find voucher by token
+      const voucher = await this.voucherRepository.findOne({
+        where: { access_token: token },
+        include: [
+          {
+            model: TransactionItem,
+            as: 'transaction_item',
+            include: [
+              {
+                model: AccountUser,
+                as: 'user',
+                include: [
+                  {
+                    model: Account,
+                    as: 'account',
+                    include: [{ model: Email, as: 'email' }],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+        transaction,
+      });
+
+      if (!voucher) throw new NotFoundException('Token akses tidak valid');
+      if (voucher.status !== 'USED') throw new BadRequestException('Voucher belum di-redeem');
+
+      const user = (voucher.transaction_item as any)?.user;
+      if (!user) throw new NotFoundException('Data akun tidak ditemukan');
+
+      // 2. Check Expiry (Strict)
+      if (user.expired_at && new Date() > user.expired_at) {
+        throw new BadRequestException('Masa aktif voucher sudah habis. Akses ditutup.');
+      }
+
+      // 3. Check Daily Limit (10x)
+      const now = new Date();
+      const lastAccess = voucher.last_access_at ? new Date(voucher.last_access_at) : null;
+      const isSameDay = lastAccess && 
+        lastAccess.getDate() === now.getDate() && 
+        lastAccess.getMonth() === now.getMonth() && 
+        lastAccess.getFullYear() === now.getFullYear();
+
+      if (isSameDay) {
+        if (voucher.access_count_today >= 10) {
+          throw new BadRequestException('Batas akses harian (10x) tercapai. Silakan coba lagi besok.');
+        }
+        await voucher.update({ 
+          access_count_today: voucher.access_count_today + 1,
+          last_access_at: now 
+        }, { transaction });
+      } else {
+        await voucher.update({ 
+          access_count_today: 1, 
+          last_access_at: now 
+        }, { transaction });
+      }
+
+      // 4. Get Allowed Subjects (is_public = true)
+      await this.postgresProvider.setSchema('master', transaction);
+      const publicSubjects = await this.emailSubjectRepository.findAll({
+        where: { is_public: true },
+        transaction,
+      });
+      const allowedContexts = publicSubjects.map(s => s.context);
+
+      // 5. Fetch Messages
+      await this.postgresProvider.setSchema(tenantId, transaction);
+      const accountEmail = user.account?.email?.email;
+      if (!accountEmail) throw new NotFoundException('Email akun tidak ditemukan');
+
+      const messages = await this.emailMessageRepository.findAll({
+        where: {
+          recipient_email: accountEmail,
+          parsed_context: { [Op.in]: allowedContexts },
+        },
+        order: [['email_date', 'DESC']],
+        limit: 20,
+        transaction,
+      });
+
+      await transaction.commit();
+
+      return {
+        account: {
+          email: accountEmail,
+          profile_name: user.profile?.name,
+          expired_at: user.expired_at,
+        },
+        messages,
+        limit: {
+          remaining: 10 - (isSameDay ? voucher.access_count_today + 1 : 1),
+          total: 10
+        }
+      };
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
   }
 }

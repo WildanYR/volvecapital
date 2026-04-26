@@ -63,14 +63,15 @@ export class EmailForwardService {
 
               if (data && context) {
                 // 1. Save to database
-                await this.emailMessageRepository.create({
-                  tenant_id: payload.tenant,
-                  from_email: e.from,
-                  subject: e.subject,
-                  email_date: new Date(e.date),
-                  parsed_context: context,
-                  parsed_data: data,
-                }, { transaction });
+                  await this.emailMessageRepository.create({
+                    tenant_id: payload.tenant,
+                    from_email: e.from,
+                    recipient_email: e.recipient,
+                    subject: e.subject,
+                    email_date: new Date(e.date),
+                    parsed_context: context,
+                    parsed_data: data,
+                  }, { transaction });
 
                 // 2. Send via Socket
                 const sanitizeEmail = this.emailParser.sanitizeEmail(e.from);

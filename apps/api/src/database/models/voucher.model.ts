@@ -31,6 +31,9 @@ export interface VoucherAttributes {
   product_variant?: ProductVariantAttributes;
   transaction?: TransactionAttributes;
   used_at?: Date | null;
+  access_token?: string | null;
+  access_count_today: number;
+  last_access_at?: Date | null;
   created_at: Date;
   updated_at: Date;
 }
@@ -40,6 +43,9 @@ interface VoucherCreationAttributes
     VoucherAttributes,
     | 'status'
     | 'payment_status'
+    | 'access_token'
+    | 'access_count_today'
+    | 'last_access_at'
     | 'transaction_id'
     | 'transaction_item_id'
     | 'payment_id'
@@ -94,6 +100,19 @@ export class Voucher extends Model<VoucherAttributes, VoucherCreationAttributes>
 
   @Column(DataType.DATE)
   declare used_at?: Date | null;
+
+  @Column(DataType.STRING)
+  declare access_token?: string | null;
+
+  @AllowNull(false)
+  @Column({
+    type: DataType.INTEGER,
+    defaultValue: 0,
+  })
+  declare access_count_today: number;
+
+  @Column(DataType.DATE)
+  declare last_access_at?: Date | null;
 
   @Column(DataType.STRING)
   declare payment_status: PaymentStatus;

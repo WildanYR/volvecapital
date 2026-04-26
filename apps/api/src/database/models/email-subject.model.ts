@@ -13,6 +13,7 @@ export interface EmailSubjectAttributes {
   id: string;
   context: string;
   subject: string;
+  is_public: boolean;
   created_at: Date;
   updated_at: Date;
 }
@@ -20,7 +21,7 @@ export interface EmailSubjectAttributes {
 interface EmailSubjectCreationAttributes
   extends Optional<
     EmailSubjectAttributes,
-    'id' | 'created_at' | 'updated_at'
+    'id' | 'is_public' | 'created_at' | 'updated_at'
   > {}
 
 @Table({ tableName: 'email_subject' })
@@ -37,4 +38,11 @@ export class EmailSubject extends Model<EmailSubjectAttributes, EmailSubjectCrea
   @AllowNull(false)
   @Column(DataType.STRING)
   declare subject: string;
+
+  @AllowNull(false)
+  @Column({
+    type: DataType.BOOLEAN,
+    defaultValue: false,
+  })
+  declare is_public: boolean;
 }

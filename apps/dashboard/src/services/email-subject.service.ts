@@ -4,6 +4,7 @@ export interface EmailSubject {
   id: string;
   context: string;
   subject: string;
+  is_public: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -17,7 +18,7 @@ export function EmailSubjectServiceGenerator(apiUrl: string, accessToken: string
     return response.json()
   }
 
-  const createEmailSubject = async (data: { context: string; subject: string }): Promise<EmailSubject> => {
+  const createEmailSubject = async (data: { context: string; subject: string; is_public?: boolean }): Promise<EmailSubject> => {
     const response = await generateApiFetch(apiUrl, accessToken, tenantId, '/email-subject', {}, {
       method: 'POST',
       headers: {
@@ -40,9 +41,23 @@ export function EmailSubjectServiceGenerator(apiUrl: string, accessToken: string
     }
   }
 
+  const updateEmailSubject = async (id: string, data: Partial<EmailSubject>): Promise<void> => {
+    const response = await generateApiFetch(apiUrl, accessToken, tenantId, `/email-subject/${id}`, {}, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    })
+    if (!response.ok) {
+      throw new Error('Failed to update email subject')
+    }
+  }
+
   return {
     getEmailSubjects,
     createEmailSubject,
+    updateEmailSubject,
     deleteEmailSubject,
   }
 }

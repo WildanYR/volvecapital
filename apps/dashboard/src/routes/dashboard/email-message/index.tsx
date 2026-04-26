@@ -28,6 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/dashboard/components/ui/select'
+import { Switch } from '@/dashboard/components/ui/switch'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -58,7 +59,7 @@ function RouteComponent() {
   // States for Email Subject Management
   const [isSubjectDialogOpen, setIsSubjectDialogOpen] = useState(false)
   const [subjectToDelete, setSubjectToDelete] = useState<string | null>(null)
-  const [newSubject, setNewSubject] = useState({ context: 'NETFLIX_OTP', subject: '' })
+  const [newSubject, setNewSubject] = useState({ context: 'NETFLIX_OTP', subject: '', is_public: true })
   const [subjectPage, setSubjectPage] = useState(1)
   const subjectsPerPage = 5
 
@@ -104,9 +105,19 @@ function RouteComponent() {
       queryClient.invalidateQueries({ queryKey: ['email-subjects'] })
       toast.success('Subjek email berhasil ditambahkan')
       setIsSubjectDialogOpen(false)
-      setNewSubject({ context: 'NETFLIX_OTP', subject: '' })
+      setNewSubject({ context: 'NETFLIX_OTP', subject: '', is_public: true })
     },
     onError: () => toast.error('Gagal menambahkan subjek email'),
+  })
+
+  const updateSubjectMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) =>
+      emailSubjectService.updateEmailSubject(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['email-subjects'] })
+      toast.success('Pengaturan subjek diperbarui')
+    },
+    onError: () => toast.error('Gagal memperbarui subjek'),
   })
 
   const deleteSubjectMutation = useMutation({
@@ -190,6 +201,16 @@ function RouteComponent() {
                     </SelectContent>
                   </Select>
                 </div>
+                <div className="flex items-center justify-between py-2 border-y border-border/50">
+                  <div className="space-y-0.5">
+                    <Label>Izinkan Buyer?</Label>
+                    <p className="text-xs text-muted-foreground">Pembeli bisa melihat email dengan subjek ini.</p>
+                  </div>
+                  <Switch
+                    checked={newSubject.is_public}
+                    onCheckedChange={(val) => setNewSubject({ ...newSubject, is_public: val })}
+                  />
+                </div>
                 <div className="grid gap-2">
                   <Label>Subject Email</Label>
                   <Input
@@ -215,14 +236,15 @@ function RouteComponent() {
               <TableRow className="*:p-4">
                 <TableHead>Context</TableHead>
                 <TableHead>Subject Email</TableHead>
+                <TableHead className="text-center">Akses Buyer</TableHead>
                 <TableHead className="text-right">Aksi</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isSubjectsLoading ? (
-                <TableRow><TableCell colSpan={3} className="text-center py-6">Loading...</TableCell></TableRow>
+                <TableRow><TableCell colSpan={4} className="text-center py-6">Loading...</TableCell></TableRow>
               ) : subjects?.length === 0 ? (
-                <TableRow><TableCell colSpan={3} className="text-center py-6 text-muted-foreground">No subjects registered.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={4} className="text-center py-6 text-muted-foreground">No subjects registered.</TableCell></TableRow>
               ) : (
                 paginatedSubjects?.map((s) => (
                   <TableRow key={s.id} className="group *:px-4 *:py-6 h-16">
@@ -236,6 +258,14 @@ function RouteComponent() {
                       </span>
                     </TableCell>
                     <TableCell className="font-medium text-base">{s.subject}</TableCell>
+                    <TableCell className="text-center">
+                      <div className="flex justify-center">
+                        <Switch
+                          checked={s.is_public}
+                          onCheckedChange={(val) => updateSubjectMutation.mutate({ id: s.id, data: { is_public: val } })}
+                        />
+                      </div>
+                    </TableCell>
                     <TableCell className="text-right">
                       <Button
                         variant="ghost"

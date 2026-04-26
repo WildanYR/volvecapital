@@ -108,4 +108,15 @@ export class PublicController {
     const tenantId = this.getTenantId(host, xTenantId);
     return this.publicService.redeemVoucher(tenantId, dto);
   }
+
+  @Get('email-access/:token')
+  getEmailAccess(
+    @Headers() headers: any,
+    @Param('token') token: string,
+  ) {
+    const host = headers.host || '';
+    const xTenantId = headers['x-tenant-id'];
+    const tenantId = this.getTenantId(host, xTenantId);
+    return this.publicService.getEmailAccess(tenantId, token);
+  }
 }

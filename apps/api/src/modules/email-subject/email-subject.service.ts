@@ -27,13 +27,29 @@ export class EmailSubjectService {
     }
   }
 
-  async create(data: { context: string; subject: string }) {
+  async create(data: { context: string; subject: string; is_public?: boolean }) {
     const transaction = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema('master', transaction);
       const subject = await this.emailSubjectRepository.create(data, { transaction });
       await transaction.commit();
       return subject;
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
+
+  async update(id: string, data: { context?: string; subject?: string; is_public?: boolean }) {
+    const transaction = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema('master', transaction);
+      await this.emailSubjectRepository.update(data, {
+        where: { id },
+        transaction,
+      });
+      await transaction.commit();
+      return { success: true };
     } catch (error) {
       await transaction.rollback();
       throw error;

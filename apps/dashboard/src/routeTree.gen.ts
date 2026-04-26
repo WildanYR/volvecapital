@@ -13,6 +13,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as DashboardRouteRouteImport } from './routes/dashboard/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
+import { Route as PortalTokenRouteImport } from './routes/portal/$token'
 import { Route as DashboardVoucherGeneratorIndexRouteImport } from './routes/dashboard/voucher-generator/index'
 import { Route as DashboardTransactionIndexRouteImport } from './routes/dashboard/transaction/index'
 import { Route as DashboardSettingIndexRouteImport } from './routes/dashboard/setting/index'
@@ -50,6 +51,11 @@ const DashboardIndexRoute = DashboardIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => DashboardRouteRoute,
+} as any)
+const PortalTokenRoute = PortalTokenRouteImport.update({
+  id: '/portal/$token',
+  path: '/portal/$token',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardVoucherGeneratorIndexRoute =
   DashboardVoucherGeneratorIndexRouteImport.update({
@@ -148,6 +154,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRouteRouteWithChildren
   '/login': typeof LoginRoute
+  '/portal/$token': typeof PortalTokenRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/dashboard/account/$slug': typeof DashboardAccountSlugRoute
   '/dashboard/account/create': typeof DashboardAccountCreateRoute
@@ -170,6 +177,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/portal/$token': typeof PortalTokenRoute
   '/dashboard': typeof DashboardIndexRoute
   '/dashboard/account/$slug': typeof DashboardAccountSlugRoute
   '/dashboard/account/create': typeof DashboardAccountCreateRoute
@@ -194,6 +202,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRouteRouteWithChildren
   '/login': typeof LoginRoute
+  '/portal/$token': typeof PortalTokenRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/dashboard/account/$slug': typeof DashboardAccountSlugRoute
   '/dashboard/account/create': typeof DashboardAccountCreateRoute
@@ -219,6 +228,7 @@ export interface FileRouteTypes {
     | '/'
     | '/dashboard'
     | '/login'
+    | '/portal/$token'
     | '/dashboard/'
     | '/dashboard/account/$slug'
     | '/dashboard/account/create'
@@ -241,6 +251,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/portal/$token'
     | '/dashboard'
     | '/dashboard/account/$slug'
     | '/dashboard/account/create'
@@ -264,6 +275,7 @@ export interface FileRouteTypes {
     | '/'
     | '/dashboard'
     | '/login'
+    | '/portal/$token'
     | '/dashboard/'
     | '/dashboard/account/$slug'
     | '/dashboard/account/create'
@@ -288,6 +300,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DashboardRouteRoute: typeof DashboardRouteRouteWithChildren
   LoginRoute: typeof LoginRoute
+  PortalTokenRoute: typeof PortalTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -319,6 +332,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard/'
       preLoaderRoute: typeof DashboardIndexRouteImport
       parentRoute: typeof DashboardRouteRoute
+    }
+    '/portal/$token': {
+      id: '/portal/$token'
+      path: '/portal/$token'
+      fullPath: '/portal/$token'
+      preLoaderRoute: typeof PortalTokenRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/dashboard/voucher-generator/': {
       id: '/dashboard/voucher-generator/'
@@ -492,6 +512,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashboardRouteRoute: DashboardRouteRouteWithChildren,
   LoginRoute: LoginRoute,
+  PortalTokenRoute: PortalTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

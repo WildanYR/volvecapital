@@ -8,6 +8,10 @@ class EmailDataDto {
 
   @IsNotEmpty()
   @IsString()
+  recipient: string;
+
+  @IsNotEmpty()
+  @IsString()
   subject: string;
 
   @IsNotEmpty()
