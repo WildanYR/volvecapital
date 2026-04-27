@@ -119,4 +119,23 @@ export class PublicController {
     const tenantId = this.getTenantId(host, xTenantId);
     return this.publicService.getEmailAccess(tenantId, token);
   }
+
+  @Get('tutorial')
+  getTutorials(@Headers() headers: any) {
+    const host = headers.host || '';
+    const xTenantId = headers['x-tenant-id'];
+    const tenantId = this.getTenantId(host, xTenantId);
+    return this.publicService.getTutorials(tenantId);
+  }
+
+  @Get('tutorial/:slug')
+  getTutorialBySlug(
+    @Headers() headers: any,
+    @Param('slug') slug: string,
+  ) {
+    const host = headers.host || '';
+    const xTenantId = headers['x-tenant-id'];
+    const tenantId = this.getTenantId(host, xTenantId);
+    return this.publicService.getTutorialBySlug(tenantId, slug);
+  }
 }

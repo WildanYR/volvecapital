@@ -23,6 +23,7 @@ import {
   TENANT_SETTING_REPOSITORY,
   EMAIL_MESSAGE_REPOSITORY,
   EMAIL_SUBJECT_REPOSITORY,
+  TUTORIAL_REPOSITORY,
 } from 'src/constants/database.const';
 import { AccountProfile } from 'src/database/models/account-profile.model';
 import { AccountUser } from 'src/database/models/account-user.model';
@@ -36,6 +37,7 @@ import { Voucher } from 'src/database/models/voucher.model';
 import { EmailMessage } from 'src/database/models/email-message.model';
 import { EmailSubject } from 'src/database/models/email-subject.model';
 import { TenantSetting } from 'src/database/models/tenant-setting.model';
+import { Tutorial } from 'src/database/models/tutorial.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { RedeemVoucherDto } from './dto/redeem-voucher.dto';
@@ -69,6 +71,8 @@ export class PublicService {
     private readonly emailMessageRepository: typeof EmailMessage,
     @Inject(EMAIL_SUBJECT_REPOSITORY)
     private readonly emailSubjectRepository: typeof EmailSubject,
+    @Inject(TUTORIAL_REPOSITORY)
+    private readonly tutorialRepository: typeof Tutorial,
   ) {}
 
   async getSettings(tenantId: string) {
@@ -977,6 +981,41 @@ export class PublicService {
           total: MAX_ACCESS
         }
       };
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
+
+  async getTutorials(tenantId: string) {
+    const transaction = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema(tenantId, transaction);
+      const tutorials = await this.tutorialRepository.findAll({
+        where: { is_published: true },
+        attributes: ['id', 'title', 'slug', 'subtitle', 'thumbnail_url', 'created_at'],
+        order: [['created_at', 'DESC']],
+        transaction,
+      });
+      await transaction.commit();
+      return tutorials;
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
+
+  async getTutorialBySlug(tenantId: string, slug: string) {
+    const transaction = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema(tenantId, transaction);
+      const tutorial = await this.tutorialRepository.findOne({
+        where: { slug, is_published: true },
+        transaction,
+      });
+      if (!tutorial) throw new NotFoundException('Tutorial tidak ditemukan');
+      await transaction.commit();
+      return tutorial;
     } catch (error) {
       await transaction.rollback();
       throw error;

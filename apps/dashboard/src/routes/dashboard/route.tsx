@@ -16,6 +16,7 @@ import {
   Receipt,
   Ticket,
   User,
+  BookOpen,
 } from 'lucide-react'
 import { Button } from '@/dashboard/components/ui/button'
 import {
@@ -76,6 +77,7 @@ const navGroups = [
     title: 'Settings',
     items: [
       { title: 'Landing Page', url: '/dashboard/setting', icon: House },
+      { title: 'Tutorial', url: '/dashboard/setting/tutorial', icon: BookOpen },
     ],
   },
 ]

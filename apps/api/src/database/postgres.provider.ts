@@ -25,6 +25,7 @@ import { TransactionItem } from './models/transaction-item.model';
 import { Transaction as TransactionModel } from './models/transaction.model';
 import { Voucher } from './models/voucher.model';
 import { TenantSetting } from './models/tenant-setting.model';
+import { Tutorial } from './models/tutorial.model';
 
 @Injectable()
 export class PostgresProvider {
@@ -80,6 +81,7 @@ export class PostgresProvider {
         Syslog,
         Voucher,
         TenantSetting,
+        Tutorial,
       ]);
     }
     else {

@@ -36,6 +36,7 @@ import { VoucherModule } from './modules/voucher/voucher.module';
 import { SettingModule } from './modules/setting/setting.module';
 import { EmailMessageModule } from './modules/email-message/email-message.module';
 import { EmailSubjectModule } from './modules/email-subject/email-subject.module';
+import { TutorialModule } from './modules/tutorial/tutorial.module';
 
 @Module({
   imports: [
@@ -80,6 +81,7 @@ import { EmailSubjectModule } from './modules/email-subject/email-subject.module
     SettingModule,
     EmailMessageModule,
     EmailSubjectModule,
+    TutorialModule,
   ],
   controllers: [AppController],
   providers: [{ provide: APP_GUARD, useClass: VcAuthGuard }, AppService],

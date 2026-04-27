@@ -32,6 +32,7 @@ import { Route as DashboardEmailCreateRouteImport } from './routes/dashboard/ema
 import { Route as DashboardEmailIdRouteImport } from './routes/dashboard/email/$id'
 import { Route as DashboardAccountCreateRouteImport } from './routes/dashboard/account/create'
 import { Route as DashboardAccountSlugRouteImport } from './routes/dashboard/account/$slug'
+import { Route as DashboardSettingTutorialIndexRouteImport } from './routes/dashboard/setting/tutorial.index'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -155,6 +156,12 @@ const DashboardAccountSlugRoute = DashboardAccountSlugRouteImport.update({
   path: '/account/$slug',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
+const DashboardSettingTutorialIndexRoute =
+  DashboardSettingTutorialIndexRouteImport.update({
+    id: '/setting/tutorial/',
+    path: '/setting/tutorial/',
+    getParentRoute: () => DashboardRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -180,6 +187,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/setting': typeof DashboardSettingIndexRoute
   '/dashboard/transaction': typeof DashboardTransactionIndexRoute
   '/dashboard/voucher-generator': typeof DashboardVoucherGeneratorIndexRoute
+  '/dashboard/setting/tutorial': typeof DashboardSettingTutorialIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -204,6 +212,7 @@ export interface FileRoutesByTo {
   '/dashboard/setting': typeof DashboardSettingIndexRoute
   '/dashboard/transaction': typeof DashboardTransactionIndexRoute
   '/dashboard/voucher-generator': typeof DashboardVoucherGeneratorIndexRoute
+  '/dashboard/setting/tutorial': typeof DashboardSettingTutorialIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -230,6 +239,7 @@ export interface FileRoutesById {
   '/dashboard/setting/': typeof DashboardSettingIndexRoute
   '/dashboard/transaction/': typeof DashboardTransactionIndexRoute
   '/dashboard/voucher-generator/': typeof DashboardVoucherGeneratorIndexRoute
+  '/dashboard/setting/tutorial/': typeof DashboardSettingTutorialIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -257,6 +267,7 @@ export interface FileRouteTypes {
     | '/dashboard/setting'
     | '/dashboard/transaction'
     | '/dashboard/voucher-generator'
+    | '/dashboard/setting/tutorial'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -281,6 +292,7 @@ export interface FileRouteTypes {
     | '/dashboard/setting'
     | '/dashboard/transaction'
     | '/dashboard/voucher-generator'
+    | '/dashboard/setting/tutorial'
   id:
     | '__root__'
     | '/'
@@ -306,6 +318,7 @@ export interface FileRouteTypes {
     | '/dashboard/setting/'
     | '/dashboard/transaction/'
     | '/dashboard/voucher-generator/'
+    | '/dashboard/setting/tutorial/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -479,6 +492,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardAccountSlugRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
+    '/dashboard/setting/tutorial/': {
+      id: '/dashboard/setting/tutorial/'
+      path: '/setting/tutorial'
+      fullPath: '/dashboard/setting/tutorial'
+      preLoaderRoute: typeof DashboardSettingTutorialIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
   }
 }
 
@@ -501,6 +521,7 @@ interface DashboardRouteRouteChildren {
   DashboardSettingIndexRoute: typeof DashboardSettingIndexRoute
   DashboardTransactionIndexRoute: typeof DashboardTransactionIndexRoute
   DashboardVoucherGeneratorIndexRoute: typeof DashboardVoucherGeneratorIndexRoute
+  DashboardSettingTutorialIndexRoute: typeof DashboardSettingTutorialIndexRoute
 }
 
 const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
@@ -522,6 +543,7 @@ const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardSettingIndexRoute: DashboardSettingIndexRoute,
   DashboardTransactionIndexRoute: DashboardTransactionIndexRoute,
   DashboardVoucherGeneratorIndexRoute: DashboardVoucherGeneratorIndexRoute,
+  DashboardSettingTutorialIndexRoute: DashboardSettingTutorialIndexRoute,
 }
 
 const DashboardRouteRouteWithChildren = DashboardRouteRoute._addFileChildren(

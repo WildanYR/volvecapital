@@ -21,6 +21,7 @@ export function Navbar() {
     { name: 'Home', href: '/' },
     { name: 'Produk', href: '/product' },
     { name: 'Redeem', href: '/redeem' },
+    { name: 'Tutorial', href: '/tutorial' },
   ]
 
   return (

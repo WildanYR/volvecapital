@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Search, Copy, Check, ExternalLink, Loader2, Sparkles, Key } from 'lucide-react'
 import { api } from '@/lib/api'
+import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { Navbar } from '@/components/navbar'
 import { Footer } from '@/components/footer'
@@ -162,13 +163,17 @@ export default function RedeemPage() {
                   };
 
                   return (
-                    <div className="bg-white/[0.02] rounded-3xl p-8 border border-white/5 space-y-8 shadow-inner">
+                    <div className="bg-white/[0.02] rounded-3xl p-8 border border-white/5 space-y-10 shadow-inner">
+                      {/* Primary Fields: Email & Password */}
                       {(showEmail || showPassword) && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className={cn(
+                          "grid gap-8",
+                          (showEmail && showPassword) ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"
+                        )}>
                           {showEmail && (
                             <div className="space-y-3">
                               <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.3em] ml-1">Email / Username</label>
-                              <div className="flex items-center justify-between bg-black/50 p-4 rounded-xl border border-white/5 group">
+                              <div className="flex items-center justify-between bg-black/50 p-4 rounded-xl border border-white/5 group transition-all hover:border-primary/30">
                                 <span className="text-base font-mono text-white truncate mr-4">{result.account.email}</span>
                                 <button onClick={() => copyToClipboard(result.account.email)} className="text-primary hover:text-white transition-colors shrink-0 p-1">
                                   <Copy className="size-5" />
@@ -179,7 +184,7 @@ export default function RedeemPage() {
                           {showPassword && (
                             <div className="space-y-3">
                               <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.3em] ml-1">Password</label>
-                              <div className="flex items-center justify-between bg-black/50 p-4 rounded-xl border border-white/5 group">
+                              <div className="flex items-center justify-between bg-black/50 p-4 rounded-xl border border-white/5 group transition-all hover:border-primary/30">
                                 <span className="text-base font-mono text-white truncate mr-4">{result.account.password}</span>
                                 <button onClick={() => copyToClipboard(result.account.password)} className="text-primary hover:text-white transition-colors shrink-0 p-1">
                                   <Copy className="size-5" />
@@ -190,27 +195,28 @@ export default function RedeemPage() {
                         </div>
                       )}
                       
+                      {/* Secondary Info: Profile & Expired */}
                       {(showProfile || showExpired) && (
-                        <div className="flex flex-col md:flex-row gap-8 pt-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           {showProfile && (
-                            <div className="flex items-center gap-4 bg-white/[0.03] px-5 py-3 rounded-2xl border border-white/5 flex-grow">
-                              <div className="bg-primary/20 p-2 rounded-lg">
-                                <Check className="size-4 text-primary" />
+                            <div className="flex items-center gap-4 bg-white/[0.03] px-6 py-4 rounded-2xl border border-white/5 transition-all hover:bg-white/[0.05]">
+                              <div className="bg-primary/20 p-2.5 rounded-xl">
+                                <Check className="size-5 text-primary" />
                               </div>
                               <div>
-                                <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Nama Profil</p>
-                                <p className="text-sm font-bold text-white">{result.account.profile_name || '-'}</p>
+                                <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-0.5">Nama Profil</p>
+                                <p className="text-base font-bold text-white">{result.account.profile_name || '-'}</p>
                               </div>
                             </div>
                           )}
                           {showExpired && (
-                            <div className="flex items-center gap-4 bg-white/[0.03] px-5 py-3 rounded-2xl border border-white/5 flex-grow">
-                              <div className="bg-green-500/20 p-2 rounded-lg">
-                                <Check className="size-4 text-green-500" />
+                            <div className="flex items-center gap-4 bg-white/[0.03] px-6 py-4 rounded-2xl border border-white/5 transition-all hover:bg-white/[0.05]">
+                              <div className="bg-green-500/20 p-2.5 rounded-xl">
+                                <Check className="size-5 text-green-500" />
                               </div>
                               <div>
-                                <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Masa Aktif</p>
-                                <p className="text-sm font-bold text-white">{new Date(result.account.expired_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                                <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-0.5">Masa Aktif</p>
+                                <p className="text-base font-bold text-white">{new Date(result.account.expired_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
                               </div>
                             </div>
                           )}
@@ -219,11 +225,14 @@ export default function RedeemPage() {
 
                       {/* Custom Fields */}
                       {customFields.length > 0 && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
+                        <div className={cn(
+                          "grid gap-8",
+                          customFields.length > 1 ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"
+                        )}>
                           {customFields.map((field, idx) => (
                             <div key={idx} className="space-y-3">
                               <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.3em] ml-1">{field.label}</label>
-                              <div className="flex items-center justify-between bg-black/50 p-4 rounded-xl border border-white/5 group">
+                              <div className="flex items-center justify-between bg-black/50 p-4 rounded-xl border border-white/5 group transition-all hover:border-primary/30">
                                 <span className="text-base font-mono text-white truncate mr-4">{resolve(field.value)}</span>
                                 <button onClick={() => copyToClipboard(resolve(field.value))} className="text-primary hover:text-white transition-colors shrink-0 p-1">
                                   <Copy className="size-5" />
