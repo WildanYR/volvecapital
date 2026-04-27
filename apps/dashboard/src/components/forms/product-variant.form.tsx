@@ -1,7 +1,8 @@
 import type { z } from 'zod'
 import type { TimeUnit } from '@/dashboard/lib/time-converter.util'
 import type { ProductVariant } from '@/dashboard/services/product.service'
-import { ChevronsUpDown } from 'lucide-react'
+import { ChevronsUpDown, Plus, Trash2 } from 'lucide-react'
+import { Button } from '@/dashboard/components/ui/button'
 import { useAppForm } from '@/dashboard/hooks/form.hook'
 import { convertTimeUnit } from '@/dashboard/lib/time-converter.util'
 import {
@@ -41,6 +42,13 @@ export function ProductVariantForm({
       description: initialData?.description ?? '',
       price: initialData?.price?.toString() ?? '0',
       voucher_expiry_hours: initialData?.voucher_expiry_hours?.toString() ?? '',
+      show_email: initialData?.redeem_display_config?.show_email ?? true,
+      show_password: initialData?.redeem_display_config?.show_password ?? true,
+      show_profile_name: initialData?.redeem_display_config?.show_profile_name ?? true,
+      show_expired_at: initialData?.redeem_display_config?.show_expired_at ?? true,
+      show_copy_template: initialData?.redeem_display_config?.show_copy_template ?? true,
+      show_buyer_portal: initialData?.redeem_display_config?.show_buyer_portal ?? true,
+      custom_fields: initialData?.redeem_display_config?.custom_fields ?? [],
     },
     onSubmit: ({ value }) => {
       const duration = convertTimeUnit(
@@ -67,6 +75,15 @@ export function ProductVariantForm({
         cooldown: cooldown.toString(),
         cooldown_unit: 'millisecond' as TimeUnit,
         voucher_expiry_hours: value.voucher_expiry_hours ? Number.parseInt(value.voucher_expiry_hours) : undefined,
+        redeem_display_config: {
+          show_email: value.show_email,
+          show_password: value.show_password,
+          show_profile_name: value.show_profile_name,
+          show_expired_at: value.show_expired_at,
+          show_copy_template: value.show_copy_template,
+          show_buyer_portal: value.show_buyer_portal,
+          custom_fields: value.custom_fields,
+        },
       })
     },
   })
@@ -196,6 +213,94 @@ export function ProductVariantForm({
               </div>
             )}
           />
+
+          <div className="border-t border-neutral-800 pt-6 space-y-6">
+            <h3 className="font-bold text-lg">Konfigurasi Tampilan Halaman Redeem</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <form.AppField
+                name="show_email"
+                children={field => (
+                  <field.BooleanCheckboxField label="Tampilkan Email" />
+                )}
+              />
+              <form.AppField
+                name="show_password"
+                children={field => (
+                  <field.BooleanCheckboxField label="Tampilkan Password" />
+                )}
+              />
+              <form.AppField
+                name="show_profile_name"
+                children={field => (
+                  <field.BooleanCheckboxField label="Tampilkan Nama Profil" />
+                )}
+              />
+              <form.AppField
+                name="show_expired_at"
+                children={field => (
+                  <field.BooleanCheckboxField label="Tampilkan Masa Aktif" />
+                )}
+              />
+              <form.AppField
+                name="show_copy_template"
+                children={field => (
+                  <field.BooleanCheckboxField label="Tampilkan Instruksi Salin" />
+                )}
+              />
+              <form.AppField
+                name="show_buyer_portal"
+                children={field => (
+                  <field.BooleanCheckboxField label="Tampilkan Portal Email OTP" />
+                )}
+              />
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <h4 className="font-bold text-sm">Field Kustom Tambahan</h4>
+              </div>
+              <form.AppField name="custom_fields" mode="array">
+                {field => (
+                  <div className="flex flex-col gap-4">
+                    {field.state.value.map((_, i) => (
+                      <div key={`custom-field-${i}`} className="relative border border-neutral-800 p-4 rounded-md space-y-4">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => field.removeValue(i)}
+                          className="absolute top-2 right-2 text-red-500 hover:text-red-700 h-8 w-8"
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                        <form.AppField
+                          name={`custom_fields[${i}].label`}
+                          children={subfield => (
+                            <subfield.TextField label="Label" placeholder="Contoh: PIN" />
+                          )}
+                        />
+                        <form.AppField
+                          name={`custom_fields[${i}].value`}
+                          children={subfield => (
+                            <subfield.TextField label="Value / Template" placeholder="Contoh: 123456 atau $$email" />
+                          )}
+                        />
+                      </div>
+                    ))}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => field.pushValue({ label: '', value: '' })}
+                      className="w-full h-9 text-xs"
+                    >
+                      <Plus className="size-3 mr-2" />
+                      Tambah Field Kustom
+                    </Button>
+                  </div>
+                )}
+              </form.AppField>
+            </div>
+          </div>
           <form.SubscribeButton
             isPending={isPending}
             label={submitButtonText}

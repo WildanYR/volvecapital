@@ -34,6 +34,7 @@ export interface ProductVariantAttributes {
   account?: AccountAttributes[];
   created_at: Date;
   updated_at: Date;
+  redeem_display_config?: any;
 }
 
 interface ProductVariantCreationAttributes
@@ -99,4 +100,7 @@ export class ProductVariant extends Model<
 
   @HasMany(() => Account)
   declare account?: Account[];
+
+  @Column(DataType.JSONB)
+  declare redeem_display_config?: any;
 }

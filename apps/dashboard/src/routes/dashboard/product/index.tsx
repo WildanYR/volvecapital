@@ -199,6 +199,7 @@ function RouteComponent() {
       copy_template: value.copy_template ? value.copy_template : undefined,
       description: value.description ? value.description : undefined,
       voucher_expiry_hours: value.voucher_expiry_hours,
+      redeem_display_config: value.redeem_display_config,
     }
     if (productVariantFormMode === 'CREATE') {
       productVariantCreateMutation.mutate({

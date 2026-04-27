@@ -36,4 +36,7 @@ export class CreateProductVariantDto {
   @IsNotEmpty()
   @IsString()
   product_id: string;
+
+  @IsOptional()
+  redeem_display_config?: any;
 }

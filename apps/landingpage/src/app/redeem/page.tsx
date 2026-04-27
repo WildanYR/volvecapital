@@ -134,77 +134,134 @@ export default function RedeemPage() {
                   )}
                 </div>
 
-                {result.account && (
-                  <div className="bg-white/[0.02] rounded-3xl p-8 border border-white/5 space-y-8 shadow-inner">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                      <div className="space-y-3">
-                        <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.3em] ml-1">Email / Username</label>
-                        <div className="flex items-center justify-between bg-black/50 p-4 rounded-xl border border-white/5 group">
-                          <span className="text-base font-mono text-white truncate mr-4">{result.account.email}</span>
-                          <button onClick={() => copyToClipboard(result.account.email)} className="text-primary hover:text-white transition-colors shrink-0 p-1">
-                            <Copy className="size-5" />
-                          </button>
-                        </div>
-                      </div>
-                      <div className="space-y-3">
-                        <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.3em] ml-1">Password</label>
-                        <div className="flex items-center justify-between bg-black/50 p-4 rounded-xl border border-white/5 group">
-                          <span className="text-base font-mono text-white truncate mr-4">{result.account.password}</span>
-                          <button onClick={() => copyToClipboard(result.account.password)} className="text-primary hover:text-white transition-colors shrink-0 p-1">
-                            <Copy className="size-5" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
+                {result.account && (() => {
+                  const displayConfig = result.voucher.product_variant?.redeem_display_config;
+                  const showEmail = displayConfig?.show_email ?? true;
+                  const showPassword = displayConfig?.show_password ?? true;
+                  const showProfile = displayConfig?.show_profile_name ?? true;
+                  const showExpired = displayConfig?.show_expired_at ?? true;
+                  const showInstruction = displayConfig?.show_copy_template ?? true;
+                  const showPortal = displayConfig?.show_buyer_portal ?? true;
+                  const customFields = (displayConfig?.custom_fields ?? []) as { label: string; value: string }[];
+                  
+                  // Helper to resolve placeholders
+                  const resolve = (val: string) => {
+                    let resolved = val
+                      .replace('$$email', result.account.email)
+                      .replace('$$password', result.account.password)
+                      .replace('$$profile', result.account.profile_name || '-')
+                      .replace('$$expired', new Date(result.account.expired_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }));
                     
-                    <div className="flex flex-col md:flex-row gap-8 pt-4">
-                      <div className="flex items-center gap-4 bg-white/[0.03] px-5 py-3 rounded-2xl border border-white/5 flex-grow">
-                        <div className="bg-primary/20 p-2 rounded-lg">
-                          <Check className="size-4 text-primary" />
+                    // Resolve metadata placeholders: $$metadata.key
+                    if (result.account.metadata) {
+                      Object.entries(result.account.metadata).forEach(([key, value]) => {
+                        resolved = resolved.replace(`$$metadata.${key}`, String(value));
+                      });
+                    }
+                    return resolved;
+                  };
+
+                  return (
+                    <div className="bg-white/[0.02] rounded-3xl p-8 border border-white/5 space-y-8 shadow-inner">
+                      {(showEmail || showPassword) && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                          {showEmail && (
+                            <div className="space-y-3">
+                              <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.3em] ml-1">Email / Username</label>
+                              <div className="flex items-center justify-between bg-black/50 p-4 rounded-xl border border-white/5 group">
+                                <span className="text-base font-mono text-white truncate mr-4">{result.account.email}</span>
+                                <button onClick={() => copyToClipboard(result.account.email)} className="text-primary hover:text-white transition-colors shrink-0 p-1">
+                                  <Copy className="size-5" />
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                          {showPassword && (
+                            <div className="space-y-3">
+                              <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.3em] ml-1">Password</label>
+                              <div className="flex items-center justify-between bg-black/50 p-4 rounded-xl border border-white/5 group">
+                                <span className="text-base font-mono text-white truncate mr-4">{result.account.password}</span>
+                                <button onClick={() => copyToClipboard(result.account.password)} className="text-primary hover:text-white transition-colors shrink-0 p-1">
+                                  <Copy className="size-5" />
+                                </button>
+                              </div>
+                            </div>
+                          )}
                         </div>
-                        <div>
-                          <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Nama Profil</p>
-                          <p className="text-sm font-bold text-white">{result.account.profile_name || '-'}</p>
+                      )}
+                      
+                      {(showProfile || showExpired) && (
+                        <div className="flex flex-col md:flex-row gap-8 pt-4">
+                          {showProfile && (
+                            <div className="flex items-center gap-4 bg-white/[0.03] px-5 py-3 rounded-2xl border border-white/5 flex-grow">
+                              <div className="bg-primary/20 p-2 rounded-lg">
+                                <Check className="size-4 text-primary" />
+                              </div>
+                              <div>
+                                <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Nama Profil</p>
+                                <p className="text-sm font-bold text-white">{result.account.profile_name || '-'}</p>
+                              </div>
+                            </div>
+                          )}
+                          {showExpired && (
+                            <div className="flex items-center gap-4 bg-white/[0.03] px-5 py-3 rounded-2xl border border-white/5 flex-grow">
+                              <div className="bg-green-500/20 p-2 rounded-lg">
+                                <Check className="size-4 text-green-500" />
+                              </div>
+                              <div>
+                                <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Masa Aktif</p>
+                                <p className="text-sm font-bold text-white">{new Date(result.account.expired_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                              </div>
+                            </div>
+                          )}
                         </div>
-                      </div>
-                      <div className="flex items-center gap-4 bg-white/[0.03] px-5 py-3 rounded-2xl border border-white/5 flex-grow">
-                        <div className="bg-green-500/20 p-2 rounded-lg">
-                          <Check className="size-4 text-green-500" />
+                      )}
+
+                      {/* Custom Fields */}
+                      {customFields.length > 0 && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
+                          {customFields.map((field, idx) => (
+                            <div key={idx} className="space-y-3">
+                              <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.3em] ml-1">{field.label}</label>
+                              <div className="flex items-center justify-between bg-black/50 p-4 rounded-xl border border-white/5 group">
+                                <span className="text-base font-mono text-white truncate mr-4">{resolve(field.value)}</span>
+                                <button onClick={() => copyToClipboard(resolve(field.value))} className="text-primary hover:text-white transition-colors shrink-0 p-1">
+                                  <Copy className="size-5" />
+                                </button>
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                        <div>
-                          <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Masa Aktif</p>
-                          <p className="text-sm font-bold text-white">{new Date(result.account.expired_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                      )}
+
+                      {showInstruction && result.account.copy_template && (
+                        <div className="mt-4 p-6 bg-primary/5 rounded-2xl border border-primary/10 border-l-4 border-l-primary">
+                          <p className="text-xs font-bold text-gray-500 uppercase tracking-[0.2em] mb-2">Instruksi Penggunaan</p>
+                          <p className="text-sm text-gray-300 leading-relaxed font-medium italic">"{result.account.copy_template}"</p>
                         </div>
-                      </div>
+                      )}
+
+                      {/* Buyer Portal Button */}
+                      {showPortal && accessToken && (
+                        <div className="mt-6 p-5 bg-blue-500/5 rounded-2xl border border-blue-500/20 flex flex-col md:flex-row items-center justify-between gap-4">
+                          <div>
+                            <p className="text-xs font-black text-blue-400 uppercase tracking-[0.2em] mb-1">📧 Portal Email OTP</p>
+                            <p className="text-sm text-gray-400">Pantau kode OTP & link reset Netflix akun Anda secara real-time.</p>
+                          </div>
+                          <a
+                            href={`${process.env.NEXT_PUBLIC_PORTAL_URL || 'http://localhost:3000'}/portal/${tenantId || 'papapremium'}/${accessToken}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="shrink-0 px-6 py-3 bg-blue-500 hover:bg-blue-400 text-white font-black rounded-xl transition-all flex items-center gap-2 text-sm shadow-[0_6px_20px_rgba(59,130,246,0.3)]"
+                          >
+                            <ExternalLink className="size-4" />
+                            Akses Email Saya
+                          </a>
+                        </div>
+                      )}
                     </div>
-
-                    {result.account.copy_template && (
-                      <div className="mt-4 p-6 bg-primary/5 rounded-2xl border border-primary/10 border-l-4 border-l-primary">
-                        <p className="text-xs font-bold text-gray-500 uppercase tracking-[0.2em] mb-2">Instruksi Penggunaan</p>
-                        <p className="text-sm text-gray-300 leading-relaxed font-medium italic">"{result.account.copy_template}"</p>
-                      </div>
-                    )}
-
-                    {/* Buyer Portal Button */}
-                    {accessToken && (
-                      <div className="mt-6 p-5 bg-blue-500/5 rounded-2xl border border-blue-500/20 flex flex-col md:flex-row items-center justify-between gap-4">
-                        <div>
-                          <p className="text-xs font-black text-blue-400 uppercase tracking-[0.2em] mb-1">📧 Portal Email OTP</p>
-                          <p className="text-sm text-gray-400">Pantau kode OTP & link reset Netflix akun Anda secara real-time.</p>
-                        </div>
-                        <a
-                          href={`${process.env.NEXT_PUBLIC_PORTAL_URL || 'http://localhost:3000'}/portal/${tenantId || 'papapremium'}/${accessToken}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="shrink-0 px-6 py-3 bg-blue-500 hover:bg-blue-400 text-white font-black rounded-xl transition-all flex items-center gap-2 text-sm shadow-[0_6px_20px_rgba(59,130,246,0.3)]"
-                        >
-                          <ExternalLink className="size-4" />
-                          Akses Email Saya
-                        </a>
-                      </div>
-                    )}
-                  </div>
-                )}
+                  );
+                })()}
               </motion.div>
             )}
           </AnimatePresence>

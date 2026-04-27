@@ -453,6 +453,7 @@ export class PublicService {
             profile_name: user.profile?.name,
             expired_at: user.expired_at,
             copy_template: voucher.product_variant?.copy_template ?? null,
+            metadata: user.profile?.metadata ? JSON.parse(user.profile.metadata) : {},
           };
         }
       }
@@ -593,6 +594,8 @@ export class PublicService {
         profileName,
         expiredAt,
         copyTemplate,
+        variant.redeem_display_config,
+        chosenProfile.metadata ? JSON.parse(chosenProfile.metadata) : {},
       ).catch(() => {});
 
       return {
@@ -604,6 +607,7 @@ export class PublicService {
         copy_template: copyTemplate,
         access_token: voucher.access_token,
         tenant_id: tenantId,
+        metadata: chosenProfile.metadata ? JSON.parse(chosenProfile.metadata) : {},
       };
     }
     catch (error) {
@@ -688,6 +692,8 @@ export class PublicService {
     profileName: string,
     expiredAt: Date,
     copyTemplate?: string | null,
+    displayConfig?: any,
+    metadata?: any,
   ): Promise<void> {
     const host = this.configService.get<string>('mail.host');
     const port = this.configService.get<number>('mail.port');
@@ -709,6 +715,27 @@ export class PublicService {
       year: 'numeric',
     });
 
+    const showEmail = displayConfig?.show_email ?? true;
+    const showPassword = displayConfig?.show_password ?? true;
+    const showProfile = displayConfig?.show_profile_name ?? true;
+    const showExpired = displayConfig?.show_expired_at ?? true;
+    const customFields = displayConfig?.custom_fields ?? [];
+
+    const resolve = (val: string) => {
+      let resolved = val
+        .replace('$$email', accountEmail)
+        .replace('$$password', accountPassword)
+        .replace('$$profile', profileName)
+        .replace('$$expired', expiredStr);
+      
+      if (metadata) {
+        Object.entries(metadata).forEach(([key, value]) => {
+          resolved = resolved.replace(`$$metadata.${key}`, String(value));
+        });
+      }
+      return resolved;
+    };
+
     const bodyText = copyTemplate
       ? copyTemplate
           .replace('{buyer_name}', buyerName)
@@ -717,7 +744,7 @@ export class PublicService {
           .replace('{profile}', profileName)
           .replace('{expired_at}', expiredStr)
           .replace('{voucher_code}', voucherCode)
-      : `Halo ${buyerName}! 🎉\n\nVoucher kamu berhasil diredeem!\n\n📧 Email: ${accountEmail}\n🔑 Password: ${accountPassword}\n👤 Profile: ${profileName}\n📅 Aktif hingga: ${expiredStr}\n\nKode Voucher: ${voucherCode}\n\nTerima kasih! 🙏`;
+      : `Halo ${buyerName}! 🎉\n\nVoucher kamu berhasil diredeem!\n\n${showEmail ? `📧 Email: ${accountEmail}\n` : ''}${showPassword ? `🔑 Password: ${accountPassword}\n` : ''}${showProfile ? `👤 Profile: ${profileName}\n` : ''}${showExpired ? `📅 Aktif hingga: ${expiredStr}\n` : ''}${customFields.map((f: any) => `${f.label}: ${resolve(f.value)}\n`).join('')}\nKode Voucher: ${voucherCode}\n\nTerima kasih! 🙏`;
 
     await transporter.sendMail({
       from: `"Volve Capital" <${from}>`,
@@ -729,10 +756,11 @@ export class PublicService {
         <p>Halo <strong>${buyerName}</strong>,</p>
         <p>Voucher kamu telah berhasil direaktivasi. Berikut adalah detail akun Anda:</p>
         <div style="background: #f4f4f4; padding: 20px; border-radius: 10px; margin: 20px 0;">
-          <p style="margin: 5px 0;">📧 <strong>Email:</strong> ${accountEmail}</p>
-          <p style="margin: 5px 0;">🔑 <strong>Password:</strong> ${accountPassword}</p>
-          <p style="margin: 5px 0;">👤 <strong>Profile:</strong> ${profileName}</p>
-          <p style="margin: 5px 0;">📅 <strong>Aktif hingga:</strong> ${expiredStr}</p>
+          ${showEmail ? `<p style="margin: 5px 0;">📧 <strong>Email:</strong> ${accountEmail}</p>` : ''}
+          ${showPassword ? `<p style="margin: 5px 0;">🔑 <strong>Password:</strong> ${accountPassword}</p>` : ''}
+          ${showProfile ? `<p style="margin: 5px 0;">👤 <strong>Profile:</strong> ${profileName}</p>` : ''}
+          ${showExpired ? `<p style="margin: 5px 0;">📅 <strong>Aktif hingga:</strong> ${expiredStr}</p>` : ''}
+          ${customFields.map((f: any) => `<p style="margin: 5px 0;"><strong>${f.label}:</strong> ${resolve(f.value)}</p>`).join('')}
         </div>
         <p>Kode Voucher: <code>${voucherCode}</code></p>
         <p style="font-size: 12px; color: #777; margin-top: 30px;">Terima kasih telah berlangganan di Volve Capital!</p>

@@ -47,6 +47,7 @@ function RouteComponent() {
         copy_template: v.copy_template || undefined,
         description: v.description || undefined,
         voucher_expiry_hours: v.voucher_expiry_hours ? Number.parseInt(v.voucher_expiry_hours) : undefined,
+        redeem_display_config: v.redeem_display_config,
       })),
     }
     mutation.mutate(payload)

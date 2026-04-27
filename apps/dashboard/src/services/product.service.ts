@@ -45,6 +45,7 @@ export interface ProductVariant {
     id: string
     name: string
   }
+  redeem_display_config?: any
 }
 
 export interface Product {
@@ -73,6 +74,7 @@ export interface CreateProductVariantPayload {
   copy_template?: string
   description?: string
   voucher_expiry_hours?: number
+  redeem_display_config?: any
 }
 
 export interface CreateProductPayload {
@@ -90,6 +92,7 @@ export interface UpdateProductVariantPayload {
   copy_template?: string
   description?: string
   voucher_expiry_hours?: number
+  redeem_display_config?: any
 }
 
 export interface UpdateProductPayload {

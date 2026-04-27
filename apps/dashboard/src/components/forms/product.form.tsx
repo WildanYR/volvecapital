@@ -31,6 +31,13 @@ function getInitialData(data?: Product): ProductFormSubmitData {
           copy_template: '',
           price: '0',
           voucher_expiry_hours: '',
+          show_email: true,
+          show_password: true,
+          show_profile_name: true,
+          show_expired_at: true,
+          show_copy_template: true,
+          show_buyer_portal: true,
+          custom_fields: [],
         },
       ],
     }
@@ -48,6 +55,13 @@ function getInitialData(data?: Product): ProductFormSubmitData {
       copy_template: v.copy_template || '',
       price: v.price?.toString() ?? '0',
       voucher_expiry_hours: v.voucher_expiry_hours?.toString() ?? '',
+      show_email: v.redeem_display_config?.show_email ?? true,
+      show_password: v.redeem_display_config?.show_password ?? true,
+      show_profile_name: v.redeem_display_config?.show_profile_name ?? true,
+      show_expired_at: v.redeem_display_config?.show_expired_at ?? true,
+      show_copy_template: v.redeem_display_config?.show_copy_template ?? true,
+      show_buyer_portal: v.redeem_display_config?.show_buyer_portal ?? true,
+      custom_fields: v.redeem_display_config?.custom_fields ?? [],
     }
   })
 
@@ -99,6 +113,15 @@ export function ProductForm({
           copy_template: v.copy_template,
           price: v.price,
           voucher_expiry_hours: v.voucher_expiry_hours,
+          redeem_display_config: {
+            show_email: v.show_email,
+            show_password: v.show_password,
+            show_profile_name: v.show_profile_name,
+            show_expired_at: v.show_expired_at,
+            show_copy_template: v.show_copy_template,
+            show_buyer_portal: v.show_buyer_portal,
+            custom_fields: v.custom_fields,
+          },
         }
       })
       onSubmit({ name: value.name, variants })

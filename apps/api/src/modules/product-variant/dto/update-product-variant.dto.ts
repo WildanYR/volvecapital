@@ -36,4 +36,7 @@ export class UpdateProductVariantDto {
   @IsOptional()
   @IsString()
   product_id: string;
+
+  @IsOptional()
+  redeem_display_config?: any;
 }
