@@ -23,4 +23,5 @@ export const ProductVariantFormSchema = z.object({
     label: z.string(),
     value: z.string(),
   })).optional(),
+  tutorial_id: z.string().optional(),
 })

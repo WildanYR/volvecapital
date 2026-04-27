@@ -418,7 +418,10 @@ export class PublicService {
           {
             model: ProductVariant,
             as: 'product_variant',
-            include: [{ model: Product, as: 'product' }],
+            include: [
+              { model: Product, as: 'product' },
+              { model: Tutorial, as: 'tutorial' }
+            ],
           },
         ],
         transaction,
@@ -481,7 +484,13 @@ export class PublicService {
       // 1. Validate voucher
       const voucher = await this.voucherRepository.findOne({
         where: { id: dto.voucher_code },
-        include: [{ model: ProductVariant, as: 'product_variant' }],
+        include: [
+          { 
+            model: ProductVariant, 
+            as: 'product_variant',
+            include: [{ model: Tutorial, as: 'tutorial' }]
+          }
+        ],
         transaction,
       });
 
@@ -612,6 +621,7 @@ export class PublicService {
         access_token: voucher.access_token,
         tenant_id: tenantId,
         metadata: chosenProfile.metadata ? JSON.parse(chosenProfile.metadata) : {},
+        tutorial_slug: (variant as any).tutorial?.slug || null,
       };
     }
     catch (error) {

@@ -34,8 +34,8 @@ export function TutorialServiceGenerator(apiUrl: string, accessToken: string, te
     'Content-Type': 'application/json',
   };
 
-  const getAllTutorials = async (): Promise<Tutorial[]> => {
-    const response = await fetch(`${apiUrl}/tutorial`, { headers });
+  const getAllTutorials = async ({ signal }: { signal?: AbortSignal } = {}): Promise<Tutorial[]> => {
+    const response = await fetch(`${apiUrl}/tutorial`, { headers, signal });
     if (!response.ok) throw new Error('Gagal mengambil data tutorial');
     return response.json();
   };

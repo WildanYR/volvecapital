@@ -2,17 +2,32 @@
 
 import { useEffect, useState, use } from 'react'
 import { motion } from 'framer-motion'
-import { BookOpen, ArrowLeft, CheckCircle2, ChevronRight, Info } from 'lucide-react'
+import { BookOpen, ArrowLeft, CheckCircle2, ChevronRight, Info, ExternalLink } from 'lucide-react'
 import { api } from '@/lib/api'
 import { Navbar } from '@/components/navbar'
 import { Footer } from '@/components/footer'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
+import { useSearchParams } from 'next/navigation'
 
 export default function TutorialDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params)
+  const searchParams = useSearchParams()
+  const token = searchParams.get('token')
+  const tenant = searchParams.get('tenant')
+  
   const [tutorial, setTutorial] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
+
+  const resolveLink = (linkUrl: string) => {
+    if (!linkUrl) return null
+    if (linkUrl === '$$portal_url') {
+      if (!token || !tenant) return null
+      const portalBase = process.env.NEXT_PUBLIC_PORTAL_URL || 'http://localhost:3000'
+      return `${portalBase}/portal/${tenant}/${token}`
+    }
+    return linkUrl
+  }
 
   useEffect(() => {
     const fetchTutorial = async () => {
@@ -124,6 +139,24 @@ export default function TutorialDetailPage({ params }: { params: Promise<{ slug:
                       {step.description}
                     </p>
                   </div>
+
+                  {/* Action Link Button */}
+                  {resolveLink(step.link_url) && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mt-8"
+                    >
+                      <a
+                        href={resolveLink(step.link_url)!}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-3 px-8 py-4 bg-primary text-black font-black rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-lg shadow-primary/20 text-sm uppercase tracking-widest"
+                      >
+                        {step.link_text || 'Buka Link'} <ExternalLink className="size-4" />
+                      </a>
+                    </motion.div>
+                  )}
                 </div>
               </div>
             </div>

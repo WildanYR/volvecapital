@@ -2,12 +2,13 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, Copy, Check, ExternalLink, Loader2, Sparkles, Key } from 'lucide-react'
+import { Search, Copy, Check, ExternalLink, Loader2, Sparkles, Key, BookOpen } from 'lucide-react'
 import { api } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { Navbar } from '@/components/navbar'
 import { Footer } from '@/components/footer'
+import Link from 'next/link'
 
 export default function RedeemPage() {
   const [code, setCode] = useState('')
@@ -266,6 +267,23 @@ export default function RedeemPage() {
                             <ExternalLink className="size-4" />
                             Akses Email Saya
                           </a>
+                        </div>
+                      )}
+
+                      {/* Tutorial Link Button */}
+                      {result.voucher?.product_variant?.tutorial?.slug && accessToken && (
+                        <div className="mt-4 p-5 bg-primary/5 rounded-2xl border border-primary/20 flex flex-col md:flex-row items-center justify-between gap-4">
+                          <div>
+                            <p className="text-xs font-black text-primary uppercase tracking-[0.2em] mb-1">📖 Panduan Penggunaan</p>
+                            <p className="text-sm text-gray-400">Ikuti langkah-langkah penggunaan agar akun Anda aman dan awet.</p>
+                          </div>
+                          <Link
+                            href={`/tutorial/${result.voucher.product_variant.tutorial.slug}?token=${accessToken}&tenant=${tenantId || 'papapremium'}`}
+                            className="shrink-0 px-6 py-3 bg-primary text-black hover:bg-primary/90 font-black rounded-xl transition-all flex items-center gap-2 text-sm shadow-[0_6px_20px_rgba(255,184,0,0.3)]"
+                          >
+                            <BookOpen className="size-4" />
+                            Lihat Panduan
+                          </Link>
                         </div>
                       )}
                     </div>

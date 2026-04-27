@@ -1,6 +1,7 @@
 import type { z } from 'zod'
 import type { TimeUnit } from '@/dashboard/lib/time-converter.util'
 import type { ProductVariant } from '@/dashboard/services/product.service'
+import type { Tutorial } from '@/dashboard/services/tutorial.service'
 import { ChevronsUpDown, Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/dashboard/components/ui/button'
 import { useAppForm } from '@/dashboard/hooks/form.hook'
@@ -22,11 +23,13 @@ export function ProductVariantForm({
   isPending,
   initialData,
   submitButtonText,
+  tutorials,
 }: {
   onSubmit: (values: ProductVariantFormSubmitData) => void
   isPending: boolean
   initialData?: ProductVariant
   submitButtonText?: string
+  tutorials?: Tutorial[]
 }) {
   const form = useAppForm({
     validators: { onSubmit: ProductVariantFormSchema },
@@ -49,6 +52,7 @@ export function ProductVariantForm({
       show_copy_template: initialData?.redeem_display_config?.show_copy_template ?? true,
       show_buyer_portal: initialData?.redeem_display_config?.show_buyer_portal ?? true,
       custom_fields: initialData?.redeem_display_config?.custom_fields ?? [],
+      tutorial_id: initialData?.tutorial_id ?? '',
     },
     onSubmit: ({ value }) => {
       const duration = convertTimeUnit(
@@ -84,6 +88,7 @@ export function ProductVariantForm({
           show_buyer_portal: value.show_buyer_portal,
           custom_fields: value.custom_fields,
         },
+        tutorial_id: (value.tutorial_id && value.tutorial_id !== '__none__') ? value.tutorial_id : undefined,
       })
     },
   })
@@ -211,6 +216,20 @@ export function ProductVariantForm({
                   </CollapsibleContent>
                 </Collapsible>
               </div>
+            )}
+          />
+
+          <form.AppField
+            name="tutorial_id"
+            children={field => (
+              <field.SelecField
+                label="Panduan Tutorial Terkait (Opsional)"
+                placeholder="Pilih tutorial untuk ditampilkan setelah redeem..."
+                selectItems={[
+                  { title: '-- Tidak Ada Tutorial --', value: '__none__' },
+                  ...(tutorials || []).map(t => ({ title: t.title, value: t.id }))
+                ]}
+              />
             )}
           />
 

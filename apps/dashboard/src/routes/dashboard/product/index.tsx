@@ -67,6 +67,7 @@ import {
   GetProductsParamsSchema,
   ProductServiceGenerator,
 } from '@/dashboard/services/product.service'
+import { TutorialServiceGenerator } from '@/dashboard/services/tutorial.service'
 
 export const Route = createFileRoute('/dashboard/product/')({
   component: RouteComponent,
@@ -85,6 +86,12 @@ function RouteComponent() {
     auth.tenant!.id,
   )
 
+
+  const tutorialService = TutorialServiceGenerator(
+    API_URL,
+    auth.tenant!.accessToken,
+    auth.tenant!.id,
+  )
   const [filter, setFilter] = useState<ProductFilter>({
     name: searchParam.name ?? '',
   })
@@ -108,6 +115,11 @@ function RouteComponent() {
   const { data: products, isLoading: isFetchProductLoading } = useQuery({
     queryKey: ['product', searchParam],
     queryFn: ({ signal }) => productService.getAllProduct({ ...searchParam, signal }),
+  })
+
+  const { data: tutorials } = useQuery({
+    queryKey: ['tutorial'],
+    queryFn: ({ signal }) => tutorialService.getAllTutorials({ signal }),
   })
 
   const productVariantCreateMutation = useMutation({
@@ -200,6 +212,7 @@ function RouteComponent() {
       description: value.description ? value.description : undefined,
       voucher_expiry_hours: value.voucher_expiry_hours,
       redeem_display_config: value.redeem_display_config,
+      tutorial_id: value.tutorial_id,
     }
     if (productVariantFormMode === 'CREATE') {
       productVariantCreateMutation.mutate({
@@ -560,7 +573,7 @@ function RouteComponent() {
         open={dialogProductEditOpen}
         onOpenChange={setDialogProductEditOpen}
       >
-        <DialogContent>
+        <DialogContent aria-describedby={undefined}>
           <DialogHeader>
             <DialogTitle>Ubah Produk</DialogTitle>
           </DialogHeader>
@@ -576,7 +589,7 @@ function RouteComponent() {
         open={dialogProductVariantOpen}
         onOpenChange={setDialogProductVariantOpen}
       >
-        <DialogContent>
+        <DialogContent aria-describedby={undefined}>
           <DialogHeader>
             <DialogTitle>Ubah Varian Produk</DialogTitle>
           </DialogHeader>
@@ -588,6 +601,10 @@ function RouteComponent() {
               initialData={selectedProductVariant}
               isPending={productVariantEditMutation.isPending}
               onSubmit={handleProductVariantFormSubmit}
+              submitButtonText={
+                productVariantFormMode === 'CREATE' ? 'Tambah' : 'Simpan'
+              }
+              tutorials={tutorials || []}
             />
           </ScrollArea>
         </DialogContent>

@@ -17,6 +17,7 @@ import {
   PlatformProductAttributes,
 } from './platform-product.model';
 import { Product, ProductAttributes } from './product.model';
+import { Tutorial, TutorialAttributes } from './tutorial.model';
 
 export interface ProductVariantAttributes {
   id: string;
@@ -35,6 +36,8 @@ export interface ProductVariantAttributes {
   created_at: Date;
   updated_at: Date;
   redeem_display_config?: any;
+  tutorial_id?: string;
+  tutorial?: TutorialAttributes;
 }
 
 interface ProductVariantCreationAttributes
@@ -46,6 +49,7 @@ interface ProductVariantCreationAttributes
     | 'product'
     | 'platform_product'
     | 'account'
+    | 'tutorial'
   > {}
 
 @Table({ tableName: 'product_variant' })
@@ -103,4 +107,11 @@ export class ProductVariant extends Model<
 
   @Column(DataType.JSONB)
   declare redeem_display_config?: any;
+
+  @ForeignKey(() => Tutorial)
+  @Column(DataType.UUID)
+  declare tutorial_id?: string;
+
+  @BelongsTo(() => Tutorial, 'tutorial_id')
+  declare tutorial?: Tutorial;
 }

@@ -29,6 +29,10 @@ export class CreateProductVariantDto {
   @IsNumber()
   voucher_expiry_hours?: number;
 
+  @IsOptional()
+  @IsString()
+  tutorial_id?: string;
+
   @IsNotEmpty()
   @IsNumber()
   price: number;

@@ -167,6 +167,20 @@ export function TutorialForm({
                                 <sub.TextareaField label="Deskripsi" placeholder="Jelaskan langkah ini secara singkat..." />
                               )}
                             />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <form.AppField
+                                name={`steps[${i}].link_text`}
+                                children={sub => (
+                                  <sub.TextField label="Teks Tombol (Opsional)" placeholder="Contoh: Buka Portal" />
+                                )}
+                              />
+                              <form.AppField
+                                name={`steps[${i}].link_url`}
+                                children={sub => (
+                                  <sub.TextField label="Link / URL (Opsional)" placeholder="Gunakan $$portal_url untuk link portal" />
+                                )}
+                              />
+                            </div>
                           </div>
                           <div className="space-y-4">
                             <form.AppField
