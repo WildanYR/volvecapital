@@ -143,19 +143,29 @@ export class PublicService {
       const grossAmount = variant.price;
 
       // Build DOKU callback URL with tenant subdomain
-      const frontendBaseUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3001';
+      let frontendBaseUrl = this.configService.get<string>('FRONTEND_URL') || 'localhost:3001';
+
+      // Ensure protocol exists
+      if (!frontendBaseUrl.startsWith('http')) {
+        frontendBaseUrl = `https://${frontendBaseUrl}`;
+      }
+
       let callbackUrl = '';
-      
       try {
         const url = new URL(frontendBaseUrl);
-        // If it's localhost, always force tenantId.localhost
-        if (url.hostname.includes('localhost') || url.hostname === '127.0.0.1') {
-          const cleanHostname = url.hostname.replace(`${tenantId}.`, '');
-          url.hostname = `${tenantId}.${cleanHostname}`;
+        const hostname = url.hostname;
+
+        // Prepend tenantId if not already present
+        if (!hostname.startsWith(`${tenantId}.`)) {
+          url.hostname = `${tenantId}.${hostname}`;
         }
+
         callbackUrl = `${url.toString().replace(/\/$/, '')}/success?order_id=${orderId}`;
-      } catch (e) {
-        callbackUrl = `${frontendBaseUrl}/success?order_id=${orderId}`;
+      }
+      catch (e) {
+        // Fallback for malformed URLs
+        const cleanBase = frontendBaseUrl.replace('https://', '').replace('http://', '');
+        callbackUrl = `https://${tenantId}.${cleanBase}/success?order_id=${orderId}`;
       }
 
       const dokuPayload = {
@@ -180,7 +190,7 @@ export class PublicService {
 
       await this.voucherRepository.create(
         {
-          id: `VC${Date.now().toString(36).toUpperCase()}`, 
+          id: `VC-${Date.now().toString(36).toUpperCase()}`, 
           buyer_name: dto.buyer_name,
           buyer_email: dto.buyer_email,
           buyer_whatsapp: dto.buyer_whatsapp,
@@ -410,6 +420,27 @@ export class PublicService {
             as: 'product_variant',
             include: [{ model: Product, as: 'product' }],
           },
+          {
+            model: TransactionItem,
+            as: 'transaction_item',
+            include: [
+              {
+                model: AccountUser,
+                as: 'user',
+                include: [
+                  {
+                    model: Account,
+                    as: 'account',
+                    include: [{ model: Email, as: 'email' }],
+                  },
+                  {
+                    model: AccountProfile,
+                    as: 'profile',
+                  },
+                ],
+              },
+            ],
+          },
         ],
         transaction,
       });
@@ -418,8 +449,27 @@ export class PublicService {
         throw new NotFoundException('Voucher tidak ditemukan');
       }
 
+      // Ekstrak data akun agar Frontend bisa langsung baca
+      const user = (voucher.transaction_item as any)?.user;
+      const accountData = user ? {
+        email: user.account?.email?.email,
+        password: user.account?.account_password,
+        profile_name: user.profile?.name,
+        expired_at: user.expired_at,
+        metadata: (() => {
+          try {
+            return user.profile?.metadata ? JSON.parse(user.profile.metadata) : {};
+          } catch (e) {
+            return {};
+          }
+        })(),
+      } : null;
+
       await transaction.commit();
-      return { voucher };
+      return { 
+        voucher, 
+        account: accountData 
+      };
     }
     catch (error) {
       await transaction.rollback();
@@ -532,6 +582,7 @@ export class PublicService {
         });
         if (txnItem) {
           await txnItem.update({ account_user_id: newUser.id }, { transaction });
+          await voucher.update({ transaction_item_id: txnItem.id }, { transaction });
         }
       }
 
@@ -541,6 +592,9 @@ export class PublicService {
         message: 'Voucher berhasil diredeem!',
         access_token: accessToken,
         expired_at: expiredAt,
+        email: (chosenAccount as any).email?.email,
+        password: chosenAccount.account_password,
+        profile_name: chosenProfile.name,
       };
     }
     catch (error) {
@@ -695,6 +749,7 @@ export class PublicService {
   async getEmailAccess(tenantId: string, token: string) {
     const transaction = await this.postgresProvider.transaction();
     try {
+      // 1. Cari Voucher dulu di schema TENANT
       await this.postgresProvider.setSchema(tenantId, transaction);
 
       // 1. Find voucher by token
@@ -736,15 +791,15 @@ export class PublicService {
       
       // 3. Update access count (Optional but good for stats)
       
-      // 4. Find Subject Filter
-      // We only allow buyer to see emails that match their profile context (e.g. Netflix PIN)
+      // 2. Pindah ke schema MASTER untuk ambil daftar subjek
+      await this.postgresProvider.setSchema('master', transaction);
       const publicSubjects = await this.emailSubjectRepository.findAll({
         where: { is_public: true },
         transaction,
       });
       const allowedContexts = publicSubjects.map(s => s.context);
 
-      // 5. Fetch Messages
+      // 2. Sekarang baru pindah ke schema TENANT untuk mengambil pesan email-nya
       await this.postgresProvider.setSchema(tenantId, transaction);
       const accountEmail = user.account?.email?.email;
       if (!accountEmail) throw new NotFoundException('Email akun tidak ditemukan');

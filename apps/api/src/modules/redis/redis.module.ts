@@ -12,6 +12,7 @@ import { AppLoggerService } from '../logger/logger.service';
       return new Redis({
         host: configService.get<string>('redis.host'),
         port: configService.get<number>('redis.port'),
+        password: configService.get<string>('redis.password'),
         connectTimeout: 10000,
         keepAlive: 10000,
         retryStrategy: (times) => {

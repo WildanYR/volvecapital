@@ -186,7 +186,7 @@ function TutorialListPage() {
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
                          <a 
-                          href={`http://${auth.tenant?.id}.localhost:3001/tutorial/${tutorial.slug}`} 
+                          href={`https://${auth.tenant?.id}.cumangeprompt.my.id/tutorial/${tutorial.slug}`}
                           target="_blank" 
                           rel="noreferrer"
                           className="flex items-center gap-2"
