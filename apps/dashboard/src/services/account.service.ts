@@ -3,7 +3,10 @@ import type { ProductVariant } from './product.service'
 import type { MetadataObject } from '@/dashboard/lib/metadata-converter'
 import type { GetAllServiceFn } from '@/dashboard/types/get-all-service.type'
 import { z } from 'zod'
-import { generateApiFetch, parseApiResponse } from '@/dashboard/lib/api-fetch.util'
+import {
+  generateApiFetch,
+  parseApiResponse,
+} from '@/dashboard/lib/api-fetch.util'
 import { convertStringToMetadataObject } from '@/dashboard/lib/metadata-converter'
 import { BaseQueryParamsSchema } from '@/dashboard/types/get-all-service.type'
 
@@ -14,12 +17,15 @@ export const AccountFilterSchema = z.object({
   email: z.string().optional(),
   user: z.string().optional(),
   billing: z.string().optional(),
+  product_id: z.string().optional(),
 })
 
 export type AccountFilter = z.infer<typeof AccountFilterSchema>
 
 export const GetAccountsParamsSchema
   = BaseQueryParamsSchema.merge(AccountFilterSchema)
+
+export type GetAccountParams = z.infer<typeof GetAccountsParamsSchema>
 
 export interface AccountProfileUser {
   id: string
@@ -147,7 +153,11 @@ export interface CountStatusAccount {
   accounts_expiring_today: number
 }
 
-export function AccountServiceGenerator(apiUrl: string, accessToken: string, tenantId: string) {
+export function AccountServiceGenerator(
+  apiUrl: string,
+  accessToken: string,
+  tenantId: string,
+) {
   const getAllAccount: GetAllServiceFn<Account, AccountFilter> = async (
     params,
   ) => {
@@ -189,7 +199,9 @@ export function AccountServiceGenerator(apiUrl: string, accessToken: string, ten
                   ...user,
                   created_at: new Date(user.created_at),
                   updated_at: new Date(user.updated_at),
-                  expired_at: user.expired_at ? new Date(user.expired_at) : undefined,
+                  expired_at: user.expired_at
+                    ? new Date(user.expired_at)
+                    : undefined,
                 }))
               : undefined,
           })),
@@ -209,7 +221,10 @@ export function AccountServiceGenerator(apiUrl: string, accessToken: string, ten
     }
   }
 
-  const getAccountById = async (accountId: string, signal?: AbortSignal): Promise<Account> => {
+  const getAccountById = async (
+    accountId: string,
+    signal?: AbortSignal,
+  ): Promise<Account> => {
     const response = await generateApiFetch(
       apiUrl,
       accessToken,
@@ -339,7 +354,10 @@ export function AccountServiceGenerator(apiUrl: string, accessToken: string, ten
     return { ...data, profile }
   }
 
-  const updateAccountUser = async (userId: string, payload: UpdateAccountUserPayload): Promise<void> => {
+  const updateAccountUser = async (
+    userId: string,
+    payload: UpdateAccountUserPayload,
+  ): Promise<void> => {
     const response = await generateApiFetch(
       apiUrl,
       accessToken,
@@ -545,7 +563,9 @@ export function AccountServiceGenerator(apiUrl: string, accessToken: string, ten
       accessToken,
       tenantId,
       '/account/count',
-      productVariantId ? { product_variant_id: productVariantId, signal } : { signal },
+      productVariantId
+        ? { product_variant_id: productVariantId, signal }
+        : { signal },
     )
     if (!response.ok) {
       const errorData = await response.json()

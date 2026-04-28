@@ -1,4 +1,5 @@
 import type { Account, AccountProfile } from '@/dashboard/services/account.service'
+import { toast } from 'sonner'
 import { formatDateIdStandard } from './time-converter.util'
 
 export function copyAccountTemplate(
@@ -48,4 +49,17 @@ export function copyAccountTemplate(
         return match
     }
   })
+}
+
+export function handleCopyTemplate(profile: AccountProfile, account: Account) {
+  const template = copyAccountTemplate(profile, account)
+  navigator.clipboard
+    .writeText(template)
+    .then(() => {
+      toast.success('Akun berhasil di copy')
+    })
+    .catch((error) => {
+      console.error(error)
+      toast.error('Akun gagal di copy')
+    })
 }

@@ -5,4 +5,5 @@ export interface IAccountGetFilter {
   email?: string;
   user?: string;
   billing?: string;
+  product_id?: string;
 }

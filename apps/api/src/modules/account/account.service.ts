@@ -28,7 +28,10 @@ import { Product } from 'src/database/models/product.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
 import { UpsertTaskQueueDto } from '../task-queue/dto/upsert-task-queue.dto';
 import { TaskQueueService } from '../task-queue/task-queue.service';
-import { AccountSubsEndNotifyPayload, NetflixResetPasswordPayload } from '../task-queue/types/task-context.type';
+import {
+  AccountSubsEndNotifyPayload,
+  NetflixResetPasswordPayload,
+} from '../task-queue/types/task-context.type';
 import { DateConverterProvider } from '../utility/date-converter.provider';
 import { PaginationProvider } from '../utility/pagination.provider';
 import { BaseGetAllUrlQuery } from '../utility/types/base-get-all-url-query.type';
@@ -78,7 +81,12 @@ export class AccountService {
         whereOptions.product_variant_id = filter.product_variant_id;
       }
       if (filter?.status) {
-        whereOptions.status = filter.status;
+        if (filter.status === 'freeze') {
+          whereOptions.freeze_until = { [Op.not]: null };
+        }
+        else {
+          whereOptions.status = filter.status;
+        }
       }
       if (filter?.billing) {
         whereOptions.billing = { [Op.iLike]: `%${filter.billing}%` };
@@ -110,7 +118,15 @@ export class AccountService {
         {
           model: ProductVariant,
           as: 'product_variant',
-          include: [{ model: Product, as: 'product' }],
+          required: !!filter?.product_id,
+          include: [
+            {
+              model: Product,
+              as: 'product',
+              required: !filter?.product_variant_id && !!filter?.product_id,
+              where: !filter?.product_variant_id && filter?.product_id ? { id: filter.product_id } : undefined,
+            },
+          ],
         },
         {
           model: AccountProfile,
@@ -685,8 +701,8 @@ export class AccountService {
 
       // 2. Query Akun Disable/Freeze (Output 4)
       const disabledResult = (await this.postgresProvider.rawQuery(
-        `SELECT COUNT(*) as count 
-     FROM account 
+        `SELECT COUNT(*) as count
+     FROM account
      WHERE (status = 'disable' OR freeze_until IS NOT NULL)
      ${accountFilterSql}`,
         {
@@ -698,8 +714,8 @@ export class AccountService {
       )) as unknown as { count: string };
 
       const expiringResult = (await this.postgresProvider.rawQuery(
-        `SELECT COUNT(*) as count 
-     FROM account 
+        `SELECT COUNT(*) as count
+     FROM account
      WHERE (batch_end_date AT TIME ZONE 'Asia/Jakarta')::date = (NOW() AT TIME ZONE 'Asia/Jakarta')::date
      ${accountFilterSql}`,
         {
@@ -713,22 +729,22 @@ export class AccountService {
       // 3. Query Utama (Output 1, 2, 3, 5)
       const slotStats = (await this.postgresProvider.rawQuery(
         `
-        WITH 
+        WITH
         user_counts AS (
             SELECT account_profile_id, COUNT(*) as active_count
             FROM account_user
             WHERE status = 'active'
             GROUP BY account_profile_id
         ),
-        
+
         profile_calc AS (
-            SELECT 
+            SELECT
                 ap.id AS profile_id,
                 ap.account_id,
                 ap.allow_generate,
                 ap.max_user,
                 COALESCE(uc.active_count, 0) as current_usage,
-                
+
                 -- Logic Akun Valid
                 (CASE WHEN a.status != 'disable' AND a.freeze_until IS NULL THEN 1 ELSE 0 END) as is_account_valid,
 
@@ -741,23 +757,23 @@ export class AccountService {
         ),
 
         account_agg AS (
-            SELECT 
+            SELECT
                 account_id,
                 COUNT(CASE WHEN allow_generate = true AND has_slot = 1 THEN 1 END) as available_gen_profiles,
                 COUNT(CASE WHEN allow_generate = true THEN 1 END) as total_gen_profiles
             FROM profile_calc
-            WHERE is_account_valid = 1 
+            WHERE is_account_valid = 1
             GROUP BY account_id
         )
 
-        SELECT 
+        SELECT
             -- Output 3
-            (SELECT COUNT(*) FROM profile_calc 
+            (SELECT COUNT(*) FROM profile_calc
             WHERE is_account_valid = 1 AND allow_generate = true AND has_slot = 1
             )::int as profiles_available,
 
             -- Output 5
-            (SELECT COUNT(*) FROM profile_calc 
+            (SELECT COUNT(*) FROM profile_calc
             WHERE is_account_valid = 1 AND allow_generate = false AND has_slot = 1
             )::int as profiles_locked,
 
@@ -787,9 +803,15 @@ export class AccountService {
         accounts_with_slots: slotStats?.accounts_providing_slots || 0,
         accounts_full: slotStats?.accounts_full || 0,
         profiles_available: slotStats?.profiles_available || 0,
-        accounts_disabled_or_frozen: Number.parseInt(disabledResult?.count || '0', 10),
+        accounts_disabled_or_frozen: Number.parseInt(
+          disabledResult?.count || '0',
+          10,
+        ),
         profiles_locked_but_has_slot: slotStats?.profiles_locked || 0,
-        accounts_expiring_today: Number.parseInt(expiringResult?.count || '0', 10),
+        accounts_expiring_today: Number.parseInt(
+          expiringResult?.count || '0',
+          10,
+        ),
       };
     }
     catch (error) {

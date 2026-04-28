@@ -153,7 +153,7 @@ function RouteComponent() {
           </div>
         </SidebarFooter>
       </Sidebar>
-      <main className="w-full">
+      <main className="flex-1 min-w-0">
         <div className="flex justify-between p-3 border-b-2 border-border">
           <SidebarTrigger className="cursor-pointer" />
           <p>{auth.tenant!.id}</p>
