@@ -14,9 +14,10 @@ import { useRouter } from 'next/navigation'
 
 declare global {
   interface Window {
-    snap: any
+    loadJokulCheckout: (url: string) => void;
   }
 }
+
 
 export default function ProductDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params)
@@ -46,23 +47,14 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
         ...formData
       })
 
-      if (window.snap) {
-        window.snap.pay(data.snap_token, {
-          onSuccess: (result: any) => {
-            toast.success('Pembayaran Berhasil!')
-            router.push(`/success?order_id=${result.order_id}&voucher=${data.voucher_code}`)
-          },
-          onPending: (result: any) => {
-            toast.info('Menunggu Pembayaran...')
-            router.push(`/success?order_id=${result.order_id}&voucher=${data.voucher_code}`)
-          },
-          onError: () => {
-            toast.error('Pembayaran Gagal')
-          },
-          onClose: () => {
-            toast.info('Pembayaran Dibatalkan')
-          }
-        })
+      if (data.payment_url) {
+        if (window.loadJokulCheckout) {
+          window.loadJokulCheckout(data.payment_url)
+        } else {
+          window.location.href = data.payment_url
+        }
+      } else {
+        toast.error('Gagal mendapatkan link pembayaran')
       }
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Terjadi kesalahan saat membuat pembayaran')
@@ -277,7 +269,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
                   )}
                 </button>
                 <p className="text-[9px] text-gray-600 text-center font-bold uppercase tracking-widest">
-                  Pembayaran aman via Midtrans
+                  Pembayaran aman via DOKU QRIS
                 </p>
               </form>
             </div>

@@ -11,6 +11,7 @@ import { RedisConfig } from './configs/redis.config';
 import { TokenConfig } from './configs/token.config';
 import { VoucherConfig } from './configs/voucher.config';
 import { MidtransConfig } from './configs/midtrans.config';
+import { DokuConfig } from './configs/doku.config';
 import { MailConfig } from './configs/mail.config';
 import { DatabaseModule } from './database/database.module';
 import { VcAuthGuard } from './guards/vc-auth.guard';
@@ -50,6 +51,7 @@ import { TutorialModule } from './modules/tutorial/tutorial.module';
         DatabaseConfig,
         VoucherConfig,
         MidtransConfig,
+        DokuConfig,
         MailConfig,
       ],
     }),

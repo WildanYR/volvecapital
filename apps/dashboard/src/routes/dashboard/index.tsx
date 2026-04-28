@@ -17,7 +17,6 @@ import { useAuth } from '@/dashboard/context-providers/auth.provider'
 import { formatRupiah } from '@/dashboard/lib/currency.util'
 import { formatDateIdStandard } from '@/dashboard/lib/time-converter.util'
 import { statisticServiceGenerator } from '@/dashboard/services/statistic.service'
-import { LowStockAlert } from '@/dashboard/components/low-stock-alert'
 
 export const Route = createFileRoute('/dashboard/')({
   component: RouteComponent,
@@ -45,8 +44,6 @@ function RouteComponent() {
           </h1>
         </div>
         
-        <LowStockAlert />
-
         {isFetchStatisticLoading
           ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -59,88 +56,88 @@ function RouteComponent() {
               <div className="flex flex-col gap-4">
                 {allStatistic?.revenue
                   ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Card>
-                          <CardHeader>
-                            <CardTitle>Penghasilan Bulan Ini</CardTitle>
-                            <CardDescription>
-                              Update data:
-                              {' '}
-                              {formatDateIdStandard(
-                                allStatistic.revenue.month.updated_at,
-                              )}
-                            </CardDescription>
-                          </CardHeader>
-                          <CardContent>
-                            <div className="flex flex-col gap-2">
-                              <p className="text-3xl">
-                                {formatRupiah(allStatistic.revenue.month.total_revenue)}
-                              </p>
-                              <p className="text-sm">
-                                Transaksi:
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <Card>
+                            <CardHeader>
+                              <CardTitle>Penghasilan Bulan Ini</CardTitle>
+                              <CardDescription>
+                                Update data:
                                 {' '}
-                                {allStatistic.revenue.month.transaction_count}
-                              </p>
-                            </div>
-                          </CardContent>
-                        </Card>
-                        <Card>
-                          <CardHeader>
-                            <CardTitle>Penghasilan Hari Ini</CardTitle>
-                            <CardDescription>
-                              Update data:
-                              {' '}
-                              {formatDateIdStandard(
-                                allStatistic.revenue.today.updated_at,
-                              )}
-                            </CardDescription>
-                          </CardHeader>
-                          <CardContent>
-                            <div className="flex flex-col gap-2">
-                              <p className="text-3xl">
-                                {formatRupiah(allStatistic.revenue.today.total_revenue)}
-                              </p>
-                              <p className="text-sm">
-                                Transaksi:
+                                {formatDateIdStandard(
+                                  allStatistic.revenue.month.updated_at,
+                                )}
+                              </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="flex flex-col gap-2">
+                                <p className="text-3xl">
+                                  {formatRupiah(allStatistic.revenue.month.total_revenue)}
+                                </p>
+                                <p className="text-sm">
+                                  Transaksi:
+                                  {' '}
+                                  {allStatistic.revenue.month.transaction_count}
+                                </p>
+                              </div>
+                            </CardContent>
+                          </Card>
+                          <Card>
+                            <CardHeader>
+                              <CardTitle>Penghasilan Hari Ini</CardTitle>
+                              <CardDescription>
+                                Update data:
                                 {' '}
-                                {allStatistic.revenue.today.transaction_count}
-                              </p>
-                            </div>
-                          </CardContent>
-                        </Card>
-                        <Card className="col-span-full">
-                          <CardHeader>
-                            <CardTitle>Grafik Revenue</CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            <RevenueChart data={allStatistic.revenue} />
-                          </CardContent>
-                        </Card>
-                        <Card className="col-span-full lg:col-span-1">
-                          <CardHeader>
-                            <CardTitle>Transaksi per Platform</CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            <PlatformList data={allStatistic.platform} />
-                          </CardContent>
-                        </Card>
-                        <Card className="col-span-full lg:col-span-1">
-                          <CardHeader>
-                            <CardTitle>Jam Sibuk (Peak Hour)</CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            <PeakHourChart data={allStatistic.peakHour} />
-                          </CardContent>
-                        </Card>
-                        <Card className="col-span-full">
-                          <CardHeader>
-                            <CardTitle>Produk Terlaris</CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            <ProductSales data={allStatistic.product} />
-                          </CardContent>
-                        </Card>
-                      </div>
+                                {formatDateIdStandard(
+                                  allStatistic.revenue.today.updated_at,
+                                )}
+                              </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="flex flex-col gap-2">
+                                <p className="text-3xl">
+                                  {formatRupiah(allStatistic.revenue.today.total_revenue)}
+                                </p>
+                                <p className="text-sm">
+                                  Transaksi:
+                                  {' '}
+                                  {allStatistic.revenue.today.transaction_count}
+                                </p>
+                              </div>
+                            </CardContent>
+                          </Card>
+                          <Card className="col-span-full md:col-span-1">
+                            <CardHeader>
+                              <CardTitle>Grafik Revenue</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <RevenueChart data={allStatistic.revenue} />
+                            </CardContent>
+                          </Card>
+                          <Card className="col-span-full md:col-span-1">
+                            <CardHeader>
+                              <CardTitle>Jam Sibuk (Peak Hour)</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <PeakHourChart data={allStatistic.peakHour} />
+                            </CardContent>
+                          </Card>
+                          <Card className="col-span-full md:col-span-1">
+                            <CardHeader>
+                              <CardTitle>Transaksi per Platform</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <PlatformList data={allStatistic.platform} />
+                            </CardContent>
+                          </Card>
+                          <Card className="col-span-full md:col-span-1">
+                            <CardHeader>
+                              <CardTitle>Produk Terlaris</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <ProductSales data={allStatistic.product} />
+                            </CardContent>
+                          </Card>
+                        </div>
                     )
                   : null}
               </div>

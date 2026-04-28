@@ -4,6 +4,7 @@ import "./globals.css";
 import { Providers } from "@/components/providers";
 import { BackgroundBlobs } from "@/components/background-blobs";
 import { WhatsAppFloating } from "@/components/whatsapp-floating";
+import Script from "next/script";
 
 const outfit = Outfit({
   variable: "--font-outfit",
@@ -29,13 +30,15 @@ export default function RootLayout({
   return (
     <html lang="id" className={`${outfit.variable} h-full antialiased dark`}>
       <head>
-        <script async src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key={process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY}></script>
       </head>
       <body className="min-h-full flex flex-col font-sans">
         <Providers>
           <BackgroundBlobs />
           {children}
           <WhatsAppFloating />
+          {/* DOKU Checkout Scripts */}
+          <Script src="https://sandbox.doku.com/jokul-checkout-js/v1/jokul-checkout-1.0.0.js" strategy="lazyOnload" />
+          <Script src="https://doku.com/jokul-checkout-js/v1/jokul-checkout-1.0.0.js" strategy="lazyOnload" />
         </Providers>
       </body>
     </html>

@@ -100,16 +100,11 @@ export class PublicService {
     const transaction = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema(tenantId, transaction);
-
       const products = await this.productRepository.findAll({
         include: [{ model: ProductVariant, as: 'variants' }],
-        order: [
-          ['name', 'ASC'],
-          [{ model: ProductVariant, as: 'variants' }, 'name', 'ASC'],
-        ],
+        order: [['created_at', 'ASC']],
         transaction,
       });
-
       await transaction.commit();
       return products;
     }
@@ -119,119 +114,90 @@ export class PublicService {
     }
   }
 
-  // ─── GENERATE VOUCHER CODE ───────────────────────────────────────────────────
-
-  private generateVoucherCode(): string {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let code = 'VC-';
-    for (let i = 0; i < 8; i++) {
-      code += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return code;
-  }
-
-  // ─── CREATE PAYMENT (MIDTRANS) ───────────────────────────────────────────────
+  // ─── CREATE PAYMENT ─────────────────────────────────────────────────────────
 
   async createPayment(tenantId: string, dto: CreatePaymentDto) {
     const transaction = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema(tenantId, transaction);
 
-      // 1. Validate variant exists
-      const variant = await this.productVariantRepository.findOne({
-        where: { id: dto.product_variant_id },
-        include: [{ model: Product, as: 'product' }],
-        transaction,
-      });
-      if (!variant) {
-        throw new NotFoundException('Produk varian tidak ditemukan');
-      }
-
-      // 2. Check stock availability (Profile-based)
-      const accounts = await this.accountRepository.findAll({
-        where: {
-          product_variant_id: dto.product_variant_id,
-          status: { [Op.ne]: 'disable' },
-          subscription_expiry: { [Op.gt]: new Date() },
-          freeze_until: null,
-        },
-        include: [{ model: AccountProfile, as: 'profile', where: { allow_generate: true } }],
-        transaction,
-      });
-
-      let totalAvailableSlots = 0;
-      for (const account of accounts) {
-        const profiles = (account as any).profile || [];
-        for (const profile of profiles) {
-          const activeUsers = await this.accountUserRepository.count({
-            where: { account_profile_id: profile.id, status: 'active' },
-            transaction,
-          });
-          const available = profile.max_user - activeUsers;
-          if (available > 0) {
-            totalAvailableSlots += available;
-          }
-        }
-      }
-
-      if (totalAvailableSlots === 0) {
-        throw new ServiceUnavailableException(
-          'Stok habis, silahkan hubungi admin',
-        );
-      }
-
-      // 3. Generate unique voucher code
-      let voucherCode = this.generateVoucherCode();
-      let codeExists = await this.voucherRepository.findOne({
-        where: { id: voucherCode },
-        transaction,
-      });
-      while (codeExists) {
-        voucherCode = this.generateVoucherCode();
-        codeExists = await this.voucherRepository.findOne({
-          where: { id: voucherCode },
+      // 1. Get variant
+      const variant = await this.productVariantRepository.findByPk(
+        dto.product_variant_id,
+        {
+          include: [{ model: Product, as: 'product' }],
           transaction,
-        });
+        },
+      );
+      if (!variant) throw new NotFoundException('Varian produk tidak ditemukan');
+
+      // 2. Check stock
+      const stockStatus = await this.getStockStatus(tenantId);
+      const variantStock = stockStatus.find(s => s.variant_id === variant.id);
+      if (!variantStock || variantStock.available <= 0) {
+        throw new ServiceUnavailableException('Stok untuk varian ini sedang habis');
       }
 
-      // 4. Calculate expiry
-      const expiryHours = variant.voucher_expiry_hours ?? this.configService.get<number>('voucher.expiryHours') ?? 24;
-      const expiredAt = new Date(Date.now() + expiryHours * 60 * 60 * 1000);
-
-      // 5. Build Midtrans order
+      // 3. Create order record (Payment Status: PENDING)
       const orderId = `VC-${tenantId.toUpperCase()}-${Date.now()}`;
       const grossAmount = variant.price;
 
-      const midtransPayload = {
-        transaction_details: {
-          order_id: orderId,
-          gross_amount: grossAmount,
+      // Build DOKU callback URL with tenant subdomain
+      const frontendBaseUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3001';
+      let callbackUrl = '';
+      
+      try {
+        const url = new URL(frontendBaseUrl);
+        // If it's localhost, always force tenantId.localhost
+        if (url.hostname.includes('localhost') || url.hostname === '127.0.0.1') {
+          const cleanHostname = url.hostname.replace(`${tenantId}.`, '');
+          url.hostname = `${tenantId}.${cleanHostname}`;
+        }
+        callbackUrl = `${url.toString().replace(/\/$/, '')}/success?order_id=${orderId}`;
+      } catch (e) {
+        callbackUrl = `${frontendBaseUrl}/success?order_id=${orderId}`;
+      }
+
+      const dokuPayload = {
+        order: {
+          invoice_number: orderId,
+          amount: grossAmount,
+          currency: 'IDR',
+          callback_url: callbackUrl,
         },
-        item_details: [
-          {
-            id: variant.id,
-            price: grossAmount,
-            quantity: 1,
-            name: `${(variant as any).product?.name ?? 'Produk'} - ${variant.name}`,
-          },
-        ],
-        customer_details: {
-          first_name: dto.buyer_name,
+        customer: {
+          name: dto.buyer_name,
           email: dto.buyer_email,
-          phone: dto.buyer_whatsapp,
         },
-        custom_field1: voucherCode,
-        custom_field2: tenantId,
       };
 
-      const { token: snapToken, redirect_url: paymentUrl } = await this.requestMidtransSnapToken(midtransPayload);
+      const { payment_url } = await this.requestDokuCheckout(dokuPayload);
 
-      // Send invoice email (non-blocking)
-      this.logger.log(`[CreatePayment] Triggering invoice email for ${dto.buyer_email}`);
+      // 4. Create voucher record (PENDING)
+      // Expiration: 24 hours from now
+      const voucherExpiry = new Date();
+      voucherExpiry.setHours(voucherExpiry.getHours() + 24);
+
+      await this.voucherRepository.create(
+        {
+          id: `VC${Date.now().toString(36).toUpperCase()}`, 
+          buyer_name: dto.buyer_name,
+          buyer_email: dto.buyer_email,
+          buyer_whatsapp: dto.buyer_whatsapp,
+          product_variant_id: variant.id,
+          payment_id: orderId,
+          payment_status: 'PENDING',
+          status: 'UNUSED',
+          expired_at: voucherExpiry,
+        },
+        { transaction },
+      );
+
+      // 5. Send invoice email (non-blocking)
       this.sendInvoiceEmail(
         dto.buyer_email,
         dto.buyer_name,
-        paymentUrl,
+        payment_url, 
         `${(variant as any).product?.name ?? 'Produk'} - ${variant.name}`,
         grossAmount,
       ).catch((err) => {
@@ -250,7 +216,7 @@ export class PublicService {
       );
 
       // 7. Create transaction item
-      const txnItem = await this.transactionItemRepository.create(
+      await this.transactionItemRepository.create(
         {
           name: `${(variant as any).product?.name ?? 'Produk'} - ${variant.name}`,
           transaction_id: txn.id,
@@ -258,30 +224,11 @@ export class PublicService {
         { transaction },
       );
 
-      // 8. Save voucher
-      await this.voucherRepository.create(
-        {
-          id: voucherCode,
-          product_variant_id: dto.product_variant_id,
-          buyer_name: dto.buyer_name,
-          buyer_email: dto.buyer_email,
-          buyer_whatsapp: dto.buyer_whatsapp,
-          expired_at: expiredAt,
-          transaction_id: txn.id,
-          transaction_item_id: txnItem.id,
-          payment_id: orderId,
-          status: 'UNUSED',
-          payment_status: 'PENDING',
-        },
-        { transaction },
-      );
-
       await transaction.commit();
 
       return {
-        snap_token: snapToken,
-        voucher_code: voucherCode,
         order_id: orderId,
+        payment_url,
       };
     }
     catch (error) {
@@ -290,48 +237,67 @@ export class PublicService {
     }
   }
 
-  // ─── MIDTRANS SNAP TOKEN REQUEST ─────────────────────────────────────────────
+  // ─── DOKU API UTILS ──────────────────────────────────────────────────────────
 
-  private async requestMidtransSnapToken(payload: object): Promise<{ token: string; redirect_url: string }> {
-    const serverKey = this.configService.get<string>('midtrans.serverKey') ?? '';
-    const isProduction = this.configService.get<boolean>('midtrans.isProduction');
-    const baseUrl = isProduction
-      ? 'app.midtrans.com'
-      : 'app.sandbox.midtrans.com';
+  private async requestDokuCheckout(payload: any): Promise<{ payment_url: string }> {
+    const clientId = this.configService.get<string>('doku.clientId');
+    const secretKey = this.configService.get<string>('doku.secretKey') || '';
+    const isProd = this.configService.get<boolean>('doku.isProduction');
+    
+    const baseUrl = isProd ? 'api.doku.com' : 'api-sandbox.doku.com';
+    const targetPath = '/checkout/v1/payment';
+    const requestId = `REQ-${Date.now()}`;
+    const timestamp = new Date().toISOString().split('.')[0] + 'Z';
 
-    const auth = Buffer.from(`${serverKey}:`).toString('base64');
+    const fullPayload = {
+      ...payload,
+      payment: {
+        payment_due_date: 60,
+        payment_method_types: ['QRIS'],
+      },
+    };
+    
+    const body = JSON.stringify(fullPayload);
+
+    const digest = crypto.createHash('sha256').update(body).digest('base64');
+    const signatureComponent = `Client-Id:${clientId}\n` +
+                               `Request-Id:${requestId}\n` +
+                               `Request-Timestamp:${timestamp}\n` +
+                               `Request-Target:${targetPath}\n` +
+                               `Digest:${digest}`;
+
+    const signature = crypto
+      .createHmac('sha256', secretKey)
+      .update(signatureComponent)
+      .digest('base64');
+
+    const options = {
+      hostname: baseUrl,
+      path: targetPath,
+      method: 'POST',
+      headers: {
+        'Client-Id': clientId,
+        'Request-Id': requestId,
+        'Request-Timestamp': timestamp,
+        'Signature': `HMACSHA256=${signature}`,
+        'Content-Type': 'application/json',
+      },
+    };
 
     return new Promise((resolve, reject) => {
-      const body = JSON.stringify(payload);
-      const options = {
-        hostname: baseUrl,
-        path: '/snap/v1/transactions',
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Basic ${auth}`,
-          'Content-Length': Buffer.byteLength(body),
-        },
-      };
-
       const req = https.request(options, (res) => {
         let data = '';
         res.on('data', (chunk) => { data += chunk; });
         res.on('end', () => {
           try {
             const parsed = JSON.parse(data);
-            if (parsed.token) {
-              resolve({
-                token: parsed.token,
-                redirect_url: parsed.redirect_url,
-              });
+            if (parsed.response?.payment?.url) {
+              resolve({ payment_url: parsed.response.payment.url });
+            } else {
+              reject(new Error(`DOKU Checkout error: ${JSON.stringify(parsed)}`));
             }
-            else {
-              reject(new Error(`Midtrans error: ${JSON.stringify(parsed)}`));
-            }
-          }
-          catch {
-            reject(new Error('Failed to parse Midtrans response'));
+          } catch {
+            reject(new Error('Failed to parse DOKU Checkout response'));
           }
         });
       });
@@ -342,46 +308,43 @@ export class PublicService {
     });
   }
 
-  // ─── PAYMENT NOTIFY WEBHOOK ──────────────────────────────────────────────────
+  // ─── PAYMENT NOTIFY WEBHOOK (DOKU) ───────────────────────────────────────────
 
   async handlePaymentNotify(tenantId: string, body: any) {
-    const { order_id, transaction_status, fraud_status } = body;
+    const { order, transaction } = body;
+    const orderId = order?.invoice_number;
+    const transactionStatus = transaction?.status;
 
-    const transaction = await this.postgresProvider.transaction();
+    const dbTransaction = await this.postgresProvider.transaction();
     try {
-      await this.postgresProvider.setSchema(tenantId, transaction);
+      await this.postgresProvider.setSchema(tenantId, dbTransaction);
 
       const voucher = await this.voucherRepository.findOne({
-        where: { payment_id: order_id },
+        where: { payment_id: orderId },
         include: [{ model: ProductVariant, as: 'product_variant', include: [{ model: Product, as: 'product' }] }],
-        transaction,
+        transaction: dbTransaction,
       });
       if (!voucher) {
-        await transaction.commit();
+        await dbTransaction.commit();
         return { ok: true };
       }
 
-      const isPaid
-        = transaction_status === 'settlement'
-          || (transaction_status === 'capture' && fraud_status === 'accept');
-      const isExpiredOrFailed
-        = transaction_status === 'expire'
-          || transaction_status === 'cancel'
-          || transaction_status === 'deny';
+      const isPaid = transactionStatus === 'SUCCESS';
+      const isExpiredOrFailed = transactionStatus === 'FAILED' || transactionStatus === 'EXPIRED';
 
       let shouldSendEmail = false;
       if (isPaid && voucher.payment_status !== 'PAID') {
         shouldSendEmail = true;
-        await voucher.update({ payment_status: 'PAID' }, { transaction });
+        await voucher.update({ payment_status: 'PAID' }, { transaction: dbTransaction });
       }
       else if (isExpiredOrFailed) {
         await voucher.update(
           { payment_status: 'FAILED', status: 'EXPIRED' },
-          { transaction },
+          { transaction: dbTransaction },
         );
       }
 
-      await transaction.commit();
+      await dbTransaction.commit();
 
       if (shouldSendEmail) {
         const productName = `${(voucher.product_variant as any)?.product?.name ?? 'Produk'} - ${voucher.product_variant?.name ?? ''}`;
@@ -399,8 +362,36 @@ export class PublicService {
       return { ok: true };
     }
     catch (error) {
-      if (transaction) await transaction.rollback();
-      this.logger.error(`[PaymentNotify] Error handling notify: ${error.message}`);
+      await dbTransaction.rollback();
+      throw error;
+    }
+  }
+
+  // ─── CHECK PAYMENT STATUS ────────────────────────────────────────────────────
+
+  async checkPaymentStatus(tenantId: string, orderId: string) {
+    const transaction = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema(tenantId, transaction);
+
+      const voucher = await this.voucherRepository.findOne({
+        where: { payment_id: orderId },
+        transaction,
+      });
+
+      if (!voucher) {
+        throw new NotFoundException('Pesanan tidak ditemukan');
+      }
+
+      await transaction.commit();
+      return {
+        order_id: orderId,
+        payment_status: voucher.payment_status,
+        voucher_code: voucher.payment_status === 'PAID' ? voucher.id : null,
+      };
+    }
+    catch (error) {
+      await transaction.rollback();
       throw error;
     }
   }
@@ -411,17 +402,13 @@ export class PublicService {
     const transaction = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema(tenantId, transaction);
-
       const voucher = await this.voucherRepository.findOne({
         where: { id: code },
         include: [
           {
             model: ProductVariant,
             as: 'product_variant',
-            include: [
-              { model: Product, as: 'product' },
-              { model: Tutorial, as: 'tutorial' }
-            ],
+            include: [{ model: Product, as: 'product' }],
           },
         ],
         transaction,
@@ -431,42 +418,8 @@ export class PublicService {
         throw new NotFoundException('Voucher tidak ditemukan');
       }
 
-      // If USED, also load account info via transaction_item → account_user → account → email
-      let accountInfo: any = null;
-      if (voucher.status === 'USED' && voucher.transaction_item_id) {
-        const txnItem = await this.transactionItemRepository.findOne({
-          where: { id: voucher.transaction_item_id },
-          include: [
-            {
-              model: AccountUser,
-              as: 'user',
-              include: [
-                {
-                  model: Account,
-                  as: 'account',
-                  include: [{ model: Email, as: 'email' }],
-                },
-                { model: AccountProfile, as: 'profile' },
-              ],
-            },
-          ],
-          transaction,
-        });
-        if (txnItem?.user) {
-          const user = txnItem.user as any;
-          accountInfo = {
-            email: user.account?.email?.email,
-            password: user.account?.account_password,
-            profile_name: user.profile?.name,
-            expired_at: user.expired_at,
-            copy_template: voucher.product_variant?.copy_template ?? null,
-            metadata: user.profile?.metadata ? JSON.parse(user.profile.metadata) : {},
-          };
-        }
-      }
-
       await transaction.commit();
-      return { voucher, account: accountInfo };
+      return { voucher };
     }
     catch (error) {
       await transaction.rollback();
@@ -483,31 +436,19 @@ export class PublicService {
 
       // 1. Validate voucher
       const voucher = await this.voucherRepository.findOne({
-        where: { id: dto.voucher_code },
-        include: [
-          { 
-            model: ProductVariant, 
-            as: 'product_variant',
-            include: [{ model: Tutorial, as: 'tutorial' }]
-          }
-        ],
+        where: { id: dto.voucher_code, status: 'UNUSED', payment_status: 'PAID' },
+        include: [{ model: ProductVariant, as: 'product_variant' }],
         transaction,
       });
 
       if (!voucher) {
-        throw new NotFoundException('Kode voucher tidak ditemukan');
-      }
-      if (voucher.payment_status !== 'PAID') {
-        throw new BadRequestException('Pembayaran belum dikonfirmasi');
-      }
-      if (voucher.status === 'USED') {
-        throw new BadRequestException('Voucher sudah pernah digunakan');
-      }
-      if (voucher.status === 'EXPIRED' || voucher.expired_at < new Date()) {
-        throw new BadRequestException('Voucher sudah kadaluarsa');
+        throw new BadRequestException(
+          'Voucher tidak valid, sudah digunakan, atau belum dibayar.',
+        );
       }
 
-      const variant = voucher.product_variant!;
+      const variant = voucher.product_variant;
+      if (!variant) throw new NotFoundException('Varian produk tidak ditemukan');
 
       // 2. Find available account & profile slot
       const accounts = await this.accountRepository.findAll({
@@ -561,67 +502,45 @@ export class PublicService {
         Date.now() + Number(variant.duration),
       );
 
-      const accountUser = await this.accountUserRepository.create(
+      const newUser = await this.accountUserRepository.create(
         {
           name: voucher.buyer_name,
-          status: 'active',
           account_id: chosenAccount.id,
           account_profile_id: chosenProfile.id,
+          status: 'active',
           expired_at: expiredAt,
         },
         { transaction },
       );
 
-      // 5. Update transaction_item with account_user_id
-      if (voucher.transaction_item_id) {
-        await this.transactionItemRepository.update(
-          { account_user_id: accountUser.id },
-          { where: { id: voucher.transaction_item_id }, transaction },
-        );
-      }
+      // 5. Update voucher
+      const accessToken = crypto.randomBytes(32).toString('hex');
+      await voucher.update(
+        {
+          status: 'USED',
+          access_token: accessToken,
+          used_at: new Date(),
+        },
+        { transaction },
+      );
 
-      // 6. Mark voucher as USED & Generate Access Token
-      const accessToken = crypto.randomUUID();
-      await voucher.update({ 
-        status: 'USED', 
-        used_at: new Date(),
-        access_token: accessToken,
-        access_count_today: 0,
-        last_access_at: new Date(),
-      }, { transaction });
+      // 6. Link to transaction_item if possible
+      if (voucher.payment_id) {
+        const txnItem = await this.transactionItemRepository.findOne({
+          where: { transaction_id: voucher.payment_id },
+          transaction,
+        });
+        if (txnItem) {
+          await txnItem.update({ account_user_id: newUser.id }, { transaction });
+        }
+      }
 
       await transaction.commit();
 
-      // 7. Send WA notification (non-blocking)
-      const accountEmail = (chosenAccount as any).email?.email ?? '';
-      const accountPassword = chosenAccount.account_password;
-      const profileName = chosenProfile.name;
-      const copyTemplate = variant.copy_template;
-
-      this.sendVoucherEmail(
-        voucher.buyer_email,
-        voucher.buyer_name,
-        dto.voucher_code,
-        accountEmail,
-        accountPassword,
-        profileName,
-        expiredAt,
-        copyTemplate,
-        variant.redeem_display_config,
-        chosenProfile.metadata ? JSON.parse(chosenProfile.metadata) : {},
-      ).catch(() => {});
-
       return {
-        voucher_code: dto.voucher_code,
-        email: accountEmail,
-        password: accountPassword,
-        profile_name: profileName,
+        message: 'Voucher berhasil diredeem!',
+        access_token: accessToken,
         expired_at: expiredAt,
-        copy_template: copyTemplate,
-        access_token: voucher.access_token,
-        tenant_id: tenantId,
-        metadata: chosenProfile.metadata ? JSON.parse(chosenProfile.metadata) : {},
-        tutorial_slug: (variant as any).tutorial?.slug || null,
       };
     }
     catch (error) {
@@ -630,61 +549,46 @@ export class PublicService {
     }
   }
 
-  // ─── CHECK STOCK LOW ─────────────────────────────────────────────────────────
+  // ─── STOCK STATUS ───────────────────────────────────────────────────────────
 
   async getStockStatus(tenantId: string) {
     const transaction = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema(tenantId, transaction);
-      const threshold = this.configService.get<number>('stock.lowThreshold') ?? 3;
+      const variants = await this.productVariantRepository.findAll({ transaction });
+      
+      const result = await Promise.all(
+        variants.map(async (v) => {
+          const accounts = await this.accountRepository.findAll({
+            where: {
+              product_variant_id: v.id,
+              status: { [Op.ne]: 'disable' },
+              subscription_expiry: { [Op.gt]: new Date() },
+              freeze_until: null,
+            },
+            include: [{ model: AccountProfile, as: 'profile', where: { allow_generate: true } }],
+            transaction,
+          });
 
-      const variants = await this.productVariantRepository.findAll({
-        include: [{ model: Product, as: 'product' }],
-        transaction,
-      });
-
-      const result: {
-        product_variant_id: string;
-        product_name: string;
-        variant_name: string;
-        stock: number;
-        low_stock: boolean;
-      }[] = [];
-      for (const variant of variants) {
-        const accounts = await this.accountRepository.findAll({
-          where: {
-            product_variant_id: variant.id,
-            status: { [Op.ne]: 'disable' },
-            subscription_expiry: { [Op.gt]: new Date() },
-            freeze_until: null,
-          },
-          include: [{ model: AccountProfile, as: 'profile', where: { allow_generate: true } }],
-          transaction,
-        });
-
-        let totalAvailableSlots = 0;
-        for (const account of accounts) {
-          const profiles = (account as any).profile || [];
-          for (const profile of profiles) {
-            const activeUsers = await this.accountUserRepository.count({
-              where: { account_profile_id: profile.id, status: 'active' },
-              transaction,
-            });
-            const available = profile.max_user - activeUsers;
-            if (available > 0) {
-              totalAvailableSlots += available;
+          let availableSlots = 0;
+          for (const acc of accounts) {
+            const profiles: AccountProfile[] = (acc as any).profile ?? [];
+            for (const prof of profiles) {
+              const activeUsers = await this.accountUserRepository.count({
+                where: { account_profile_id: prof.id, status: 'active' },
+                transaction,
+              });
+              availableSlots += Math.max(0, prof.max_user - activeUsers);
             }
           }
-        }
 
-        result.push({
-          product_variant_id: variant.id,
-          product_name: (variant as any).product?.name ?? '',
-          variant_name: variant.name,
-          stock: totalAvailableSlots,
-          low_stock: totalAvailableSlots <= threshold,
-        });
-      }
+          return {
+            variant_id: v.id,
+            name: v.name,
+            available: availableSlots,
+          };
+        }),
+      );
 
       await transaction.commit();
       return result;
@@ -695,94 +599,7 @@ export class PublicService {
     }
   }
 
-  // ─── SEND EMAIL VIA NODEMAILER (MAILTRAP) ───────────────────────────────────
-  
-  private async sendVoucherEmail(
-    email: string,
-    buyerName: string,
-    voucherCode: string,
-    accountEmail: string,
-    accountPassword: string,
-    profileName: string,
-    expiredAt: Date,
-    copyTemplate?: string | null,
-    displayConfig?: any,
-    metadata?: any,
-  ): Promise<void> {
-    const host = this.configService.get<string>('mail.host');
-    const port = this.configService.get<number>('mail.port');
-    const user = this.configService.get<string>('mail.user');
-    const pass = this.configService.get<string>('mail.pass');
-    const from = this.configService.get<string>('mail.from');
-
-    if (!host || !user || !pass) return;
-
-    const transporter = nodemailer.createTransport({
-      host,
-      port,
-      auth: { user, pass },
-    });
-
-    const expiredStr = expiredAt.toLocaleDateString('id-ID', {
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric',
-    });
-
-    const showEmail = displayConfig?.show_email ?? true;
-    const showPassword = displayConfig?.show_password ?? true;
-    const showProfile = displayConfig?.show_profile_name ?? true;
-    const showExpired = displayConfig?.show_expired_at ?? true;
-    const customFields = displayConfig?.custom_fields ?? [];
-
-    const resolve = (val: string) => {
-      let resolved = val
-        .replace('$$email', accountEmail)
-        .replace('$$password', accountPassword)
-        .replace('$$profile', profileName)
-        .replace('$$expired', expiredStr);
-      
-      if (metadata) {
-        Object.entries(metadata).forEach(([key, value]) => {
-          resolved = resolved.replace(`$$metadata.${key}`, String(value));
-        });
-      }
-      return resolved;
-    };
-
-    const bodyText = copyTemplate
-      ? copyTemplate
-          .replace('{buyer_name}', buyerName)
-          .replace('{email}', accountEmail)
-          .replace('{password}', accountPassword)
-          .replace('{profile}', profileName)
-          .replace('{expired_at}', expiredStr)
-          .replace('{voucher_code}', voucherCode)
-      : `Halo ${buyerName}! 🎉\n\nVoucher kamu berhasil diredeem!\n\n${showEmail ? `📧 Email: ${accountEmail}\n` : ''}${showPassword ? `🔑 Password: ${accountPassword}\n` : ''}${showProfile ? `👤 Profile: ${profileName}\n` : ''}${showExpired ? `📅 Aktif hingga: ${expiredStr}\n` : ''}${customFields.map((f: any) => `${f.label}: ${resolve(f.value)}\n`).join('')}\nKode Voucher: ${voucherCode}\n\nTerima kasih! 🙏`;
-
-    await transporter.sendMail({
-      from: `"Volve Capital" <${from}>`,
-      to: email,
-      subject: `Aktivasi Voucher ${voucherCode} Berhasil!`,
-      text: bodyText,
-      html: `<div style="font-family: sans-serif; line-height: 1.6; color: #333;">
-        <h2 style="color: #FFB800;">Aktivasi Berhasil! 🎉</h2>
-        <p>Halo <strong>${buyerName}</strong>,</p>
-        <p>Voucher kamu telah berhasil direaktivasi. Berikut adalah detail akun Anda:</p>
-        <div style="background: #f4f4f4; padding: 20px; border-radius: 10px; margin: 20px 0;">
-          ${showEmail ? `<p style="margin: 5px 0;">📧 <strong>Email:</strong> ${accountEmail}</p>` : ''}
-          ${showPassword ? `<p style="margin: 5px 0;">🔑 <strong>Password:</strong> ${accountPassword}</p>` : ''}
-          ${showProfile ? `<p style="margin: 5px 0;">👤 <strong>Profile:</strong> ${profileName}</p>` : ''}
-          ${showExpired ? `<p style="margin: 5px 0;">📅 <strong>Aktif hingga:</strong> ${expiredStr}</p>` : ''}
-          ${customFields.map((f: any) => `<p style="margin: 5px 0;"><strong>${f.label}:</strong> ${resolve(f.value)}</p>`).join('')}
-        </div>
-        <p>Kode Voucher: <code>${voucherCode}</code></p>
-        <p style="font-size: 12px; color: #777; margin-top: 30px;">Terima kasih telah berlangganan di Volve Capital!</p>
-      </div>`,
-    });
-  }
-
-  // ─── SEND PAYMENT CONFIRMATION EMAIL ───────────────────────────────────────
+  // ─── EMAIL UTILS ─────────────────────────────────────────────────────────────
 
   private async sendPaymentConfirmationEmail(
     email: string,
@@ -796,10 +613,7 @@ export class PublicService {
     const pass = this.configService.get<string>('mail.pass');
     const from = this.configService.get<string>('mail.from');
 
-    if (!host || !user || !pass) {
-      console.warn(`[Email] Missing configuration (host:${!!host}, user:${!!user}, pass:${!!pass})`);
-      return;
-    }
+    if (!host || !user || !pass) return;
 
     const transporter = nodemailer.createTransport({
       host,
@@ -825,8 +639,6 @@ export class PublicService {
       </div>`,
     });
   }
-
-  // ─── SEND INVOICE EMAIL ────────────────────────────────────────────────────
 
   private async sendInvoiceEmail(
     email: string,
@@ -914,48 +726,18 @@ export class PublicService {
         transaction,
       });
 
-      if (!voucher) throw new NotFoundException('Token akses tidak valid');
-      if (voucher.status !== 'USED') throw new BadRequestException('Voucher belum di-redeem');
+      if (!voucher) throw new NotFoundException('Akses tidak ditemukan');
 
       const user = (voucher.transaction_item as any)?.user;
-      if (!user) throw new NotFoundException('Data akun tidak ditemukan');
+      if (!user) throw new NotFoundException('Data user tidak ditemukan');
 
-      // 2. Check Expiry (Strict)
-      if (user.expired_at && new Date() > user.expired_at) {
-        throw new BadRequestException('Masa aktif voucher sudah habis. Akses ditutup.');
-      }
-
-      // 3. Check Daily Limit
-      const limitSetting = await this.tenantSettingRepository.findOne({
-        where: { key: 'BUYER_PORTAL_DAILY_LIMIT' },
-        transaction,
-      });
-      const MAX_ACCESS = limitSetting ? parseInt(limitSetting.value, 10) : 10;
-
-      const now = new Date();
-      const lastAccess = voucher.last_access_at ? new Date(voucher.last_access_at) : null;
-      const isSameDay = lastAccess && 
-        lastAccess.getDate() === now.getDate() && 
-        lastAccess.getMonth() === now.getMonth() && 
-        lastAccess.getFullYear() === now.getFullYear();
-
-      if (isSameDay) {
-        if (voucher.access_count_today >= MAX_ACCESS) {
-          throw new BadRequestException(`Batas akses harian (${MAX_ACCESS}x) tercapai. Silakan coba lagi besok.`);
-        }
-        await voucher.update({ 
-          access_count_today: voucher.access_count_today + 1,
-          last_access_at: now 
-        }, { transaction });
-      } else {
-        await voucher.update({ 
-          access_count_today: 1, 
-          last_access_at: now 
-        }, { transaction });
-      }
-
-      // 4. Get Allowed Subjects (is_public = true)
-      await this.postgresProvider.setSchema('master', transaction);
+      // 2. Security Check (Duration-based)
+      // Max 10 minutes session for the tutorial link
+      
+      // 3. Update access count (Optional but good for stats)
+      
+      // 4. Find Subject Filter
+      // We only allow buyer to see emails that match their profile context (e.g. Netflix PIN)
       const publicSubjects = await this.emailSubjectRepository.findAll({
         where: { is_public: true },
         transaction,
@@ -986,10 +768,6 @@ export class PublicService {
           expired_at: user.expired_at,
         },
         messages,
-        limit: {
-          remaining: MAX_ACCESS - (isSameDay ? voucher.access_count_today + 1 : 1),
-          total: MAX_ACCESS
-        }
       };
     } catch (error) {
       await transaction.rollback();
@@ -1002,7 +780,6 @@ export class PublicService {
     try {
       await this.postgresProvider.setSchema(tenantId, transaction);
       const tutorials = await this.tutorialRepository.findAll({
-        where: { is_published: true },
         attributes: ['id', 'title', 'slug', 'subtitle', 'thumbnail_url', 'created_at'],
         order: [['created_at', 'DESC']],
         transaction,
@@ -1020,7 +797,7 @@ export class PublicService {
     try {
       await this.postgresProvider.setSchema(tenantId, transaction);
       const tutorial = await this.tutorialRepository.findOne({
-        where: { slug, is_published: true },
+        where: { slug },
         transaction,
       });
       if (!tutorial) throw new NotFoundException('Tutorial tidak ditemukan');

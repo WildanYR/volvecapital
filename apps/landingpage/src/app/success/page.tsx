@@ -13,9 +13,34 @@ import { AlertCircle } from 'lucide-react'
 
 function SuccessContent() {
   const searchParams = useSearchParams()
-  const code = searchParams.get('voucher') || searchParams.get('code')
+  const [code, setCode] = useState<string | null>(searchParams.get('voucher') || searchParams.get('code'))
+  const orderId = searchParams.get('order_id')
   const [voucherData, setVoucherData] = useState<any>(null)
+  const [isChecking, setIsChecking] = useState(false)
 
+  // Polling for payment status if only orderId is present
+  useEffect(() => {
+    if (orderId && !code) {
+      setIsChecking(true)
+      const interval = setInterval(async () => {
+        try {
+          const res = await api.get(`/public/payment/status/${orderId}`)
+          if (res.data.payment_status === 'PAID') {
+            setCode(res.data.voucher_code)
+            setIsChecking(false)
+            clearInterval(interval)
+            toast.success('Pembayaran terkonfirmasi!')
+          }
+        } catch (err) {
+          console.error('Gagal mengecek status pembayaran:', err)
+        }
+      }, 3000)
+
+      return () => clearInterval(interval)
+    }
+  }, [orderId, code])
+
+  // Fetch voucher details once code is available
   useEffect(() => {
     if (code) {
       api.get(`/public/voucher/${code}`)
@@ -57,7 +82,7 @@ function SuccessContent() {
             <p className="text-[10px] uppercase tracking-[0.3em] text-gray-500 font-black mb-4">Kode Voucher Eksklusif Anda</p>
             <div className="flex flex-col md:flex-row items-center justify-center gap-6">
               <span className="text-4xl md:text-6xl font-black text-primary tracking-tightest">
-                {code || 'VC-XXXXXXXX'}
+                {code || (isChecking ? 'MENGECEK...' : 'VC-XXXXXXXX')}
               </span>
               <button 
                 onClick={copyCode}

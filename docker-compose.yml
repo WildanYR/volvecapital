@@ -1,0 +1,74 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-123456}
+      POSTGRES_DB: ${DB_NAME:-volvecapital}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database-setup.sql:/docker-entrypoint-initdb.d/setup.sql
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    ports:
+      - "6379:6379"
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: always
+    environment:
+      - DATABASE_URL=postgres://${DB_USER:-postgres}:${DB_PASSWORD:-123456}@db:5432/${DB_NAME:-volvecapital}
+      - DATABASE_MIGRATION_URL=postgres://${DB_USER:-postgres}:${DB_PASSWORD:-123456}@db:5432/${DB_NAME:-volvecapital}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    env_file:
+      - apps/api/.env
+    depends_on:
+      - db
+      - redis
+    ports:
+      - "5000:3000"
+
+  socket:
+    build:
+      context: .
+      dockerfile: apps/socket/Dockerfile
+    restart: always
+    env_file:
+      - apps/api/.env
+    environment:
+      - DATABASE_URL=postgres://${DB_USER:-postgres}:${DB_PASSWORD:-123456}@db:5432/${DB_NAME:-volvecapital}
+    depends_on:
+      - db
+    ports:
+      - "5100:3000"
+
+  email-reciever:
+    build:
+      context: .
+      dockerfile: apps/email-reciever/Dockerfile
+    restart: always
+    env_file:
+      - apps/api/.env
+    ports:
+      - "5200:3000"
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: apps/dashboard/Dockerfile
+      args:
+        - VITE_MASTER_URL=${VITE_MASTER_URL:-https://api.volve-capital.com}
+    restart: always
+    ports:
+      - "3000:80"
+
+volumes:
+  postgres_data:

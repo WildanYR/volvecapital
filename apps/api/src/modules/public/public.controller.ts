@@ -66,17 +66,42 @@ export class PublicController {
   handleNotify(
     @Body() body: any,
   ) {
-    // For notifications, always extract tenantId from order_id 
+    // For DOKU notifications, extract tenantId from order.invoice_number
     // Format: VC-TENANTID-TIMESTAMP
-    const orderId = body.order_id ?? '';
+    const orderId = body.order?.invoice_number || body.order_id || '';
     const parts = orderId.split('-');
     
+    console.log(`[PaymentNotify] Incoming: ${orderId}, Body: ${JSON.stringify(body)}`);
+
     if (parts.length < 2) {
+      console.error(`[PaymentNotify] Invalid order_id format: ${orderId}`);
       throw new BadRequestException('Invalid order_id format');
     }
 
     const tenantId = parts[1].toLowerCase();
+    console.log(`[PaymentNotify] Extracted Tenant: ${tenantId}`);
     return this.publicService.handlePaymentNotify(tenantId, body);
+  }
+
+  @Get('payment/status/:order_id')
+  checkPaymentStatus(
+    @Headers() headers: any,
+    @Param('order_id') orderId: string,
+  ) {
+    let tenantId = '';
+    
+    // 1. Try to extract from orderId (VC-TENANT-TIMESTAMP)
+    const parts = orderId.split('-');
+    if (parts.length >= 2) {
+      tenantId = parts[1].toLowerCase();
+    } else {
+      // 2. Fallback to headers
+      const host = headers.host || '';
+      const xTenantId = headers['x-tenant-id'];
+      tenantId = this.getTenantId(host, xTenantId);
+    }
+    
+    return this.publicService.checkPaymentStatus(tenantId, orderId);
   }
 
   @Get('voucher/stock')

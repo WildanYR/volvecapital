@@ -35,6 +35,7 @@ import {
 } from '@/dashboard/components/ui/sidebar'
 import { useAuth } from '@/dashboard/context-providers/auth.provider'
 import logo from '@/dashboard/logo.svg'
+import { StockNotification } from '@/dashboard/components/stock-notification'
 
 const navGroups = [
   {
@@ -169,9 +170,12 @@ function RouteComponent() {
         </SidebarFooter>
       </Sidebar>
       <main className="w-full">
-        <div className="flex justify-between p-3 border-b-2 border-border">
+        <div className="flex justify-between items-center p-3 border-b-2 border-border">
           <SidebarTrigger className="cursor-pointer" />
-          <p>{auth.tenant!.id}</p>
+          <div className="flex items-center gap-4">
+            <StockNotification />
+            <p className="font-semibold text-sm">{auth.tenant!.id}</p>
+          </div>
         </div>
         <div className="px-6 py-4">
           <Outlet />
