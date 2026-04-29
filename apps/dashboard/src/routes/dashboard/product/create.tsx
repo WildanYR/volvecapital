@@ -1,4 +1,3 @@
-import type { ProductFormSubmitData } from '@/dashboard/components/forms/product.form'
 import type { CreateProductPayload } from '@/dashboard/services/product.service'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'

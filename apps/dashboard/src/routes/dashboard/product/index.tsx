@@ -1,5 +1,3 @@
-import type { ProductEditFormSubmitData } from '@/dashboard/components/forms/product-edit.form'
-import type { ProductVariantFormSubmitData } from '@/dashboard/components/forms/product-variant.form'
 import type { TimeUnit } from '@/dashboard/lib/time-converter.util'
 import type {
   CreateProductVariantPayload,

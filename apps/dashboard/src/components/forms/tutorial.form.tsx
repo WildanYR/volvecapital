@@ -23,7 +23,7 @@ export function TutorialForm({
     validators: { onSubmit: TutorialFormSchema },
     defaultValues: {
       title: initialData?.title ?? '',
-      subtitle: initialData?.subtitle ?? undefined,
+      subtitle: initialData?.subtitle ?? '',
       thumbnail_url: initialData?.thumbnail_url ?? '',
       is_published: initialData?.is_published ?? false,
       steps: (initialData?.steps ?? []).map(step => ({
@@ -31,10 +31,10 @@ export function TutorialForm({
         title: step.title ?? '',
         description: step.description ?? '',
         image_url: (step as any).image_url ?? (step as any).media_url ?? '',
-        link_text: (step as any).link_text ?? undefined,
-        link_url: (step as any).link_url ?? undefined,
+        link_text: (step as any).link_text ?? '',
+        link_url: (step as any).link_url ?? '',
       })),
-    } as TutorialFormSubmitData,
+    },
     onSubmit: ({ value }) => {
       onSubmit(value)
     },
@@ -119,7 +119,7 @@ export function TutorialForm({
                               children={sub => (
                                 <input
                                   value={sub.state.value}
-                                  onChange={e => sub.handleChange(e.target.value)}
+                                  onChange={e => sub.handleChange(e.target.value as any)}
                                   onBlur={sub.handleBlur}
                                   className="bg-primary/20 text-primary text-xs font-black px-3 py-1 rounded-full uppercase tracking-widest border-none focus:ring-1 focus:ring-primary w-32"
                                   placeholder="LANGKAH 1"

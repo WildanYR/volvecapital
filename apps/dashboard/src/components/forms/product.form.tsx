@@ -37,6 +37,8 @@ function getInitialData(data?: Product): ProductFormSubmitData {
           show_expired_at: true,
           show_copy_template: true,
           show_buyer_portal: true,
+          description: '',
+          tutorial_id: '__none__',
           custom_fields: [],
         },
       ],
@@ -109,18 +111,14 @@ export function ProductForm({
           cooldown: cooldown,
           price: Number.parseInt(v.price),
           copy_template: v.copy_template || undefined,
-          description: v.description || undefined,
-          voucher_expiry_hours: v.voucher_expiry_hours ? Number.parseInt(v.voucher_expiry_hours) : undefined,
-          redeem_display_config: {
-            show_email: v.show_email,
-            show_password: v.show_password,
-            show_profile_name: v.show_profile_name,
-            show_expired_at: v.show_expired_at,
-            show_copy_template: v.show_copy_template,
-            show_buyer_portal: v.show_buyer_portal,
-            custom_fields: v.custom_fields,
-          },
           tutorial_id: (v.tutorial_id && v.tutorial_id !== '__none__') ? v.tutorial_id : undefined,
+          show_email: v.show_email,
+          show_password: v.show_password,
+          show_profile_name: v.show_profile_name,
+          show_expired_at: v.show_expired_at,
+          show_copy_template: v.show_copy_template,
+          show_buyer_portal: v.show_buyer_portal,
+          custom_fields: v.custom_fields,
         }
       })
       onSubmit({ name: value.name, variants } as any)
@@ -261,6 +259,8 @@ export function ProductForm({
                       show_expired_at: true,
                       show_copy_template: true,
                       show_buyer_portal: true,
+                      description: '',
+                      tutorial_id: '__none__',
                       custom_fields: [],
                     })}
                   className="w-full cursor-pointer"

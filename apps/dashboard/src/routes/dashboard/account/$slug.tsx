@@ -25,7 +25,6 @@ import type { OrderByDirection } from '@/dashboard/types/order-by.type'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import {
-  AlertCircle,
   Banknote,
   BrushCleaning,
   CalendarClock,

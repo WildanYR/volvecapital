@@ -6,6 +6,7 @@ import {
   EllipsisVertical,
   CheckCircle2,
   CircleDashed,
+  ExternalLink,
   Eye
 } from 'lucide-react'
 import { useState } from 'react'
