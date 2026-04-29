@@ -283,4 +283,3 @@ export function ProductForm({
     </form.AppForm>
   )
 }
-}
