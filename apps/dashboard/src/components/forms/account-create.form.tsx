@@ -16,6 +16,7 @@ export const AccountFormSchema = z.object({
   billing: z.string(),
   label: z.string(),
   product_variant_id: z.string().nonempty(),
+  capital_price: z.number().min(0).optional(),
   profile: z.array(AccountProfileFormSchema).min(1),
   modifier: z.array(AccountModifierFormSchema),
 })
@@ -41,6 +42,7 @@ export function AccountCreateForm({
       billing: '',
       label: '',
       product_variant_id: '',
+      capital_price: 0,
       profile: [
         {
           name: '',
@@ -88,7 +90,7 @@ export function AccountCreateForm({
           <form.AppField
             name="status"
             children={field => (
-              <field.SelecField
+              <field.SelectField
                 label="Status"
                 placeholder="Pilih Status..."
                 selectItems={AccountStatusSelect}
@@ -101,6 +103,15 @@ export function AccountCreateForm({
               <field.TextField
                 label="Billing (opsional)"
                 placeholder="Masukkan metode pembayaran untuk akun..."
+              />
+            )}
+          />
+          <form.AppField
+            name="capital_price"
+            children={field => (
+              <field.NumberField
+                label="Harga Modal (HPP)"
+                placeholder="Masukkan harga modal akun..."
               />
             )}
           />

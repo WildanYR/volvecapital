@@ -127,7 +127,7 @@ export function AccountUserForm({
                   <form.AppField
                     name="transaction.platform"
                     children={field => (
-                      <field.SelecField
+                      <field.SelectField
                         label="Platform"
                         placeholder="Pilih Platform..."
                         selectItems={[

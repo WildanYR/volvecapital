@@ -25,6 +25,8 @@ import type { OrderByDirection } from '@/dashboard/types/order-by.type'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import {
+  AlertCircle,
+  Banknote,
   BrushCleaning,
   CalendarClock,
   Check,
@@ -55,6 +57,7 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import { useDebouncedCallback } from 'use-debounce'
 import { AccountStatus } from '@/dashboard/components/account-status'
+import { FinancialDetailDialog } from '@/dashboard/components/financial-detail-dialog'
 import { AccountEditForm } from '@/dashboard/components/forms/account-edit.form'
 import { AccountFreezeForm } from '@/dashboard/components/forms/account-freeze.form'
 import { AccountModifierEditForm } from '@/dashboard/components/forms/account-modifier-edit.form'
@@ -106,6 +109,7 @@ import { useGlobalAlertDialog } from '@/dashboard/context-providers/alert-dialog
 import { useAuth } from '@/dashboard/context-providers/auth.provider'
 import { copyAccountTemplate } from '@/dashboard/lib/copy-template'
 import { convertMetadataObjectToString } from '@/dashboard/lib/metadata-converter'
+import { formatRupiah } from '@/dashboard/lib/currency.util'
 import { formatDateIdStandard } from '@/dashboard/lib/time-converter.util'
 import {
   AccountServiceGenerator,
@@ -170,6 +174,7 @@ function RouteComponent() {
   const [dialogAccountUserUpdateOpen, setDialogAccountUserUpdateOpen]
     = useState<boolean>(false)
   const [dialogFreezeOpen, setDialogFreezeOpen] = useState<boolean>(false)
+  const [dialogFinancialDetailOpen, setDialogFinancialDetailOpen] = useState<boolean>(false)
 
   const [selectedAccountState, setSelectedAccount] = useState<Account>()
   
@@ -1142,6 +1147,48 @@ function RouteComponent() {
                               {account.label || '-'}
                             </p>
                           </div>
+                          
+                          <div className="space-y-1 w-full px-3 border-l-2 border-primary/50 col-span-full bg-primary/5 py-3 rounded-r-md mt-2">
+                            <div className="flex items-center justify-between gap-2 mb-2">
+                              <div className="flex items-center gap-2">
+                                <Banknote className="size-4 text-primary" />
+                                <p className="text-xs font-bold text-primary uppercase tracking-wider">Statistik Finansial</p>
+                              </div>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="size-6 rounded-full hover:bg-primary/20"
+                                onClick={() => {
+                                  setSelectedAccount(account)
+                                  setDialogFinancialDetailOpen(true)
+                                }}
+                              >
+                                <Plus className="size-3 text-primary" />
+                              </Button>
+                            </div>
+                            <div className="grid grid-cols-2 gap-y-3 gap-x-4">
+                              <div>
+                                <p className="text-[10px] text-muted-foreground uppercase font-medium">Modal (Total)</p>
+                                <p className="font-bold text-sm">{formatRupiah(account.total_capital || account.capital_price)}</p>
+                              </div>
+                              <div>
+                                <p className="text-[10px] text-muted-foreground uppercase font-medium">Pendapatan</p>
+                                <p className="font-bold text-sm text-green-600 dark:text-green-400">{formatRupiah(account.total_revenue || 0)}</p>
+                              </div>
+                              <div>
+                                <p className="text-[10px] text-muted-foreground uppercase font-medium">Laba Bersih</p>
+                                <p className={`font-bold text-sm ${(account.profit || 0) >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-red-600'}`}>
+                                  {formatRupiah(account.profit || 0)}
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-[10px] text-muted-foreground uppercase font-medium">ROI</p>
+                                <p className={`font-bold text-sm ${(account.roi || 0) >= 0 ? 'text-orange-600' : 'text-red-600'}`}>
+                                  {account.roi || 0}%
+                                </p>
+                              </div>
+                            </div>
+                          </div>
                         </div>
                         <Button
                           variant="outline"
@@ -1521,6 +1568,12 @@ function RouteComponent() {
           />
         </DialogContent>
       </Dialog>
+      
+      <FinancialDetailDialog
+        account={selectedAccount!}
+        open={dialogFinancialDetailOpen}
+        onOpenChange={setDialogFinancialDetailOpen}
+      />
     </>
   )
 }

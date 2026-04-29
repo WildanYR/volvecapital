@@ -60,6 +60,10 @@ export class CreateAccountDto {
   @IsString()
   label?: string;
 
+  @IsOptional()
+  @IsNumber()
+  capital_price?: number;
+
   @IsNotEmpty()
   @IsString()
   email_id: string;

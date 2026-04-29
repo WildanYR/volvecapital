@@ -11,9 +11,18 @@ api.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname
     const parts = hostname.split('.')
-    if (parts.length >= 2) {
-      // e.g. papapremium.localhost -> papapremium
+    
+    // 1. Try to get tenant from subdomain
+    if (parts.length >= 2 && parts[0] !== 'localhost' && parts[0] !== 'www') {
       config.headers['x-tenant-id'] = parts[0]
+    } 
+    // 2. Fallback to query parameter (useful for local dev)
+    else {
+      const urlParams = new URLSearchParams(window.location.search)
+      const tenant = urlParams.get('tenant')
+      if (tenant) {
+        config.headers['x-tenant-id'] = tenant
+      }
     }
   }
   return config

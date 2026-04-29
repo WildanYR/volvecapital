@@ -64,6 +64,35 @@ export interface Account {
   profile: Array<AccountProfile>
   modifier?: Array<AccountModifier>
   pinned?: boolean
+  capital_price: number
+  total_capital?: number
+  total_revenue?: number
+  profit?: number
+  roi?: number
+}
+
+export interface AccountCapital {
+  id: string
+  amount: number
+  note?: string
+  created_at: Date
+}
+
+export interface AccountRevenueDetail {
+  transaction_id: string
+  amount: number
+  date: Date
+  user_name: string
+}
+
+export interface AccountFinancialDetails {
+  capitals: Array<AccountCapital>
+  revenues: Array<AccountRevenueDetail>
+}
+
+export interface AddAccountCapitalPayload {
+  amount: number
+  note?: string
 }
 
 export interface CreateAccountProfilePayload {
@@ -89,6 +118,7 @@ export interface CreateAccountPayload {
   product_variant_id: string
   profile?: Array<CreateAccountProfilePayload>
   modifier?: Array<CreateAccountModifierPayload>
+  capital_price?: number
 }
 
 export interface CreateAccountUserTransaction {
@@ -134,6 +164,7 @@ export interface UpdateAccountPayload {
   label?: string
   email_id?: string
   product_variant_id?: string
+  capital_price?: number
 }
 
 export interface FreezeAccountPayload {
@@ -599,5 +630,40 @@ export function AccountServiceGenerator(apiUrl: string, accessToken: string, ten
     deleteAccountProfile,
     countStatusAccount,
     pinAccount,
+    getFinancialDetails: async (accountId: string): Promise<AccountFinancialDetails> => {
+      const response = await generateApiFetch(
+        apiUrl,
+        accessToken,
+        tenantId,
+        `/account/${accountId}/financial-details`,
+      )
+      if (!response.ok) {
+        const errorData = await parseApiResponse(response)
+        throw new Error(errorData.message || 'Failed to fetch financial details')
+      }
+      const data = await response.json()
+      return {
+        capitals: data.capitals.map((c: any) => ({ ...c, created_at: new Date(c.created_at) })),
+        revenues: data.revenues.map((r: any) => ({ ...r, date: new Date(r.date) })),
+      }
+    },
+    addAccountCapital: async (accountId: string, payload: AddAccountCapitalPayload): Promise<void> => {
+      const response = await generateApiFetch(
+        apiUrl,
+        accessToken,
+        tenantId,
+        `/account/${accountId}/capital`,
+        undefined,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        },
+      )
+      if (!response.ok) {
+        const errorData = await parseApiResponse(response)
+        throw new Error(errorData.message || 'Failed to add capital')
+      }
+    },
   }
 }

@@ -1,7 +1,7 @@
 import { useFieldContext } from '@/dashboard/hooks/form.hook'
 import { SelectInput } from '../inputs/select-input'
 
-export function SelecField({
+export function SelectField({
   label,
   placeholder,
   selectItems,

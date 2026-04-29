@@ -418,7 +418,10 @@ export class PublicService {
           {
             model: ProductVariant,
             as: 'product_variant',
-            include: [{ model: Product, as: 'product' }],
+            include: [
+              { model: Product, as: 'product' },
+              { model: Tutorial, as: 'tutorial' }
+            ],
           },
           {
             model: TransactionItem,

@@ -12,6 +12,10 @@ import {
   Table,
 } from 'sequelize-typescript';
 import {
+  AccountCapital,
+  AccountCapitalAttributes,
+} from './account-capital.model';
+import {
   AccountModifier,
   AccountModifierAttributes,
 } from './account-modifier.model';
@@ -43,7 +47,9 @@ export interface AccountAttributes {
   user?: AccountUserAttributes[];
   profile?: AccountProfileAttributes[];
   modifier?: AccountModifierAttributes[];
+  capitals?: AccountCapitalAttributes[];
   pinned?: boolean;
+  capital_price: number;
   created_at: Date;
   updated_at: Date;
 }
@@ -59,6 +65,7 @@ export interface AccountCreationAttributes
     | 'user'
     | 'profile'
     | 'modifier'
+    | 'capital_price'
   > {}
 
 @Table({ tableName: 'account' })
@@ -109,6 +116,10 @@ export class Account extends Model<
   @Column(DataType.BOOLEAN)
   declare pinned: boolean;
 
+  @AllowNull(false)
+  @Column({ type: DataType.INTEGER, defaultValue: 0 })
+  declare capital_price: number;
+
   @BelongsTo(() => Email, 'email_id')
   declare email: Email;
 
@@ -123,4 +134,7 @@ export class Account extends Model<
 
   @HasMany(() => AccountModifier)
   declare modifier?: AccountModifier[];
+
+  @HasMany(() => AccountCapital)
+  declare capitals?: AccountCapital[];
 }

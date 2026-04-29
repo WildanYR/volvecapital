@@ -148,16 +148,19 @@ export default function RedeemPage() {
                   
                   // Helper to resolve placeholders
                   const resolve = (val: string) => {
+                    if (!val) return '';
                     let resolved = val
-                      .replace('$$email', result.account.email)
-                      .replace('$$password', result.account.password)
-                      .replace('$$profile', result.account.profile_name || '-')
-                      .replace('$$expired', new Date(result.account.expired_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }));
+                      .replace(/\$\$email/g, result.account.email || '')
+                      .replace(/\$\$password/g, result.account.password || '')
+                      .replace(/\$\$profile/g, result.account.profile_name || '-')
+                      .replace(/\$\$product/g, result.voucher.product_variant?.product?.name || '')
+                      .replace(/\$\$expired/g, result.account.expired_at ? new Date(result.account.expired_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-');
                     
                     // Resolve metadata placeholders: $$metadata.key
                     if (result.account.metadata) {
                       Object.entries(result.account.metadata).forEach(([key, value]) => {
-                        resolved = resolved.replace(`$$metadata.${key}`, String(value));
+                        const regex = new RegExp(`\\$\\$metadata\\.${key}`, 'g');
+                        resolved = resolved.replace(regex, String(value || ''));
                       });
                     }
                     return resolved;
@@ -244,10 +247,10 @@ export default function RedeemPage() {
                         </div>
                       )}
 
-                      {showInstruction && result.account.copy_template && (
+                      {showInstruction && result.voucher.product_variant?.copy_template && (
                         <div className="mt-4 p-6 bg-primary/5 rounded-2xl border border-primary/10 border-l-4 border-l-primary">
                           <p className="text-xs font-bold text-gray-500 uppercase tracking-[0.2em] mb-2">Instruksi Penggunaan</p>
-                          <p className="text-sm text-gray-300 leading-relaxed font-medium italic">"{result.account.copy_template}"</p>
+                          <p className="text-sm text-gray-300 leading-relaxed font-medium italic">"{resolve(result.voucher.product_variant.copy_template)}"</p>
                         </div>
                       )}
 

@@ -35,7 +35,7 @@ import {
 } from '@/dashboard/components/ui/dropdown-menu'
 import { Skeleton } from '@/dashboard/components/ui/skeleton'
 import { Badge } from '@/dashboard/components/ui/badge'
-import { API_URL } from '@/dashboard/constants/api-url.cont'
+import { API_URL, LANDING_URL } from '@/dashboard/constants/api-url.cont'
 import { useAuth } from '@/dashboard/context-providers/auth.provider'
 import { useGlobalAlertDialog } from '@/dashboard/context-providers/alert-dialog.provider'
 import { TutorialServiceGenerator } from '@/dashboard/services/tutorial.service'
@@ -126,6 +126,14 @@ function TutorialListPage() {
     }
   }
 
+  const getTutorialUrl = (slug: string) => {
+    const tenantId = auth.tenant?.id || 'papapremium'
+    if (LANDING_URL.includes('localhost')) {
+      return `http://${LANDING_URL}/tutorial/${slug}?tenant=${tenantId}`
+    }
+    return `https://${tenantId}.${LANDING_URL}/tutorial/${slug}`
+  }
+
   return (
     <div className="flex flex-col gap-8">
       <div className="flex flex-col md:flex-row gap-6 justify-between items-center">
@@ -184,16 +192,16 @@ function TutorialListPage() {
                       <DropdownMenuItem onClick={() => handleEdit(tutorial)}>
                         Edit Tutorial
                       </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                         <a 
-                          href={`https://${auth.tenant?.id}.cumangeprompt.my.id/tutorial/${tutorial.slug}`}
-                          target="_blank" 
-                          rel="noreferrer"
-                          className="flex items-center gap-2"
-                         >
-                           <Eye className="size-4" /> Lihat Halaman
-                         </a>
-                      </DropdownMenuItem>
+                       <DropdownMenuItem asChild>
+                          <a 
+                           href={getTutorialUrl(tutorial.slug)}
+                           target="_blank" 
+                           rel="noreferrer"
+                           className="flex items-center gap-2"
+                          >
+                            <Eye className="size-4" /> Lihat Halaman
+                          </a>
+                       </DropdownMenuItem>
                       <DropdownMenuItem 
                         onClick={() => handleDelete(tutorial)}
                         className="text-red-500 focus:text-red-500 focus:bg-red-500/10"

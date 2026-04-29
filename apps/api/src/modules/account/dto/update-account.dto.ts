@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsBoolean, IsDate, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsDate, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class UpdateAccountDto {
   @IsOptional()
@@ -22,6 +22,10 @@ export class UpdateAccountDto {
   @IsOptional()
   @IsString()
   label?: string;
+
+  @IsOptional()
+  @IsNumber()
+  capital_price?: number;
 
   @IsOptional()
   @IsString()

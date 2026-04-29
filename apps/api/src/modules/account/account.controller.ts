@@ -16,6 +16,7 @@ import { AtLeastOnePropertyPipe } from 'src/pipes/at-least-one-property.pipe';
 import { AppRequest } from 'src/types/app-request.type';
 import { PaginationProvider } from '../utility/pagination.provider';
 import { AccountService } from './account.service';
+import { AddAccountCapitalDto } from './dto/add-account-capital.dto';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { FreezeAccountDto } from './dto/freeze-account.dto';
 import { GetAllAccountQueryUrlDto } from './dto/get-all-account.dto';
@@ -56,6 +57,11 @@ export class AccountController {
   @Get(':id')
   findById(@Param('id') id: string, @Request() request: AppRequest) {
     return this.accountService.findOne(request.tenant_id!, id);
+  }
+
+  @Get(':id/financial-details')
+  getFinancialDetails(@Param('id') id: string, @Request() request: AppRequest) {
+    return this.accountService.getFinancialDetails(request.tenant_id!, id);
   }
 
   @Post()
@@ -121,5 +127,18 @@ export class AccountController {
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id') accountId: string, @Request() request: AppRequest) {
     return this.accountService.remove(request.tenant_id!, accountId);
+  }
+
+  @Post(':id/capital')
+  addCapital(
+    @Param('id') id: string,
+    @Body() addAccountCapitalDto: AddAccountCapitalDto,
+    @Request() request: AppRequest,
+  ) {
+    return this.accountService.addCapital(
+      request.tenant_id!,
+      id,
+      addAccountCapitalDto,
+    );
   }
 }

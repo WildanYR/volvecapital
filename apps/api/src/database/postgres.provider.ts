@@ -26,6 +26,7 @@ import { Transaction as TransactionModel } from './models/transaction.model';
 import { Voucher } from './models/voucher.model';
 import { TenantSetting } from './models/tenant-setting.model';
 import { Tutorial } from './models/tutorial.model';
+import { AccountCapital } from './models/account-capital.model';
 
 @Injectable()
 export class PostgresProvider {
@@ -82,6 +83,7 @@ export class PostgresProvider {
         Voucher,
         TenantSetting,
         Tutorial,
+        AccountCapital,
       ]);
     }
     else {

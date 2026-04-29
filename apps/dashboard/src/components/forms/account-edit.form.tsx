@@ -11,6 +11,7 @@ export const AccountEditFormSchema = z.object({
   billing: z.string(),
   label: z.string(),
   product_variant_id: z.string().nonempty(),
+  capital_price: z.number().min(0).optional(),
 })
 
 export type AccountEditFormSubmitData = z.infer<typeof AccountEditFormSchema>
@@ -38,6 +39,7 @@ export function AccountEditForm({
       billing: initialData?.billing || '',
       label: initialData?.label || '',
       product_variant_id: initialData?.product_variant_id || '',
+      capital_price: initialData?.capital_price || 0,
     } as AccountEditFormSubmitData,
     onSubmit: ({ value }) => {
       onSubmit(value)
@@ -81,7 +83,7 @@ export function AccountEditForm({
           <form.AppField
             name="status"
             children={field => (
-              <field.SelecField
+              <field.SelectField
                 label="Status"
                 placeholder="Pilih Status..."
                 selectItems={AccountStatusSelect}
@@ -104,6 +106,15 @@ export function AccountEditForm({
                 label="Varian Produk"
                 initialData={initialData?.product_variant}
                 productSlug={productSlug}
+              />
+            )}
+          />
+          <form.AppField
+            name="capital_price"
+            children={field => (
+              <field.NumberField
+                label="Harga Modal (HPP)"
+                placeholder="Masukkan harga modal akun..."
               />
             )}
           />

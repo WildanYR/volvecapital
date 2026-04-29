@@ -3,8 +3,9 @@ import { AccountModifierField } from '@/dashboard/components/forms/common/fields
 import { BooleanCheckboxField } from '@/dashboard/components/forms/common/fields/boolean-checkbox-field'
 import { DatePickerField } from '@/dashboard/components/forms/common/fields/date-picker-field'
 import { EmailSelectField } from '@/dashboard/components/forms/common/fields/email-select-field'
+import { NumberField } from '@/dashboard/components/forms/common/fields/number-field'
 import { ProductVariantSelectField } from '@/dashboard/components/forms/common/fields/product-variant-select-field'
-import { SelecField } from '@/dashboard/components/forms/common/fields/select-field'
+import { SelectField } from '@/dashboard/components/forms/common/fields/select-field'
 import { TextField } from '@/dashboard/components/forms/common/fields/text-field'
 import { TextWithOptions } from '@/dashboard/components/forms/common/fields/text-with-options-field'
 import { TextareaField } from '@/dashboard/components/forms/common/fields/textarea-field'
@@ -22,7 +23,8 @@ export const { useAppForm, withFieldGroup } = createFormHook({
     TextareaField,
     DatePickerField,
     BooleanCheckboxField,
-    SelecField,
+    SelectField,
+    NumberField,
     EmailSelectField,
     ProductVariantSelectField,
     AccountModifierField,

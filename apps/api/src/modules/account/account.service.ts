@@ -10,6 +10,7 @@ import {
   ACCOUNT_PROFILE_REPOSITORY,
   ACCOUNT_REPOSITORY,
   ACCOUNT_USER_REPOSITORY,
+  ACCOUNT_CAPITAL_REPOSITORY,
 } from 'src/constants/database.const';
 import {
   NETFLIX_RESET_PASSWORD,
@@ -22,6 +23,7 @@ import {
   Account,
   AccountCreationAttributes,
 } from 'src/database/models/account.model';
+import { AccountCapital } from 'src/database/models/account-capital.model';
 import { Email } from 'src/database/models/email.model';
 import { ProductVariant } from 'src/database/models/product-variant.model';
 import { Product } from 'src/database/models/product.model';
@@ -56,6 +58,8 @@ export class AccountService {
     private readonly accountModifierRepository: typeof AccountModifier,
     @Inject(ACCOUNT_USER_REPOSITORY)
     private readonly accountUserRepository: typeof AccountUser,
+    @Inject(ACCOUNT_CAPITAL_REPOSITORY)
+    private readonly accountCapitalRepository: typeof AccountCapital,
   ) {}
 
   async findAll(
@@ -170,10 +174,65 @@ export class AccountService {
         transaction,
       });
 
+      const accountIds = accounts.map(a => a.id);
+      let revenues: any[] = [];
+      if (accountIds.length > 0) {
+        revenues = await this.postgresProvider.rawQuery(`
+          SELECT 
+            au.account_id,
+            COALESCE(SUM(t.total_price), 0)::INT as total_revenue
+          FROM account_user au
+          JOIN transaction_item ti ON ti.account_user_id = au.id
+          JOIN transaction t ON t.id = ti.transaction_id
+          WHERE au.account_id IN (:accountIds)
+          GROUP BY au.account_id
+        `, {
+          replacements: { accountIds },
+          type: QueryTypes.SELECT,
+          transaction,
+        });
+      }
+
+      // Fetch Capital Summaries
+      let capitals: any[] = [];
+      if (accountIds.length > 0) {
+        capitals = await this.postgresProvider.rawQuery(`
+          SELECT 
+            account_id,
+            COALESCE(SUM(amount), 0)::INT as total_capital
+          FROM account_capital
+          WHERE account_id IN (:accountIds)
+          GROUP BY account_id
+        `, {
+          replacements: { accountIds },
+          type: QueryTypes.SELECT,
+          transaction,
+        });
+      }
+
+      const accountsWithStats = accounts.map((account) => {
+        const revenueData = revenues.find(r => r.account_id === account.id);
+        const capitalData = capitals.find(c => c.account_id === account.id);
+        
+        const totalRevenue = revenueData ? revenueData.total_revenue : 0;
+        const totalCapital = account.capital_price + (capitalData ? capitalData.total_capital : 0);
+        
+        const profit = totalRevenue - totalCapital;
+        const roi = totalCapital > 0 ? (profit / totalCapital) * 100 : 0;
+
+        return {
+          ...account.get({ plain: true }),
+          total_revenue: totalRevenue,
+          total_capital: totalCapital,
+          profit,
+          roi: Number(roi.toFixed(2)),
+        };
+      });
+
       await transaction.commit();
 
       return this.paginationProvider.generatePaginationResponse(
-        accounts,
+        accountsWithStats,
         accountCount,
         pagination,
       );
@@ -218,8 +277,45 @@ export class AccountService {
           `account dengan id: ${accountId} tidak ditemukan`,
         );
       }
+
+      const [revenueResult]: any = await this.postgresProvider.rawQuery(`
+        SELECT 
+          COALESCE(SUM(t.total_price), 0)::INT as total_revenue
+        FROM account_user au
+        JOIN transaction_item ti ON ti.account_user_id = au.id
+        JOIN transaction t ON t.id = ti.transaction_id
+        WHERE au.account_id = :accountId
+      `, {
+        replacements: { accountId },
+        type: QueryTypes.SELECT,
+        transaction,
+      });
+
+      const [capitalResult]: any = await this.postgresProvider.rawQuery(`
+        SELECT 
+          COALESCE(SUM(amount), 0)::INT as total_capital
+        FROM account_capital
+        WHERE account_id = :accountId
+      `, {
+        replacements: { accountId },
+        type: QueryTypes.SELECT,
+        transaction,
+      });
+
+      const totalRevenue = revenueResult ? (revenueResult as any).total_revenue : 0;
+      const totalCapital = account.capital_price + (capitalResult ? (capitalResult as any).total_capital : 0);
+      const profit = totalRevenue - totalCapital;
+      const roi = totalCapital > 0 ? (profit / totalCapital) * 100 : 0;
+
       await transaction.commit();
-      return account;
+
+      return {
+        ...account.get({ plain: true }),
+        total_revenue: totalRevenue,
+        total_capital: totalCapital,
+        profit,
+        roi: Number(roi.toFixed(2)),
+      };
     }
     catch (error) {
       await transaction.rollback();
@@ -817,4 +913,73 @@ export class AccountService {
       throw error;
     }
   }
+
+  async addCapital(tenantId: string, accountId: string, data: { amount: number; note?: string }) {
+    const transaction = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema(tenantId, transaction);
+
+      const account = await this.accountRepository.findByPk(accountId, { transaction });
+      if (!account) {
+        throw new NotFoundException(`Account dengan id: ${accountId} tidak ditemukan`);
+      }
+
+      const capital = await this.accountCapitalRepository.create(
+        {
+          account_id: accountId,
+          amount: data.amount,
+          note: data.note,
+        } as any,
+        { transaction },
+      );
+
+      await transaction.commit();
+      return capital;
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
+
+  async getFinancialDetails(tenantId: string, accountId: string) {
+    const transaction = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema(tenantId, transaction);
+
+      // 1. Fetch Capitals
+      const capitals = await this.accountCapitalRepository.findAll({
+        where: { account_id: accountId },
+        order: [['created_at', 'DESC']],
+        transaction,
+      });
+
+      // 2. Fetch Revenue Details
+      const revenues = await this.postgresProvider.rawQuery(`
+        SELECT 
+          t.id as transaction_id,
+          t.total_price as amount,
+          t.created_at as date,
+          au.name as user_name
+        FROM account_user au
+        JOIN transaction_item ti ON ti.account_user_id = au.id
+        JOIN transaction t ON t.id = ti.transaction_id
+        WHERE au.account_id = :accountId
+        ORDER BY t.created_at DESC
+      `, {
+        replacements: { accountId },
+        type: QueryTypes.SELECT,
+        transaction,
+      });
+
+      await transaction.commit();
+      return {
+        capitals,
+        revenues,
+      };
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
 }
+

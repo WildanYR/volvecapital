@@ -68,7 +68,7 @@ export function PlatformProductForm({
           <form.AppField
             name="platform"
             children={field => (
-              <field.SelecField
+              <field.SelectField
                 label="Platform"
                 placeholder="Pilih Platform..."
                 selectItems={[{ title: 'Shopee', value: 'Shopee' }]}

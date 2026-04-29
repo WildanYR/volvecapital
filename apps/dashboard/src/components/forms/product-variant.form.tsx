@@ -222,7 +222,7 @@ export function ProductVariantForm({
           <form.AppField
             name="tutorial_id"
             children={field => (
-              <field.SelecField
+              <field.SelectField
                 label="Panduan Tutorial Terkait (Opsional)"
                 placeholder="Pilih tutorial untuk ditampilkan setelah redeem..."
                 selectItems={[
