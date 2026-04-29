@@ -1161,6 +1161,7 @@ function RouteComponent() {
                               <div className="flex items-center gap-2">
                                 <Banknote className="size-4 text-muted-foreground" />
                                 <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Statistik Finansial</p>
+                                <span className="bg-green-500 text-white text-[10px] px-1 rounded ml-2">NEW VERSION</span>
                               </div>
                               <Button 
                                 variant="ghost" 
