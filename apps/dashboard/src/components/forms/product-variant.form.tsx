@@ -90,7 +90,7 @@ export function ProductVariantForm({
           custom_fields: value.custom_fields,
         },
         tutorial_id: (value.tutorial_id && value.tutorial_id !== '__none__') ? value.tutorial_id : undefined,
-      }
+      } as any
       
       onSubmit(payload)
     },

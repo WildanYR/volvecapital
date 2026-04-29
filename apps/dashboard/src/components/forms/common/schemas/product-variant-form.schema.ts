@@ -20,8 +20,8 @@ export const ProductVariantFormSchema = z.object({
   show_copy_template: z.boolean().default(true),
   show_buyer_portal: z.boolean().default(true),
   custom_fields: z.array(z.object({
-    label: z.string(),
-    value: z.string(),
+    label: z.string().default(''),
+    value: z.string().default(''),
   })).default([]),
-  tutorial_id: z.string().default(''),
+  tutorial_id: z.string().optional().default('__none__'),
 })

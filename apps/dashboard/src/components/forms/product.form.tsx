@@ -123,7 +123,7 @@ export function ProductForm({
           tutorial_id: (v.tutorial_id && v.tutorial_id !== '__none__') ? v.tutorial_id : undefined,
         }
       })
-      onSubmit({ name: value.name, variants })
+      onSubmit({ name: value.name, variants } as any)
     },
   })
 

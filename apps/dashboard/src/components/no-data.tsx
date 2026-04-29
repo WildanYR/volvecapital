@@ -3,8 +3,8 @@ import { SearchX } from 'lucide-react'
 
 export function NoData({ 
   children, 
-  title, 
-  description 
+  title = "Belum Ada Data", 
+  description = "Silakan tambahkan data baru untuk memulai."
 }: { 
   children?: React.ReactNode
   title?: string
