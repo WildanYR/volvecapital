@@ -20,7 +20,7 @@ export function TutorialForm({
   submitButtonText?: string
 }) {
   const form = useAppForm({
-    validators: { onSubmit: TutorialFormSchema },
+    validators: { onSubmit: TutorialFormSchema as any },
     defaultValues: {
       title: initialData?.title ?? '',
       subtitle: initialData?.subtitle ?? '',

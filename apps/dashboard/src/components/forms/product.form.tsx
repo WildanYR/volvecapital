@@ -1,4 +1,4 @@
-import type { TimeUnit } from '@/dashboard/lib/time-converter.util'
+import type { ProductEditFormSubmitData } from '@/dashboard/components/forms/product-edit.form'
 import type { Product } from '@/dashboard/services/product.service'
 import { Plus, Trash2 } from 'lucide-react'
 import { z } from 'zod'
@@ -85,7 +85,7 @@ export function ProductForm({
   submitButtonText?: string
 }) {
   const form = useAppForm({
-    validators: { onSubmit: ProductFormSchema },
+    validators: { onSubmit: ProductFormSchema as any },
     defaultValues: getInitialData(initialData),
     onSubmit: ({ value }) => {
       const variants = value.variants.map((v: any) => {
@@ -111,6 +111,7 @@ export function ProductForm({
           cooldown: cooldown,
           price: Number.parseInt(v.price),
           copy_template: v.copy_template || undefined,
+          description: v.description || undefined,
           tutorial_id: (v.tutorial_id && v.tutorial_id !== '__none__') ? v.tutorial_id : undefined,
           show_email: v.show_email,
           show_password: v.show_password,

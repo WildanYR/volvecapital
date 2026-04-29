@@ -32,7 +32,7 @@ export function ProductVariantForm({
   tutorials?: Tutorial[]
 }) {
   const form = useAppForm({
-    validators: { onSubmit: ProductVariantFormSchema },
+    validators: { onSubmit: ProductVariantFormSchema as any },
     defaultValues: {
       name: initialData?.name ?? '',
       duration: initialData?.duration.toString() ?? '',
