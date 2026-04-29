@@ -1148,22 +1148,22 @@ function RouteComponent() {
                             </p>
                           </div>
                           
-                          <div className="space-y-1 w-full px-3 border-l-2 border-primary/50 col-span-full bg-primary/5 py-3 rounded-r-md mt-2">
+                          <div className="space-y-1 w-full px-3 border-l-2 border-secondary col-span-full bg-card py-3 rounded-r-md mt-2">
                             <div className="flex items-center justify-between gap-2 mb-2">
                               <div className="flex items-center gap-2">
-                                <Banknote className="size-4 text-primary" />
-                                <p className="text-xs font-bold text-primary uppercase tracking-wider">Statistik Finansial</p>
+                                <Banknote className="size-4 text-muted-foreground" />
+                                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Statistik Finansial</p>
                               </div>
                               <Button 
                                 variant="ghost" 
                                 size="icon" 
-                                className="size-6 rounded-full hover:bg-primary/20"
+                                className="size-9 rounded-md hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 cursor-pointer"
                                 onClick={() => {
                                   setSelectedAccount(account)
                                   setDialogFinancialDetailOpen(true)
                                 }}
                               >
-                                <Plus className="size-3 text-primary" />
+                                <EllipsisVertical className="size-4" />
                               </Button>
                             </div>
                             <div className="grid grid-cols-2 gap-y-3 gap-x-4">
@@ -1173,17 +1173,17 @@ function RouteComponent() {
                               </div>
                               <div>
                                 <p className="text-[10px] text-muted-foreground uppercase font-medium">Pendapatan</p>
-                                <p className="font-bold text-sm text-green-600 dark:text-green-400">{formatRupiah(account.total_revenue || 0)}</p>
+                                <p className="font-bold text-sm text-muted-foreground dark:text-muted-foreground">{formatRupiah(account.total_revenue || 0)}</p>
                               </div>
                               <div>
                                 <p className="text-[10px] text-muted-foreground uppercase font-medium">Laba Bersih</p>
-                                <p className={`font-bold text-sm ${(account.profit || 0) >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-red-600'}`}>
+                                <p className="font-bold text-sm text-muted-foreground">
                                   {formatRupiah(account.profit || 0)}
                                 </p>
                               </div>
                               <div>
                                 <p className="text-[10px] text-muted-foreground uppercase font-medium">ROI</p>
-                                <p className={`font-bold text-sm ${(account.roi || 0) >= 0 ? 'text-orange-600' : 'text-red-600'}`}>
+                                <p className="font-bold text-sm text-muted-foreground">
                                   {account.roi || 0}%
                                 </p>
                               </div>
