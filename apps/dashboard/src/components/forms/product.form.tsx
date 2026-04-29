@@ -1,4 +1,4 @@
-import type { ProductEditFormSubmitData } from '@/dashboard/components/forms/product-edit.form'
+import type { TimeUnit } from '@/dashboard/lib/time-converter.util'
 import type { Product } from '@/dashboard/services/product.service'
 import { Plus, Trash2 } from 'lucide-react'
 import { z } from 'zod'
@@ -57,6 +57,8 @@ function getInitialData(data?: Product): ProductFormSubmitData {
       copy_template: v.copy_template || '',
       price: v.price?.toString() ?? '0',
       voucher_expiry_hours: v.voucher_expiry_hours?.toString() ?? '',
+      description: v.description ?? '',
+      tutorial_id: v.tutorial_id ?? '__none__',
       show_email: v.redeem_display_config?.show_email ?? true,
       show_password: v.redeem_display_config?.show_password ?? true,
       show_profile_name: v.redeem_display_config?.show_profile_name ?? true,
