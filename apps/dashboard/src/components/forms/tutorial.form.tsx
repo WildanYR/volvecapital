@@ -23,11 +23,18 @@ export function TutorialForm({
     validators: { onSubmit: TutorialFormSchema },
     defaultValues: {
       title: initialData?.title ?? '',
-      subtitle: initialData?.subtitle ?? '',
+      subtitle: initialData?.subtitle ?? undefined,
       thumbnail_url: initialData?.thumbnail_url ?? '',
       is_published: initialData?.is_published ?? false,
-      steps: initialData?.steps ?? [],
-    },
+      steps: (initialData?.steps ?? []).map(step => ({
+        label: (step as any).label ?? '',
+        title: step.title ?? '',
+        description: step.description ?? '',
+        image_url: (step as any).image_url ?? (step as any).media_url ?? '',
+        link_text: (step as any).link_text ?? undefined,
+        link_url: (step as any).link_url ?? undefined,
+      })),
+    } as TutorialFormSubmitData,
     onSubmit: ({ value }) => {
       onSubmit(value)
     },
@@ -101,14 +108,14 @@ export function TutorialForm({
             <form.AppField name="steps" mode="array">
               {field => (
                 <div className="flex flex-col gap-6">
-                  {field.state.value.map((_, i) => (
+                  {field.state.value.map((_: any, i: number) => (
                     <Card key={`step-${i}`} className="bg-white/5 border-white/10 relative overflow-hidden group">
                       <div className="absolute top-0 left-0 w-1 h-full bg-primary" />
                       <CardContent className="p-6">
                         <div className="flex justify-between items-start mb-6">
                           <div className="flex items-center gap-4">
                             <form.AppField
-                              name={`steps[${i}].label`}
+                              name={`steps.${i}.label` as any}
                               children={sub => (
                                 <input
                                   value={sub.state.value}
@@ -156,26 +163,26 @@ export function TutorialForm({
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                           <div className="space-y-4">
                             <form.AppField
-                              name={`steps[${i}].title`}
+                              name={`steps.${i}.title` as any}
                               children={sub => (
                                 <sub.TextField label="Judul Langkah" placeholder="Contoh: Pilih Produk" />
                               )}
                             />
                             <form.AppField
-                              name={`steps[${i}].description`}
+                              name={`steps.${i}.description` as any}
                               children={sub => (
                                 <sub.TextareaField label="Deskripsi" placeholder="Jelaskan langkah ini secara singkat..." />
                               )}
                             />
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               <form.AppField
-                                name={`steps[${i}].link_text`}
+                                name={`steps.${i}.link_text` as any}
                                 children={sub => (
                                   <sub.TextField label="Teks Tombol (Opsional)" placeholder="Contoh: Buka Portal" />
                                 )}
                               />
                               <form.AppField
-                                name={`steps[${i}].link_url`}
+                                name={`steps.${i}.link_url` as any}
                                 children={sub => (
                                   <sub.TextField label="Link / URL (Opsional)" placeholder="Gunakan $$portal_url untuk link portal" />
                                 )}
@@ -184,7 +191,7 @@ export function TutorialForm({
                           </div>
                           <div className="space-y-4">
                             <form.AppField
-                              name={`steps[${i}].image_url`}
+                              name={`steps.${i}.image_url` as any}
                               children={sub => (
                                 <div className="space-y-2">
                                   <sub.TextField label="URL Gambar Preview" placeholder="Paste link gambar di sini..." />
@@ -209,7 +216,7 @@ export function TutorialForm({
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => field.pushValue({ label: `LANGKAH ${field.state.value.length + 1}`, title: '', description: '', image_url: '' })}
+                    onClick={() => field.pushValue({ label: `LANGKAH ${field.state.value.length + 1}`, title: '', description: '', image_url: '', link_text: '', link_url: '' })}
                     className="w-full h-12 border-dashed border-white/20 hover:border-primary/50 hover:bg-primary/5 transition-all"
                   >
                     <Plus className="size-4 mr-2" />

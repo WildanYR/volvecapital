@@ -25,7 +25,7 @@ export function ProductVariantForm({
   submitButtonText,
   tutorials,
 }: {
-  onSubmit: (values: ProductVariantFormSubmitData) => void
+  onSubmit: (values: any) => void
   isPending: boolean
   initialData?: ProductVariant
   submitButtonText?: string
@@ -70,15 +70,16 @@ export function ProductVariantForm({
         value.cooldown_unit as TimeUnit,
         'millisecond',
       )
-      onSubmit({
-        ...value,
-        duration: duration.toString(),
-        duration_unit: 'millisecond' as TimeUnit,
-        interval: interval.toString(),
-        interval_unit: 'millisecond' as TimeUnit,
-        cooldown: cooldown.toString(),
-        cooldown_unit: 'millisecond' as TimeUnit,
-        voucher_expiry_hours: value.voucher_expiry_hours ? Number.parseInt(value.voucher_expiry_hours) : undefined,
+      
+      const payload = {
+        name: value.name,
+        duration: duration,
+        interval: interval,
+        cooldown: cooldown,
+        price: Number.parseInt(value.price),
+        copy_template: value.copy_template ? value.copy_template : undefined,
+        description: value.description ? value.description : undefined,
+        voucher_expiry_hours: value.voucher_expiry_hours?.trim() ? Number.parseInt(value.voucher_expiry_hours) : undefined,
         redeem_display_config: {
           show_email: value.show_email,
           show_password: value.show_password,
@@ -89,7 +90,9 @@ export function ProductVariantForm({
           custom_fields: value.custom_fields,
         },
         tutorial_id: (value.tutorial_id && value.tutorial_id !== '__none__') ? value.tutorial_id : undefined,
-      })
+      }
+      
+      onSubmit(payload)
     },
   })
 
@@ -281,7 +284,7 @@ export function ProductVariantForm({
               <form.AppField name="custom_fields" mode="array">
                 {field => (
                   <div className="flex flex-col gap-4">
-                    {field.state.value.map((_, i) => (
+                    {field.state.value.map((_: any, i: number) => (
                       <div key={`custom-field-${i}`} className="relative border border-neutral-800 p-4 rounded-md space-y-4">
                         <Button
                           type="button"
@@ -293,13 +296,13 @@ export function ProductVariantForm({
                           <Trash2 className="size-4" />
                         </Button>
                         <form.AppField
-                          name={`custom_fields[${i}].label`}
+                          name={`custom_fields.${i}.label` as any}
                           children={subfield => (
                             <subfield.TextField label="Label" placeholder="Contoh: PIN" />
                           )}
                         />
                         <form.AppField
-                          name={`custom_fields[${i}].value`}
+                          name={`custom_fields.${i}.value` as any}
                           children={subfield => (
                             <subfield.TextField label="Value / Template" placeholder="Contoh: 123456 atau $$email" />
                           )}

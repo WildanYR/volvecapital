@@ -200,20 +200,8 @@ function RouteComponent() {
   }
 
   const handleProductVariantFormSubmit = (
-    value: ProductVariantFormSubmitData,
+    payload: any,
   ) => {
-    const payload = {
-      name: value.name,
-      duration: Number.parseInt(value.duration),
-      interval: Number.parseInt(value.interval),
-      cooldown: Number.parseInt(value.cooldown),
-      price: Number.parseInt(value.price),
-      copy_template: value.copy_template ? value.copy_template : undefined,
-      description: value.description ? value.description : undefined,
-      voucher_expiry_hours: value.voucher_expiry_hours,
-      redeem_display_config: value.redeem_display_config,
-      tutorial_id: value.tutorial_id,
-    }
     if (productVariantFormMode === 'CREATE') {
       productVariantCreateMutation.mutate({
         product_id: selectedProduct!.id,

@@ -6,7 +6,6 @@ import { Button } from '@/dashboard/components/ui/button'
 import { Badge } from '@/dashboard/components/ui/badge'
 import { 
   Mail, 
-  Key, 
   ExternalLink, 
   Clock, 
   RefreshCw, 
@@ -18,7 +17,7 @@ import {
 } from 'lucide-react'
 import { formatDistanceToNow, format } from 'date-fns'
 import { id } from 'date-fns/locale'
-import { useState, useEffect } from 'react'
+import { } from 'react'
 import { toast } from 'sonner'
 
 export const Route = createFileRoute('/portal/$token')({

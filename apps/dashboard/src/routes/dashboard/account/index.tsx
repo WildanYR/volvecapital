@@ -3,7 +3,6 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import {
   Package,
   Plus,
-  ArrowRight,
   ChevronRight,
   TrendingUp,
   AlertCircle,
@@ -16,7 +15,6 @@ import { Button } from '@/dashboard/components/ui/button'
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from '@/dashboard/components/ui/card'

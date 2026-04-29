@@ -77,7 +77,7 @@ export function ProductForm({
   initialData,
   submitButtonText,
 }: {
-  onSubmit: (values: ProductFormSubmitData) => void
+  onSubmit: (values: any) => void
   isPending: boolean
   initialData?: Product
   submitButtonText?: string
@@ -86,33 +86,31 @@ export function ProductForm({
     validators: { onSubmit: ProductFormSchema },
     defaultValues: getInitialData(initialData),
     onSubmit: ({ value }) => {
-      const variants = value.variants.map((v) => {
+      const variants = value.variants.map((v: any) => {
         const duration = convertTimeUnit(
           Number.parseInt(v.duration),
-          v.duration_unit,
+          v.duration_unit as TimeUnit,
           'millisecond',
         )
         const interval = convertTimeUnit(
           Number.parseInt(v.interval),
-          v.interval_unit,
+          v.interval_unit as TimeUnit,
           'millisecond',
         )
         const cooldown = convertTimeUnit(
           Number.parseInt(v.cooldown),
-          v.cooldown_unit,
+          v.cooldown_unit as TimeUnit,
           'millisecond',
         )
         return {
           name: v.name,
-          duration: duration.toString(),
-          duration_unit: 'millisecond' as TimeUnit,
-          interval: interval.toString(),
-          interval_unit: 'millisecond' as TimeUnit,
-          cooldown: cooldown.toString(),
-          cooldown_unit: 'millisecond' as TimeUnit,
-          copy_template: v.copy_template,
-          price: v.price,
-          voucher_expiry_hours: v.voucher_expiry_hours,
+          duration: duration,
+          interval: interval,
+          cooldown: cooldown,
+          price: Number.parseInt(v.price),
+          copy_template: v.copy_template || undefined,
+          description: v.description || undefined,
+          voucher_expiry_hours: v.voucher_expiry_hours ? Number.parseInt(v.voucher_expiry_hours) : undefined,
           redeem_display_config: {
             show_email: v.show_email,
             show_password: v.show_password,
@@ -122,6 +120,7 @@ export function ProductForm({
             show_buyer_portal: v.show_buyer_portal,
             custom_fields: v.custom_fields,
           },
+          tutorial_id: (v.tutorial_id && v.tutorial_id !== '__none__') ? v.tutorial_id : undefined,
         }
       })
       onSubmit({ name: value.name, variants })
@@ -150,7 +149,7 @@ export function ProductForm({
           <form.AppField name="variants" mode="array">
             {field => (
               <div className="flex flex-col gap-4">
-                {field.state.value.map((_, i) => (
+                {field.state.value.map((_: any, i: number) => (
                   <div
                     key={`variant-${i}`}
                     className="relative border border-neutral-800 space-y-6 p-4 rounded-md"
@@ -256,6 +255,13 @@ export function ProductForm({
                       copy_template: '',
                       price: '0',
                       voucher_expiry_hours: '',
+                      show_email: true,
+                      show_password: true,
+                      show_profile_name: true,
+                      show_expired_at: true,
+                      show_copy_template: true,
+                      show_buyer_portal: true,
+                      custom_fields: [],
                     })}
                   className="w-full cursor-pointer"
                 >
@@ -276,4 +282,5 @@ export function ProductForm({
       </form>
     </form.AppForm>
   )
+}
 }

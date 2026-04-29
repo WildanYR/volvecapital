@@ -1,10 +1,8 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { 
   Plus, 
   BookOpen, 
-  Trash2, 
-  ExternalLink, 
   EllipsisVertical,
   CheckCircle2,
   CircleDashed,
@@ -19,7 +17,6 @@ import {
   CardDescription, 
   CardHeader, 
   CardTitle,
-  CardAction
 } from '@/dashboard/components/ui/card'
 import { 
   Dialog, 

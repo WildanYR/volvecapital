@@ -116,7 +116,6 @@ import {
   GetAccountsParamsSchema,
 } from '@/dashboard/services/account.service'
 import { ProductServiceGenerator } from '@/dashboard/services/product.service'
-import type { Product } from '@/dashboard/services/product.service'
 
 export const Route = createFileRoute('/dashboard/account/$slug')({
   component: RouteComponent,
@@ -189,8 +188,17 @@ function RouteComponent() {
 
   const { data: accounts, isLoading: isFetchAccountLoading } = useQuery({
     queryKey: ['account', { ...searchParam, product_slug: slug }],
-    queryFn: ({ signal }) => accountService.getAllAccount({ ...searchParam, product_slug: slug, signal }),
-
+    queryFn: ({ signal }) => {
+      const { page, limit, order_by, order_direction, ...filters } = searchParam
+      return accountService.getAllAccount({
+        page,
+        limit,
+        order_by,
+        order_direction,
+        filter: { ...filters, product_slug: slug } as any,
+        signal,
+      })
+    },
   })
 
   const selectedAccount = selectedAccountState 
@@ -637,6 +645,7 @@ function RouteComponent() {
         ...prev,
         order_by: orderBy,
         order_direction: orderDirection as OrderByDirection | undefined,
+        voucher_expiry_hours: (prev as any).voucher_expiry_hours ? Number.parseInt((prev as any).voucher_expiry_hours) : undefined,
         page: 1,
       }),
       replace: true,

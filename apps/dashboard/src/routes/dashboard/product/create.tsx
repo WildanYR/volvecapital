@@ -35,21 +35,7 @@ function RouteComponent() {
     },
   })
 
-  const handleSubmit = (values: ProductFormSubmitData) => {
-    const payload: CreateProductPayload = {
-      name: values.name,
-      variants: values.variants.map(v => ({
-        name: v.name,
-        duration: Number.parseInt(v.duration),
-        interval: Number.parseInt(v.interval),
-        cooldown: Number.parseInt(v.cooldown),
-        price: Number.parseInt(v.price),
-        copy_template: v.copy_template || undefined,
-        description: v.description || undefined,
-        voucher_expiry_hours: v.voucher_expiry_hours ? Number.parseInt(v.voucher_expiry_hours) : undefined,
-        redeem_display_config: v.redeem_display_config,
-      })),
-    }
+  const handleSubmit = (payload: any) => {
     mutation.mutate(payload)
   }
 

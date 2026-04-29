@@ -5,13 +5,13 @@ export const TutorialStepSchema = z.object({
   title: z.string().min(1, 'Judul langkah harus diisi'),
   description: z.string().min(1, 'Deskripsi harus diisi'),
   image_url: z.string().url('URL gambar tidak valid').or(z.string().length(0)),
-  link_text: z.string().optional(),
-  link_url: z.string().optional(),
+  link_text: z.string().default(''),
+  link_url: z.string().default(''),
 });
 
 export const TutorialFormSchema = z.object({
   title: z.string().min(1, 'Judul harus diisi'),
-  subtitle: z.string().optional(),
+  subtitle: z.string().default(''),
   thumbnail_url: z.string().url('URL thumbnail tidak valid').or(z.string().length(0)),
   is_published: z.boolean().default(false),
   steps: z.array(TutorialStepSchema).default([]),

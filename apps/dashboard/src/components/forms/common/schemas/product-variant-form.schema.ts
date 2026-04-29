@@ -10,9 +10,9 @@ export const ProductVariantFormSchema = z.object({
   cooldown: z.string().nonempty(),
   cooldown_unit: TimeUnitEnum,
   copy_template: z.string(),
-  description: z.string().optional(),
+  description: z.string().default(''),
   price: z.string().nonempty('Harga wajib diisi').refine(v => !Number.isNaN(Number(v)) && Number(v) >= 0, 'Harga harus berupa angka positif'),
-  voucher_expiry_hours: z.string().optional().refine(v => !v || (!Number.isNaN(Number(v)) && Number(v) >= 0), 'Harus berupa angka positif'),
+  voucher_expiry_hours: z.string().default('').refine(v => !v || (!Number.isNaN(Number(v)) && Number(v) >= 0), 'Harus berupa angka positif'),
   show_email: z.boolean().default(true),
   show_password: z.boolean().default(true),
   show_profile_name: z.boolean().default(true),
@@ -22,6 +22,6 @@ export const ProductVariantFormSchema = z.object({
   custom_fields: z.array(z.object({
     label: z.string(),
     value: z.string(),
-  })).optional(),
-  tutorial_id: z.string().optional(),
+  })).default([]),
+  tutorial_id: z.string().default(''),
 })
