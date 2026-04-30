@@ -9,6 +9,9 @@ export interface DispatchTaskData {
   type?: string;
   executeAt?: string;
   payload: any;
+  options?: {
+    maxRetries?: number;
+  };
 }
 
 export interface TaskDoneData {

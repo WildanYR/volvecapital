@@ -47,7 +47,9 @@ export class Database {
         created_at TEXT DEFAULT (datetime('now')),
         started_at TEXT,
         completed_at TEXT,
-        error TEXT
+        error TEXT,
+        max_retries INTEGER DEFAULT 0,
+        retry_count INTEGER DEFAULT 0
       )
     `);
 

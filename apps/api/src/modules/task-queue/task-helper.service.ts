@@ -109,6 +109,7 @@ export class TaskHelperService {
       const clientId = await this.socketGateway.dispatchTask(taskId, tenantId, {
         module: 'netflix',
         type: 'resetPassword',
+        maxRetries: 0,
         payload,
       });
 

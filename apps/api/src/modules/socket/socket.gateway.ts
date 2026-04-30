@@ -10,6 +10,7 @@ interface DispatchTaskRequest {
     type?: string;
     executeAt?: string;
     payload?: any;
+    maxRetries?: number;
   };
 }
 

@@ -18,4 +18,6 @@ export interface TaskRow {
   started_at: string | null;
   completed_at: string | null;
   error: string | null;
+  max_retries: number;
+  retry_count: number;
 }

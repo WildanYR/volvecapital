@@ -19,6 +19,7 @@ export interface DispatchTaskData {
   type?: string;
   executeAt?: string;
   payload?: any;
+  maxRetries?: number;
 }
 
 export interface EventData {
