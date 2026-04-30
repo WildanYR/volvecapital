@@ -184,12 +184,13 @@ export function AccountServiceGenerator(apiUrl: string, accessToken: string, ten
   const getAllAccount: GetAllServiceFn<Account, AccountFilter> = async (
     params,
   ) => {
+    const { filter, ...rest } = params
     const response = await generateApiFetch(
       apiUrl,
       accessToken,
       tenantId,
       '/account',
-      params,
+      { ...rest, ...filter },
     )
     if (!response.ok) {
       const errorData = await parseApiResponse(response)

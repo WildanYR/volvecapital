@@ -106,12 +106,13 @@ export function ProductServiceGenerator(apiUrl: string, accessToken: string, ten
   const getAllProduct: GetAllServiceFn<Product, ProductFilter> = async (
     params,
   ) => {
+    const { filter, ...rest } = params
     const response = await generateApiFetch(
       apiUrl,
       accessToken,
       tenantId,
       '/product',
-      params,
+      { ...rest, ...filter },
     )
     if (!response.ok) {
       const errorData = await parseApiResponse(response)
@@ -173,12 +174,13 @@ export function ProductServiceGenerator(apiUrl: string, accessToken: string, ten
     ProductVariant,
     ProductVariantFilter
   > = async (params) => {
+    const { filter, ...rest } = params
     const response = await generateApiFetch(
       apiUrl,
       accessToken,
       tenantId,
       '/product-variant',
-      params,
+      { ...rest, ...filter },
     )
     if (!response.ok) {
       const errorData = await response.json()

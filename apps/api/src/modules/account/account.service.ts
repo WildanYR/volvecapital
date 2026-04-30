@@ -78,9 +78,6 @@ export class AccountService {
       if (filter?.email_id) {
         whereOptions.email_id = filter.email_id;
       }
-      if (filter?.product_variant_id) {
-        whereOptions.product_variant_id = filter.product_variant_id;
-      }
       if (filter?.status) {
         whereOptions.status = filter.status;
       }
@@ -115,6 +112,7 @@ export class AccountService {
           model: ProductVariant,
           as: 'product_variant',
           where: {
+            ...(filter?.product_variant_id && { id: filter.product_variant_id }),
             ...(filter?.product_id && { product_id: filter.product_id }),
           },
           include: [
@@ -127,7 +125,7 @@ export class AccountService {
               required: !!filter?.product_slug,
             },
           ],
-          required: !!filter?.product_id || !!filter?.product_slug,
+          required: !!filter?.product_variant_id || !!filter?.product_id || !!filter?.product_slug,
         },
         {
           model: AccountProfile,

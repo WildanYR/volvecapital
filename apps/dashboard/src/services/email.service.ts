@@ -32,12 +32,13 @@ export interface UpdateEmailPayload {
 
 export function EmailServiceGenerator(apiUrl: string, accessToken: string, tenantId: string) {
   const getAllEmail: GetAllServiceFn<Email, EmailFilter> = async (params) => {
+    const { filter, ...rest } = params
     const response = await generateApiFetch(
       apiUrl,
       accessToken,
       tenantId,
       '/email',
-      params,
+      { ...rest, ...filter },
     )
     if (!response.ok) {
       const errorData = await parseApiResponse(response)
