@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, ShieldCheck, ArrowRight, Loader2, Copy, CheckCircle2, CreditCard } from 'lucide-react'
-import { Product, ProductVariant } from '@/lib/types'
+import { Product, ProductVariant } from '@/hooks/use-products'
 import { api } from '@/lib/api'
 import { toast } from 'sonner'
 import { formatCurrency } from '@/lib/format'
