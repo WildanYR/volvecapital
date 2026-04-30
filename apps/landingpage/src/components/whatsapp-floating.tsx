@@ -7,7 +7,7 @@ import { useTenant } from '@/hooks/use-tenant'
 
 export function WhatsAppFloating() {
   const { tenantId } = useTenant()
-  const { data: settings } = useSettings(tenantId)
+  const { data: settings } = useSettings(tenantId || '')
 
   const whatsappNumber = settings?.whatsapp_number || '6285189307255'
 
