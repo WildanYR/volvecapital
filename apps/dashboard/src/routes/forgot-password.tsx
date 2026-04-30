@@ -62,7 +62,7 @@ function ForgotPasswordComponent() {
           </CardHeader>
           <CardFooter>
             <Button asChild variant="outline" className="w-full border-zinc-800 hover:bg-zinc-800 text-zinc-100">
-              <Link href="/login">Kembali ke Login</Link>
+              <Link to="/login">Kembali ke Login</Link>
             </Button>
           </CardFooter>
         </Card>
@@ -123,7 +123,7 @@ function ForgotPasswordComponent() {
           </CardContent>
           <CardFooter className="flex justify-center border-t border-zinc-800/50 pt-4">
             <Link 
-              href="/login" 
+              to="/login" 
               className="text-sm text-zinc-400 hover:text-emerald-500 flex items-center gap-2 transition-colors"
             >
               <ArrowLeft className="w-4 h-4" /> Kembali ke Login

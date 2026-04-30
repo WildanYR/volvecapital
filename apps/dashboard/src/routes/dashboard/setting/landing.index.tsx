@@ -28,7 +28,6 @@ import { SettingServiceGenerator } from '@/dashboard/services/setting.service'
 import { Link } from '@tanstack/react-router'
 import type { 
   LandingHeroConfig, 
-  LandingFeatureItem, 
   LandingFeatureConfig,
   LandingTestimonialItem, 
   LandingFaqItem, 

@@ -75,7 +75,7 @@ function ResetPasswordComponent() {
           </CardHeader>
           <CardContent>
             <Button asChild className="w-full bg-zinc-800 hover:bg-zinc-700">
-              <Link href="/forgot-password">Minta Link Reset Baru</Link>
+              <Link to="/forgot-password">Minta Link Reset Baru</Link>
             </Button>
           </CardContent>
         </Card>
@@ -97,7 +97,7 @@ function ResetPasswordComponent() {
             </CardDescription>
           </CardHeader>
           <CardContent className="flex justify-center">
-             <Link href="/login" className="text-emerald-500 hover:underline flex items-center gap-2">
+             <Link to="/login" className="text-emerald-500 hover:underline flex items-center gap-2">
                Klik di sini jika tidak beralih otomatis <ArrowRight className="w-4 h-4" />
              </Link>
           </CardContent>
