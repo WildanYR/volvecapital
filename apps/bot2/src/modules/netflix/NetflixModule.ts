@@ -23,11 +23,13 @@ import {
   getConfirmNewPasswordInput,
   getLogAllDevicesCheckbox,
   getSubmitButton,
+  getAllInputValidation,
 } from "./locators/changePassword.js";
 import {
   getEmailRadio,
   getEmailInput,
   getSendEmailButton,
+  getAlert,
 } from "./locators/requestReset.js";
 import { updateNetflixAccountStatus } from "./api.js";
 
@@ -98,6 +100,7 @@ export class NetflixModule extends BaseModule {
           .then(() => "not_logged_in"),
       ]);
 
+      let submitButton
       if (loginState === "not_logged_in") {
         // 2.1 Request Reset Password
         this.logger.info("Not logged in, proceeding to request reset link");
@@ -105,23 +108,27 @@ export class NetflixModule extends BaseModule {
         // Navigate to request reset URL in same page
         await page.goto(REQUEST_RESET_URL);
 
-        // Fill email steps
+        // Ensure radio is checked (implied by click, but could verify if strict)
         const emailRadio = getEmailRadio(page);
         await emailRadio.click();
-
-        // Ensure radio is checked (implied by click, but could verify if strict)
-
+        
+        // Fill email steps
         const emailInput = getEmailInput(page);
         await emailInput.fill(email);
 
         const sendButton = getSendEmailButton(page);
         await sendButton.click();
 
+        const alert = getAlert(page)
+        const alertCount = await alert.count()
+        if (alertCount) {
+          const errorMessage = await alert.innerText() ?? 'status tidak didapatkan'
+          throw new Error(`Request Email Gagal (${errorMessage})`)
+        }
+        
         this.logger.info("Reset email requested, waiting for event...");
-
         // Wait for event
         const eventName = `${sanitizeEmail(email)}:NETFLIX_REQ_RESET_PASSWORD`;
-        // TODO #send-event
         const eventData = await this.waitForTaskEvent<ResetPasswordEventData>(
           task.id,
           eventName,
@@ -147,7 +154,8 @@ export class NetflixModule extends BaseModule {
         }
 
         // Submit
-        await getSubmitButton(page).click();
+        submitButton = getSubmitButton(page)
+        await submitButton.click()
       } else {
         // 2.2 Change Password (Logged In)
         this.logger.info("Logged in, proceeding to change password");
@@ -169,10 +177,19 @@ export class NetflixModule extends BaseModule {
         }
 
         // Submit
-        await getSubmitButton(page).click();
+        submitButton = getSubmitButton(page)
+        await submitButton.click()
       }
 
       await this.sleep(1000);
+
+      const isSubmitButtonExist = await submitButton.count()
+      if (isSubmitButtonExist) {
+        // Failed
+        const validationMessages = await getAllInputValidation(page).allInnerTexts()
+        const errorMessage = validationMessages.length ? validationMessages.join(', ') : 'status tidak didapatkan'
+        throw new Error(`Input Password Baru Gagal (${errorMessage})`)
+      }
       this.logger.info("Password reset/change submitted successfully");
 
       // 3. Save state and cleanup
@@ -198,7 +215,7 @@ export class NetflixModule extends BaseModule {
           {
             level: "NEED_ACTION",
             context: "ResetNetflixPassword",
-            customMessage: `⚠️ Berhasil reset password netflix\ntapi gagal update data di app\n\nSilahkan clear dan ubah password manual pada email tersebut.\nEmail: ${email}\nPassword baru: ${newPassword}`,
+            customMessage: `⚠️ Berhasil reset password netflix\ntapi gagal update data di app [${error instanceof Error ? error.message : String(error)}]\n\nSilahkan clear dan ubah password manual pada email tersebut.\nEmail: ${email}\nPassword baru: ${newPassword}`,
           },
         );
       }
@@ -209,14 +226,14 @@ export class NetflixModule extends BaseModule {
         {
           level: "NEED_ACTION",
           context: "ResetNetflixPassword",
-          customMessage: `‼️ Gagal reset password netflix pada email ${email}\n\nSilahkan lakukan reset manual.`,
+          customMessage: `‼️ Gagal reset password netflix pada email ${email}\n[${error instanceof Error ? error.message : String(error)}]\n\nSilahkan lakukan reset manual.`,
         },
       );
       throw error; // Re-throw to fail the task in TaskManager
     } finally {
-      await page.close();
       // Save and close only the context used by this task, not all contexts
       await this.saveSession(contextName);
+      await page.close();
       const ctx = this.getContextByName(contextName);
       if (ctx) {
         await ctx.close();
