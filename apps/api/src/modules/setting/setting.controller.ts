@@ -24,4 +24,12 @@ export class SettingController {
   ) {
     return this.settingService.update(request.tenant_id!, body.key, body.value);
   }
+
+  @Patch('bulk')
+  updateBulk(
+    @Request() request: AppRequest,
+    @Body() body: Record<string, string>,
+  ) {
+    return this.settingService.updateBulk(request.tenant_id!, body);
+  }
 }

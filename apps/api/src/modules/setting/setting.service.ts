@@ -47,4 +47,26 @@ export class SettingService {
       throw error;
     }
   }
+
+  async updateBulk(tenantId: string, settings: Record<string, string>) {
+    const transaction = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema(tenantId, transaction);
+      
+      const updatePromises = Object.entries(settings).map(([key, value]) => 
+        this.tenantSettingRepository.upsert(
+          { key, value },
+          { transaction }
+        )
+      );
+
+      await Promise.all(updatePromises);
+
+      await transaction.commit();
+      return { success: true };
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
 }

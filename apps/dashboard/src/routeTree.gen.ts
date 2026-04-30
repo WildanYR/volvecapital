@@ -36,6 +36,7 @@ import { Route as DashboardEmailIdRouteImport } from './routes/dashboard/email/$
 import { Route as DashboardAccountCreateRouteImport } from './routes/dashboard/account/create'
 import { Route as DashboardAccountSlugRouteImport } from './routes/dashboard/account/$slug'
 import { Route as DashboardSettingTutorialIndexRouteImport } from './routes/dashboard/setting/tutorial.index'
+import { Route as DashboardSettingLandingIndexRouteImport } from './routes/dashboard/setting/landing.index'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -180,6 +181,12 @@ const DashboardSettingTutorialIndexRoute =
     path: '/setting/tutorial/',
     getParentRoute: () => DashboardRouteRoute,
   } as any)
+const DashboardSettingLandingIndexRoute =
+  DashboardSettingLandingIndexRouteImport.update({
+    id: '/setting/landing/',
+    path: '/setting/landing/',
+    getParentRoute: () => DashboardRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -208,6 +215,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/setting': typeof DashboardSettingIndexRoute
   '/dashboard/transaction': typeof DashboardTransactionIndexRoute
   '/dashboard/voucher-generator': typeof DashboardVoucherGeneratorIndexRoute
+  '/dashboard/setting/landing': typeof DashboardSettingLandingIndexRoute
   '/dashboard/setting/tutorial': typeof DashboardSettingTutorialIndexRoute
 }
 export interface FileRoutesByTo {
@@ -236,6 +244,7 @@ export interface FileRoutesByTo {
   '/dashboard/setting': typeof DashboardSettingIndexRoute
   '/dashboard/transaction': typeof DashboardTransactionIndexRoute
   '/dashboard/voucher-generator': typeof DashboardVoucherGeneratorIndexRoute
+  '/dashboard/setting/landing': typeof DashboardSettingLandingIndexRoute
   '/dashboard/setting/tutorial': typeof DashboardSettingTutorialIndexRoute
 }
 export interface FileRoutesById {
@@ -266,6 +275,7 @@ export interface FileRoutesById {
   '/dashboard/setting/': typeof DashboardSettingIndexRoute
   '/dashboard/transaction/': typeof DashboardTransactionIndexRoute
   '/dashboard/voucher-generator/': typeof DashboardVoucherGeneratorIndexRoute
+  '/dashboard/setting/landing/': typeof DashboardSettingLandingIndexRoute
   '/dashboard/setting/tutorial/': typeof DashboardSettingTutorialIndexRoute
 }
 export interface FileRouteTypes {
@@ -297,6 +307,7 @@ export interface FileRouteTypes {
     | '/dashboard/setting'
     | '/dashboard/transaction'
     | '/dashboard/voucher-generator'
+    | '/dashboard/setting/landing'
     | '/dashboard/setting/tutorial'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -325,6 +336,7 @@ export interface FileRouteTypes {
     | '/dashboard/setting'
     | '/dashboard/transaction'
     | '/dashboard/voucher-generator'
+    | '/dashboard/setting/landing'
     | '/dashboard/setting/tutorial'
   id:
     | '__root__'
@@ -354,6 +366,7 @@ export interface FileRouteTypes {
     | '/dashboard/setting/'
     | '/dashboard/transaction/'
     | '/dashboard/voucher-generator/'
+    | '/dashboard/setting/landing/'
     | '/dashboard/setting/tutorial/'
   fileRoutesById: FileRoutesById
 }
@@ -559,6 +572,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardSettingTutorialIndexRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
+    '/dashboard/setting/landing/': {
+      id: '/dashboard/setting/landing/'
+      path: '/setting/landing'
+      fullPath: '/dashboard/setting/landing'
+      preLoaderRoute: typeof DashboardSettingLandingIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
   }
 }
 
@@ -581,6 +601,7 @@ interface DashboardRouteRouteChildren {
   DashboardSettingIndexRoute: typeof DashboardSettingIndexRoute
   DashboardTransactionIndexRoute: typeof DashboardTransactionIndexRoute
   DashboardVoucherGeneratorIndexRoute: typeof DashboardVoucherGeneratorIndexRoute
+  DashboardSettingLandingIndexRoute: typeof DashboardSettingLandingIndexRoute
   DashboardSettingTutorialIndexRoute: typeof DashboardSettingTutorialIndexRoute
 }
 
@@ -603,6 +624,7 @@ const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardSettingIndexRoute: DashboardSettingIndexRoute,
   DashboardTransactionIndexRoute: DashboardTransactionIndexRoute,
   DashboardVoucherGeneratorIndexRoute: DashboardVoucherGeneratorIndexRoute,
+  DashboardSettingLandingIndexRoute: DashboardSettingLandingIndexRoute,
   DashboardSettingTutorialIndexRoute: DashboardSettingTutorialIndexRoute,
 }
 

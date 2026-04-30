@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { House, Loader2, Save } from 'lucide-react'
+import { House, LayoutTemplate, Loader2, Save } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/dashboard/components/ui/button'
@@ -113,6 +113,21 @@ function RouteComponent() {
         <House className="size-6 text-primary" />
         <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight">Pengaturan Aplikasi</h1>
       </div>
+
+      <Card className="border-primary/50 bg-primary/5">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-primary">
+            <LayoutTemplate className="size-5" />
+            Landing Page CMS
+          </CardTitle>
+          <CardDescription>Kustomisasi hero, fitur, testimoni, FAQ, navbar, dan footer website Anda.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button asChild>
+            <Link to="/dashboard/setting/landing">Buka Pengaturan Landing Page</Link>
+          </Button>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

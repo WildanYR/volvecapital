@@ -3,8 +3,15 @@
 import { motion } from 'framer-motion'
 import { Star, Quote } from 'lucide-react'
 
-const testimonials = [
+import type { LandingTestimonialItem } from '@volvecapital/shared/types'
+
+interface TestimonialsProps {
+  items?: LandingTestimonialItem[]
+}
+
+const defaultTestimonials: LandingTestimonialItem[] = [
   {
+    id: '1',
     name: "Andi Pratama",
     role: "Pecinta Film",
     content: "Sumpah cepet banget! Bayar pake QRIS, langsung dapet WA kode vouchernya. Netflix 4K nya jernih parah.",
@@ -12,6 +19,7 @@ const testimonials = [
     initial: "A"
   },
   {
+    id: '2',
     name: "Siska Amelia",
     role: "Mahasiswi",
     content: "Spotify Premium termurah yang pernah saya beli. Udah 3 bulan aman terus, gak pernah back to free. Trusted!",
@@ -19,6 +27,7 @@ const testimonials = [
     initial: "S"
   },
   {
+    id: '3',
     name: "Budi Raharjo",
     role: "Bapak Rumah Tangga",
     content: "Disney+ buat anak-anak jadi gampang belinya. Proses redeemnya simple banget buat saya yang gaptek.",
@@ -26,6 +35,7 @@ const testimonials = [
     initial: "B"
   },
   {
+    id: '4',
     name: "Rina Wijaya",
     role: "Freelancer",
     content: "Pelayanan mantap, adminnya responsif banget pas ditanya-tanya via WhatsApp. Sangat recommended buat yang cari akun legal.",
@@ -34,7 +44,9 @@ const testimonials = [
   }
 ]
 
-export function Testimonials() {
+export function Testimonials({ items }: TestimonialsProps) {
+  const displayTestimonials = items && items.length > 0 ? items : defaultTestimonials
+
   return (
     <section id="testimonials" className="py-32 px-6 w-full flex justify-center z-10">
       <div className="w-full max-w-7xl md:px-12">
@@ -52,9 +64,9 @@ export function Testimonials() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {testimonials.map((t, idx) => (
+          {displayTestimonials.map((t, idx) => (
             <motion.div
-              key={idx}
+              key={t.id || idx}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.1 }}

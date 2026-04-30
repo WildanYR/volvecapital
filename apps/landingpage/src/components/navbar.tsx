@@ -6,7 +6,13 @@ import { Crown, Menu, X, ShoppingBag, Key } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
-export function Navbar() {
+import type { LandingNavbarConfig, LandingHeroConfig } from '@volvecapital/shared/types'
+
+interface NavbarProps {
+  config?: LandingNavbarConfig | null
+}
+
+export function Navbar({ config }: NavbarProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const pathname = usePathname()
@@ -17,12 +23,31 @@ export function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  const navLinks = [
+  const defaultLinks = [
     { name: 'Home', href: '/' },
     { name: 'Produk', href: '/product' },
     { name: 'Redeem', href: '/redeem' },
     { name: 'Tutorial', href: '/tutorial' },
   ]
+
+  const showProducts = config?.showProducts ?? true
+  const showRedeem = config?.showRedeem ?? true
+  const customLinks = config?.links || []
+
+  const navLinks = [
+    { name: 'Home', href: '/' },
+    ...(showProducts ? [{ name: 'Produk', href: '/product' }] : []),
+    ...(showRedeem ? [{ name: 'Redeem', href: '/redeem' }] : []),
+    ...customLinks.map(l => ({ name: l.label, href: l.href }))
+  ]
+
+  // If no custom links and everything disabled, fallback to tutorial at least
+  if (navLinks.length === 1 && !showProducts && !showRedeem && customLinks.length === 0) {
+    navLinks.push({ name: 'Tutorial', href: '/tutorial' })
+  }
+
+  const logoText = config?.logoText || 'VOLVECAPITAL'
+  const logoIconEmbed = config?.logoIconEmbed
 
   return (
     <>
@@ -37,10 +62,30 @@ export function Navbar() {
           }`}>
             <Link href="/" className="flex items-center gap-3 shrink-0 group">
               <div className="bg-gradient-gold p-2.5 rounded-xl shadow-[0_0_20px_rgba(255,184,0,0.4)] group-hover:scale-110 transition-transform duration-300">
-                <Crown className="size-5 text-black" />
+                {logoIconEmbed ? (
+                  <div className="size-5 flex items-center justify-center">
+                    {logoIconEmbed.startsWith('http') ? (
+                      <img src={logoIconEmbed} alt="Logo" className="size-5 object-contain" />
+                    ) : (
+                      <div className="size-5" dangerouslySetInnerHTML={{ __html: logoIconEmbed }} />
+                    )}
+                  </div>
+                ) : (
+                  <Crown className="size-5 text-black" />
+                )}
               </div>
-              <span className="text-xl md:text-2xl font-black tracking-tighter text-white">
-                VOLVE<span className="text-primary">CAPITAL</span>
+              <span className="text-xl md:text-2xl font-black tracking-tighter text-white uppercase">
+                {logoText.includes(' ') ? (
+                  <>
+                    {logoText.split(' ')[0]}
+                    <span className="text-primary">{logoText.split(' ').slice(1).join(' ')}</span>
+                  </>
+                ) : (
+                  <>
+                    {logoText.substring(0, Math.ceil(logoText.length / 2))}
+                    <span className="text-primary">{logoText.substring(Math.ceil(logoText.length / 2))}</span>
+                  </>
+                )}
               </span>
             </Link>
 
@@ -53,7 +98,7 @@ export function Navbar() {
                     key={link.name} 
                     href={link.href} 
                     className={`text-sm font-bold transition-all tracking-widest uppercase relative group ${
-                      isActive ? 'text-primary' : 'text-gray-400 hover:text-white'
+                      isActive ? 'text-primary' : 'text-zinc-400 hover:text-white'
                     }`}
                   >
                     {link.name}

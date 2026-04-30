@@ -3,7 +3,16 @@
 import { Crown, Instagram, Twitter, MessageCircle } from 'lucide-react'
 import Link from 'next/link'
 
-export function Footer() {
+import type { LandingFooterConfig } from '@volvecapital/shared/types'
+
+interface FooterProps {
+  config?: LandingFooterConfig | null
+}
+
+export function Footer({ config }: FooterProps) {
+  const address = config?.address || 'Solusi hiburan premium terbaik dengan sistem otomatisasi voucher 24/7. Cepat, aman, dan terpercaya.'
+  const email = config?.email || 'support@volvecapital.com'
+
   return (
     <footer className="py-20 px-6 border-t border-white/5 w-full flex justify-center overflow-hidden">
       <div className="w-full max-w-7xl md:px-12 relative z-10">
@@ -18,9 +27,12 @@ export function Footer() {
               </span>
             </Link>
             <p className="text-gray-500 text-base max-w-sm leading-relaxed">
-              Solusi hiburan premium terbaik dengan sistem otomatisasi voucher 24/7. 
-              Cepat, aman, dan terpercaya sejak 2024.
+              {address}
             </p>
+            <div className="flex flex-col gap-2">
+              <p className="text-sm text-gray-500 font-bold uppercase tracking-wider">Kontak Kami</p>
+              <p className="text-sm text-gray-400">{email}</p>
+            </div>
             <div className="flex items-center gap-5">
               <Link href="#" className="size-10 rounded-full glass flex items-center justify-center text-gray-400 hover:text-primary hover:border-primary/50 transition-all">
                 <Instagram className="size-5" />

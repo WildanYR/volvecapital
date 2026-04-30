@@ -19,6 +19,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@/dashboard': resolve(__dirname, './src'),
+      '@volvecapital/shared': resolve(__dirname, '../../packages/shared-types/src'),
     },
   },
 })
