@@ -165,12 +165,14 @@ export class AccountService {
         limit,
         offset,
         include: includeOptions,
+        subQuery: false,
         transaction,
       });
       const accountCount = await this.accountRepository.count({
         where: whereOptions,
         include: includeOptions,
         distinct: true,
+        subQuery: false,
         transaction,
       });
 
