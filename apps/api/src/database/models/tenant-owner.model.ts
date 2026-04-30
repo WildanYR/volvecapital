@@ -17,12 +17,14 @@ export interface TenantOwnerAttributes {
   email: string;
   password: string;
   is_verified: boolean;
+  reset_token?: string | null;
+  reset_expires?: Date | null;
   created_at: Date;
   updated_at: Date;
 }
 
 interface TenantOwnerCreationAttributes
-  extends Optional<TenantOwnerAttributes, 'id' | 'created_at' | 'updated_at' | 'is_verified'> {}
+  extends Optional<TenantOwnerAttributes, 'id' | 'is_verified' | 'created_at' | 'updated_at' | 'reset_token' | 'reset_expires'> {}
 
 @Table({ tableName: 'tenant_owner' })
 export class TenantOwner extends Model<TenantOwnerAttributes, TenantOwnerCreationAttributes> {
@@ -53,6 +55,14 @@ export class TenantOwner extends Model<TenantOwnerAttributes, TenantOwnerCreatio
     defaultValue: false,
   })
   declare is_verified: boolean;
+
+  @AllowNull(true)
+  @Column(DataType.STRING)
+  declare reset_token: string | null;
+
+  @AllowNull(true)
+  @Column(DataType.DATE)
+  declare reset_expires: Date | null;
 
   @BelongsTo(() => Tenant)
   declare tenant: Tenant;

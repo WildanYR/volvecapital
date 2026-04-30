@@ -1,4 +1,4 @@
-import { createFileRoute, redirect } from '@tanstack/react-router'
+import { createFileRoute, redirect, Link } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import { z } from 'zod'
 import {
@@ -8,6 +8,8 @@ import {
   CardHeader,
   CardTitle,
 } from '@/dashboard/components/ui/card'
+import { Label } from '@/dashboard/components/ui/label'
+import { Input } from '@/dashboard/components/ui/input'
 import { useAuth } from '@/dashboard/context-providers/auth.provider'
 import { useAppForm } from '@/dashboard/hooks/form.hook'
 import logo from '../logo.svg'
@@ -82,23 +84,41 @@ function RouteComponent() {
                         />
                       )}
                     />
-                    <form.AppField
-                      name="password"
-                      children={field => (
-                        <field.TextField
-                          label="Password"
-                          type="password"
-                          placeholder="***********"
-                        />
-                      )}
-                    />
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="password">Password</Label>
+                        <Link
+                          to="/forgot-password"
+                          className="text-xs text-zinc-400 hover:text-emerald-500 transition-colors"
+                        >
+                          Lupa password?
+                        </Link>
+                      </div>
+                      <form.Field
+                        name="password"
+                        children={(field) => (
+                          <Input
+                            id="password"
+                            type="password"
+                            className="bg-zinc-950 border-zinc-800 text-zinc-100 focus-visible:ring-emerald-500"
+                            value={field.state.value}
+                            onBlur={field.handleBlur}
+                            onChange={(e) => field.handleChange(e.target.value)}
+                            required
+                          />
+                        )}
+                      />
+                    </div>
                     <form.SubscribeButton label="Login" />
                   </div>
                   <div className="mt-4 text-center text-sm text-muted-foreground">
                     Belum punya akun?{' '}
-                    <a href="/register" className="text-primary hover:underline font-medium">
+                    <Link
+                      to="/register"
+                      className="text-emerald-500 hover:underline"
+                    >
                       Daftar Sekarang
-                    </a>
+                    </Link>
                   </div>
                 </form>
               </form.AppForm>
@@ -109,4 +129,3 @@ function RouteComponent() {
     </div>
   )
 }
-

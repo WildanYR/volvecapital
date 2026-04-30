@@ -24,6 +24,7 @@ import {
   EMAIL_MESSAGE_REPOSITORY,
   EMAIL_SUBJECT_REPOSITORY,
   TUTORIAL_REPOSITORY,
+  TENANT_OWNER_REPOSITORY,
 } from 'src/constants/database.const';
 import { AccountProfile } from 'src/database/models/account-profile.model';
 import { AccountUser } from 'src/database/models/account-user.model';
@@ -37,6 +38,8 @@ import { Voucher } from 'src/database/models/voucher.model';
 import { EmailMessage } from 'src/database/models/email-message.model';
 import { EmailSubject } from 'src/database/models/email-subject.model';
 import { TenantSetting } from 'src/database/models/tenant-setting.model';
+import { TenantOwner } from 'src/database/models/tenant-owner.model';
+import { Tenant } from 'src/database/models/tenant.model';
 import { Tutorial } from 'src/database/models/tutorial.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
 import { TenantProvisioningService } from '../tenant/tenant-provisioning.service';
@@ -75,6 +78,8 @@ export class PublicService {
     private readonly emailSubjectRepository: typeof EmailSubject,
     @Inject(TUTORIAL_REPOSITORY)
     private readonly tutorialRepository: typeof Tutorial,
+    @Inject(TENANT_OWNER_REPOSITORY)
+    private readonly tenantOwnerRepository: typeof TenantOwner,
     private readonly tenantProvisioningService: TenantProvisioningService,
   ) {}
 
@@ -145,6 +150,109 @@ export class PublicService {
         <div style="text-align: center; margin: 30px 0;">
           <a href="${this.configService.get('FRONTEND_URL')}/login" style="background: #4CAF50; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">Login ke Dashboard</a>
         </div>
+      </div>`,
+    });
+  }
+
+  async forgotPassword(email: string) {
+    const transaction = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema('master', transaction);
+
+      const owner = await this.tenantOwnerRepository.findOne({
+        where: { email },
+        include: [{ model: Tenant, as: 'tenant' }],
+        transaction,
+      });
+
+      if (!owner) {
+        // We return success even if user not found for security (avoid enumeration)
+        return { message: 'Jika email Anda terdaftar, Anda akan menerima link reset password.' };
+      }
+
+      const token = crypto.randomBytes(32).toString('hex');
+      const expires = new Date();
+      expires.setHours(expires.getHours() + 1); // 1 hour expiry
+
+      await owner.update({
+        reset_token: token,
+        reset_expires: expires,
+      }, { transaction });
+
+      await this.sendResetPasswordEmail(email, owner.tenant?.name || 'Owner', token);
+
+      await transaction.commit();
+      return { message: 'Jika email Anda terdaftar, Anda akan menerima link reset password.' };
+    }
+    catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
+
+  async resetPassword(token: string, password: string) {
+    const transaction = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema('master', transaction);
+
+      const owner = await this.tenantOwnerRepository.findOne({
+        where: {
+          reset_token: token,
+          reset_expires: { [Op.gt]: new Date() },
+        },
+        transaction,
+      });
+
+      if (!owner) {
+        throw new BadRequestException('Token tidak valid atau sudah kadaluarsa');
+      }
+
+      const hashedPassword = crypto.createHash('sha256').update(password).digest('hex');
+
+      await owner.update({
+        password: hashedPassword,
+        reset_token: null,
+        reset_expires: null,
+      }, { transaction });
+
+      await transaction.commit();
+      return { message: 'Password Anda berhasil diperbarui. Silakan login kembali.' };
+    }
+    catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
+
+  private async sendResetPasswordEmail(email: string, name: string, token: string) {
+    const host = this.configService.get<string>('mail.host');
+    const port = this.configService.get<number>('mail.port');
+    const user = this.configService.get<string>('mail.user');
+    const pass = this.configService.get<string>('mail.pass');
+    const from = this.configService.get<string>('mail.from');
+
+    if (!host || !user || !pass) return;
+
+    const transporter = nodemailer.createTransport({
+      host,
+      port,
+      auth: { user, pass },
+    });
+
+    const resetUrl = `${this.configService.get('FRONTEND_URL')}/reset-password?token=${token}`;
+
+    await transporter.sendMail({
+      from: `"Volve Capital" <${from}>`,
+      to: email,
+      subject: 'Reset Password Volve Capital',
+      html: `<div style="font-family: sans-serif; line-height: 1.6; color: #333;">
+        <h2>Halo ${name}!</h2>
+        <p>Anda menerima email ini karena kami menerima permintaan reset password untuk akun Anda.</p>
+        <p>Silakan klik tombol di bawah ini untuk mereset password Anda. Link ini akan kadaluarsa dalam 1 jam.</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${resetUrl}" style="background: #f44336; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">Reset Password</a>
+        </div>
+        <p>Jika Anda tidak merasa meminta reset password, silakan abaikan email ini.</p>
       </div>`,
     });
   }

@@ -166,7 +166,17 @@ export class PublicController {
   }
 
   @Post('tenant/register')
-  registerTenant(@Body() dto: RegisterTenantDto) {
-    return this.publicService.registerTenant(dto);
+  async registerTenant(@Body() data: RegisterTenantDto) {
+    return await this.publicService.registerTenant(data);
+  }
+
+  @Post('auth/forgot-password')
+  async forgotPassword(@Body('email') email: string) {
+    return await this.publicService.forgotPassword(email);
+  }
+
+  @Post('auth/reset-password')
+  async resetPassword(@Body() data: any) {
+    return await this.publicService.resetPassword(data.token, data.password);
   }
 }

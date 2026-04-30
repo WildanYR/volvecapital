@@ -118,6 +118,7 @@ export class VcAuthGuard implements CanActivate {
       }
 
       req.tenant_id = tenant_id;
+      req.user = payload;
 
       return true;
     }

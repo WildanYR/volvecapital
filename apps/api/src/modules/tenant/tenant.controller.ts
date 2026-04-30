@@ -9,6 +9,8 @@ import {
   Patch,
   Post,
   Query,
+  Request,
+  UseGuards,
   UsePipes,
 } from '@nestjs/common';
 import { PublicRoute } from 'src/guards/public-route.decorator';
@@ -19,6 +21,7 @@ import { LoginDto } from './dto/login.dto';
 import { GetAllTenantQueryUrlDto } from './dto/get-all-tenant.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
 import { TenantService } from './tenant.service';
+import { VcAuthGuard } from 'src/guards/vc-auth.guard';
 
 @Controller('tenant')
 export class TenantController {
@@ -57,6 +60,13 @@ export class TenantController {
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id') tenantId: string) {
     return this.tenantService.remove(tenantId);
+  }
+
+  @UseGuards(VcAuthGuard)
+  @Patch('owner/change-password')
+  async changePassword(@Request() req: any, @Body() data: any) {
+    const ownerId = req.user?.id;
+    return await this.tenantService.changePassword(ownerId, data);
   }
 
   @PublicRoute()

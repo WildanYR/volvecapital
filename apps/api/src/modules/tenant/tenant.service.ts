@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Inject,
   Injectable,
   NotFoundException,
@@ -185,8 +186,10 @@ export class TenantService {
       const token = await this.tokenProvider.signJwt<IAccessTokenPayload>(
         this.configService.get<string>('token.secret')!,
         {
+          id: owner.id,
           tenant_id: owner.tenant_id,
-          role: 'USER',
+          email: owner.email,
+          role: 'TENANT_OWNER',
         },
       );
 
@@ -196,6 +199,34 @@ export class TenantService {
         token,
         tenant_name: owner.tenant.name,
       };
+    }
+    catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
+
+  async changePassword(ownerId: string, data: any) {
+    const { oldPassword, newPassword } = data;
+    const transaction = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema('master', transaction);
+
+      const owner = await this.tenantOwnerRepository.findByPk(ownerId, { transaction });
+      if (!owner) {
+        throw new NotFoundException('Owner tidak ditemukan');
+      }
+
+      const hashedOld = crypto.createHash('sha256').update(oldPassword).digest('hex');
+      if (owner.password !== hashedOld) {
+        throw new BadRequestException('Password lama salah');
+      }
+
+      const hashedNew = crypto.createHash('sha256').update(newPassword).digest('hex');
+      await owner.update({ password: hashedNew }, { transaction });
+
+      await transaction.commit();
+      return { message: 'Password berhasil diubah' };
     }
     catch (error) {
       await transaction.rollback();

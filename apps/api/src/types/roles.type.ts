@@ -1,1 +1,1 @@
-export type Roles = 'USER' | 'ADMIN' | 'BACKEND';
+export type Roles = 'USER' | 'ADMIN' | 'BACKEND' | 'TENANT_OWNER';
