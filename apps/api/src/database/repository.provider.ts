@@ -23,6 +23,7 @@ import {
   TENANT_SETTING_REPOSITORY,
   TUTORIAL_REPOSITORY,
   ACCOUNT_CAPITAL_REPOSITORY,
+  TENANT_OWNER_REPOSITORY,
 } from 'src/constants/database.const';
 import { AccountModifier } from './models/account-modifier.model';
 import { AccountProfile } from './models/account-profile.model';
@@ -47,6 +48,7 @@ import { Transaction } from './models/transaction.model';
 import { TenantSetting } from './models/tenant-setting.model';
 import { Tutorial } from './models/tutorial.model';
 import { AccountCapital } from './models/account-capital.model';
+import { TenantOwner } from './models/tenant-owner.model';
 
 export const RepositoryProvider: Provider[] = [
   { provide: TENANT_REPOSITORY, useValue: Tenant },
@@ -75,4 +77,5 @@ export const RepositoryProvider: Provider[] = [
   { provide: TENANT_SETTING_REPOSITORY, useValue: TenantSetting },
   { provide: TUTORIAL_REPOSITORY, useValue: Tutorial },
   { provide: ACCOUNT_CAPITAL_REPOSITORY, useValue: AccountCapital },
+  { provide: TENANT_OWNER_REPOSITORY, useValue: TenantOwner },
 ];

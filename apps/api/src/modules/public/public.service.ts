@@ -39,7 +39,9 @@ import { EmailSubject } from 'src/database/models/email-subject.model';
 import { TenantSetting } from 'src/database/models/tenant-setting.model';
 import { Tutorial } from 'src/database/models/tutorial.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
+import { TenantProvisioningService } from '../tenant/tenant-provisioning.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
+import { RegisterTenantDto } from './dto/register-tenant.dto';
 import { RedeemVoucherDto } from './dto/redeem-voucher.dto';
 
 @Injectable()
@@ -73,6 +75,7 @@ export class PublicService {
     private readonly emailSubjectRepository: typeof EmailSubject,
     @Inject(TUTORIAL_REPOSITORY)
     private readonly tutorialRepository: typeof Tutorial,
+    private readonly tenantProvisioningService: TenantProvisioningService,
   ) {}
 
   async getSettings(tenantId: string) {
@@ -92,6 +95,58 @@ export class PublicService {
       await transaction.rollback();
       throw error;
     }
+  }
+
+  // ─── REGISTER TENANT ────────────────────────────────────────────────────────
+
+  async registerTenant(dto: RegisterTenantDto) {
+    if (dto.password !== dto.confirm_password) {
+      throw new BadRequestException('Konfirmasi password tidak cocok');
+    }
+
+    const tenant = await this.tenantProvisioningService.provision({
+      username: dto.username,
+      email: dto.email,
+      password: dto.password,
+    });
+
+    // Send verification email (simulated for now, can be real later)
+    await this.sendWelcomeEmail(dto.email, dto.username);
+
+    return {
+      message: 'Registrasi berhasil! Silakan cek email Anda untuk konfirmasi.',
+      tenant_id: tenant.id,
+    };
+  }
+
+  private async sendWelcomeEmail(email: string, username: string) {
+    const host = this.configService.get<string>('mail.host');
+    const port = this.configService.get<number>('mail.port');
+    const user = this.configService.get<string>('mail.user');
+    const pass = this.configService.get<string>('mail.pass');
+    const from = this.configService.get<string>('mail.from');
+
+    if (!host || !user || !pass) return;
+
+    const transporter = nodemailer.createTransport({
+      host,
+      port,
+      auth: { user, pass },
+    });
+
+    await transporter.sendMail({
+      from: `"Volve Capital" <${from}>`,
+      to: email,
+      subject: 'Selamat Datang di Volve Capital!',
+      html: `<div style="font-family: sans-serif; line-height: 1.6; color: #333;">
+        <h2>Halo ${username}! 👋</h2>
+        <p>Terima kasih telah mendaftar di Volve Capital. Akun Anda telah berhasil dibuat.</p>
+        <p>Anda sekarang dapat login ke dashboard menggunakan email dan password yang telah Anda buat.</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${this.configService.get('FRONTEND_URL')}/login" style="background: #4CAF50; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">Login ke Dashboard</a>
+        </div>
+      </div>`,
+    });
   }
 
   // ─── LIST PRODUCTS ──────────────────────────────────────────────────────────

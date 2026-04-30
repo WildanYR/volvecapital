@@ -8,16 +8,21 @@ import {
   CardHeader,
   CardTitle,
 } from '@/dashboard/components/ui/card'
-import { useAuth } from '@/dashboard/context-providers/auth.provider'
 import { useAppForm } from '@/dashboard/hooks/form.hook'
+import { API_URL } from '@/dashboard/constants/api-url.cont'
 import logo from '../logo.svg'
 
-const LoginFormSchema = z.object({
+const RegisterFormSchema = z.object({
+  username: z.string().min(3, 'Username minimal 3 karakter').nonempty('Username harus diisi'),
   email: z.string().email('Email tidak valid').nonempty('Email harus diisi'),
-  password: z.string().nonempty('Password harus diisi'),
-})
+  password: z.string().min(8, 'Password minimal 8 karakter').nonempty('Password harus diisi'),
+  confirm_password: z.string().nonempty('Konfirmasi password harus diisi'),
+}).refine((data) => data.password === data.confirm_password, {
+  message: "Password tidak cocok",
+  path: ["confirm_password"],
+});
 
-export const Route = createFileRoute('/login')({
+export const Route = createFileRoute('/register')({
   beforeLoad: ({ context }) => {
     if (context.auth?.isAuthenticated) {
       throw redirect({ to: '/dashboard' })
@@ -27,28 +32,44 @@ export const Route = createFileRoute('/login')({
 })
 
 function RouteComponent() {
-  const auth = useAuth()
   const navigate = Route.useNavigate()
 
   const form = useAppForm({
     validators: {
-      onSubmit: LoginFormSchema,
+      onSubmit: RegisterFormSchema,
     },
     defaultValues: {
+      username: '',
       email: '',
       password: '',
+      confirm_password: '',
     },
     onSubmit: async ({ value, formApi }) => {
       try {
-        await auth.login(value.email, value.password)
+        const response = await fetch(`${API_URL}/public/tenant/register`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(value),
+        })
+
+        const result = await response.json()
+
+        if (!response.ok) {
+          throw new Error(result.message || 'Gagal mendaftar')
+        }
+
+        toast.success(result.message || 'Registrasi berhasil!')
         formApi.reset()
-        navigate({ to: '/dashboard' })
+        navigate({ to: '/login' })
       }
       catch (error) {
         toast.error((error as Error).message)
       }
     },
   })
+
   return (
     <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
       <div className="w-full max-w-sm">
@@ -58,9 +79,9 @@ function RouteComponent() {
               <div className="flex justify-center items-center mb-6">
                 <img src={logo} className="h-12" />
               </div>
-              <CardTitle>Login ke Dashboard</CardTitle>
+              <CardTitle>Daftar Akun Tenant</CardTitle>
               <CardDescription>
-                Masukkan email dan password Anda untuk masuk
+                Buat akun dashboard untuk mengelola bisnis Anda
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -73,6 +94,15 @@ function RouteComponent() {
                   }}
                 >
                   <div className="flex flex-col gap-6">
+                    <form.AppField
+                      name="username"
+                      children={field => (
+                        <field.TextField
+                          label="Username (Nama Tenant)"
+                          placeholder="tokomaju"
+                        />
+                      )}
+                    />
                     <form.AppField
                       name="email"
                       children={field => (
@@ -92,12 +122,22 @@ function RouteComponent() {
                         />
                       )}
                     />
-                    <form.SubscribeButton label="Login" />
+                    <form.AppField
+                      name="confirm_password"
+                      children={field => (
+                        <field.TextField
+                          label="Konfirmasi Password"
+                          type="password"
+                          placeholder="***********"
+                        />
+                      )}
+                    />
+                    <form.SubscribeButton label="Daftar Sekarang" />
                   </div>
                   <div className="mt-4 text-center text-sm text-muted-foreground">
-                    Belum punya akun?{' '}
-                    <a href="/register" className="text-primary hover:underline font-medium">
-                      Daftar Sekarang
+                    Sudah punya akun?{' '}
+                    <a href="/login" className="text-primary hover:underline font-medium">
+                      Login Di Sini
                     </a>
                   </div>
                 </form>
@@ -109,4 +149,3 @@ function RouteComponent() {
     </div>
   )
 }
-

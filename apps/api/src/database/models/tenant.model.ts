@@ -10,13 +10,14 @@ import {
 
 export interface TenantAttributes {
   id: string;
-  secret: string;
+  name: string | null;
+  status: 'active' | 'pending' | 'suspended';
   created_at: Date;
   updated_at: Date;
 }
 
 interface TenantCreationAttributes
-  extends Optional<TenantAttributes, 'created_at' | 'updated_at'> {}
+  extends Optional<TenantAttributes, 'created_at' | 'updated_at' | 'status' | 'name'> {}
 
 @Table({ tableName: 'tenant' })
 export class Tenant extends Model<TenantAttributes, TenantCreationAttributes> {
@@ -25,7 +26,15 @@ export class Tenant extends Model<TenantAttributes, TenantCreationAttributes> {
   @Column(DataType.STRING)
   declare id: string;
 
-  @AllowNull(false)
+  @AllowNull(true)
   @Column(DataType.STRING)
-  declare secret: string;
+  declare name: string | null;
+
+  @AllowNull(false)
+  @Column({
+    type: DataType.ENUM('active', 'pending', 'suspended'),
+    defaultValue: 'pending',
+  })
+  declare status: 'active' | 'pending' | 'suspended';
 }
+

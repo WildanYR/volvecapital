@@ -31,17 +31,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setTenant(null)
   }, [])
 
-  const login = React.useCallback(async (tenantId: string, secret: string) => {
-    const response = await fetch(`${API_URL}/tenant/access-token`, {
+  const login = React.useCallback(async (email: string, password: string) => {
+    const response = await fetch(`${API_URL}/tenant/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ tenant_id: tenantId, secret }),
+      body: JSON.stringify({ email, password }),
     })
     if (!response.ok) {
       const errorData = await response.json()
-      throw new Error(errorData.message || 'Something went wrong')
+      throw new Error(errorData.message || 'Email atau password salah')
     }
 
     const tenantData = await response.json()

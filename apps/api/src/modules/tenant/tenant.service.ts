@@ -4,16 +4,19 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Op, WhereOptions } from 'sequelize';
-import { TENANT_REPOSITORY } from 'src/constants/database.const';
+import { TENANT_REPOSITORY, TENANT_OWNER_REPOSITORY } from 'src/constants/database.const';
 import { Tenant } from 'src/database/models/tenant.model';
+import { TenantOwner } from 'src/database/models/tenant-owner.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
+import * as crypto from 'crypto';
 import { IAccessTokenPayload } from 'src/types/access-token.type';
 import { PaginationProvider } from '../utility/pagination.provider';
 import { TokenProvider } from '../utility/token.provider';
 import { BaseGetAllUrlQuery } from '../utility/types/base-get-all-url-query.type';
 import { CreateTenantDto } from './dto/create-tenant.dto';
-import { GenerateAccessTokenDto } from './dto/generate-access-token.dto';
+import { LoginDto } from './dto/login.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
 import { ITenantGetFilter } from './filter/tenant-get.filter';
 
@@ -22,8 +25,10 @@ export class TenantService {
   constructor(
     private readonly paginationProvider: PaginationProvider,
     private readonly tokenProvider: TokenProvider,
+    private readonly configService: ConfigService,
     private readonly postgresProvider: PostgresProvider,
     @Inject(TENANT_REPOSITORY) private readonly tenantRepository: typeof Tenant,
+    @Inject(TENANT_OWNER_REPOSITORY) private readonly tenantOwnerRepository: typeof TenantOwner,
   ) {}
 
   async findAll(pagination?: BaseGetAllUrlQuery, filter?: ITenantGetFilter) {
@@ -153,35 +158,43 @@ export class TenantService {
     }
   }
 
-  async generateAccessToken(generateAccessTokenDto: GenerateAccessTokenDto) {
+  async login(loginDto: LoginDto) {
     const transaction = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema('master', transaction);
 
-      const tenant = await this.tenantRepository.findOne({
+      const hashedPassword = crypto.createHash('sha256').update(loginDto.password).digest('hex');
+
+      const owner = await this.tenantOwnerRepository.findOne({
         where: {
-          id: generateAccessTokenDto.tenant_id,
-          secret: generateAccessTokenDto.secret,
+          email: loginDto.email,
+          password: hashedPassword,
         },
+        include: [{ model: Tenant, as: 'tenant' }],
         transaction,
       });
 
-      if (!tenant) {
-        throw new UnauthorizedException('App Id or Secret invalid');
+      if (!owner) {
+        throw new UnauthorizedException('Email atau password salah');
+      }
+
+      if (!owner.tenant) {
+        throw new UnauthorizedException('Tenant tidak ditemukan');
       }
 
       const token = await this.tokenProvider.signJwt<IAccessTokenPayload>(
-        tenant.dataValues.secret,
+        this.configService.get<string>('token.secret')!,
         {
-          tenant_id: tenant.id,
+          tenant_id: owner.tenant_id,
           role: 'USER',
         },
       );
 
       await transaction.commit();
       return {
-        id: tenant.id,
+        id: owner.tenant_id,
         token,
+        tenant_name: owner.tenant.name,
       };
     }
     catch (error) {

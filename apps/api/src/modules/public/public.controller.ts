@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { PublicRoute } from 'src/guards/public-route.decorator';
 import { CreatePaymentDto } from './dto/create-payment.dto';
+import { RegisterTenantDto } from './dto/register-tenant.dto';
 import { RedeemVoucherDto } from './dto/redeem-voucher.dto';
 import { PublicService } from './public.service';
 
@@ -162,5 +163,10 @@ export class PublicController {
     const xTenantId = headers['x-tenant-id'];
     const tenantId = this.getTenantId(host, xTenantId);
     return this.publicService.getTutorialBySlug(tenantId, slug);
+  }
+
+  @Post('tenant/register')
+  registerTenant(@Body() dto: RegisterTenantDto) {
+    return this.publicService.registerTenant(dto);
   }
 }

@@ -1,4 +1,5 @@
 import { Inject } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { ConnectedSocket, MessageBody, OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage, WebSocketGateway } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { TASK_QUEUE_REPOSITORY, TENANT_REPOSITORY } from 'src/constants/database.const';
@@ -22,6 +23,7 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect, 
   constructor(
     private readonly logger: AppLoggerService,
     private readonly tokenProvider: TokenProvider,
+    private readonly configService: ConfigService,
     private readonly postgresProvider: PostgresProvider,
     @Inject(TENANT_REPOSITORY) private readonly tenantRepository: typeof Tenant,
     @Inject(TASK_QUEUE_REPOSITORY) private readonly taskQueueRepository: typeof TaskQueue
@@ -79,7 +81,7 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect, 
 
       try {
         const payload = await this.tokenProvider.verifyJwt<IAccessTokenPayload>(
-          tenant!.dataValues.secret,
+          this.configService.get<string>('token.secret')!,
           token,
         );
 

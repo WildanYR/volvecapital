@@ -32,9 +32,15 @@ export class ApiExceptionFilter implements ExceptionFilter {
     }
     else {
       statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
-      errorMessage = 'Internal Server Error';
+      errorMessage = (exception as Error).message || 'Internal Server Error';
+      
+      // Detailed logging for Sequelize Validation Errors
+      const details = (exception as any).errors 
+        ? JSON.stringify((exception as any).errors.map((e: any) => ({ field: e.path, message: e.message })))
+        : '';
+
       this.logger.error(
-        (exception as Error).message,
+        `${errorMessage} ${details}`,
         (exception as Error).stack,
         'AppException',
       );

@@ -15,7 +15,7 @@ import { PublicRoute } from 'src/guards/public-route.decorator';
 import { AtLeastOnePropertyPipe } from 'src/pipes/at-least-one-property.pipe';
 import { PaginationProvider } from '../utility/pagination.provider';
 import { CreateTenantDto } from './dto/create-tenant.dto';
-import { GenerateAccessTokenDto } from './dto/generate-access-token.dto';
+import { LoginDto } from './dto/login.dto';
 import { GetAllTenantQueryUrlDto } from './dto/get-all-tenant.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
 import { TenantService } from './tenant.service';
@@ -60,8 +60,8 @@ export class TenantController {
   }
 
   @PublicRoute()
-  @Post('access-token')
-  generateAccessToken(@Body() generateAccessTokenDto: GenerateAccessTokenDto) {
-    return this.tenantService.generateAccessToken(generateAccessTokenDto);
+  @Post('login')
+  login(@Body() loginDto: LoginDto) {
+    return this.tenantService.login(loginDto);
   }
 }

@@ -94,10 +94,7 @@ export class VcAuthGuard implements CanActivate {
       }
     }
 
-    const secret
-      = tokenPayload.role === 'ADMIN'
-        ? this.configService.get<string>('token.secret')
-        : tenant!.dataValues.secret;
+    const secret = this.configService.get<string>('token.secret');
 
     if (!secret) {
       throw new UnauthorizedException('Missing secret');
