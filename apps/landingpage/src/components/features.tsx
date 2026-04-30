@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { UserMinus, Zap, Clock, MessageCircle, ShieldCheck, CreditCard } from 'lucide-react'
-import type { LandingFeatureItem } from '@volvecapital/shared/types'
+import type { LandingFeatureItem, LandingFeatureConfig } from '@volvecapital/shared/types'
 
 interface FeaturesProps {
   config?: LandingFeatureConfig | null
