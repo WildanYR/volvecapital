@@ -172,7 +172,6 @@ export class AccountService {
         where: whereOptions,
         include: includeOptions,
         distinct: true,
-        subQuery: false,
         transaction,
       });
 
