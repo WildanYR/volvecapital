@@ -23,8 +23,17 @@ export default function RedeemPage() {
     if (typeof window !== 'undefined') {
       const hostname = window.location.hostname
       const parts = hostname.split('.')
-      if (parts.length > 2 || (parts.length === 2 && !hostname.includes('localhost'))) {
-        setTenantId(parts[0])
+      
+      // Jika ada subdomain (misal: paytronik.localhost atau paytronik.digitalpremium.id)
+      if (parts.length >= 2) {
+        // Kasus localhost: paytronik.localhost
+        if (parts[parts.length - 1] === 'localhost' && parts.length > 1) {
+          setTenantId(parts[0])
+        } 
+        // Kasus production: paytronik.digitalpremium.id
+        else if (parts.length >= 3) {
+          setTenantId(parts[0])
+        }
       }
     }
   })
@@ -272,15 +281,35 @@ export default function RedeemPage() {
                             <p className="text-xs font-black text-blue-400 uppercase tracking-[0.2em] mb-1">📧 Portal Email OTP</p>
                             <p className="text-sm text-gray-400">Pantau kode OTP & link reset Netflix akun Anda secara real-time.</p>
                           </div>
-                          <a
-                            href={`${process.env.NEXT_PUBLIC_PORTAL_URL || 'http://localhost:3000'}/portal/${tenantId || 'master'}/${accessToken}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="shrink-0 px-6 py-3 bg-blue-500 hover:bg-blue-400 text-white font-black rounded-xl transition-all flex items-center gap-2 text-sm shadow-[0_6px_20px_rgba(59,130,246,0.3)]"
-                          >
-                            <ExternalLink className="size-4" />
-                            Akses Email Saya
-                          </a>
+                          {(() => {
+                            const portalBase = process.env.NEXT_PUBLIC_PORTAL_URL || 'http://localhost:3000';
+                            let finalPortalUrl = portalBase;
+                            
+                            if (tenantId && tenantId !== 'master') {
+                              try {
+                                const url = new URL(portalBase);
+                                if (!url.hostname.startsWith(`${tenantId}.`) && !url.hostname.includes('localhost')) {
+                                  url.hostname = `${tenantId}.${url.hostname}`;
+                                }
+                                finalPortalUrl = url.toString().replace(/\/$/, '');
+                              } catch(e) {
+                                // Fallback jika URL tidak valid
+                                finalPortalUrl = portalBase;
+                              }
+                            }
+
+                            return (
+                              <a
+                                href={`${finalPortalUrl}/portal/${tenantId || 'master'}/${accessToken}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="shrink-0 px-6 py-3 bg-blue-500 hover:bg-blue-400 text-white font-black rounded-xl transition-all flex items-center gap-2 text-sm shadow-[0_6px_20px_rgba(59,130,246,0.3)]"
+                              >
+                                <ExternalLink className="size-4" />
+                                Akses Email Saya
+                              </a>
+                            );
+                          })()}
                         </div>
                       )}
 
