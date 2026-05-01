@@ -17,6 +17,17 @@ export default function RedeemPage() {
   const [copied, setCopied] = useState(false)
   const [accessToken, setAccessToken] = useState<string | null>(null)
   const [tenantId, setTenantId] = useState<string | null>(null)
+  
+  // Ambil tenant dari hostname (misal: paytronik.localhost:3001 -> paytronik)
+  useState(() => {
+    if (typeof window !== 'undefined') {
+      const hostname = window.location.hostname
+      const parts = hostname.split('.')
+      if (parts.length > 2 || (parts.length === 2 && !hostname.includes('localhost'))) {
+        setTenantId(parts[0])
+      }
+    }
+  })
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -262,7 +273,7 @@ export default function RedeemPage() {
                             <p className="text-sm text-gray-400">Pantau kode OTP & link reset Netflix akun Anda secara real-time.</p>
                           </div>
                           <a
-                            href={`${process.env.NEXT_PUBLIC_PORTAL_URL || 'http://localhost:3000'}/portal/${tenantId || 'papapremium'}/${accessToken}`}
+                            href={`${process.env.NEXT_PUBLIC_PORTAL_URL || 'http://localhost:3000'}/portal/${tenantId || 'master'}/${accessToken}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="shrink-0 px-6 py-3 bg-blue-500 hover:bg-blue-400 text-white font-black rounded-xl transition-all flex items-center gap-2 text-sm shadow-[0_6px_20px_rgba(59,130,246,0.3)]"
@@ -281,7 +292,7 @@ export default function RedeemPage() {
                             <p className="text-sm text-gray-400">Ikuti langkah-langkah penggunaan agar akun Anda aman dan awet.</p>
                           </div>
                           <Link
-                            href={`/tutorial/${result.voucher.product_variant.tutorial.slug}?token=${accessToken}&tenant=${tenantId || 'papapremium'}`}
+                            href={`/tutorial/${result.voucher.product_variant.tutorial.slug}?token=${accessToken}&tenant=${tenantId || 'master'}`}
                             className="shrink-0 px-6 py-3 bg-primary text-black hover:bg-primary/90 font-black rounded-xl transition-all flex items-center gap-2 text-sm shadow-[0_6px_20px_rgba(255,184,0,0.3)]"
                           >
                             <BookOpen className="size-4" />
