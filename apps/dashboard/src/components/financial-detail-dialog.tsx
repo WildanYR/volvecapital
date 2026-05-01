@@ -19,6 +19,7 @@ import { formatDateIdStandard } from '@/dashboard/lib/time-converter.util'
 import { AccountServiceGenerator } from '@/dashboard/services/account.service'
 import { API_URL } from '@/dashboard/constants/api-url.cont'
 import { useAuth } from '@/dashboard/context-providers/auth.provider'
+import { Pagination } from '@/dashboard/components/pagination'
 
 interface FinancialDetailDialogProps {
   account: Account
@@ -41,6 +42,9 @@ export function FinancialDetailDialog({
 
   const [newCapital, setNewCapital] = useState<string>('')
   const [newNote, setNewNote] = useState<string>('')
+  const [capitalPage, setCapitalPage] = useState(1)
+  const [revenuePage, setRevenuePage] = useState(1)
+  const itemsPerPage = 5
 
   const { data: details, isLoading } = useQuery({
     queryKey: ['account-financial-details', account?.id],
@@ -143,29 +147,64 @@ export function FinancialDetailDialog({
                 {isLoading ? (
                   <p className="text-center text-sm text-muted-foreground py-10">Memuat riwayat modal...</p>
                 ) : details?.capitals.length ? (
-                  <div className="space-y-3">
-                    {/* Initial Capital (from account.capital_price if exists) */}
-                    {account.capital_price > 0 && (
-                      <div className="flex justify-between items-center p-3 bg-secondary/20 rounded-md border-l-4 border-secondary">
-                        <div>
-                          <p className="text-sm font-bold">{formatRupiah(account.capital_price)}</p>
-                          <p className="text-[10px] text-muted-foreground">Modal Awal Akun (Legacy)</p>
-                        </div>
-                        <p className="text-[10px] font-medium opacity-70">-</p>
-                      </div>
-                    )}
-                    
-                    {details.capitals.map((cap) => (
-                      <div key={cap.id} className="flex justify-between items-center p-3 bg-muted/50 rounded-md">
-                        <div>
-                          <p className="text-sm font-bold">{formatRupiah(cap.amount)}</p>
-                          <p className="text-[10px] text-muted-foreground">{cap.note || 'Tidak ada catatan'}</p>
-                        </div>
-                        <p className="text-[10px] font-medium opacity-70">
-                          {formatDateIdStandard(cap.created_at, true)}
-                        </p>
-                      </div>
-                    ))}
+                  <div className="flex flex-col h-full">
+                    <div className="space-y-3 flex-1">
+                      {/* Initial Capital (from account.capital_price if exists) - Only on Page 1 or last? 
+                          User wants latest data first, so initial capital (legacy) is at the end.
+                      */}
+                      
+                      {(() => {
+                        const allCapitals = [...details.capitals]
+                        const totalItems = allCapitals.length + (account.capital_price > 0 ? 1 : 0)
+                        const totalPages = Math.ceil(totalItems / itemsPerPage)
+                        
+                        // Combine legacy capital if exists (put at the end because it's oldest)
+                        const combinedData = [...allCapitals]
+                        if (account.capital_price > 0) {
+                          // We use a dummy object for the legacy capital
+                          (combinedData as any[]).push({ isLegacy: true, amount: account.capital_price })
+                        }
+                        
+                        const startIndex = (capitalPage - 1) * itemsPerPage
+                        const paginatedData = combinedData.slice(startIndex, startIndex + itemsPerPage)
+                        
+                        return (
+                          <>
+                            {paginatedData.map((cap: any, index) => (
+                              cap.isLegacy ? (
+                                <div key="legacy-cap" className="flex justify-between items-center p-3 bg-secondary/20 rounded-md border-l-4 border-secondary">
+                                  <div>
+                                    <p className="text-sm font-bold">{formatRupiah(cap.amount)}</p>
+                                    <p className="text-[10px] text-muted-foreground">Modal Awal Akun (Legacy)</p>
+                                  </div>
+                                  <p className="text-[10px] font-medium opacity-70">-</p>
+                                </div>
+                              ) : (
+                                <div key={cap.id} className="flex justify-between items-center p-3 bg-muted/50 rounded-md">
+                                  <div>
+                                    <p className="text-sm font-bold">{formatRupiah(cap.amount)}</p>
+                                    <p className="text-[10px] text-muted-foreground">{cap.note || 'Tidak ada catatan'}</p>
+                                  </div>
+                                  <p className="text-[10px] font-medium opacity-70">
+                                    {formatDateIdStandard(cap.created_at, true)}
+                                  </p>
+                                </div>
+                              )
+                            ))}
+                            
+                            {totalPages > 1 && (
+                              <div className="pt-4 flex justify-center border-t mt-4">
+                                <Pagination 
+                                  currentPage={capitalPage} 
+                                  totalPages={totalPages} 
+                                  onPageChange={setCapitalPage} 
+                                />
+                              </div>
+                            )}
+                          </>
+                        )
+                      })()}
+                    </div>
                   </div>
                 ) : (
                   <div className="text-center py-10">
@@ -185,22 +224,44 @@ export function FinancialDetailDialog({
                 {isLoading ? (
                   <p className="text-center text-sm text-muted-foreground py-10">Memuat riwayat pendapatan...</p>
                 ) : details?.revenues.length ? (
-                  details.revenues.map((rev) => (
-                    <div key={rev.transaction_id} className="flex justify-between items-center p-3 bg-green-500/5 dark:bg-green-500/10 rounded-md border-l-4 border-green-500">
-                      <div>
-                        <p className="text-sm font-bold text-green-600 dark:text-green-400">{formatRupiah(rev.amount)}</p>
-                        <div className="flex items-center gap-1 mt-0.5">
-                          <User className="size-3 text-muted-foreground" />
-                          <p className="text-[10px] font-medium">{rev.user_name}</p>
+                  (() => {
+                    const totalPages = Math.ceil(details.revenues.length / itemsPerPage)
+                    const startIndex = (revenuePage - 1) * itemsPerPage
+                    const paginatedRevenues = details.revenues.slice(startIndex, startIndex + itemsPerPage)
+                    
+                    return (
+                      <>
+                        <div className="space-y-3 flex-1">
+                          {paginatedRevenues.map((rev) => (
+                            <div key={rev.transaction_id} className="flex justify-between items-center p-3 bg-green-500/5 dark:bg-green-500/10 rounded-md border-l-4 border-green-500">
+                              <div>
+                                <p className="text-sm font-bold text-green-600 dark:text-green-400">{formatRupiah(rev.amount)}</p>
+                                <div className="flex items-center gap-1 mt-0.5">
+                                  <User className="size-3 text-muted-foreground" />
+                                  <p className="text-[10px] font-medium">{rev.user_name}</p>
+                                </div>
+                              </div>
+                              <p className="text-[10px] font-medium opacity-70 text-right">
+                                {formatDateIdStandard(rev.date, true)}
+                                <br />
+                                <span className="text-[8px] uppercase tracking-tighter">ID: {rev.transaction_id.slice(-6)}</span>
+                              </p>
+                            </div>
+                          ))}
                         </div>
-                      </div>
-                      <p className="text-[10px] font-medium opacity-70 text-right">
-                        {formatDateIdStandard(rev.date, true)}
-                        <br />
-                        <span className="text-[8px] uppercase tracking-tighter">ID: {rev.transaction_id.slice(-6)}</span>
-                      </p>
-                    </div>
-                  ))
+                        
+                        {totalPages > 1 && (
+                          <div className="pt-4 flex justify-center border-t mt-4">
+                            <Pagination 
+                              currentPage={revenuePage} 
+                              totalPages={totalPages} 
+                              onPageChange={setRevenuePage} 
+                            />
+                          </div>
+                        )}
+                      </>
+                    )
+                  })()
                 ) : (
                   <p className="text-center text-sm text-muted-foreground py-10">Belum ada riwayat pendapatan</p>
                 )}
