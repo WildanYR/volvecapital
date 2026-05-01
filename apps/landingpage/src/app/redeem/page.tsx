@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Search, Copy, Check, ExternalLink, Loader2, Sparkles, Key, BookOpen } from 'lucide-react'
 import { api } from '@/lib/api'
@@ -16,22 +16,41 @@ export default function RedeemPage() {
   const [result, setResult] = useState<any>(null)
   const [copied, setCopied] = useState(false)
   const [accessToken, setAccessToken] = useState<string | null>(null)
-  const [tenantId, setTenantId] = useState<string | null>(() => {
-    if (typeof window !== 'undefined') {
-      const hostname = window.location.hostname
+  const [tenantId, setTenantId] = useState<string | null>(null)
+  
+  // Deteksi tenant secara agresif
+  useEffect(() => {
+    const detect = () => {
+      if (typeof window === 'undefined') return
+      
+      const urlParams = new URLSearchParams(window.location.search)
+      const forceTenant = urlParams.get('tenant')
+      
+      if (forceTenant) {
+        if (tenantId !== forceTenant) setTenantId(forceTenant)
+        return
+      }
+
+      const hostname = window.location.hostname.toLowerCase()
       const parts = hostname.split('.')
       
-      if (parts.length >= 2) {
-        if (parts[parts.length - 1] === 'localhost' && parts.length > 1) {
-          return parts[0]
-        } 
-        if (parts.length >= 3) {
-          return parts[0]
+      if (parts.length > 1) {
+        const firstPart = parts[0]
+        if (firstPart !== 'localhost' && firstPart !== 'www') {
+          if (tenantId !== firstPart) {
+            setTenantId(firstPart)
+          }
         }
       }
     }
-    return null
-  })
+
+    detect()
+    // Jalankan lagi setelah 500ms jika belum ketemu (antisipasi race condition)
+    if (!tenantId) {
+      const timer = setTimeout(detect, 500)
+      return () => clearTimeout(timer)
+    }
+  }, [tenantId])
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -295,15 +314,15 @@ export default function RedeemPage() {
                             }
 
                             return (
-                              <a
-                                href={`${finalPortalUrl}/portal/${tenantId || 'master'}/${accessToken}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="shrink-0 px-6 py-3 bg-blue-500 hover:bg-blue-400 text-white font-black rounded-xl transition-all flex items-center gap-2 text-sm shadow-[0_6px_20px_rgba(59,130,246,0.3)]"
-                              >
-                                <ExternalLink className="size-4" />
-                                Akses Email Saya
-                              </a>
+                                <a
+                                  href={`${finalPortalUrl}/portal/${tenantId || 'master'}/${accessToken}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="shrink-0 px-6 py-3 bg-blue-500 hover:bg-blue-400 text-white font-black rounded-xl transition-all flex items-center gap-2 text-sm shadow-[0_6px_20px_rgba(59,130,246,0.3)]"
+                                >
+                                  <ExternalLink className="size-4" />
+                                  Akses Email Saya
+                                </a>
                             );
                           })()}
                         </div>

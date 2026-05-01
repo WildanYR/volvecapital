@@ -30,14 +30,20 @@ function PortalPage() {
   const [tenantId, setTenantId] = useState(paramTenantId)
   const apiUrl = import.meta.env.VITE_MASTER_URL || 'http://localhost:4000'
 
-  // Smart Detection: Jika tenantId adalah 'master', coba cek subdomain
+  // Smart Detection: Jika tenantId adalah 'master', coba cek subdomain atau query param
   useEffect(() => {
     if (paramTenantId === 'master' && typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search)
+      const forceTenant = urlParams.get('tenant')
+      
       const hostname = window.location.hostname
       const parts = hostname.split('.')
       
       let detectedTenant = paramTenantId
-      if (parts.length >= 2) {
+
+      if (forceTenant) {
+        detectedTenant = forceTenant
+      } else if (parts.length >= 2) {
         if (parts[parts.length - 1] === 'localhost' && parts.length > 1) {
           detectedTenant = parts[0]
         } else if (parts.length >= 3) {
