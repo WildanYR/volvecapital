@@ -26,8 +26,30 @@ export const Route = createFileRoute('/portal/$tenantId/$token')({
 })
 
 function PortalPage() {
-  const { token, tenantId } = Route.useParams()
+  const { token, tenantId: paramTenantId } = Route.useParams()
+  const [tenantId, setTenantId] = useState(paramTenantId)
   const apiUrl = import.meta.env.VITE_MASTER_URL || 'http://localhost:4000'
+
+  // Smart Detection: Jika tenantId adalah 'master', coba cek subdomain
+  useEffect(() => {
+    if (paramTenantId === 'master' && typeof window !== 'undefined') {
+      const hostname = window.location.hostname
+      const parts = hostname.split('.')
+      
+      let detectedTenant = paramTenantId
+      if (parts.length >= 2) {
+        if (parts[parts.length - 1] === 'localhost' && parts.length > 1) {
+          detectedTenant = parts[0]
+        } else if (parts.length >= 3) {
+          detectedTenant = parts[0]
+        }
+      }
+      
+      if (detectedTenant !== paramTenantId) {
+        setTenantId(detectedTenant)
+      }
+    }
+  }, [paramTenantId])
   
   const portalService = PortalServiceGenerator(apiUrl, tenantId)
   

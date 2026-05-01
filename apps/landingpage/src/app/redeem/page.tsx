@@ -16,26 +16,21 @@ export default function RedeemPage() {
   const [result, setResult] = useState<any>(null)
   const [copied, setCopied] = useState(false)
   const [accessToken, setAccessToken] = useState<string | null>(null)
-  const [tenantId, setTenantId] = useState<string | null>(null)
-  
-  // Ambil tenant dari hostname (misal: paytronik.localhost:3001 -> paytronik)
-  useState(() => {
+  const [tenantId, setTenantId] = useState<string | null>(() => {
     if (typeof window !== 'undefined') {
       const hostname = window.location.hostname
       const parts = hostname.split('.')
       
-      // Jika ada subdomain (misal: paytronik.localhost atau paytronik.digitalpremium.id)
       if (parts.length >= 2) {
-        // Kasus localhost: paytronik.localhost
         if (parts[parts.length - 1] === 'localhost' && parts.length > 1) {
-          setTenantId(parts[0])
+          return parts[0]
         } 
-        // Kasus production: paytronik.digitalpremium.id
-        else if (parts.length >= 3) {
-          setTenantId(parts[0])
+        if (parts.length >= 3) {
+          return parts[0]
         }
       }
     }
+    return null
   })
 
   const handleSearch = async (e: React.FormEvent) => {
