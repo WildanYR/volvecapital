@@ -288,7 +288,8 @@ export default function RedeemPage() {
                             if (tenantId && tenantId !== 'master') {
                               try {
                                 const url = new URL(portalBase);
-                                if (!url.hostname.startsWith(`${tenantId}.`) && !url.hostname.includes('localhost')) {
+                                // Sisipkan subdomain jika belum ada
+                                if (!url.hostname.startsWith(`${tenantId}.`)) {
                                   url.hostname = `${tenantId}.${url.hostname}`;
                                 }
                                 finalPortalUrl = url.toString().replace(/\/$/, '');
