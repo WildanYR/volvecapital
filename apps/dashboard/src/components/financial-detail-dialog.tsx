@@ -170,7 +170,7 @@ export function FinancialDetailDialog({
                         
                         return (
                           <>
-                            {paginatedData.map((cap: any, index) => (
+                            {paginatedData.map((cap: any) => (
                               cap.isLegacy ? (
                                 <div key="legacy-cap" className="flex justify-between items-center p-3 bg-secondary/20 rounded-md border-l-4 border-secondary">
                                   <div>
