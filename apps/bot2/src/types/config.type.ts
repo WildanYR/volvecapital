@@ -4,8 +4,8 @@ import { LogLevel } from "./logger.type.js";
  * API Authentication config - untuk autentikasi ke server Volve Capital
  */
 export interface ApiConfig {
-  app_id: string;
-  app_secret: string;
+  email: string;
+  password: string;
 }
 
 export interface AppConfig {

@@ -7,6 +7,7 @@ export const PlatformProductFormSchema = z.object({
   platform: z.string().nonempty(),
   platform_product_id: z.string(),
   product_variant_id: z.string(),
+  variant: z.string().optional(),
 })
 
 export type PlatformProductFormSubmitData = z.infer<
@@ -31,6 +32,7 @@ export function PlatformProductForm({
       platform: initialData?.platform ?? '',
       platform_product_id: initialData?.platform_product_id ?? '',
       product_variant_id: initialData?.product_variant_id ?? '',
+      variant: initialData?.variant ?? '',
     },
     onSubmit: ({ value }) => {
       onSubmit(value)
@@ -72,6 +74,15 @@ export function PlatformProductForm({
                 label="Platform"
                 placeholder="Pilih Platform..."
                 selectItems={[{ title: 'Shopee', value: 'Shopee' }]}
+              />
+            )}
+          />
+          <form.AppField
+            name="variant"
+            children={field => (
+              <field.TextField
+                label="Varian Platform (opsional)"
+                placeholder="masukkan varian produk sesuai nama di platform..."
               />
             )}
           />

@@ -9,6 +9,7 @@ export const PlatformProductFilterSchema = z.object({
   platform: z.string().optional(),
   platform_product_id: z.string().optional(),
   product_variant_id: z.string().optional(),
+  variant: z.string().optional(),
 })
 
 export type PlatformProductFilter = z.infer<typeof PlatformProductFilterSchema>
@@ -23,6 +24,7 @@ export interface PlatformProduct {
   platform: string
   platform_product_id?: string
   product_variant_id: string
+  variant?: string
   product_variant: ProductVariant
 }
 
@@ -31,6 +33,7 @@ export interface CreatePlatformProductPayload {
   platform: string
   platform_product_id?: string
   product_variant_id: string
+  variant?: string
 }
 
 export interface UpdatePlatformProductPayload {
@@ -38,6 +41,7 @@ export interface UpdatePlatformProductPayload {
   platform?: string
   platform_product_id?: string
   product_variant_id?: string
+  variant?: string
 }
 
 export function PlatformProductServiceGenerator(apiUrl: string, accessToken: string, tenantId: string) {

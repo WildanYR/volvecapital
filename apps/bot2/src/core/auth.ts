@@ -28,23 +28,23 @@ export class AuthenticationError extends Error {
 }
 
 /**
- * Fetch access token from API
+ * Fetch access token from API using email and password
  */
 export async function fetchAccessToken(
   apiBaseUrl: string,
-  appId: string,
-  appSecret: string
+  email: string,
+  password: string
 ): Promise<AuthCredentials> {
-  const url = `${apiBaseUrl}/tenant/access-token`;
+  const url = `${apiBaseUrl}/tenant/login`;
 
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ tenant_id: appId, secret: appSecret }),
+    body: JSON.stringify({ email, password }),
   });
 
   if (!res.ok) {
-    let errorMessage = 'Gagal mendapatkan access token';
+    let errorMessage = 'Gagal login ke API';
     try {
       const data = (await res.json()) as { message?: string };
       if (data.message) {
@@ -66,8 +66,8 @@ export async function fetchAccessToken(
 export async function getAuthCredentials(
   db: Database,
   apiBaseUrl: string,
-  appId: string,
-  appSecret: string
+  email: string,
+  password: string
 ): Promise<AuthCredentials> {
   // Check if credentials exist in DB
   const tenantIdRow = db.get<{ value: string }>(
@@ -87,7 +87,7 @@ export async function getAuthCredentials(
   }
 
   // Fetch from API
-  const credentials = await fetchAccessToken(apiBaseUrl, appId, appSecret);
+  const credentials = await fetchAccessToken(apiBaseUrl, email, password);
 
   // Save to DB
   db.run(

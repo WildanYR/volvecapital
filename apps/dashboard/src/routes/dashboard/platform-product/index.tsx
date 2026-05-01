@@ -269,13 +269,19 @@ function RouteComponent() {
                             {' '}
                             Produk
                           </p>
-                          <p className="font-semibold">
+                          <p className="font-semibold text-sm">
                             {platformProduct.product_variant.product?.name}
                             {' '}
                             {platformProduct.product_variant.name}
                           </p>
                         </div>
                       </div>
+                      {platformProduct.variant && (
+                        <div className="mt-4 pt-4 border-t border-secondary/50">
+                          <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium mb-1">Varian Platform</p>
+                          <p className="text-sm font-medium">{platformProduct.variant}</p>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 ))

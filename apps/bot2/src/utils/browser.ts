@@ -30,7 +30,8 @@ export async function launchBrowser(options?: LaunchOptions): Promise<Browser> {
  */
 export async function createContext(
     browser: Browser,
-    storageStatePath?: string
+    storageStatePath?: string,
+    options?: { blockAssets?: boolean }
 ): Promise<BrowserContext> {
     const contextOptions: Parameters<Browser['newContext']>[0] = {
         viewport: { width: 1366, height: 768 },
@@ -44,7 +45,21 @@ export async function createContext(
         contextOptions.storageState = storageStatePath;
     }
 
-    return browser.newContext(contextOptions);
+    const context = await browser.newContext(contextOptions);
+
+    if (options?.blockAssets) {
+        await context.route('**/*', (route) => {
+            const request = route.request();
+            const resourceType = request.resourceType();
+            if (['image', 'stylesheet', 'font', 'media'].includes(resourceType)) {
+                route.abort();
+            } else {
+                route.continue();
+            }
+        });
+    }
+
+    return context;
 }
 
 /**

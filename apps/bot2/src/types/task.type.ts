@@ -19,6 +19,8 @@ export interface Task {
   startedAt?: Date;
   completedAt?: Date;
   error?: string;
+  maxRetries: number;
+  retryCount: number;
 }
 
 export interface TaskInput {
@@ -28,4 +30,5 @@ export interface TaskInput {
   source?: TaskSource;  // Default: 'INTERNAL'
   payload?: Record<string, unknown>;
   executeAt?: Date;  // kapan task dieksekusi, default: sekarang (immediate)
+  maxRetries?: number;
 }

@@ -15,5 +15,9 @@ export class UpdatePlatformProductDto {
 
   @IsOptional()
   @IsString()
+  variant?: string;
+
+  @IsOptional()
+  @IsString()
   product_variant_id: string;
 }

@@ -8,10 +8,9 @@ export function normalizeApiBaseHost(apiBaseHost: string): string {
     throw new Error('[app.api_base_url] is required');
   }
 
+  // If it already has a protocol, just return it after a basic check
   if (host.includes('://')) {
-    throw new Error(
-      `[app.api_base_url] must not include a protocol. Use a hostname like "api.volve-capital.com", not "${apiBaseHost}".`
-    );
+    return host;
   }
 
   if (host.includes('/') || host.includes('?') || host.includes('#')) {
@@ -37,9 +36,21 @@ export function normalizeApiBaseHost(apiBaseHost: string): string {
 }
 
 export function buildApiBaseUrl(apiBaseHost: string): string {
-  return new URL(`https://${normalizeApiBaseHost(apiBaseHost)}`).origin;
+  const normalized = normalizeApiBaseHost(apiBaseHost);
+  if (normalized.includes('://')) return new URL(normalized).origin;
+  
+  const protocol = normalized.startsWith('localhost') || normalized.startsWith('127.0.0.1') ? 'http' : 'https';
+  return new URL(`${protocol}://${normalized}`).origin;
 }
 
 export function buildSocketBaseUrl(apiBaseHost: string): string {
-  return new URL(`wss://${normalizeApiBaseHost(apiBaseHost)}`).origin;
+  const normalized = normalizeApiBaseHost(apiBaseHost);
+  if (normalized.includes('://')) {
+    const url = new URL(normalized);
+    const protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
+    return `${protocol}//${url.host}`;
+  }
+  
+  const protocol = normalized.startsWith('localhost') || normalized.startsWith('127.0.0.1') ? 'ws' : 'wss';
+  return `${protocol}://${normalized}`;
 }

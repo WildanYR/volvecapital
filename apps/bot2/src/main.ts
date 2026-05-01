@@ -46,8 +46,8 @@ class Application {
             this.authCredentials = await getAuthCredentials(
                 this.db,
                 this.apiBaseUrl,
-                this.config.api.app_id,
-                this.config.api.app_secret
+                this.config.api.email,
+                this.config.api.password
             );
             console.log('Auth credentials obtained');
 

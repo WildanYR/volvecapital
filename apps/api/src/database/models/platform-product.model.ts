@@ -21,6 +21,7 @@ export interface PlatformProductAttributes {
   platform: string;
   platform_product_id?: string;
   product_variant_id: string;
+  variant?: string | null;
   product_variant: ProductVariantAttributes;
   created_at: Date;
   updated_at: Date;
@@ -45,6 +46,9 @@ export class PlatformProduct extends Model<
   @AllowNull(false)
   @Column(DataType.STRING)
   declare name: string;
+
+  @Column(DataType.STRING)
+  declare variant?: string | null;
 
   @AllowNull(false)
   @Column(DataType.STRING)

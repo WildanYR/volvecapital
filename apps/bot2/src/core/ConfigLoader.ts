@@ -124,17 +124,17 @@ export class ConfigLoader {
 
         const section = api as Record<string, unknown>;
 
-        if (typeof section['app_id'] !== 'string' || !section['app_id']) {
-            throw new Error('[api.app_id] is required');
+        if (typeof section['email'] !== 'string' || !section['email']) {
+            throw new Error('[api.email] is required');
         }
 
-        if (typeof section['app_secret'] !== 'string' || !section['app_secret']) {
-            throw new Error('[api.app_secret] is required');
+        if (typeof section['password'] !== 'string' || !section['password']) {
+            throw new Error('[api.password] is required');
         }
 
         return {
-            app_id: section['app_id'],
-            app_secret: section['app_secret'],
+            email: section['email'],
+            password: section['password'],
         };
     }
 

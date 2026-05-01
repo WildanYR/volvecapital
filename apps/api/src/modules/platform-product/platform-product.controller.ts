@@ -18,6 +18,7 @@ import { PaginationProvider } from '../utility/pagination.provider';
 import { CreatePlatformProductDto } from './dto/create-platform-product.dto';
 import { GetAllPlatformProductByNamesDto } from './dto/get-all-platform-product-by-names.dto';
 import { GetAllPlatformProductQueryUrlDto } from './dto/get-all-platform-product.dto';
+import { ResolvePlatformProductDto } from './dto/resolve-platform-product.dto';
 import { UpdatePlatformProductDto } from './dto/update-platform-product.dto';
 import { PlatformProductService } from './platform-product.service';
 
@@ -56,6 +57,18 @@ export class PlatformProductController {
   @Get(':id')
   findById(@Param('id') id: string, @Request() request: AppRequest) {
     return this.platformProductService.findOne(request.tenant_id!, id);
+  }
+
+  @Post('resolve')
+  @HttpCode(HttpStatus.OK)
+  resolve(
+    @Body() resolvePlatformProductDto: ResolvePlatformProductDto,
+    @Request() request: AppRequest,
+  ) {
+    return this.platformProductService.resolve(
+      request.tenant_id!,
+      resolvePlatformProductDto,
+    );
   }
 
   @Post()

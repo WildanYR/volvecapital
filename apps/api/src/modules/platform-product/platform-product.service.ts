@@ -14,6 +14,7 @@ import { PaginationProvider } from '../utility/pagination.provider';
 import { BaseGetAllUrlQuery } from '../utility/types/base-get-all-url-query.type';
 import { CreatePlatformProductDto } from './dto/create-platform-product.dto';
 import { GetAllPlatformProductByNamesDto } from './dto/get-all-platform-product-by-names.dto';
+import { ResolvePlatformProductDto } from './dto/resolve-platform-product.dto';
 import { UpdatePlatformProductDto } from './dto/update-platform-product.dto';
 import { IPlatformProductGetFilter } from './filter/platform-product-get.filter';
 
@@ -47,6 +48,9 @@ export class PlatformProductService {
       }
       if (filter?.product_variant_id) {
         whereOptions.product_variant_id = filter.product_variant_id;
+      }
+      if (filter?.variant) {
+        whereOptions.variant = { [Op.iLike]: `%${filter.variant}%` };
       }
 
       const platformProducts
@@ -161,6 +165,58 @@ export class PlatformProductService {
 
       await transaction.commit();
       return platformProductByNames;
+    }
+    catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
+
+  async resolve(
+    tenantId: string,
+    resolvePlatformProductDto: ResolvePlatformProductDto,
+  ) {
+    const transaction = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema(tenantId, transaction);
+
+      const items = resolvePlatformProductDto.items;
+
+      const platformProducts = await this.platformProductRepository.findAll({
+        where: {
+          platform: resolvePlatformProductDto.platform,
+          [Op.or]: items.map(item => ({
+            name: item.name,
+            variant: item.variant || null,
+          })),
+        },
+        transaction,
+      });
+
+      const results = items.map((item) => {
+        const found = platformProducts.find(
+          pp =>
+            pp.name === item.name
+            && (pp.variant === item.variant || (!pp.variant && !item.variant)),
+        );
+
+        if (found) {
+          return {
+            name: item.name,
+            variant: item.variant,
+            product_variant_id: found.product_variant_id,
+            isFound: true,
+          };
+        }
+        return {
+          name: item.name,
+          variant: item.variant,
+          isFound: false,
+        };
+      });
+
+      await transaction.commit();
+      return results;
     }
     catch (error) {
       await transaction.rollback();

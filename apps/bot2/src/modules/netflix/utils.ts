@@ -7,5 +7,5 @@
  * Used for creating consistent browser context names and event names
  */
 export function sanitizeEmail(email: string): string {
-  return email.replace(/[.@]/g, '_');
+  return email.toLowerCase().replace(/[.@]/g, '_');
 }

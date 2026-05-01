@@ -104,14 +104,16 @@ export class TaskManager {
         const executeAt = input.executeAt
             ? input.executeAt.toISOString()
             : now;  // default: immediate
+        
+        const maxRetries = input.maxRetries ?? 3;
 
         this.db.run(
-            `INSERT INTO sys_tasks (id, module_instance_id, type, source, status, payload, execute_at, created_at)
-       VALUES (?, ?, ?, ?, 'PENDING', ?, ?, ?)`,
-            [id, input.moduleInstanceId, input.type, source, JSON.stringify(input.payload || {}), executeAt, now]
+            `INSERT INTO sys_tasks (id, module_instance_id, type, source, status, payload, execute_at, created_at, max_retries, retry_count)
+       VALUES (?, ?, ?, ?, 'PENDING', ?, ?, ?, ?, 0)`,
+            [id, input.moduleInstanceId, input.type, source, JSON.stringify(input.payload || {}), executeAt, now, maxRetries]
         );
 
-        this.logger.debug(`Task enqueued: ${id} (${input.type}) for ${input.moduleInstanceId}, source: ${source}, execute_at: ${executeAt}`);
+        this.logger.debug(`Task enqueued: ${id} (${input.type}) for ${input.moduleInstanceId}, source: ${source}, execute_at: ${executeAt}, max_retries: ${maxRetries}`);
         return id;
     }
 
@@ -353,6 +355,8 @@ export class TaskManager {
             status: 'RUNNING',
             executeAt: new Date(row.execute_at),
             createdAt: new Date(row.created_at),
+            maxRetries: row.max_retries,
+            retryCount: row.retry_count,
         };
 
         // Mark as running
@@ -380,11 +384,14 @@ export class TaskManager {
                 const errorMessage = err instanceof Error ? err.message : 'Unknown error';
 
                 // Check if error is due to browser disconnect - retry instead of fail
-                if (this.isBrowserDisconnectError(errorMessage)) {
-                    this.logger.warn(`Task ${task.id} failed due to browser disconnect, will retry`);
+                if (this.isBrowserDisconnectError(errorMessage) && task.retryCount < task.maxRetries) {
+                    this.logger.warn(`Task ${task.id} failed due to browser disconnect, will retry (${task.retryCount + 1}/${task.maxRetries})`);
                     this.markTaskForRetry(task.id);
                 } else {
-                    this.markTaskFailed(task.id, errorMessage, task.source);
+                    const failMessage = this.isBrowserDisconnectError(errorMessage)
+                        ? `${errorMessage} (Max retries reached: ${task.maxRetries})`
+                        : errorMessage;
+                    this.markTaskFailed(task.id, failMessage, task.source);
                     this.incrementErrorCount(task.moduleInstanceId);
                 }
             })
@@ -560,7 +567,7 @@ export class TaskManager {
      */
     private markTaskForRetry(taskId: string): void {
         this.db.run(
-            `UPDATE sys_tasks SET status = 'PENDING', started_at = NULL WHERE id = ?`,
+            `UPDATE sys_tasks SET status = 'PENDING', started_at = NULL, retry_count = retry_count + 1 WHERE id = ?`,
             [taskId]
         );
         this.logger.info(`Task ${taskId} marked for retry`);

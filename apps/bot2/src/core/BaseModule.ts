@@ -84,7 +84,10 @@ export abstract class BaseModule {
      * Get or create browser context from global browser
      * @param contextName - Name of the context (default: 'default')
      */
-    protected async getOrCreateContext(contextName: string = BaseModule.DEFAULT_CONTEXT_NAME): Promise<BrowserContext> {
+    protected async getOrCreateContext(
+        contextName: string = BaseModule.DEFAULT_CONTEXT_NAME,
+        options?: { blockAssets?: boolean }
+    ): Promise<BrowserContext> {
         // Validate existing context - check if browser is still connected
         const existingContext = this.browserContexts.get(contextName);
         if (existingContext) {
@@ -105,7 +108,7 @@ export abstract class BaseModule {
         const browser = await getGlobalBrowser();
 
         const storagePath = getStorageStatePath(this.instanceId, contextName);
-        const context = await createContext(browser, storagePath);
+        const context = await createContext(browser, storagePath, options);
         this.browserContexts.set(contextName, context);
         this.logger.debug(`Browser context '${contextName}' created from global browser`);
 

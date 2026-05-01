@@ -13,6 +13,10 @@ export class CreatePlatformProductDto {
   @IsString()
   platform_product_id?: string;
 
+  @IsOptional()
+  @IsString()
+  variant?: string;
+
   @IsNotEmpty()
   @IsString()
   product_variant_id: string;

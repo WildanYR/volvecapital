@@ -38,17 +38,16 @@ function pruneBundleArtifacts(rootDir) {
 rmSync(distRoot, { recursive: true, force: true });
 mkdirSync(distRoot, { recursive: true });
 
-const nccBin = resolve(appRoot, 'node_modules', '.bin', process.platform === 'win32' ? 'ncc.cmd' : 'ncc');
 const sourcePackage = JSON.parse(readFileSync(sourcePackagePath, 'utf8'));
 const runtimeDependencies = Object.keys(sourcePackage.dependencies ?? {});
 const externalArgs = runtimeDependencies.flatMap(dependency => ['-e', dependency]);
+const nccBin = resolve(appRoot, 'node_modules', '.bin', process.platform === 'win32' ? 'ncc.cmd' : 'ncc');
 const nccResult = spawnSync(
   nccBin,
-  ['build', 'src/main.ts', '-m', '-o', bundleRoot, ...externalArgs],
+  ['build', 'src/main.ts', '-o', bundleRoot, ...externalArgs],
   {
     cwd: appRoot,
     stdio: 'inherit',
-    shell: process.platform === 'win32',
   }
 );
 
