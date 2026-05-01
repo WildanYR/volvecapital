@@ -7,7 +7,7 @@ export const PlatformProductFormSchema = z.object({
   platform: z.string().nonempty(),
   platform_product_id: z.string(),
   product_variant_id: z.string(),
-  variant: z.string().optional(),
+  variant: z.string(),
 })
 
 export type PlatformProductFormSubmitData = z.infer<
