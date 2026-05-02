@@ -506,8 +506,8 @@ function LandingSettingPage() {
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label>Alamat</Label>
-                    <Input value={footer.address} onChange={e => setFooter({...footer, address: e.target.value})} />
+                    <Label>Deskripsi Footer</Label>
+                    <Textarea value={footer.address} onChange={e => setFooter({...footer, address: e.target.value})} placeholder="Deskripsi singkat layanan Anda di bagian bawah website." />
                   </div>
                   <div className="space-y-2">
                     <Label>Email Support</Label>

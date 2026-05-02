@@ -2,20 +2,23 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Crown, Menu, X, ShoppingBag, Key } from 'lucide-react'
+import { Menu, X, ShoppingBag, Home, Package, Key, Crown } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-
-import type { LandingNavbarConfig, LandingHeroConfig } from '@volvecapital/shared/types'
+import { useTenant } from '@/hooks/use-tenant'
+import { api } from '@/lib/api'
+import type { LandingNavbarConfig } from '@volvecapital/shared/types'
 
 interface NavbarProps {
   config?: LandingNavbarConfig | null
 }
 
-export function Navbar({ config }: NavbarProps) {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+export function Navbar({ config: initialConfig }: NavbarProps) {
+  const [isOpen, setIsOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const [config, setConfig] = useState<LandingNavbarConfig | null>(initialConfig || null)
   const pathname = usePathname()
+  const { tenantId } = useTenant()
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20)
@@ -23,144 +26,143 @@ export function Navbar({ config }: NavbarProps) {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  const defaultLinks = [
-    { name: 'Home', href: '/' },
-    { name: 'Produk', href: '/product' },
-    { name: 'Redeem', href: '/redeem' },
-    { name: 'Tutorial', href: '/tutorial' },
-  ]
-
-  const showProducts = config?.showProducts ?? true
-  const showRedeem = config?.showRedeem ?? true
-  const customLinks = config?.links || []
+  useEffect(() => {
+    if (!initialConfig && tenantId) {
+      const fetchSettings = async () => {
+        try {
+          const { data } = await api.get('/public/settings')
+          if (data.LANDING_NAVBAR) {
+            setConfig(JSON.parse(data.LANDING_NAVBAR))
+          }
+        } catch (error) {
+          console.error('Failed to fetch navbar settings:', error)
+        }
+      }
+      fetchSettings()
+    } else if (initialConfig) {
+      setConfig(initialConfig)
+    }
+  }, [initialConfig, tenantId])
 
   const navLinks = [
-    { name: 'Home', href: '/' },
-    ...(showProducts ? [{ name: 'Produk', href: '/product' }] : []),
-    ...(showRedeem ? [{ name: 'Redeem', href: '/redeem' }] : []),
-    ...customLinks.map(l => ({ name: l.label, href: l.href }))
+    { name: 'HOME', href: '/', icon: Home },
+    { name: 'PRODUK', href: '/product', icon: Package },
+    { name: 'REDEEM', href: '/redeem', icon: Key },
   ]
 
-  // If no custom links and everything disabled, fallback to tutorial at least
-  if (navLinks.length === 1 && !showProducts && !showRedeem && customLinks.length === 0) {
-    navLinks.push({ name: 'Tutorial', href: '/tutorial' })
+  const brandName = config?.logoText || 'VOLVECAPITAL'
+  const logoIcon = config?.logoIconEmbed
+
+  const renderLogoIcon = () => {
+    if (!logoIcon) {
+      return (
+        <div className="size-10 bg-gradient-to-br from-[#f97316] to-[#ef4444] rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/20 group-hover:scale-110 transition-transform">
+          <Crown className="size-6 text-white" />
+        </div>
+      )
+    }
+
+    if (logoIcon.startsWith('<svg')) {
+      return (
+        <div 
+          className="size-10 flex items-center justify-center group-hover:scale-110 transition-transform"
+          dangerouslySetInnerHTML={{ __html: logoIcon }}
+        />
+      )
+    }
+
+    return (
+      <div className="size-10 flex items-center justify-center group-hover:scale-110 transition-transform">
+        <img src={logoIcon} alt={brandName} className="size-full object-contain" />
+      </div>
+    )
   }
 
-  const logoText = config?.logoText || 'VOLVECAPITAL'
-  const logoIconEmbed = config?.logoIconEmbed
-
   return (
-    <>
-      <nav 
-        className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 w-full flex justify-center ${
-          scrolled ? 'py-4' : 'py-8'
-        }`}
-      >
-        <div className="w-full max-w-7xl px-6 md:px-12">
-          <div className={`flex items-center justify-between px-8 py-4 rounded-[24px] transition-all duration-500 ${
-            scrolled ? 'glass shadow-2xl border-white/10' : 'bg-transparent border-transparent'
-          }`}>
-            <Link href="/" className="flex items-center gap-3 shrink-0 group">
-              <div className="bg-gradient-gold p-2.5 rounded-xl shadow-[0_0_20px_rgba(255,184,0,0.4)] group-hover:scale-110 transition-transform duration-300">
-                {logoIconEmbed ? (
-                  <div className="size-5 flex items-center justify-center">
-                    {logoIconEmbed.startsWith('http') ? (
-                      <img src={logoIconEmbed} alt="Logo" className="size-5 object-contain" />
-                    ) : (
-                      <div className="size-5" dangerouslySetInnerHTML={{ __html: logoIconEmbed }} />
-                    )}
-                  </div>
-                ) : (
-                  <Crown className="size-5 text-black" />
-                )}
-              </div>
-              <span className="text-xl md:text-2xl font-black tracking-tighter text-white uppercase">
-                {logoText.includes(' ') ? (
-                  <>
-                    {logoText.split(' ')[0]}
-                    <span className="text-primary">{logoText.split(' ').slice(1).join(' ')}</span>
-                  </>
-                ) : (
-                  <>
-                    {logoText.substring(0, Math.ceil(logoText.length / 2))}
-                    <span className="text-primary">{logoText.substring(Math.ceil(logoText.length / 2))}</span>
-                  </>
-                )}
-              </span>
-            </Link>
+    <nav 
+      className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 border-b ${
+        scrolled 
+        ? 'bg-white/90 backdrop-blur-xl border-slate-100 shadow-sm py-3' 
+        : 'bg-white border-transparent py-5'
+      }`}
+    >
+      <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
+        {/* Logo */}
+        <Link href="/" className="flex items-center gap-3 group">
+          {renderLogoIcon()}
+          <span className="text-xl font-black tracking-tighter text-[#0f172a] group-hover:text-[#f97316] transition-colors uppercase">
+            {brandName}
+          </span>
+        </Link>
 
-            {/* Desktop Links */}
-            <div className="hidden md:flex items-center gap-10">
-              {navLinks.map(link => {
-                const isActive = pathname === link.href
-                return (
-                  <Link 
-                    key={link.name} 
-                    href={link.href} 
-                    className={`text-sm font-bold transition-all tracking-widest uppercase relative group ${
-                      isActive ? 'text-primary' : 'text-zinc-400 hover:text-white'
-                    }`}
-                  >
-                    {link.name}
-                    <span className={`absolute -bottom-1 left-0 h-0.5 bg-primary transition-all duration-300 ${
-                      isActive ? 'w-full' : 'w-0 group-hover:w-full'
-                    }`} />
-                  </Link>
-                )
-              })}
-              
-              <Link 
-                href="/product" 
-                className="bg-gradient-gold text-black text-[10px] font-black px-8 py-3 rounded-xl hover:scale-105 active:scale-95 transition-all shadow-[0_10px_20px_rgba(255,184,0,0.2)] uppercase tracking-[0.2em] flex items-center gap-2"
+        {/* Desktop Menu */}
+        <div className="hidden lg:flex items-center gap-10">
+          <div className="flex items-center gap-8">
+            {navLinks.map((link) => (
+              <Link
+                key={link.name}
+                href={link.href}
+                className={`text-xs font-black tracking-[0.2em] transition-all hover:text-[#f97316] ${
+                  pathname === link.href ? 'text-[#f97316]' : 'text-slate-400'
+                }`}
               >
-                <ShoppingBag className="size-3" />
-                Mulai Berlangganan
+                {link.name}
               </Link>
-            </div>
-
-            {/* Mobile Toggle */}
-            <button 
-              className="md:hidden p-2 text-primary"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            >
-              {isMobileMenuOpen ? <X className="size-6" /> : <Menu className="size-6" />}
-            </button>
+            ))}
           </div>
-        </div>
-      </nav>
-
-      {/* Mobile Menu Overlay */}
-      <AnimatePresence>
-        {isMobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className="fixed inset-0 z-[90] md:hidden glass flex flex-col justify-center items-center p-10"
+          <Link 
+            href="/product"
+            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-br from-[#f97316] to-[#ef4444] text-white rounded-2xl font-black text-xs tracking-widest shadow-xl shadow-orange-500/20 hover:scale-105 active:scale-95 transition-all"
           >
-            <div className="flex flex-col gap-8 items-center text-center">
-              {navLinks.map(link => (
-                <Link 
-                  key={link.name} 
-                  href={link.href} 
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="text-4xl font-black text-white hover:text-primary transition-colors uppercase tracking-tighter"
+            <ShoppingBag className="size-4" />
+            MULAI BELI
+          </Link>
+        </div>
+
+        {/* Mobile Toggle */}
+        <button 
+          className="lg:hidden size-11 flex items-center justify-center text-[#0f172a] bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors"
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          {isOpen ? <X className="size-6" /> : <Menu className="size-6" />}
+        </button>
+      </div>
+
+      {/* Mobile/Tablet Menu */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="lg:hidden bg-white border-t border-slate-50 overflow-hidden shadow-2xl"
+          >
+            <div className="p-8 space-y-5">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.name}
+                  href={link.href}
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center gap-4 p-5 rounded-3xl bg-slate-50 text-[#0f172a] font-black text-sm hover:bg-orange-50 hover:text-[#f97316] transition-all"
                 >
+                  <div className="size-10 bg-white rounded-2xl flex items-center justify-center shadow-sm">
+                    <link.icon className="size-5 text-[#f97316]" />
+                  </div>
                   {link.name}
                 </Link>
               ))}
-              <Link 
-                href="/product" 
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="mt-4 bg-gradient-gold text-black text-sm font-black px-10 py-5 rounded-2xl flex items-center gap-3 uppercase tracking-widest"
+              <Link
+                href="/product"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center justify-center gap-3 w-full p-6 bg-[#0f172a] text-white rounded-[28px] font-black text-sm shadow-xl"
               >
                 <ShoppingBag className="size-5" />
-                Beli Paket
+                MULAI BELI
               </Link>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-    </>
+    </nav>
   )
 }

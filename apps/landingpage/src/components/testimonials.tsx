@@ -2,98 +2,60 @@
 
 import { motion } from 'framer-motion'
 import { Star, Quote } from 'lucide-react'
-
 import type { LandingTestimonialItem } from '@volvecapital/shared/types'
 
 interface TestimonialsProps {
   items?: LandingTestimonialItem[]
 }
 
-const defaultTestimonials: LandingTestimonialItem[] = [
-  {
-    id: '1',
-    name: "Andi Pratama",
-    role: "Pecinta Film",
-    content: "Sumpah cepet banget! Bayar pake QRIS, langsung dapet WA kode vouchernya. Netflix 4K nya jernih parah.",
-    stars: 5,
-    initial: "A"
-  },
-  {
-    id: '2',
-    name: "Siska Amelia",
-    role: "Mahasiswi",
-    content: "Spotify Premium termurah yang pernah saya beli. Udah 3 bulan aman terus, gak pernah back to free. Trusted!",
-    stars: 5,
-    initial: "S"
-  },
-  {
-    id: '3',
-    name: "Budi Raharjo",
-    role: "Bapak Rumah Tangga",
-    content: "Disney+ buat anak-anak jadi gampang belinya. Proses redeemnya simple banget buat saya yang gaptek.",
-    stars: 5,
-    initial: "B"
-  },
-  {
-    id: '4',
-    name: "Rina Wijaya",
-    role: "Freelancer",
-    content: "Pelayanan mantap, adminnya responsif banget pas ditanya-tanya via WhatsApp. Sangat recommended buat yang cari akun legal.",
-    stars: 5,
-    initial: "R"
-  }
-]
-
 export function Testimonials({ items }: TestimonialsProps) {
-  const displayTestimonials = items && items.length > 0 ? items : defaultTestimonials
+  const defaultTestimonials = [
+    { name: "Andi Pratama", role: "Pelanggan Setia", content: "Prosesnya beneran instan! Bayar pakai QRIS, hitungan detik kode voucher langsung masuk WA. Netflix saya aktif lagi tanpa nunggu admin.", avatar: "A" },
+    { name: "Siti Aminah", role: "Freelancer", content: "Harga paling murah dibanding toko sebelah, tapi kualitasnya premium banget. Udah langganan 6 bulan di sini gapernah ada masalah.", avatar: "S" },
+    { name: "Budi Santoso", role: "Gamer", content: "CS nya ramah banget pas nanya-nanya di WA. Recomended banget buat yang mau cari voucher premium murah dan aman.", avatar: "B" }
+  ]
+
+  const displayItems = items && items.length > 0 ? items : defaultTestimonials
 
   return (
-    <section id="testimonials" className="py-32 px-6 w-full flex justify-center z-10">
-      <div className="w-full max-w-7xl md:px-12">
+    <section className="py-32 px-6 w-full flex justify-center bg-slate-50/50">
+      <div className="w-full max-w-7xl">
         <div className="text-center mb-24">
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            className="text-primary font-black tracking-[0.3em] uppercase text-[10px] mb-4"
-          >
-            Review Pelanggan
-          </motion.div>
-          <h2 className="text-4xl md:text-6xl font-black mb-6 text-white tracking-tight">Suara <span className="text-primary">Komunitas Kami.</span></h2>
-          <p className="text-gray-500 text-lg max-w-2xl mx-auto">Bergabunglah dengan ribuan pelanggan yang telah menikmati layanan premium kami.</p>
+          <h2 className="text-4xl md:text-5xl font-black text-[#0f172a] mb-6">
+            Apa Kata <span className="bg-clip-text text-transparent bg-gradient-to-br from-[#f97316] to-[#ef4444]">Mereka?</span>
+          </h2>
+          <p className="text-slate-500 text-lg font-medium">Ribuan pelanggan telah mempercayakan hiburan mereka kepada kami.</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {displayTestimonials.map((t, idx) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {displayItems.map((item, index) => (
             <motion.div
-              key={t.id || idx}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.1 }}
+              key={index}
+              initial={{ opacity: 0, scale: 0.95 }}
+              whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
-              className="glass-card p-10 rounded-[40px] border-white/5 relative group hover:border-primary/20 transition-all duration-500"
+              transition={{ delay: index * 0.1 }}
+              className="p-10 rounded-[40px] bg-white border border-slate-100 shadow-sm relative group hover:shadow-2xl transition-all duration-500"
             >
-              <div className="absolute top-10 right-10 opacity-5 group-hover:opacity-10 transition-opacity">
-                <Quote className="size-16 text-primary" />
-              </div>
+              <Quote className="absolute top-8 right-8 size-10 text-orange-100 group-hover:text-orange-200 transition-colors" />
               
               <div className="flex gap-1 mb-6">
-                {[...Array(t.stars)].map((_, i) => (
-                  <Star key={i} className="size-4 fill-primary text-primary" />
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="size-4 text-[#f97316] fill-[#f97316]" />
                 ))}
               </div>
 
-              <p className="text-gray-300 text-lg leading-relaxed italic mb-10 relative z-10 font-medium">
-                "{t.content}"
+              <p className="text-slate-600 leading-relaxed font-medium mb-8 italic">
+                "{item.content}"
               </p>
 
-              <div className="flex items-center gap-5 mt-auto pt-8 border-t border-white/5">
-                <div className="size-14 rounded-2xl bg-gradient-gold flex items-center justify-center font-black text-black text-xl shadow-lg">
-                  {t.initial}
+              <div className="flex items-center gap-4">
+                <div className="size-12 rounded-full bg-gradient-to-br from-[#f97316] to-[#ef4444] flex items-center justify-center text-white font-black text-xl shadow-lg">
+                  {item.avatar || item.name[0]}
                 </div>
                 <div>
-                  <h4 className="font-black text-white text-lg tracking-tight">{t.name}</h4>
-                  <p className="text-[10px] text-gray-500 font-black uppercase tracking-[0.2em]">{t.role}</p>
+                  <h4 className="text-[#0f172a] font-black text-lg">{item.name}</h4>
+                  <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">{item.role}</p>
                 </div>
               </div>
             </motion.div>

@@ -1,39 +1,6 @@
 @import "tailwindcss";
 
-@theme {
-  --font-sans: var(--font-outfit), system-ui, sans-serif;
-  --color-primary: #FFB800;
-}
-
-:root {
-  --background: #050505;
-  --foreground: #ffffff;
-}
-
 body {
-  background: #050505;
-  color: #ffffff;
-  font-family: var(--font-sans);
-}
-
-@layer utilities {
-  .glass {
-    background: rgba(255, 255, 255, 0.03);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-  }
-  
-  .glass-card {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-  }
-
-  .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-br from-white to-[#FFB800];
-  }
-
-  .bg-gradient-gold {
-    @apply bg-gradient-to-br from-[#FFB800] to-[#FF8A00];
-  }
+  background-color: white;
+  color: #1e293b;
 }

@@ -9,66 +9,60 @@ export function Steps() {
       icon: Search,
       title: "Pilih Variant & Bayar",
       description: "Pilih layanan premium yang kamu butuhkan dan selesaikan pembayaran secara instan.",
-      color: "text-blue-500",
-      bg: "bg-blue-500/10"
+      color: "text-blue-500"
     },
     {
       icon: CreditCard,
       title: "Dapatkan Kode Otomatis",
       description: "Setelah pembayaran berhasil, kode voucher akan otomatis dikirimkan ke email atau WhatsApp kamu.",
-      color: "text-primary",
-      bg: "bg-primary/10"
+      color: "text-[#f97316]"
     },
     {
       icon: CheckCircle2,
       title: "Redeem & Aktifasi",
       description: "Tukarkan kode voucher di halaman redeem dan nikmati layanan premium pilihanmu seketika.",
-      color: "text-green-500",
-      bg: "bg-green-500/10"
+      color: "text-emerald-500"
     }
   ]
 
   return (
-    <section className="py-24 px-6 w-full flex justify-center z-10">
-      <div className="w-full max-w-7xl md:px-12">
-        <div className="text-center mb-20">
-          <motion.h2 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-4xl md:text-6xl font-black text-white mb-6 tracking-tight"
-          >
-            Alur Kerja <span className="text-primary">Instan.</span>
-          </motion.h2>
-          <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-            Hanya butuh 3 langkah sederhana untuk mendapatkan akses layanan premium favoritmu.
-          </p>
+    <section className="py-32 px-6 w-full flex justify-center bg-white overflow-hidden">
+      <div className="w-full max-w-7xl">
+        <div className="text-center mb-24">
+          <h2 className="text-4xl md:text-6xl font-black text-[#0f172a] mb-6 tracking-tight">
+            Alur Kerja <span className="bg-clip-text text-transparent bg-gradient-to-br from-[#f97316] to-[#ef4444]">Instan.</span>
+          </h2>
+          <p className="text-slate-500 text-lg font-medium">Hanya butuh 3 langkah sederhana untuk mendapatkan akses layanan premium favoritmu.</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+        <div className="relative flex flex-col md:flex-row justify-between items-center gap-12 md:gap-0">
+          {/* Connector Line (Desktop) */}
+          <div className="hidden md:block absolute top-[64px] left-[15%] right-[15%] h-0.5 bg-slate-100 z-0" />
+
           {steps.map((step, index) => (
             <motion.div
               key={index}
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: index * 0.2 }}
-              className="relative flex flex-col items-center text-center group"
+              transition={{ delay: index * 0.1 }}
+              className="relative z-10 flex flex-col items-center text-center group md:w-1/3"
             >
-              {/* Connector Line (Desktop) */}
-              {index < 2 && (
-                <div className="hidden md:block absolute top-12 left-1/2 w-full h-[2px] bg-white/5 z-0" />
-              )}
-              
-              <div className={`${step.bg} p-6 rounded-[32px] relative z-10 mb-8 border border-white/5 group-hover:scale-110 transition-transform duration-500 shadow-xl`}>
-                <step.icon className={`size-10 ${step.color}`} />
-                <div className="absolute -top-3 -right-3 bg-white/10 backdrop-blur-md size-8 rounded-full flex items-center justify-center text-xs font-black text-white border border-white/20">
+              {/* Wrapped Icon & Number together for synced animation */}
+              <div className="relative mb-10 group-hover:-translate-y-4 transition-transform duration-500">
+                <div className="w-32 h-32 mx-auto bg-white border-4 border-slate-50 rounded-full shadow-xl shadow-slate-200/50 flex items-center justify-center relative">
+                  <step.icon className={`size-12 ${step.color}`} />
+                </div>
+                {/* Large Number Badge - Now synced with parent animation */}
+                <div className="absolute top-0 right-0 size-9 bg-[#0f172a] text-white rounded-full flex items-center justify-center text-xs font-black shadow-lg">
                   {index + 1}
                 </div>
               </div>
-              
-              <h3 className="text-2xl font-black text-white mb-4">{step.title}</h3>
-              <p className="text-gray-500 leading-relaxed max-w-[280px]">
+
+              <h3 className="text-2xl font-black text-[#0f172a] mb-4 tracking-tight group-hover:text-[#f97316] transition-colors">
+                {step.title}
+              </h3>
+              <p className="text-slate-500 leading-relaxed font-medium text-base max-w-[260px] mx-auto">
                 {step.description}
               </p>
             </motion.div>

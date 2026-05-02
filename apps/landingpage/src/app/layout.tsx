@@ -42,7 +42,7 @@ export default async function RootLayout({
   }
 
   return (
-    <html lang="id" className={`${outfit.variable} h-full antialiased dark`}>
+    <html lang="id" className={`${outfit.variable} h-full antialiased`}>
       <head>
       </head>
       <body className="min-h-full flex flex-col font-sans">
