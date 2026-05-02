@@ -57,36 +57,37 @@ function SuccessContent() {
   }
 
   return (
-    <main className="min-h-screen flex flex-col pt-32 pb-20">
+    <main className="min-h-screen flex flex-col pt-32 pb-20 bg-slate-50/50">
       <Navbar />
       
       <div className="container mx-auto max-w-2xl px-6 flex-grow flex flex-col justify-center">
         <motion.div 
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="glass-card p-10 md:p-14 text-center rounded-[48px] border-white/5 relative overflow-hidden"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white p-10 md:p-14 text-center rounded-[48px] border border-slate-100 shadow-2xl relative overflow-hidden"
         >
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-gold" />
+          {/* Subtle Accent */}
+          <div className="absolute top-0 right-0 w-32 h-32 bg-orange-50/50 blur-[60px] rounded-full -translate-y-1/2 translate-x-1/2" />
           
-          <div className="inline-flex p-5 bg-green-500/10 rounded-full mb-8 relative">
-            <CheckCircle2 className="size-14 text-green-500" />
-            <Sparkles className="absolute -top-1 -right-1 size-6 text-primary animate-pulse" />
+          <div className="inline-flex p-6 bg-emerald-50 rounded-full mb-8 relative">
+            <CheckCircle2 className="size-16 text-emerald-500" />
+            <Sparkles className="absolute -top-1 -right-1 size-8 text-[#f97316] animate-pulse" />
           </div>
           
-          <h1 className="text-4xl md:text-5xl font-black mb-6 text-white tracking-tight uppercase">Pembayaran Berhasil!</h1>
-          <p className="text-gray-400 mb-12 leading-relaxed font-medium">
+          <h1 className="text-4xl md:text-5xl font-black mb-6 text-[#0f172a] tracking-tight uppercase">Pembayaran Berhasil!</h1>
+          <p className="text-slate-500 mb-12 leading-relaxed font-medium text-lg">
             Pesanan Anda telah kami terima. Gunakan kode voucher di bawah ini untuk mengaktifkan layanan premium Anda sekarang juga.
           </p>
 
-          <div className="bg-white/[0.03] border border-white/10 rounded-[32px] p-10 mb-12 relative group shadow-inner">
-            <p className="text-[10px] uppercase tracking-[0.3em] text-gray-500 font-black mb-4">Kode Voucher Eksklusif Anda</p>
+          <div className="bg-slate-50 border border-slate-100 rounded-[32px] p-10 mb-12 relative group shadow-inner">
+            <p className="text-[10px] uppercase tracking-[0.3em] text-slate-400 font-black mb-4">Kode Voucher Eksklusif Anda</p>
             <div className="flex flex-col md:flex-row items-center justify-center gap-6">
-              <span className="text-4xl md:text-6xl font-black text-primary tracking-tightest">
+              <span className="text-4xl md:text-6xl font-black text-[#0f172a] tracking-tight">
                 {code || (isChecking ? 'MENGECEK...' : 'VC-XXXXXXXX')}
               </span>
               <button 
                 onClick={copyCode}
-                className="p-4 bg-primary/10 hover:bg-primary hover:text-black rounded-2xl transition-all duration-300 text-primary border border-primary/20"
+                className="p-5 bg-white hover:bg-slate-50 text-[#f97316] rounded-2xl transition-all duration-300 border border-slate-200 shadow-sm active:scale-95"
               >
                 <Copy className="size-6" />
               </button>
@@ -97,15 +98,15 @@ function SuccessContent() {
             <motion.div 
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-12 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-3 text-left"
+              className="mb-12 p-6 bg-red-50 border border-red-100 rounded-[32px] flex items-center gap-4 text-left"
             >
-              <div className="p-2 bg-red-500/20 rounded-xl">
-                <AlertCircle className="size-5 text-red-500" />
+              <div className="p-3 bg-white rounded-2xl shadow-sm">
+                <AlertCircle className="size-6 text-red-500" />
               </div>
               <div>
                 <p className="text-xs font-black text-red-500 uppercase tracking-widest mb-0.5">Peringatan Penting</p>
-                <p className="text-sm text-gray-300 font-medium">
-                  Segera klaim voucher Anda sebelum <span className="text-white font-bold">{new Date(voucherData.expired_at).toLocaleString('id-ID', { dateStyle: 'long', timeStyle: 'short' })}</span> agar tidak hangus.
+                <p className="text-sm text-slate-600 font-bold">
+                  Segera klaim voucher Anda sebelum <span className="text-red-600 font-black">{new Date(voucherData.expired_at).toLocaleString('id-ID', { dateStyle: 'long', timeStyle: 'short' })}</span> agar tidak hangus.
                 </p>
               </div>
             </motion.div>
@@ -114,23 +115,23 @@ function SuccessContent() {
           <div className="flex flex-col gap-4">
             <Link 
               href="/redeem"
-              className="w-full bg-gradient-gold text-black font-black py-5 rounded-2xl flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-95 transition-all shadow-xl uppercase tracking-widest text-sm"
+              className="w-full bg-gradient-to-br from-[#f97316] to-[#ef4444] text-white font-black py-5 rounded-2xl flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-95 transition-all shadow-[0_15px_40px_rgba(249,115,22,0.3)] uppercase tracking-widest text-sm"
             >
               Aktivasi Voucher Sekarang
               <ArrowRight className="size-5" />
             </Link>
             <Link 
               href="/"
-              className="w-full py-5 glass border-white/10 text-white font-black rounded-2xl flex items-center justify-center gap-3 hover:bg-white/5 transition-all uppercase tracking-widest text-xs"
+              className="w-full py-5 bg-slate-50 text-slate-400 font-black rounded-2xl flex items-center justify-center gap-3 hover:bg-slate-100 hover:text-[#0f172a] transition-all uppercase tracking-widest text-xs"
             >
               <Home className="size-4" />
               Kembali ke Beranda
             </Link>
           </div>
 
-          <div className="mt-12 pt-8 border-t border-white/5 flex items-center justify-center gap-3 text-[10px] text-gray-600 font-black uppercase tracking-widest">
-            <MessageSquare className="size-4 text-primary" />
-            Butuh bantuan? Hubungi <Link href="#" className="text-primary hover:underline">Support WhatsApp</Link>
+          <div className="mt-12 pt-8 border-t border-slate-100 flex items-center justify-center gap-3 text-[10px] text-slate-400 font-black uppercase tracking-widest">
+            <MessageSquare className="size-4 text-[#f97316]" />
+            Butuh bantuan? Hubungi <Link href="https://wa.me/628123456789" className="text-[#f97316] hover:underline">Support WhatsApp</Link>
           </div>
         </motion.div>
       </div>
