@@ -25,6 +25,7 @@ import {
   EMAIL_SUBJECT_REPOSITORY,
   TUTORIAL_REPOSITORY,
   TENANT_OWNER_REPOSITORY,
+  ARTICLE_REPOSITORY,
 } from 'src/constants/database.const';
 import { AccountProfile } from 'src/database/models/account-profile.model';
 import { AccountUser } from 'src/database/models/account-user.model';
@@ -41,6 +42,7 @@ import { TenantSetting } from 'src/database/models/tenant-setting.model';
 import { TenantOwner } from 'src/database/models/tenant-owner.model';
 import { Tenant } from 'src/database/models/tenant.model';
 import { Tutorial } from 'src/database/models/tutorial.model';
+import { Article } from 'src/database/models/article.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
 import { TenantProvisioningService } from '../tenant/tenant-provisioning.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
@@ -80,6 +82,8 @@ export class PublicService {
     private readonly tutorialRepository: typeof Tutorial,
     @Inject(TENANT_OWNER_REPOSITORY)
     private readonly tenantOwnerRepository: typeof TenantOwner,
+    @Inject(ARTICLE_REPOSITORY)
+    private readonly articleRepository: typeof Article,
     private readonly tenantProvisioningService: TenantProvisioningService,
   ) {}
 
@@ -1035,6 +1039,40 @@ export class PublicService {
       if (!tutorial) throw new NotFoundException('Tutorial tidak ditemukan');
       await transaction.commit();
       return tutorial;
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
+
+  async getArticles(tenantId: string) {
+    const transaction = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema(tenantId, transaction);
+      const articles = await this.articleRepository.findAll({
+        where: { is_published: true },
+        order: [['created_at', 'DESC']],
+        transaction,
+      });
+      await transaction.commit();
+      return articles;
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
+
+  async getArticleBySlug(tenantId: string, slug: string) {
+    const transaction = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema(tenantId, transaction);
+      const article = await this.articleRepository.findOne({
+        where: { slug, is_published: true },
+        transaction,
+      });
+      if (!article) throw new NotFoundException('Artikel tidak ditemukan');
+      await transaction.commit();
+      return article;
     } catch (error) {
       await transaction.rollback();
       throw error;

@@ -79,6 +79,7 @@ const navGroups = [
     items: [
       { title: 'Landing Page', url: '/dashboard/setting', icon: House },
       { title: 'Tutorial', url: '/dashboard/setting/tutorial', icon: BookOpen },
+      { title: 'Artikel', url: '/dashboard/setting/article', icon: FileText },
     ],
   },
 ]

@@ -22,6 +22,7 @@ import {
   VOUCHER_REPOSITORY,
   TENANT_SETTING_REPOSITORY,
   TUTORIAL_REPOSITORY,
+  ARTICLE_REPOSITORY,
   ACCOUNT_CAPITAL_REPOSITORY,
   TENANT_OWNER_REPOSITORY,
 } from 'src/constants/database.const';
@@ -47,6 +48,7 @@ import { TransactionItem } from './models/transaction-item.model';
 import { Transaction } from './models/transaction.model';
 import { TenantSetting } from './models/tenant-setting.model';
 import { Tutorial } from './models/tutorial.model';
+import { Article } from './models/article.model';
 import { AccountCapital } from './models/account-capital.model';
 import { TenantOwner } from './models/tenant-owner.model';
 
@@ -76,6 +78,7 @@ export const RepositoryProvider: Provider[] = [
   { provide: SYSLOG_REPOSITORY, useValue: Syslog },
   { provide: TENANT_SETTING_REPOSITORY, useValue: TenantSetting },
   { provide: TUTORIAL_REPOSITORY, useValue: Tutorial },
+  { provide: ARTICLE_REPOSITORY, useValue: Article },
   { provide: ACCOUNT_CAPITAL_REPOSITORY, useValue: AccountCapital },
   { provide: TENANT_OWNER_REPOSITORY, useValue: TenantOwner },
 ];

@@ -57,10 +57,10 @@ function SuccessContent() {
   }
 
   return (
-    <main className="min-h-screen flex flex-col pt-32 pb-40 bg-slate-50">
+    <main className="min-h-screen flex flex-col pt-32 bg-slate-50">
       <Navbar />
       
-      <div className="container mx-auto max-w-2xl px-6 flex-grow flex flex-col justify-center">
+      <div className="container mx-auto max-w-2xl px-6 flex-grow flex flex-col justify-center mb-32">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

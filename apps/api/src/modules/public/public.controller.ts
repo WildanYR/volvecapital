@@ -25,6 +25,11 @@ export class PublicController {
     // 2. Fallback: Host header subdomain
     if (!host) throw new BadRequestException('Missing host or x-tenant-id header');
     
+    // Special case for local development
+    if (host.includes('localhost')) {
+      return 'master';
+    }
+
     const parts = host.split('.');
     if (parts.length >= 2) {
       const subdomain = parts[0].split(':')[0];
@@ -163,6 +168,25 @@ export class PublicController {
     const xTenantId = headers['x-tenant-id'];
     const tenantId = this.getTenantId(host, xTenantId);
     return this.publicService.getTutorialBySlug(tenantId, slug);
+  }
+
+  @Get('article')
+  getArticles(@Headers() headers: any) {
+    const host = headers.host || '';
+    const xTenantId = headers['x-tenant-id'];
+    const tenantId = this.getTenantId(host, xTenantId);
+    return this.publicService.getArticles(tenantId);
+  }
+
+  @Get('article/:slug')
+  getArticleBySlug(
+    @Headers() headers: any,
+    @Param('slug') slug: string,
+  ) {
+    const host = headers.host || '';
+    const xTenantId = headers['x-tenant-id'];
+    const tenantId = this.getTenantId(host, xTenantId);
+    return this.publicService.getArticleBySlug(tenantId, slug);
   }
 
   @Post('tenant/register')

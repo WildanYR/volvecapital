@@ -68,7 +68,7 @@ export default function TutorialDetailPage({ params }: { params: Promise<{ slug:
   }
 
   return (
-    <main className="min-h-screen flex flex-col pt-40 pb-20 bg-slate-50">
+    <main className="min-h-screen flex flex-col pt-40 bg-slate-50">
       <Navbar />
       
       {/* Lightbox Modal */}

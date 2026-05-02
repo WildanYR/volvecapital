@@ -42,12 +42,20 @@ export async function migrateUp() {
     await masterUmzug.up();
     console.log('✅ Master migrations done');
 
-    const schemas = CONFIG.TENANT_SCHEMAS.split(',')
+    let schemas = CONFIG.TENANT_SCHEMAS.split(',')
       .map(s => s.trim())
       .filter(Boolean);
 
     if (schemas.length === 0) {
-      console.warn('⚠️ No tenant schemas defined in TENANT_SCHEMAS');
+      console.log('🔍 TENANT_SCHEMAS is empty, fetching all schemas from database...');
+      const [results] = await sequelize.query(
+        "SELECT schema_name FROM information_schema.schemata WHERE schema_name NOT IN ('information_schema', 'pg_catalog', 'public', 'master', 'pg_toast') AND schema_name NOT LIKE 'pg_temp_%' AND schema_name NOT LIKE 'pg_toast_%'"
+      );
+      schemas = (results as any[]).map(r => r.schema_name);
+    }
+
+    if (schemas.length === 0) {
+      console.warn('⚠️ No tenant schemas found to migrate');
     }
 
     for (const schema of schemas) {
@@ -75,12 +83,20 @@ export async function migrateDown() {
     await masterUmzug.down({ step: 99 });
     console.log('✅ Master reverse migrations done');
 
-    const schemas = CONFIG.TENANT_SCHEMAS.split(',')
+    let schemas = CONFIG.TENANT_SCHEMAS.split(',')
       .map(s => s.trim())
       .filter(Boolean);
 
     if (schemas.length === 0) {
-      console.warn('⚠️ No tenant schemas defined in TENANT_SCHEMAS');
+      console.log('🔍 TENANT_SCHEMAS is empty, fetching all schemas from database...');
+      const [results] = await sequelize.query(
+        "SELECT schema_name FROM information_schema.schemata WHERE schema_name NOT IN ('information_schema', 'pg_catalog', 'public', 'master', 'pg_toast') AND schema_name NOT LIKE 'pg_temp_%' AND schema_name NOT LIKE 'pg_toast_%'"
+      );
+      schemas = (results as any[]).map(r => r.schema_name);
+    }
+
+    if (schemas.length === 0) {
+      console.warn('⚠️ No tenant schemas found to reverse migrate');
     }
 
     for (const schema of schemas) {

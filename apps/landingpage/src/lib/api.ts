@@ -15,13 +15,16 @@ api.interceptors.request.use((config) => {
     // 1. Try to get tenant from subdomain
     if (parts.length >= 2 && parts[0] !== 'localhost' && parts[0] !== 'www') {
       config.headers['x-tenant-id'] = parts[0]
+      localStorage.setItem('last_tenant', parts[0])
     } 
-    // 2. Fallback to query parameter (useful for local dev)
+    // 2. Fallback to query parameter
     else {
       const urlParams = new URLSearchParams(window.location.search)
-      const tenant = urlParams.get('tenant')
+      const tenant = urlParams.get('tenant') || localStorage.getItem('last_tenant')
+      
       if (tenant) {
         config.headers['x-tenant-id'] = tenant
+        localStorage.setItem('last_tenant', tenant)
       }
     }
   }
