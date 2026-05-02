@@ -39,3 +39,9 @@ Mohon informasikan beberapa poin berikut agar implementasi tepat sasaran:
 2. **Placeholder Khusus**: Apakah kita butuh placeholder seperti `$$redeem_page` yang otomatis mengarah ke halaman `/redeem` tenant tersebut agar Anda tidak perlu mengetik URL lengkap?
 3. **Desain Tombol**: Apakah Anda ingin tombol link ini memiliki warna yang seragam (misal: emas/primary) atau bisa kustom warna per langkah? (Saran saya: Seragam agar tetap rapi).
 4. **Link di Deskripsi**: Apakah deskripsi langkah juga perlu mendukung "clickable link" di dalam teks (hyperlink), atau cukup satu tombol utama saja di setiap langkah?
+
+jawaban :
+1. aku ingin tombol tersebut hanya muncul jika user membuka tutorial dalam "konteks" tertentu misal jika dia sudah redeem voucher baru muncul tombol portal emailnya
+2. aku ingin menggunakan placeholder $$portal_url
+3. seragam aja warnanya
+4. cukup satu tombol utama aja di setiap langkah

@@ -1,39 +1,44 @@
-import { ChatTemplate } from './chat-template.type.js';
-import { ShopeeShop } from './shopee-shop.type.js';
+import { LogLevel } from "./logger.type.js";
 
-export interface IConfig {
-  MAIN_LOOP_MIN_MS: number;
-  MAIN_LOOP_MAX_MS: number;
-  PAGE_TIMEOUT: number;
-  MAX_RETRY_ATTEMPT: number;
+/**
+ * API Authentication config - untuk autentikasi ke server Volve Capital
+ */
+export interface ApiConfig {
+  email: string;
+  password: string;
 }
 
-export interface Configuration {
-  appId: string;
-  appSecret: string;
-  timeout: number;
-  max_retry_attempt: number;
-  min_wait_time_ms: number;
-  max_wait_time_ms: number;
-  concurrency: number;
-  shopee_shop: ShopeeShop[];
-  chat_template?: ChatTemplate;
+export interface AppConfig {
+  app: {
+    name: string;
+    max_concurrent_tasks: number;
+    task_timeout_ms: number;
+    default_loop_interval?: number;  // default interval untuk loop modules (ms)
+    api_base_url: string;  // base URL for API server
+    browser_recycle_interval_minutes?: number;  // interval untuk global browser recycle (menit), default 60
+    headless?: boolean;
+  };
+  api: ApiConfig;
+  connector: {
+    enabled: boolean;
+  };
+  logger: {
+    level: LogLevel;
+  };
+  modules: ModuleConfig[];
 }
 
-interface TomlChatTemplate {
-  send_before?: { message: string }[];
-  send_after?: { message: string }[];
-  send_fallback?: { message: string }[];
+export interface ModuleConfig {
+  module: string;      // nama module yang tersedia di app
+  name: string;        // instance id (unique)
+  loop_interval?: number;  // interval untuk loop iteration (ms), default dari app config
+  [key: string]: unknown;  // module-specific config
 }
 
-export interface TomlConfiguration {
-  appId: string;
-  appSecret: string;
-  timeout: number;
-  max_retry_attempt: number;
-  min_wait_time_ms: number;
-  max_wait_time_ms: number;
-  concurrency: number;
-  shopee_shop: ShopeeShop[];
-  chat_template?: TomlChatTemplate;
+export interface ConnectorConfig {
+  enabled: boolean;
+}
+
+export interface LoggerConfig {
+  level: LogLevel;
 }

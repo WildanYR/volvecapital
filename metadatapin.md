@@ -59,3 +59,7 @@ Fitur ini sangat berguna untuk produk yang membutuhkan informasi tambahan spesif
 - Penulisan **Key** harus persis sama (case-sensitive tergantung sistem, namun disarankan menggunakan huruf kecil semua).
 - Jika Key tidak ditemukan di metadata profil, placeholder akan dikosongkan (string kosong).
 - Pastikan Anda telah menambahkan metadata tersebut di bagian **Profil** saat mengelola akun.
+
+
+saya juga mau bisa menambahkan label dan value baru juga misal label PIN dan value 123123
+untuk value nya saya minta type nya string ya dan jika saya isi $$email`: Menampilkan email akun.

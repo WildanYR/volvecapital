@@ -1,0 +1,104 @@
+[app]
+name = "VPS Gilang"
+max_concurrent_tasks = 3
+task_timeout_ms = 300000
+api_base_url ="http://localhost:4000"
+headless=false
+
+[api]
+email = "paytronikpremium@gmail.com"
+password = "@Baguvix123"
+
+[connector]
+enabled = true
+
+[logger]
+level = "info"
+
+[[modules]]
+module = "shopee-order"
+name = "paytronik"
+recycle_interval = 30
+loginKey = "anangg628@gmail.com"
+password = "Jogokariyan78"
+message_before = [
+"""
+❗️RULES NTFLIX (WAJIB BACA)❗️
+
+1. Hanya untuk 1 Device (ganti device tidak ada garansi)
+2. Dilarang Mengubah/menggunakan profile yang bukan miliknya
+3. Dilarang Mengubah Apapun (termasuk pin, nama profile dan password)
+4. Melanggar :  GARANSI HANGUS
+"""
+]
+message_after = [
+"""
+Tolong Bantu Ulasan bintang 5 ya kak :) ⭐️⭐️⭐️⭐️⭐
+
+Untuk pembelian selanjutnya hanya Rp.5000 klik ==> s.id/LangganandiWea
+Kalo gabisa di klik copy aja terus paste ke web
+
+    --------THANK YOU--------
+"""
+]
+message_fallback = "Pesanan kaka sudah kami terima dan akan kami proses segera, mohon ditunggu 🔁 jika dalam 10 menit tidak memberikan akun silahkan chat kewa klik ==> s.id/LangganandiWea Kalo gabisa di klik copy aja terus paste ke web"
+
+[[modules]]
+module = "shopee-order"
+name = "digital_premium"
+recycle_interval = 30
+loginKey = "digitalpremium.id"
+password = "Bintang78"
+message_before = [
+"""
+❗️RULES NTFLIX (WAJIB BACA)❗️
+
+1. Hanya untuk 1 Device (ganti device tidak ada garansi)
+2. Dilarang Mengubah/menggunakan profile yang bukan miliknya
+3. Dilarang Mengubah Apapun (termasuk pin, nama profile dan password)
+4. Melanggar :  GARANSI HANGUS
+"""
+]
+message_after = [
+"""
+Tolong Bantu Ulasan bintang 5 ya kak :) ⭐️⭐️⭐️⭐️⭐
+
+Untuk pembelian selanjutnya hanya Rp.5000 klik ==> s.id/LangganandiWea
+Kalo gabisa di klik copy aja terus paste ke web
+
+    --------THANK YOU--------
+"""
+]
+message_fallback = "Pesanan kaka sudah kami terima dan akan kami proses segera, mohon ditunggu 🔁 jika dalam 10 menit tidak memberikan akun silahkan chat kewa klik ==> s.id/LangganandiWea Kalo gabisa di klik copy aja terus paste ke web"
+
+[[modules]]
+module = "shopee-order"
+name = "papapremium"
+recycle_interval = 30
+loginKey = "papapremium"
+password = "Baguvix123"
+message_before = [
+"""
+❗️RULES NTFLIX (WAJIB BACA)❗️
+
+1. Hanya untuk 1 Device (ganti device tidak ada garansi)
+2. Dilarang Mengubah/menggunakan profile yang bukan miliknya
+3. Dilarang Mengubah Apapun (termasuk pin, nama profile dan password)
+4. Melanggar :  GARANSI HANGUS
+"""
+]
+message_after = [
+"""
+Tolong Bantu Ulasan bintang 5 ya kak :) ⭐️⭐️⭐️⭐️⭐
+
+Untuk pembelian selanjutnya hanya Rp.5000 klik ==> s.id/LangganandiWea
+Kalo gabisa di klik copy aja terus paste ke web
+
+    --------THANK YOU--------
+"""
+]
+message_fallback = "Pesanan kaka sudah kami terima dan akan kami proses segera, mohon ditunggu 🔁 jika dalam 10 menit tidak memberikan akun silahkan chat kewa klik ==> s.id/LangganandiWea Kalo gabisa di klik copy aja terus paste ke web"
+
+#[[modules]]
+#module = "netflix"
+#name = "netflix"

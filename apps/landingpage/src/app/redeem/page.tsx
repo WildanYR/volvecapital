@@ -9,6 +9,7 @@ import { toast } from 'sonner'
 import { Navbar } from '@/components/navbar'
 import { Footer } from '@/components/footer'
 import Link from 'next/link'
+import { useTenant } from '@/hooks/use-tenant'
 
 export default function RedeemPage() {
   const [code, setCode] = useState('')
@@ -16,41 +17,8 @@ export default function RedeemPage() {
   const [result, setResult] = useState<any>(null)
   const [copied, setCopied] = useState(false)
   const [accessToken, setAccessToken] = useState<string | null>(null)
-  const [tenantId, setTenantId] = useState<string | null>(null)
+  const { tenantId } = useTenant()
   
-  // Deteksi tenant secara agresif
-  useEffect(() => {
-    const detect = () => {
-      if (typeof window === 'undefined') return
-      
-      const urlParams = new URLSearchParams(window.location.search)
-      const forceTenant = urlParams.get('tenant')
-      
-      if (forceTenant) {
-        if (tenantId !== forceTenant) setTenantId(forceTenant)
-        return
-      }
-
-      const hostname = window.location.hostname.toLowerCase()
-      const parts = hostname.split('.')
-      
-      if (parts.length > 1) {
-        const firstPart = parts[0]
-        if (firstPart !== 'localhost' && firstPart !== 'www') {
-          if (tenantId !== firstPart) {
-            setTenantId(firstPart)
-          }
-        }
-      }
-    }
-
-    detect()
-    // Jalankan lagi setelah 500ms jika belum ketemu (antisipasi race condition)
-    if (!tenantId) {
-      const timer = setTimeout(detect, 500)
-      return () => clearTimeout(timer)
-    }
-  }, [tenantId])
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -63,10 +31,8 @@ export default function RedeemPage() {
       setResult(data)
       if (data?.voucher?.status === 'USED' && data?.voucher?.access_token) {
         setAccessToken(data.voucher.access_token)
-        setTenantId(data.voucher.tenant_id)
       } else {
         setAccessToken(null)
-        setTenantId(null)
       }
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Kode voucher tidak ditemukan')
@@ -81,7 +47,6 @@ export default function RedeemPage() {
       const { data } = await api.post('/public/voucher/redeem', { voucher_code: code })
       // Simpan access_token terpisah untuk portal link
       if (data.access_token) setAccessToken(data.access_token)
-      if (data.tenant_id) setTenantId(data.tenant_id)
       setResult({ ...result, voucher: { ...result.voucher, status: 'USED' }, account: data })
       toast.success('Voucher berhasil diredeem!')
     } catch (error: any) {

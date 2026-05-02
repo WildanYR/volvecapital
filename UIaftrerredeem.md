@@ -57,3 +57,5 @@ Sebelum saya mulai mengimplementasikan kodenya, mohon konfirmasi beberapa hal be
 5. **Buyer Portal**: Untuk tombol "Portal Email OTP", apakah itu juga ingin diatur per varian? (Saat ini sepertinya hanya muncul jika `accessToken` ada).
 
 Ditunggu feedback-nya ya!
+
+

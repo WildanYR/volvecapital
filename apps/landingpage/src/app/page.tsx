@@ -54,8 +54,9 @@ export default async function Home() {
   }
 
   // If no tenantId, the component will handle the empty state
-  const products = tenantId ? await getProducts(tenantId) : []
-  const settings = tenantId ? await getSettings(tenantId) : {}
+  const [products, settings] = tenantId 
+    ? await Promise.all([getProducts(tenantId), getSettings(tenantId)])
+    : [[], {}]
 
   return <HomeContent initialProducts={products} tenantId={tenantId} settings={settings} />
 }

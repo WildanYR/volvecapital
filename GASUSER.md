@@ -6,3 +6,5 @@ jadi voucher yang masih ada masa aktif nya masih bisa untuk akses halaman gas, s
 dan aku juga mau buat jika gilang dapat result.account.email misal jonathanbear@gmail.com maka gilang hanya bisa liat database GAS hanya email itu saja, email yang lain digabisa liat
 
 tolong buatkan implementasi untuk sistem ini ya, bagaimana alur dan arsitektur nya tolong buat di file GASforUser.md
+
+

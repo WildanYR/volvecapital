@@ -66,3 +66,14 @@ Sebelum lanjut ke tahap pengodingan, mohon konfirmasi beberapa hal berikut:
 3. **Status "Aktif" (#7)**: Apakah voucher yang sudah USED tapi durasi produknya masih berjalan dianggap "Aktif", atau hanya voucher UNUSED yang belum melewati `expired_at`?
 4. **Layout Detail**: Apakah data lengkap user (Nama, Email, WA) ingin ditampilkan langsung di card list, atau muncul saat card diklik (expand/modal)? Menampilkan semua data langsung mungkin akan membuat card menjadi sangat panjang.
 5. **Auto-Refresh**: Apakah statistik ini perlu auto-refresh setiap beberapa detik, atau cukup refresh saat halaman dimuat/setelah generate voucher baru?
+
+jawaban : 
+1. iya itu maksud saya (Voucher yang SUDAH di-redeem) + (Voucher yang SUDAH dibayar tapi BELUM di-redeem)
+2. iya setuju
+3. voucher yang sudah used tapi durasi produknya masih berjalan dianggap "Aktif", atau hanya voucher UNUSED yang belum melewati `expired_at`
+4. datanya muncul saat card diklik (expand/modal)
+5. cukup refresh saat halaman dimuat/setelah generate voucher baru
+
+bisa kan ngambil data account dan account_profile nya? untuk ditampilkan di detail voucher
+
+w-full md:w-auto px-10 py-4 bg-green-500 text-black font-black rounded-2xl hover:bg-green-400 transition-all flex items-center justify-center gap-3 shadow-[0_10px_30px_rgba(34,197,94,0.3)]

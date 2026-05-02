@@ -1,27 +1,36 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import React, { createContext, useContext, ReactNode } from 'react'
+
+interface TenantContextType {
+  tenantId: string | null
+  hostname: string | null
+}
+
+const TenantContext = createContext<TenantContextType | undefined>(undefined)
+
+export function TenantProvider({ 
+  children, 
+  tenantId, 
+  hostname 
+}: { 
+  children: ReactNode, 
+  tenantId: string | null, 
+  hostname: string | null 
+}) {
+  return (
+    <TenantContext.Provider value={{ tenantId, hostname }}>
+      {children}
+    </TenantContext.Provider>
+  )
+}
 
 export function useTenant() {
-  const [tenantId, setTenantId] = useState<string | null>(null)
-  const [hostname, setHostname] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const host = window.location.host
-      setHostname(host)
-      
-      const parts = host.split('.')
-      // Example: papapremium.localhost:3000 -> papapremium
-      // Example: papapremium.volve-capital.com -> papapremium
-      if (parts.length >= 2) {
-        const subdomain = parts[0]
-        if (subdomain !== 'www' && subdomain !== 'localhost') {
-          setTenantId(subdomain)
-        }
-      }
-    }
-  }, [])
-
-  return { tenantId, hostname }
+  const context = useContext(TenantContext)
+  if (context === undefined) {
+    // Fallback to old behavior if not inside Provider, 
+    // but ideally we should always be inside Provider
+    return { tenantId: null, hostname: null }
+  }
+  return context
 }

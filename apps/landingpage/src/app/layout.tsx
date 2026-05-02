@@ -5,6 +5,7 @@ import { Providers } from "@/components/providers";
 import { BackgroundBlobs } from "@/components/background-blobs";
 import { WhatsAppFloating } from "@/components/whatsapp-floating";
 import Script from "next/script";
+import { headers } from "next/headers";
 
 const outfit = Outfit({
   variable: "--font-outfit",
@@ -27,12 +28,25 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const headersList = headers();
+  const host = headersList.get("host") || "";
+  
+  let tenantId: string | null = null;
+  const parts = host.split('.');
+  
+  if (parts.length >= 2) {
+    const subdomain = parts[0];
+    if (subdomain !== 'www' && subdomain !== 'localhost' && !subdomain.includes(':')) {
+      tenantId = subdomain;
+    }
+  }
+
   return (
     <html lang="id" className={`${outfit.variable} h-full antialiased dark`}>
       <head>
       </head>
       <body className="min-h-full flex flex-col font-sans">
-        <Providers>
+        <Providers tenantId={tenantId} hostname={host}>
           <BackgroundBlobs />
           {children}
           <WhatsAppFloating />
