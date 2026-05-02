@@ -57,7 +57,7 @@ function SuccessContent() {
   }
 
   return (
-    <main className="min-h-screen flex flex-col pt-32 pb-40 bg-slate-50/50">
+    <main className="min-h-screen flex flex-col pt-32 pb-40 bg-slate-50">
       <Navbar />
       
       <div className="container mx-auto max-w-2xl px-6 flex-grow flex flex-col justify-center">
