@@ -39,6 +39,7 @@ export interface LandingTestimonialItem {
   content: string;
   stars: number;
   initial: string;
+  avatar?: string;
 }
 
 export interface LandingFaqItem {
