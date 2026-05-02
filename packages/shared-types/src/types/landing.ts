@@ -47,6 +47,11 @@ export interface LandingFaqItem {
   answer: string;
 }
 
+export interface LandingFaqConfig {
+  sectionTitle: string;
+  items: LandingFaqItem[];
+}
+
 export interface LandingNavbarConfig {
   logoText: string;
   logoIconEmbed: string;
