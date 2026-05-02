@@ -324,7 +324,7 @@ function RouteComponent() {
     <>
       <div className="flex flex-col gap-8">
         <div className="flex flex-col md:flex-row gap-6 justify-between items-center">
-          <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight text-balance">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-balance">
             Produk
           </h1>
           <Button asChild>
@@ -491,14 +491,14 @@ function RouteComponent() {
                                 </p>
                               </div>
                             </div>
-                            <div className="flex justify-between items-center text-muted-foreground">
-                              <div className="space-y-1 w-full px-3 border-l-2 border-secondary">
-                                <p className="text-sm inline-flex items-center gap-1">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-y-4 sm:gap-y-0 text-muted-foreground">
+                              <div className="space-y-1 px-3 border-l-2 border-secondary min-w-0">
+                                <p className="text-sm inline-flex items-center gap-1 whitespace-nowrap">
                                   <Timer className="size-4" />
                                   {' '}
                                   Durasi
                                 </p>
-                                <p className="font-semibold">
+                                <p className="font-semibold truncate">
                                   {variant.duration}
                                   {' '}
                                   {getTimeUnitSymbol(
@@ -506,13 +506,13 @@ function RouteComponent() {
                                   )}
                                 </p>
                               </div>
-                              <div className="space-y-1 w-full px-3 border-l-2 border-secondary">
-                                <p className="text-sm inline-flex items-center gap-1">
+                              <div className="space-y-1 px-3 border-l-2 border-secondary min-w-0">
+                                <p className="text-sm inline-flex items-center gap-1 whitespace-nowrap">
                                   <ClockFading className="size-4" />
                                   {' '}
                                   Interval
                                 </p>
-                                <p className="font-semibold">
+                                <p className="font-semibold truncate">
                                   {variant.interval}
                                   {' '}
                                   {getTimeUnitSymbol(
@@ -520,13 +520,13 @@ function RouteComponent() {
                                   )}
                                 </p>
                               </div>
-                              <div className="space-y-1 w-full px-3 border-l-2 border-secondary">
-                                <p className="text-sm inline-flex items-center gap-1">
+                              <div className="space-y-1 px-3 border-l-2 border-secondary min-w-0">
+                                <p className="text-sm inline-flex items-center gap-1 whitespace-nowrap">
                                   <Hourglass className="size-4" />
                                   {' '}
                                   Cooldown
                                 </p>
-                                <p className="font-semibold">
+                                <p className="font-semibold truncate">
                                   {variant.cooldown}
                                   {' '}
                                   {getTimeUnitSymbol(

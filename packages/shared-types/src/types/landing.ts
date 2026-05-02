@@ -17,6 +17,7 @@ export interface LandingHeroConfig {
   showCTAs: boolean;
   showSocialProof: boolean;
   socialProofItems: LandingSocialProofItem[];
+  backgroundImageUrl?: string;
 }
 
 export interface LandingFeatureItem {

@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useState, use } from 'react'
-import { motion } from 'framer-motion'
-import { BookOpen, ArrowLeft, CheckCircle2, ChevronRight, Info, ExternalLink } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { BookOpen, ArrowLeft, CheckCircle2, ChevronRight, Info, ExternalLink, X, ZoomIn } from 'lucide-react'
 import { api } from '@/lib/api'
 import { Navbar } from '@/components/navbar'
 import { Footer } from '@/components/footer'
@@ -18,6 +18,7 @@ export default function TutorialDetailPage({ params }: { params: Promise<{ slug:
   
   const [tutorial, setTutorial] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [selectedImage, setSelectedImage] = useState<{ url: string, title: string } | null>(null)
 
   const resolveLink = (linkUrl: string) => {
     if (!linkUrl) return null
@@ -45,19 +46,19 @@ export default function TutorialDetailPage({ params }: { params: Promise<{ slug:
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
-        <div className="size-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="size-12 border-4 border-slate-100 border-t-[#f97316] rounded-full animate-spin" />
       </div>
     )
   }
 
   if (!tutorial) {
     return (
-      <div className="min-h-screen flex flex-col pt-32 pb-20">
+      <div className="min-h-screen flex flex-col pt-32 pb-20 bg-white">
         <Navbar />
         <div className="container mx-auto px-6 flex flex-col items-center justify-center py-32">
-          <h1 className="text-4xl font-black text-white mb-6">Tutorial Tidak Ditemukan</h1>
-          <Link href="/tutorial" className="text-primary hover:underline flex items-center gap-2">
+          <h1 className="text-4xl font-black text-[#0f172a] mb-6">Tutorial Tidak Ditemukan</h1>
+          <Link href="/tutorial" className="text-[#f97316] hover:underline flex items-center gap-2">
             <ArrowLeft className="size-4" /> Kembali ke Daftar Tutorial
           </Link>
         </div>
@@ -67,16 +68,57 @@ export default function TutorialDetailPage({ params }: { params: Promise<{ slug:
   }
 
   return (
-    <main className="min-h-screen flex flex-col pt-32 pb-20">
+    <main className="min-h-screen flex flex-col pt-40 pb-20 bg-slate-50">
       <Navbar />
       
+      {/* Lightbox Modal */}
+      <AnimatePresence>
+        {selectedImage && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] flex items-center justify-center p-4 md:p-10 bg-[#0f172a]/95 backdrop-blur-md"
+            onClick={() => setSelectedImage(null)}
+          >
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="relative max-w-7xl w-full h-full flex flex-col items-center justify-center"
+              onClick={e => e.stopPropagation()}
+            >
+              <button 
+                onClick={() => setSelectedImage(null)}
+                className="absolute -top-12 right-0 md:-right-12 text-white hover:text-[#f97316] transition-colors p-2"
+              >
+                <X className="size-8" />
+              </button>
+              
+              <div className="bg-white p-2 rounded-3xl shadow-2xl overflow-hidden max-h-[85vh] flex items-center justify-center">
+                <img 
+                  src={selectedImage.url} 
+                  alt={selectedImage.title}
+                  className="max-w-full max-h-full object-contain rounded-2xl"
+                />
+              </div>
+              
+              <div className="mt-6 text-center">
+                <h4 className="text-white text-xl font-black uppercase italic tracking-tight">{selectedImage.title}</h4>
+                <p className="text-slate-400 text-sm mt-1">Klik di mana saja untuk menutup</p>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Header Section */}
       <div className="container mx-auto max-w-4xl px-6 mb-20">
         <Link 
           href="/tutorial" 
-          className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-primary transition-colors mb-8 group"
+          className="inline-flex items-center gap-2 text-sm text-black hover:text-[#f97316] transition-colors mb-8 group"
         >
-          <div className="size-8 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+          <div className="size-8 rounded-full bg-white flex items-center justify-center group-hover:bg-orange-50 transition-colors shadow-sm">
             <ArrowLeft className="size-4" />
           </div>
           Kembali ke Daftar
@@ -86,10 +128,10 @@ export default function TutorialDetailPage({ params }: { params: Promise<{ slug:
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <h1 className="text-4xl md:text-6xl font-black mb-6 text-white tracking-tight leading-tight">
+          <h1 className="text-4xl md:text-6xl font-black mb-6 text-[#0f172a] tracking-tight leading-tight uppercase italic">
             {tutorial.title}
           </h1>
-          <p className="text-gray-400 text-xl leading-relaxed">
+          <p className="text-slate-500 text-xl leading-relaxed font-medium">
             {tutorial.subtitle}
           </p>
         </motion.div>
@@ -106,36 +148,46 @@ export default function TutorialDetailPage({ params }: { params: Promise<{ slug:
             transition={{ delay: index * 0.1 }}
             className="group"
           >
-            <div className="glass-card rounded-[40px] overflow-hidden border-white/5 hover:border-primary/20 transition-all duration-500">
+            <div className="bg-white rounded-[40px] overflow-hidden border border-slate-100 shadow-xl shadow-slate-200/50 hover:border-[#f97316]/30 transition-all duration-500">
               <div className="flex flex-col lg:flex-row">
-                {/* Left: Image */}
-                <div className="lg:w-1/2 aspect-video lg:aspect-auto relative overflow-hidden bg-black/40">
+                {/* Left: Image (Clickable) */}
+                <div 
+                  className="lg:w-1/2 aspect-video lg:aspect-auto relative overflow-hidden bg-slate-100 cursor-zoom-in group/img"
+                  onClick={() => step.image_url && setSelectedImage({ url: step.image_url, title: step.title || `Langkah ${index + 1}` })}
+                >
                   {step.image_url ? (
-                    <img 
-                      src={step.image_url} 
-                      alt={step.title} 
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                    />
+                    <>
+                      <img 
+                        src={step.image_url} 
+                        alt={step.title} 
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                      />
+                      <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover/img:opacity-100">
+                        <div className="bg-white/90 p-4 rounded-2xl shadow-xl backdrop-blur-sm">
+                          <ZoomIn className="size-6 text-[#0f172a]" />
+                        </div>
+                      </div>
+                    </>
                   ) : (
                     <div className="w-full h-full flex items-center justify-center opacity-10">
                       <BookOpen className="size-20" />
                     </div>
                   )}
-                  <div className="absolute top-6 left-6 size-12 rounded-2xl bg-primary text-black font-black flex items-center justify-center text-xl shadow-2xl">
+                  <div className="absolute top-6 left-6 size-12 rounded-2xl bg-[#0f172a] text-white font-black flex items-center justify-center text-xl shadow-2xl">
                     {index + 1}
                   </div>
                 </div>
 
                 {/* Right: Content */}
                 <div className="lg:w-1/2 p-8 md:p-12 flex flex-col justify-center">
-                  <span className="text-[10px] font-black tracking-[0.3em] text-primary uppercase mb-4 block">
+                  <span className="text-[10px] font-black tracking-[0.3em] text-[#f97316] uppercase mb-4 block">
                     {step.label || `LANGKAH ${index + 1}`}
                   </span>
-                  <h3 className="text-2xl md:text-3xl font-black text-white mb-6 group-hover:text-primary transition-colors">
+                  <h3 className="text-2xl md:text-3xl font-black text-[#0f172a] mb-6 group-hover:text-[#f97316] transition-colors uppercase italic">
                     {step.title}
                   </h3>
-                  <div className="bg-white/[0.03] rounded-3xl p-6 border border-white/5">
-                    <p className="text-gray-400 leading-relaxed text-lg">
+                  <div className="bg-slate-50 rounded-3xl p-6 border border-slate-100">
+                    <p className="text-slate-600 leading-relaxed text-lg font-medium">
                       {step.description}
                     </p>
                   </div>
@@ -151,7 +203,7 @@ export default function TutorialDetailPage({ params }: { params: Promise<{ slug:
                         href={resolveLink(step.link_url)!}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-3 px-8 py-4 bg-primary text-black font-black rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-lg shadow-primary/20 text-sm uppercase tracking-widest"
+                        className="inline-flex items-center gap-3 px-8 py-4 bg-[#0f172a] text-white font-black rounded-2xl hover:bg-[#f97316] hover:scale-105 active:scale-95 transition-all shadow-lg shadow-[#0f172a]/20 text-sm uppercase tracking-widest"
                       >
                         {step.link_text || 'Buka Link'} <ExternalLink className="size-4" />
                       </a>
@@ -164,7 +216,7 @@ export default function TutorialDetailPage({ params }: { params: Promise<{ slug:
             {/* Visual connector for next step */}
             {index < tutorial.steps.length - 1 && (
               <div className="flex justify-center h-12">
-                <div className="w-0.5 bg-gradient-to-b from-primary/30 to-transparent" />
+                <div className="w-0.5 bg-gradient-to-b from-slate-200 to-transparent" />
               </div>
             )}
           </motion.div>
@@ -172,25 +224,23 @@ export default function TutorialDetailPage({ params }: { params: Promise<{ slug:
       </div>
 
       {/* Completion Card */}
-      <div className="container mx-auto max-w-4xl px-6">
+      <div className="container mx-auto max-w-4xl px-6 mb-32">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
-          className="bg-gradient-gold p-1 rounded-[40px]"
+          className="bg-white rounded-[40px] p-10 md:p-16 border border-slate-100 shadow-2xl shadow-slate-200/50 flex flex-col md:flex-row items-center justify-between gap-10"
         >
-          <div className="bg-[#0a0a0a] rounded-[38px] p-8 md:p-12 flex flex-col md:flex-row items-center justify-between gap-8">
-            <div className="space-y-2 text-center md:text-left">
-              <h3 className="text-2xl font-black text-white">Sudah Selesai?</h3>
-              <p className="text-gray-400">Anda sudah mempelajari seluruh langkah di panduan ini.</p>
-            </div>
-            <Link 
-              href="/" 
-              className="px-8 py-4 bg-white text-black font-black rounded-2xl hover:scale-105 active:scale-95 transition-all flex items-center gap-3 uppercase text-sm tracking-widest shadow-lg"
-            >
-              Mulai Sekarang <CheckCircle2 className="size-5" />
-            </Link>
+          <div className="space-y-3 text-center md:text-left">
+            <h3 className="text-3xl font-black text-[#0f172a] uppercase italic">Sudah Selesai?</h3>
+            <p className="text-slate-500 text-lg font-medium">Anda sudah mempelajari seluruh langkah di panduan ini.</p>
           </div>
+          <Link 
+            href="/" 
+            className="px-10 py-5 bg-[#f97316] text-white font-black rounded-2xl hover:scale-110 active:scale-95 transition-all flex items-center gap-3 uppercase text-sm tracking-[0.2em] shadow-xl shadow-orange-500/30"
+          >
+            Mulai Sekarang <CheckCircle2 className="size-5" />
+          </Link>
         </motion.div>
       </div>
 

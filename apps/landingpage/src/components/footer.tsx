@@ -76,8 +76,8 @@ export function Footer({ config: initialConfig }: FooterProps) {
   return (
     <footer className="py-24 px-6 w-full flex justify-center bg-[#0f172a]">
       <div className="w-full max-w-7xl relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-16 mb-20">
-          <div className="md:col-span-2 space-y-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 md:gap-12 lg:gap-16 mb-20">
+          <div className="md:col-span-2 lg:col-span-2 space-y-8">
             <Link href="/" className="flex items-center gap-3 group">
               {renderLogoIcon()}
               <span className="text-3xl font-black tracking-tighter text-white uppercase">
@@ -114,8 +114,22 @@ export function Footer({ config: initialConfig }: FooterProps) {
             <ul className="space-y-5">
               <li><Link href="/terms" className="text-slate-400 hover:text-white transition-colors text-base font-bold">Syarat & Ketentuan</Link></li>
               <li><Link href="/privacy" className="text-slate-400 hover:text-white transition-colors text-base font-bold">Kebijakan Privasi</Link></li>
-              <li><p className="text-slate-500 text-sm mt-4 font-bold uppercase tracking-widest">Kontak Admin</p></li>
-              <li><p className="text-[#f97316] text-sm font-black">{email}</p></li>
+              <li>
+                <a 
+                  href={`https://wa.me/${config?.email.replace(/[^0-9]/g, '') || ''}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-6 flex items-center gap-3 px-5 py-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 hover:border-primary/50 transition-all group/wa"
+                >
+                  <div className="p-2 bg-green-500/20 rounded-lg group-hover/wa:bg-green-500/30 transition-colors">
+                    <MessageCircle className="size-4 text-green-500" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 leading-none mb-1">WhatsApp</p>
+                    <p className="text-sm font-bold text-white leading-none">Support</p>
+                  </div>
+                </a>
+              </li>
             </ul>
           </div>
         </div>

@@ -96,9 +96,38 @@ function RouteComponent() {
     },
   })
 
-  const handleCopy = (code: string) => {
-    navigator.clipboard.writeText(code)
-    toast.success('Kode voucher disalin!')
+  const handleCopy = (text: string, label: string = 'Kode voucher') => {
+    if (!text) return
+    
+    const performCopy = async () => {
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(text)
+          toast.success(`${label} disalin!`)
+        } else {
+          throw new Error('Clipboard API unavailable')
+        }
+      } catch (err) {
+        // Fallback for non-secure contexts or older mobile browsers
+        const textArea = document.createElement("textarea")
+        textArea.value = text
+        textArea.style.position = "fixed"
+        textArea.style.left = "-9999px"
+        textArea.style.top = "0"
+        document.body.appendChild(textArea)
+        textArea.focus()
+        textArea.select()
+        try {
+          document.execCommand('copy')
+          toast.success(`${label} disalin!`)
+        } catch (copyErr) {
+          toast.error(`Gagal menyalin ${label.toLowerCase()}`)
+        }
+        document.body.removeChild(textArea)
+      }
+    }
+
+    performCopy()
   }
 
   const formatDate = (date: string | null | undefined) => {
@@ -127,23 +156,23 @@ function RouteComponent() {
 
   return (
     <div className="flex flex-col gap-8 pb-10">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-4xl font-extrabold tracking-tight">Voucher Generator</h1>
-        <p className="text-muted-foreground text-sm">Kelola dan pantau statistik voucher streaming.</p>
+      <div className="flex flex-col gap-1">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight">Voucher Generator</h1>
+        <p className="text-xs sm:text-sm text-muted-foreground">Kelola dan pantau statistik voucher streaming.</p>
       </div>
 
       {/* Statistics Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
         {statCards.map((stat, i) => (
-          <Card key={i} className="border-none bg-muted/30">
-            <CardContent className="p-4 flex flex-col gap-1">
-              <div className="flex items-center justify-between">
-                <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{stat.title}</p>
-                <div className={`p-1.5 rounded-lg ${stat.bg}`}>
-                  <stat.icon className={`size-3.5 ${stat.color}`} />
+          <Card key={i} className="border-none bg-muted/30 min-w-0 shadow-none">
+            <CardContent className="p-3 sm:p-4 flex flex-col gap-1 min-w-0">
+              <div className="flex items-center justify-between gap-1">
+                <p className="text-[9px] sm:text-[10px] font-bold text-muted-foreground uppercase tracking-wider truncate">{stat.title}</p>
+                <div className={`p-1 rounded-lg shrink-0 ${stat.bg}`}>
+                  <stat.icon className={`size-3 sm:size-3.5 ${stat.color}`} />
                 </div>
               </div>
-              <p className="text-2xl font-bold tracking-tight">
+              <p className="text-xl sm:text-2xl font-black tracking-tight truncate mt-1">
                 {isStatsLoading ? <Loader2 className="size-4 animate-spin" /> : (stat.value ?? 0)}
               </p>
             </CardContent>
@@ -238,23 +267,23 @@ function RouteComponent() {
         {/* History Section */}
         <Card className="flex flex-col">
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <CardTitle className="flex items-center gap-2">
                 <Ticket className="size-5" />
                 Daftar Voucher
               </CardTitle>
-              <div className="flex items-center gap-3">
-                <div className="relative w-48 md:w-64">
+              <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+                <div className="relative w-full sm:w-64">
                   <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
                   <Input 
                     placeholder="Cari voucher/nama/tlp..." 
-                    className="pl-9 h-9 text-xs"
+                    className="pl-9 h-9 text-xs w-full"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                   />
                 </div>
                 <Select value={statusFilter} onValueChange={(val) => { setStatusFilter(val); setPage(1) }}>
-                  <SelectTrigger className="h-9 w-[130px] text-xs">
+                  <SelectTrigger className="h-9 w-full sm:w-[130px] text-xs">
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -277,17 +306,17 @@ function RouteComponent() {
                   <Dialog key={v.id}>
                     <DialogTrigger asChild>
                       <div 
-                        className="flex items-center justify-between p-3 border border-border hover:bg-muted/50 rounded-xl transition-all cursor-pointer group"
+                        className="flex items-center justify-between p-3 border border-border hover:bg-muted/50 rounded-xl transition-all cursor-pointer group min-w-0 gap-3"
                       >
-                        <div className="flex flex-col">
-                          <span className="font-bold text-sm group-hover:text-primary transition-colors">{v.id}</span>
-                          <span className="text-[10px] text-muted-foreground">
+                        <div className="flex flex-col min-w-0 flex-1">
+                          <span className="font-bold text-sm group-hover:text-primary transition-colors truncate">{v.id}</span>
+                          <span className="text-[10px] text-muted-foreground truncate">
                             {v.product_variant?.product?.name} - {v.product_variant?.name}
                           </span>
                         </div>
-                        <div className="flex items-center gap-3">
-                          <div className="flex flex-col items-end mr-2">
-                            <span className="text-[9px] text-muted-foreground">{formatDate(v.created_at)}</span>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <div className="flex flex-col items-end">
+                            <span className="text-[9px] text-muted-foreground whitespace-nowrap">{formatDate(v.created_at)}</span>
                             <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full mt-1 ${
                               v.status === 'USED' 
                                 ? 'bg-red-500/10 text-red-500' 
@@ -453,10 +482,17 @@ function RouteComponent() {
                           </>
                         )}
                         
-                        <div className="flex gap-2 pt-2">
+                        <div className="flex flex-col sm:flex-row gap-2 pt-2">
                           <Button className="flex-1 gap-2" variant="outline" onClick={() => handleCopy(v.id)}>
                             <Copy className="size-4" />
                             Salin Kode Voucher
+                          </Button>
+                          <Button className="flex-1 gap-2 bg-primary/10 text-primary hover:bg-primary/20 border-primary/20" variant="ghost" onClick={() => {
+                            const landingUrl = window.location.origin.replace('dashboard.', '').replace(':3000', ':3001')
+                            handleCopy(`${landingUrl}/redeem?code=${v.id}`, 'Link redeem')
+                          }}>
+                            <Zap className="size-4" />
+                            Salin Link Redeem
                           </Button>
                         </div>
                       </div>

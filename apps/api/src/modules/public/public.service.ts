@@ -980,6 +980,13 @@ export class PublicService {
         transaction,
       });
 
+      // 4. Fetch Tenant Settings for Limit
+      const portalLimitSetting = await this.tenantSettingRepository.findOne({ 
+        where: { key: 'BUYER_PORTAL_DAILY_LIMIT' },
+        transaction 
+      });
+      const dailyLimit = portalLimitSetting?.value || '10';
+
       await transaction.commit();
 
       return {
@@ -989,6 +996,10 @@ export class PublicService {
           expired_at: user.expired_at,
         },
         messages,
+        limit: {
+          total: parseInt(dailyLimit),
+          remaining: parseInt(dailyLimit),
+        }
       };
     } catch (error) {
       await transaction.rollback();

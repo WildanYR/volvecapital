@@ -169,15 +169,15 @@ function RouteComponent() {
           </div>
         </SidebarFooter>
       </Sidebar>
-      <main className="w-full">
-        <div className="flex justify-between items-center p-3 border-b-2 border-border">
+      <main className="flex-1 min-w-0 overflow-x-hidden max-w-full">
+        <div className="flex justify-between items-center p-3 border-b-2 border-border bg-background sticky top-0 z-30">
           <SidebarTrigger className="cursor-pointer" />
           <div className="flex items-center gap-4">
             <StockNotification />
-            <p className="font-semibold text-sm">{auth.tenant!.id}</p>
+            <p className="font-semibold text-sm truncate max-w-[100px] sm:max-w-none">{auth.tenant!.id}</p>
           </div>
         </div>
-        <div className="px-6 py-4">
+        <div className="px-4 sm:px-6 py-4">
           <Outlet />
         </div>
       </main>

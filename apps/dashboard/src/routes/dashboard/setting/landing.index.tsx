@@ -11,7 +11,8 @@ import {
   HelpCircle, 
   Navigation, 
   Type,
-  ArrowLeft
+  ArrowLeft,
+  ShieldCheck
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
@@ -66,6 +67,7 @@ function LandingSettingPage() {
     socialProofItems: [
       { id: '1', number: '2.000+', label: 'Pelanggan Aktif', iconEmbed: '' }
     ],
+    backgroundImageUrl: '',
   })
 
   const [features, setFeatures] = useState<LandingFeatureConfig>({
@@ -184,8 +186,9 @@ function LandingSettingPage() {
       </div>
 
       <Tabs defaultValue="hero" className="w-full">
-        <TabsList className="grid grid-cols-2 md:grid-cols-5 w-full h-auto gap-2 bg-transparent p-0">
+        <TabsList className="grid grid-cols-2 md:grid-cols-6 w-full h-auto gap-2 bg-transparent p-0">
           <TabsTrigger value="hero" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground border border-input h-10">Hero</TabsTrigger>
+          <TabsTrigger value="social-proof" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground border border-input h-10">Social Proof</TabsTrigger>
           <TabsTrigger value="features" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground border border-input h-10">Fitur</TabsTrigger>
           <TabsTrigger value="testimonials" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground border border-input h-10">Testimoni</TabsTrigger>
           <TabsTrigger value="faq" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground border border-input h-10">FAQ</TabsTrigger>
@@ -223,6 +226,16 @@ function LandingSettingPage() {
                 <Label>Subjudul</Label>
                 <Textarea value={hero.subtitle} onChange={e => setHero({...hero, subtitle: e.target.value})} placeholder="Deskripsi singkat layanan Anda." />
               </div>
+              
+              <div className="space-y-2">
+                <Label>Hero Background Image URL (Embed Link)</Label>
+                <Input 
+                  value={hero.backgroundImageUrl} 
+                  onChange={e => setHero({...hero, backgroundImageUrl: e.target.value})} 
+                  placeholder="https://example.com/hero-bg.jpg" 
+                />
+                <p className="text-[10px] text-muted-foreground italic">* Kosongkan untuk menggunakan background default (gelap).</p>
+              </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-t pt-6">
                 <div className="space-y-2">
@@ -235,55 +248,75 @@ function LandingSettingPage() {
                 </div>
               </div>
 
-                <div className="flex items-center justify-between border-t pt-6">
-                  <div className="flex items-center space-x-2">
-                    <Switch checked={hero.showSocialProof} onCheckedChange={v => setHero({...hero, showSocialProof: v})} />
-                    <Label>Tampilkan Social Proof</Label>
-                  </div>
-                  {hero.showSocialProof && (
-                    <Button size="sm" variant="outline" onClick={() => setHero({ ...hero, socialProofItems: [...hero.socialProofItems, { id: crypto.randomUUID(), number: '', label: '', iconEmbed: '' }] })}>
-                      <Plus className="size-4 mr-2" /> Tambah Item
-                    </Button>
-                  )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* SOCIAL PROOF SECTION */}
+        <TabsContent value="social-proof" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ShieldCheck className="size-5 text-primary" />
+                Social Proof Settings
+              </CardTitle>
+              <CardDescription>Tampilkan angka kepercayaan pelanggan di bawah Hero Section.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between border-b pb-6">
+                <div className="flex items-center space-x-2">
+                  <Switch checked={hero.showSocialProof} onCheckedChange={v => setHero({...hero, showSocialProof: v})} />
+                  <Label>Tampilkan Social Proof</Label>
                 </div>
-                
                 {hero.showSocialProof && (
-                  <div className="space-y-4">
-                    {hero.socialProofItems.map((item, index) => (
-                      <div key={item.id} className="p-4 border rounded-lg bg-card relative">
-                        <Button variant="ghost" size="icon" className="absolute top-2 right-2 text-destructive" onClick={() => setHero({ ...hero, socialProofItems: hero.socialProofItems.filter(i => i.id !== item.id) })}>
-                          <Trash2 className="size-4" />
-                        </Button>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                          <div className="space-y-2">
-                            <Label>Angka (e.g. 2.000+)</Label>
-                            <Input value={item.number} onChange={e => {
-                              const newItems = [...hero.socialProofItems]
-                              newItems[index].number = e.target.value
-                              setHero({ ...hero, socialProofItems: newItems })
-                            }} />
-                          </div>
-                          <div className="space-y-2">
-                            <Label>Label (e.g. Pelanggan Aktif)</Label>
-                            <Input value={item.label} onChange={e => {
-                              const newItems = [...hero.socialProofItems]
-                              newItems[index].label = e.target.value
-                              setHero({ ...hero, socialProofItems: newItems })
-                            }} />
-                          </div>
-                          <div className="space-y-2">
-                            <Label>Icon Embed (SVG/Link)</Label>
-                            <Input value={item.iconEmbed} onChange={e => {
-                              const newItems = [...hero.socialProofItems]
-                              newItems[index].iconEmbed = e.target.value
-                              setHero({ ...hero, socialProofItems: newItems })
-                            }} placeholder="<svg>...</svg> or link" />
-                          </div>
+                  <Button size="sm" variant="outline" onClick={() => setHero({ ...hero, socialProofItems: [...hero.socialProofItems, { id: crypto.randomUUID(), number: '', label: '', iconEmbed: '' }] })}>
+                    <Plus className="size-4 mr-2" /> Tambah Item
+                  </Button>
+                )}
+              </div>
+              
+              {hero.showSocialProof && (
+                <div className="space-y-4">
+                  {hero.socialProofItems.map((item, index) => (
+                    <div key={item.id} className="p-4 border rounded-lg bg-card relative">
+                      <Button variant="ghost" size="icon" className="absolute top-2 right-2 text-destructive" onClick={() => setHero({ ...hero, socialProofItems: hero.socialProofItems.filter(i => i.id !== item.id) })}>
+                        <Trash2 className="size-4" />
+                      </Button>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="space-y-2">
+                          <Label>Angka (e.g. 2.000+)</Label>
+                          <Input value={item.number} onChange={e => {
+                            const newItems = [...hero.socialProofItems]
+                            newItems[index].number = e.target.value
+                            setHero({ ...hero, socialProofItems: newItems })
+                          }} />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Label (e.g. Pelanggan Aktif)</Label>
+                          <Input value={item.label} onChange={e => {
+                            const newItems = [...hero.socialProofItems]
+                            newItems[index].label = e.target.value
+                            setHero({ ...hero, socialProofItems: newItems })
+                          }} />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Icon Embed (SVG/Link)</Label>
+                          <Input value={item.iconEmbed} onChange={e => {
+                            const newItems = [...hero.socialProofItems]
+                            newItems[index].iconEmbed = e.target.value
+                            setHero({ ...hero, socialProofItems: newItems })
+                          }} placeholder="<svg>...</svg> or link" />
                         </div>
                       </div>
-                    ))}
-                  </div>
-                )}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {hero.showSocialProof && hero.socialProofItems.length === 0 && (
+                <div className="text-center py-10 border-2 border-dashed rounded-lg text-muted-foreground">
+                  Belum ada item Social Proof. Klik "Tambah Item" untuk memulai.
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

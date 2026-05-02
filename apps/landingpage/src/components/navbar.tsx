@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Menu, X, ShoppingBag, Home, Package, Key, Crown } from 'lucide-react'
+import { Menu, X, ShoppingBag, Home, Package, Key, Crown, BookOpen } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTenant } from '@/hooks/use-tenant'
@@ -17,36 +17,41 @@ export function Navbar({ config: initialConfig }: NavbarProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [config, setConfig] = useState<LandingNavbarConfig | null>(initialConfig || null)
+  const [heroBg, setHeroBg] = useState<string | null>(null)
   const pathname = usePathname()
   const { tenantId } = useTenant()
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20)
+    const handleScroll = () => setScrolled(window.scrollY > 50)
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
   useEffect(() => {
-    if (!initialConfig && tenantId) {
-      const fetchSettings = async () => {
-        try {
-          const { data } = await api.get('/public/settings')
-          if (data.LANDING_NAVBAR) {
-            setConfig(JSON.parse(data.LANDING_NAVBAR))
-          }
-        } catch (error) {
-          console.error('Failed to fetch navbar settings:', error)
+    const fetchSettings = async () => {
+      try {
+        const { data } = await api.get('/public/settings')
+        if (data.LANDING_NAVBAR) {
+          setConfig(JSON.parse(data.LANDING_NAVBAR))
         }
+        if (data.LANDING_HERO) {
+          const heroConfig = JSON.parse(data.LANDING_HERO)
+          setHeroBg(heroConfig.backgroundImageUrl || null)
+        }
+      } catch (error) {
+        console.error('Failed to fetch navbar settings:', error)
       }
-      fetchSettings()
-    } else if (initialConfig) {
-      setConfig(initialConfig)
     }
-  }, [initialConfig, tenantId])
+
+    if (tenantId) {
+      fetchSettings()
+    }
+  }, [tenantId])
 
   const navLinks = [
     { name: 'HOME', href: '/', icon: Home },
     { name: 'PRODUK', href: '/product', icon: Package },
+    { name: 'TUTORIAL', href: '/tutorial', icon: BookOpen },
     { name: 'REDEEM', href: '/redeem', icon: Key },
   ]
 
@@ -78,19 +83,30 @@ export function Navbar({ config: initialConfig }: NavbarProps) {
     )
   }
 
+  // Determine if we should use transparent/white text mode
+  // Only use white text at the top if we are on HOME and there is a HERO background
+  const isHomePage = pathname === '/'
+  const isTransparent = !scrolled && isHomePage && heroBg
+  
+  const textColorClass = isTransparent ? 'text-white' : 'text-[#0f172a]'
+  const linkColorClass = isTransparent ? 'text-white hover:text-[#f97316]' : 'text-slate-600 hover:text-[#f97316]'
+  const activeLinkClass = isTransparent ? 'text-white' : 'text-[#f97316]'
+
   return (
     <nav 
-      className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 border-b ${
+      className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 ${
         scrolled 
-        ? 'bg-white/90 backdrop-blur-xl border-slate-100 shadow-sm py-3' 
-        : 'bg-white border-transparent py-5'
+        ? 'bg-white border-b border-slate-100 shadow-lg py-3' 
+        : isTransparent
+          ? 'bg-transparent py-6 border-b border-transparent'
+          : 'bg-white border-b border-slate-50 py-5'
       }`}
     >
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3 group">
           {renderLogoIcon()}
-          <span className="text-xl font-black tracking-tighter text-[#0f172a] group-hover:text-[#f97316] transition-colors uppercase">
+          <span className={`text-xl font-black tracking-tighter ${textColorClass} group-hover:text-[#f97316] transition-colors uppercase`}>
             {brandName}
           </span>
         </Link>
@@ -102,8 +118,8 @@ export function Navbar({ config: initialConfig }: NavbarProps) {
               <Link
                 key={link.name}
                 href={link.href}
-                className={`text-xs font-black tracking-[0.2em] transition-all hover:text-[#f97316] ${
-                  pathname === link.href ? 'text-[#f97316]' : 'text-slate-400'
+                className={`text-xs font-black tracking-[0.2em] transition-all ${
+                  pathname === link.href ? activeLinkClass : linkColorClass
                 }`}
               >
                 {link.name}
@@ -121,7 +137,9 @@ export function Navbar({ config: initialConfig }: NavbarProps) {
 
         {/* Mobile Toggle */}
         <button 
-          className="lg:hidden size-11 flex items-center justify-center text-[#0f172a] bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors"
+          className={`lg:hidden size-11 flex items-center justify-center rounded-xl transition-colors ${
+            isTransparent ? 'text-white bg-white/10 hover:bg-white/20' : 'text-[#0f172a] bg-slate-50 hover:bg-slate-100'
+          }`}
           onClick={() => setIsOpen(!isOpen)}
         >
           {isOpen ? <X className="size-6" /> : <Menu className="size-6" />}
