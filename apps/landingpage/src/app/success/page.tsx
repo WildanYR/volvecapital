@@ -57,7 +57,7 @@ function SuccessContent() {
   }
 
   return (
-    <main className="min-h-screen flex flex-col pt-32 pb-20 bg-slate-50/50">
+    <main className="min-h-screen flex flex-col pt-32 pb-40 bg-slate-50/50">
       <Navbar />
       
       <div className="container mx-auto max-w-2xl px-6 flex-grow flex flex-col justify-center">
@@ -115,14 +115,14 @@ function SuccessContent() {
           <div className="flex flex-col gap-4">
             <Link 
               href="/redeem"
-              className="w-full bg-gradient-to-br from-[#f97316] to-[#ef4444] text-white font-black py-5 rounded-2xl flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-95 transition-all shadow-[0_15px_40px_rgba(249,115,22,0.3)] uppercase tracking-widest text-sm"
+              className="w-full bg-gradient-to-br from-[#f97316] to-[#ef4444] text-white font-black py-5 rounded-2xl flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-95 transition-all uppercase tracking-widest text-sm"
             >
               Aktivasi Voucher Sekarang
               <ArrowRight className="size-5" />
             </Link>
             <Link 
               href="/"
-              className="w-full py-5 bg-slate-50 text-slate-400 font-black rounded-2xl flex items-center justify-center gap-3 hover:bg-slate-100 hover:text-[#0f172a] transition-all uppercase tracking-widest text-xs"
+              className="w-full py-5 bg-slate-50 text-[#0f172a] font-black rounded-2xl flex items-center justify-center gap-3 hover:bg-slate-100 hover:text-[#f97316] transition-all uppercase tracking-widest text-xs"
             >
               <Home className="size-4" />
               Kembali ke Beranda
