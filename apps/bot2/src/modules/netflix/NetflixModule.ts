@@ -28,6 +28,7 @@ import {
   getEmailRadio,
   getEmailInput,
   getSendEmailButton,
+  getResetErrorCallout,
 } from "./locators/requestReset.js";
 import {
   getUserLoginIdInput,
@@ -87,21 +88,21 @@ export class NetflixModule extends BaseModule {
 
     try {
       await page.goto(CHANGE_PASSWORD_URL);
-      this.logger.info("Checking auth state...");
+      this.logger.info(`[${email}] Checking auth state...`);
 
       let loginState = await this.detectLoginState(page);
 
       // 2. Jika Belum Login, Coba Login Manual Dulu
       if (loginState === "not_logged_in") {
-          this.logger.info("Not logged in, attempting manual login with existing password...");
+          this.logger.info(`[${email}] Not logged in, attempting manual login with existing password...`);
           const loginSuccess = await this.attemptManualLogin(page, email, password);
           
           if (loginSuccess) {
-              this.logger.info("Manual login successful, proceeding to change password");
+              this.logger.info(`[${email}] Manual login successful, proceeding to change password`);
               await page.goto(CHANGE_PASSWORD_URL);
               loginState = await this.detectLoginState(page);
           } else {
-              this.logger.info("Manual login failed or not possible, falling back to email reset");
+              this.logger.info(`[${email}] Manual login failed or not possible, falling back to email reset`);
           }
       }
 
@@ -109,11 +110,11 @@ export class NetflixModule extends BaseModule {
       if (loginState === "not_logged_in") {
         await this.handleEmailResetFlow(page, task, email, newPassword);
       } else {
-        await this.handleChangePasswordFlow(page, newPassword, password);
+        await this.handleChangePasswordFlow(page, email, newPassword, password);
       }
 
-      await this.handlePostSubmission(page);
-      this.logger.info("Password reset/change submitted successfully");
+      await this.handlePostSubmission(page, email);
+      this.logger.info(`[${email}] Password reset/change submitted successfully`);
 
       // 5. Update Status ke API (V3 Logic)
       const { status, reason } = this.calculateAccountState(payload.subscription_expiry);
@@ -167,9 +168,9 @@ export class NetflixModule extends BaseModule {
 
           // 2. Cek OTP / Get Help / Rejoin Screen (Polling 10 detik)
           const pinEntry = getPinEntry(page);
-          const rejoinText = getRejoinText(page);
+          const rejoinsText = getRejoinText(page);
 
-          this.logger.info("Waiting for next screen (OTP or Rejoin)...");
+          this.logger.info(`[${email}] Waiting for next screen (OTP or Rejoin)...`);
           let screenDetected: 'otp' | 'rejoin' | 'timeout' = 'timeout';
           
           for (let i = 0; i < 20; i++) { // Check setiap 500ms selama 10 detik
@@ -177,7 +178,7 @@ export class NetflixModule extends BaseModule {
                   screenDetected = 'otp';
                   break;
               }
-              if (await rejoinText.isVisible()) {
+              if (await rejoinsText.isVisible()) {
                   screenDetected = 'rejoin';
                   break;
               }
@@ -185,34 +186,34 @@ export class NetflixModule extends BaseModule {
           }
 
           if (screenDetected === 'otp' || screenDetected === 'rejoin') {
-              this.logger.info(`${screenDetected.toUpperCase()} screen detected!`);
+              this.logger.info(`[${email}] ${screenDetected.toUpperCase()} screen detected!`);
               
               if (screenDetected === 'rejoin') {
-                  this.logger.info("Mendeteksi tombol 'kirim ulang' berhasil.");
+                  this.logger.info(`[${email}] Mendeteksi tombol 'kirim ulang' berhasil.`);
               }
 
               // Klik Expand 'Dapatkan Bantuan'
               const getHelp = getGetHelpText(page);
               if (await getHelp.isVisible()) {
                   await getHelp.click();
-                  this.logger.info("Tombol 'Dapatkan Bantuan' berhasil diklik.");
+                  this.logger.info(`[${email}] Tombol 'Dapatkan Bantuan' berhasil diklik.`);
                   await this.sleep(1500); // Tunggu menu expand
               } else {
-                  this.logger.warn("Tombol 'Dapatkan Bantuan' tidak terlihat.");
+                  this.logger.warn(`[${email}] Tombol 'Dapatkan Bantuan' tidak terlihat.`);
               }
 
               // Klik 'Gunakan Sandi'
               const usePwBtn = getUsePasswordInsteadItem(page);
               if (await usePwBtn.isVisible()) {
                   await usePwBtn.click();
-                  this.logger.info("Tombol 'Gunakan sandi' berhasil diklik.");
+                  this.logger.info(`[${email}] Tombol 'Gunakan sandi' berhasil diklik.`);
                   await this.sleep(2000);
               } else {
-                  this.logger.warn("Tombol 'Gunakan sandi' tidak terlihat setelah klik bantuan.");
+                  this.logger.warn(`[${email}] Tombol 'Gunakan sandi' tidak terlihat setelah klik bantuan.`);
                   return false;
               }
           } else {
-              this.logger.info("Neither OTP nor Rejoin screen detected, checking if direct password input available...");
+              this.logger.info(`[${email}] Neither OTP nor Rejoin screen detected, checking if direct password input available...`);
           }
 
           // 3. Input Password (Coba 2x jika gagal sekali)
@@ -239,31 +240,76 @@ export class NetflixModule extends BaseModule {
                   const error = getLoginErrorCallout(page);
                   if (await error.isVisible()) {
                       const errorMsg = await error.innerText();
-                      this.logger.warn(`Login attempt ${attempt} failed: ${errorMsg}`);
+                      this.logger.warn(`[${email}] Login attempt ${attempt} failed: ${errorMsg}`);
                       if (attempt === 2) return false;
                       await this.sleep(2000);
                   }
               } else {
+                  this.logger.warn(`[${email}] Sign in button or password input not found on attempt ${attempt}`);
                   return false;
               }
           }
           
           return false;
       } catch (err) {
-          this.logger.error(`Error during manual login attempt: ${err instanceof Error ? err.message : String(err)}`);
+          this.logger.error(`[${email}] Error during manual login attempt: ${err instanceof Error ? err.message : String(err)}`);
           return false;
       }
   }
 
   private async handleEmailResetFlow(page: any, task: Task, email: string, newPassword: string): Promise<void> {
-    this.logger.info("Proceeding with email reset flow...");
-    await page.goto(REQUEST_RESET_URL);
+    this.logger.info(`[${email}] Proceeding with email reset flow...`);
+    
+    let success = false;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+        // Clear Cookies sebelum retry (jika bukan attempt pertama)
+        if (attempt > 1) {
+            this.logger.info(`[${email}] Attempt ${attempt}: Clearing cookies before retry...`);
+            await page.goto("https://www.netflix.com/clearcookies");
+            await this.sleep(2000);
+        }
 
-    await getEmailRadio(page).click();
-    await getEmailInput(page).fill(email);
-    await getSendEmailButton(page).click();
+        await page.goto(REQUEST_RESET_URL);
+        await this.sleep(1000);
 
-    this.logger.info("Reset email requested, waiting for event...");
+        await getEmailRadio(page).click();
+        await getEmailInput(page).fill(email);
+        await getSendEmailButton(page).click();
+        
+        this.logger.info(`[${email}] Attempt ${attempt}: Waiting for response from Netflix (up to 10s)...`);
+
+        // Cek apakah muncul pesan error "Terjadi Kesalahan" dengan waitFor (lebih akurat daripada sleep)
+        const errorCallout = getResetErrorCallout(page).first();
+        let hasError = false;
+        try {
+            await errorCallout.waitFor({ state: 'visible', timeout: 10000 });
+            hasError = true;
+        } catch (e) {
+            // Jika timeout, berarti tidak ada error yang muncul dalam 10 detik
+            hasError = false;
+        }
+
+        if (hasError) {
+            const errorMsg = await errorCallout.innerText();
+            this.logger.warn(`[${email}] Email reset attempt ${attempt} failed with error: "${errorMsg}".`);
+            
+            if (attempt === 3) {
+                this.logger.error(`[${email}] reset gagal terjadi kesalahan silahkan ambil link manual`);
+                throw new Error("reset gagal terjadi kesalahan silahkan ambil link manual");
+            }
+            
+            // Lanjut ke loop berikutnya (akan clear cookies di awal loop)
+            continue;
+        }
+
+        // Jika TIDAK ADA error setelah menunggu 10 detik, kita anggap berhasil
+        success = true;
+        break;
+    }
+
+    if (!success) return;
+
+    this.logger.info(`[${email}] Reset email requested successfully (no error detected after wait), waiting for event...`);
 
     const eventName = `${sanitizeEmail(email)}:NETFLIX_REQ_RESET_PASSWORD`;
     this.eventBus.emit('socket:subscribe', eventName);
@@ -276,7 +322,7 @@ export class NetflixModule extends BaseModule {
     this.eventBus.emit('socket:unsubscribe', eventName);
 
     const resetLink = eventData.data;
-    this.logger.info(`Received reset link: ${resetLink}`);
+    this.logger.info(`[${email}] Received reset link: ${resetLink}`);
 
     await page.goto(resetLink);
     await getNewPasswordInput(page).waitFor({ state: "visible" });
@@ -292,8 +338,8 @@ export class NetflixModule extends BaseModule {
     await getSubmitButton(page).click();
   }
 
-  private async handleChangePasswordFlow(page: any, newPassword: string, password?: string): Promise<void> {
-    this.logger.info("Already logged in, proceeding to change password");
+  private async handleChangePasswordFlow(page: any, email: string, newPassword: string, password?: string): Promise<void> {
+    this.logger.info(`[${email}] Already logged in, proceeding to change password`);
 
     if (!password) {
       throw new Error("Current password is required for logged-in change password flow");
@@ -311,40 +357,42 @@ export class NetflixModule extends BaseModule {
     await getSubmitButton(page).click();
   }
 
-  private async handlePostSubmission(page: any): Promise<void> {
-    this.logger.info("Waiting for Netflix to confirm password change...");
+  private async handlePostSubmission(page: any, email: string): Promise<void> {
+    this.logger.info(`[${email}] Waiting for Netflix to confirm password change...`);
     try {
+      // Tunggu sampai salah satu indikator sukses muncul
       await Promise.race([
-        page.waitForURL((url: any) => url.toString().includes('addphone'), { timeout: 15000 }),
-        page.waitForURL((url: any) => url.toString().includes('passwordUpdated=success'), { timeout: 15000 }),
-        page.waitForSelector('text="Tidak, Terima Kasih"', { timeout: 15000 }),
-        this.sleep(10000) 
-      ]);
+        page.waitForURL((url: any) => url.toString().includes('addphone'), { timeout: 30000 }),
+        page.waitForURL((url: any) => url.toString().includes('passwordUpdated=success'), { timeout: 30000 }),
+        page.waitForURL((url: any) => url.toString().includes('YourAccount'), { timeout: 30000 }),
+        page.waitForURL((url: any) => url.toString().includes('browse'), { timeout: 30000 }),
+        page.waitForSelector('text="Tidak, Terima Kasih", text="No Thanks", text="Not Now"', { timeout: 30000 }),
+      ]).catch(() => this.logger.warn(`[${email}] Timeout waiting for redirect, checking current state...`));
 
       const currentUrl = page.url();
-      this.logger.info(`Current page after submit: ${currentUrl}`);
+      this.logger.info(`[${email}] Current page after submit: ${currentUrl}`);
 
-      if (currentUrl.includes('addphone') || await page.isVisible('text="Tidak, Terima Kasih"')) {
-        this.logger.info("Handling 'Add Recovery Phone' prompt...");
-        const noThanksBtn = page.locator('button:has-text("Tidak, Terima Kasih"), a:has-text("Tidak, Terima Kasih")');
-        if (await noThanksBtn.isVisible()) {
-          await noThanksBtn.click();
-          await this.sleep(2000);
-        }
+      // 1. Handle prompt "Add Recovery Phone" atau "No Thanks"
+      const noThanksBtn = page.locator('button:has-text("Tidak, Terima Kasih"), a:has-text("Tidak, Terima Kasih"), button:has-text("No Thanks"), button:has-text("Not Now")');
+      if (await noThanksBtn.isVisible({ timeout: 5000 })) {
+        this.logger.info(`[${email}] Handling 'Add Recovery Phone' prompt...`);
+        await noThanksBtn.click();
+        await this.sleep(3000);
       }
 
-      if (page.url().includes('passwordUpdated=success')) {
-          this.logger.info("Verifying successful redirect to security page...");
+      // 2. Verifikasi jika mendarat di halaman keamanan/akun
+      if (page.url().includes('passwordUpdated=success') || page.url().includes('security')) {
+          this.logger.info(`[${email}] Verifying successful redirect to security page...`);
           const deviceLabel = page.locator('[data-uia="account-security-page+security-card+devices+item+label"]');
-          if (await deviceLabel.isVisible()) {
+          if (await deviceLabel.isVisible({ timeout: 5000 })) {
               await deviceLabel.click();
-              this.logger.info("Final verification click performed.");
+              this.logger.info(`[${email}] Final verification click performed.`);
           }
       }
     } catch (err) {
-      this.logger.warn("Post-submission verification timed out, but password might still be saved.");
+      this.logger.warn("Post-submission verification finished with notice: " + (err instanceof Error ? err.message : String(err)));
     }
-    await this.sleep(10000); 
+    await this.sleep(5000); 
   }
 
   private async notifyApiSuccess(payload: any, email: string, newPassword: string): Promise<void> {
