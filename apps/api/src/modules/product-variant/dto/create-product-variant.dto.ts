@@ -27,6 +27,10 @@ export class CreateProductVariantDto {
 
   @IsOptional()
   @IsNumber()
+  low_stock_threshold?: number;
+
+  @IsOptional()
+  @IsNumber()
   voucher_expiry_hours?: number;
 
   @IsOptional()

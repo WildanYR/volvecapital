@@ -12,6 +12,7 @@ import type { OrderByDirection } from '@/dashboard/types/order-by.type'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import {
+  AlertCircle,
   ClockFading,
   EllipsisVertical,
   Hourglass,
@@ -486,9 +487,15 @@ function RouteComponent() {
                             </div>
                             <div className="flex justify-between items-center text-muted-foreground">
                               <div className="space-y-1 w-full px-3 border-l-2 border-secondary">
-                                <p className="text-sm font-semibold text-primary">
-                                  Rp {variant.price?.toLocaleString('id-ID') ?? '–'}
-                                </p>
+                                <div className="flex justify-between items-center">
+                                  <p className="text-sm font-semibold text-primary">
+                                    Rp {variant.price?.toLocaleString('id-ID') ?? '–'}
+                                  </p>
+                                  <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                                    <AlertCircle className="size-3" />
+                                    Threshold: {variant.low_stock_threshold ?? 5}
+                                  </p>
+                                </div>
                               </div>
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-y-4 sm:gap-y-0 text-muted-foreground">

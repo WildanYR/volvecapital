@@ -38,6 +38,7 @@ export interface ProductVariantAttributes {
   redeem_display_config?: any;
   tutorial_id?: string;
   tutorial?: TutorialAttributes;
+  low_stock_threshold?: number;
 }
 
 interface ProductVariantCreationAttributes
@@ -114,4 +115,7 @@ export class ProductVariant extends Model<
 
   @BelongsTo(() => Tutorial, 'tutorial_id')
   declare tutorial?: Tutorial;
+
+  @Column({ type: DataType.INTEGER, defaultValue: 5 })
+  declare low_stock_threshold: number;
 }

@@ -82,11 +82,11 @@ function RouteComponent() {
             >
               <Card className="h-full transition-all duration-300 hover:shadow-lg hover:border-primary/50 group-hover:scale-[1.02] cursor-pointer bg-card/50 backdrop-blur-sm">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-xl font-bold group-hover:text-primary transition-colors">
+                  <CardTitle className="text-xl font-bold transition-colors">
                     {item.name}
                   </CardTitle>
-                  <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
-                    <Package className="size-5 text-primary" />
+                  <div className="p-2 bg-secondary rounded-lg transition-colors">
+                    <Package className="size-5" />
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -102,25 +102,25 @@ function RouteComponent() {
                     <div className="grid grid-cols-2 gap-4 pt-2 border-t border-border/50">
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                          <CheckCircle2 className="size-3 text-green-500" />
+                          <CheckCircle2 className="size-3" />
                           <span>Aktif</span>
                         </div>
-                        <span className="font-semibold text-green-600 dark:text-green-400">
+                        <span className="font-semibold">
                           {item.active}
                         </span>
                       </div>
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                          <AlertCircle className="size-3 text-red-500" />
+                          <AlertCircle className="size-3" />
                           <span>Expired</span>
                         </div>
-                        <span className="font-semibold text-red-600 dark:text-red-400">
+                        <span className="font-semibold">
                           {item.expired}
                         </span>
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-end pt-2 text-primary font-medium text-sm group-hover:gap-2 transition-all">
+                    <div className="flex items-center justify-end pt-2 font-medium text-sm group-hover:gap-2 transition-all">
                       Lihat Akun <ChevronRight className="size-4" />
                     </div>
                   </div>

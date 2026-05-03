@@ -71,7 +71,7 @@ export function StockNotification() {
                       <p className="text-sm font-semibold leading-none">
                         Stok Hampir Habis!
                       </p>
-                      <p className="text-xs text-muted-foreground mt-1">
+                      <p className="text-xs text-muted-foreground mt-1 text-pretty">
                         {item.product_name} - {item.variant_name} tersisa <span className="text-red-500 font-bold">{item.stock}</span> akun.
                       </p>
                     </div>

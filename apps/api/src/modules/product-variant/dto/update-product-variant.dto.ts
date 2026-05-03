@@ -31,6 +31,10 @@ export class UpdateProductVariantDto {
 
   @IsOptional()
   @IsNumber()
+  low_stock_threshold?: number;
+
+  @IsOptional()
+  @IsNumber()
   price: number;
 
   @IsOptional()

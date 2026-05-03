@@ -47,6 +47,7 @@ export interface ProductVariant {
   }
   tutorial_id?: string
   redeem_display_config?: any
+  low_stock_threshold?: number
 }
 
 export interface Product {
@@ -77,6 +78,7 @@ export interface CreateProductVariantPayload {
   voucher_expiry_hours?: number
   redeem_display_config?: any
   tutorial_id?: string
+  low_stock_threshold?: number
 }
 
 export interface CreateProductPayload {
@@ -96,6 +98,7 @@ export interface UpdateProductVariantPayload {
   voucher_expiry_hours?: number
   redeem_display_config?: any
   tutorial_id?: string
+  low_stock_threshold?: number
 }
 
 export interface UpdateProductPayload {

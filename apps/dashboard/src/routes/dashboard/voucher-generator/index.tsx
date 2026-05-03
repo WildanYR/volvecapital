@@ -142,14 +142,14 @@ function RouteComponent() {
   }
 
   const statCards = [
-    { title: 'Total Generated', value: stats?.totalGenerated, icon: Ticket, color: 'text-blue-500', bg: 'bg-blue-500/10' },
-    { title: 'Total Redeemed', value: stats?.totalRedeemed, icon: CheckCircle, color: 'text-green-500', bg: 'bg-green-500/10' },
-    { title: 'Total Tersedia', value: stats?.totalTersedia, icon: Zap, color: 'text-yellow-500', bg: 'bg-yellow-500/10' },
-    { title: 'Redeem & Tersedia', value: stats?.totalRedeemedDanTersedia, icon: BarChart3, color: 'text-purple-500', bg: 'bg-purple-500/10' },
-    { title: 'Total Unused', value: stats?.totalUnused, icon: Clock, color: 'text-orange-500', bg: 'bg-orange-500/10' },
-    { title: 'Total Used', value: stats?.totalUsed, icon: User, color: 'text-indigo-500', bg: 'bg-indigo-500/10' },
-    { title: 'Total Aktif', value: stats?.totalAktif, icon: Activity, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-    { title: 'Total Kadaluarsa', value: stats?.totalKadaluarsa, icon: AlertTriangle, color: 'text-red-500', bg: 'bg-red-500/10' },
+    { title: 'Total Generated', value: stats?.totalGenerated, icon: Ticket },
+    { title: 'Total Redeemed', value: stats?.totalRedeemed, icon: CheckCircle },
+    { title: 'Total Tersedia', value: stats?.totalTersedia, icon: Zap },
+    { title: 'Redeem & Tersedia', value: stats?.totalRedeemedDanTersedia, icon: BarChart3 },
+    { title: 'Total Unused', value: stats?.totalUnused, icon: Clock },
+    { title: 'Total Used', value: stats?.totalUsed, icon: User },
+    { title: 'Total Aktif', value: stats?.totalAktif, icon: Activity },
+    { title: 'Total Kadaluarsa', value: stats?.totalKadaluarsa, icon: AlertTriangle },
   ]
 
   const totalPages = Math.ceil((vouchersData?.total || 0) / limit)
@@ -168,8 +168,8 @@ function RouteComponent() {
             <CardContent className="p-3 sm:p-4 flex flex-col gap-1 min-w-0">
               <div className="flex items-center justify-between gap-1">
                 <p className="text-[9px] sm:text-[10px] font-bold text-muted-foreground uppercase tracking-wider truncate">{stat.title}</p>
-                <div className={`p-1 rounded-lg shrink-0 ${stat.bg}`}>
-                  <stat.icon className={`size-3 sm:size-3.5 ${stat.color}`} />
+                <div className="p-2 bg-secondary rounded-lg shrink-0">
+                  <stat.icon className="size-5 sm:size-6" />
                 </div>
               </div>
               <p className="text-xl sm:text-2xl font-black tracking-tight truncate mt-1">

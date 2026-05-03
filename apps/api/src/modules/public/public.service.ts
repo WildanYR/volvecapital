@@ -300,8 +300,8 @@ export class PublicService {
 
       // 2. Check stock
       const stockStatus = await this.getStockStatus(tenantId);
-      const variantStock = stockStatus.find(s => s.variant_id === variant.id);
-      if (!variantStock || variantStock.available <= 0) {
+      const variantStock = stockStatus.find(s => s.product_variant_id === variant.id);
+      if (!variantStock || variantStock.stock <= 0) {
         throw new ServiceUnavailableException('Stok untuk varian ini sedang habis');
       }
 
@@ -779,7 +779,18 @@ export class PublicService {
     const transaction = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema(tenantId, transaction);
-      const variants = await this.productVariantRepository.findAll({ transaction });
+      
+      // 1. Get low stock threshold from settings
+      const thresholdSetting = await this.tenantSettingRepository.findOne({
+        where: { key: 'LOW_STOCK_THRESHOLD' },
+        transaction,
+      });
+      const globalThreshold = thresholdSetting ? parseInt(thresholdSetting.value) : 5;
+
+      const variants = await this.productVariantRepository.findAll({ 
+        include: [{ model: Product, as: 'product' }],
+        transaction 
+      });
       
       const result = await Promise.all(
         variants.map(async (v) => {
@@ -806,10 +817,14 @@ export class PublicService {
             }
           }
 
+          const threshold = v.low_stock_threshold ?? globalThreshold;
+
           return {
-            variant_id: v.id,
-            name: v.name,
-            available: availableSlots,
+            product_variant_id: v.id,
+            product_name: (v as any).product?.name || 'Unknown',
+            variant_name: v.name,
+            stock: availableSlots,
+            low_stock: availableSlots <= threshold,
           };
         }),
       );

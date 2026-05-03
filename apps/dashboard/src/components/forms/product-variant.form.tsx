@@ -53,6 +53,7 @@ export function ProductVariantForm({
       show_buyer_portal: initialData?.redeem_display_config?.show_buyer_portal ?? true,
       custom_fields: initialData?.redeem_display_config?.custom_fields ?? [],
       tutorial_id: initialData?.tutorial_id ?? '',
+      low_stock_threshold: initialData?.low_stock_threshold?.toString() ?? '5',
     },
     onSubmit: ({ value }) => {
       const duration = convertTimeUnit(
@@ -90,6 +91,7 @@ export function ProductVariantForm({
           custom_fields: value.custom_fields,
         },
         tutorial_id: (value.tutorial_id && value.tutorial_id !== '__none__') ? value.tutorial_id : undefined,
+        low_stock_threshold: value.low_stock_threshold?.trim() ? Number.parseInt(value.low_stock_threshold) : 5,
       } as any
       
       onSubmit(payload)
@@ -141,6 +143,16 @@ export function ProductVariantForm({
                 label="Masa Berlaku Voucher (Jam)"
                 type="number"
                 placeholder="contoh: 24 (biarkan kosong untuk default)"
+              />
+            )}
+          />
+          <form.AppField
+            name="low_stock_threshold"
+            children={field => (
+              <field.TextField
+                label="Batas Peringatan Stok Habis"
+                type="number"
+                placeholder="contoh: 3 (notifikasi muncul jika stok <= angka ini)"
               />
             )}
           />

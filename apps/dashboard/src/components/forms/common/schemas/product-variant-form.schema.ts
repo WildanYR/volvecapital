@@ -13,6 +13,7 @@ export const ProductVariantFormSchema = z.object({
   description: z.string().default(''),
   price: z.string().nonempty('Harga wajib diisi').refine(v => !Number.isNaN(Number(v)) && Number(v) >= 0, 'Harga harus berupa angka positif'),
   voucher_expiry_hours: z.string().default('').refine(v => !v || (!Number.isNaN(Number(v)) && Number(v) >= 0), 'Harus berupa angka positif'),
+  low_stock_threshold: z.string().default('5').refine(v => !v || (!Number.isNaN(Number(v)) && Number(v) >= 0), 'Harus berupa angka positif'),
   show_email: z.boolean().default(true),
   show_password: z.boolean().default(true),
   show_profile_name: z.boolean().default(true),
