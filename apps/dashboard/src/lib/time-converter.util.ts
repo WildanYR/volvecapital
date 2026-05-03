@@ -84,3 +84,18 @@ export function formatDateIdStandard(date?: Date, hideTime?: boolean) {
   }
   return formatted
 }
+
+export function formatTimeOnly(date?: Date) {
+  if (!date)
+    return ''
+
+  const dt = new Date(date)
+  return dt
+    .toLocaleTimeString('id-ID', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+      timeZone: 'Asia/Jakarta',
+    })
+    .replace('.', ':')
+}

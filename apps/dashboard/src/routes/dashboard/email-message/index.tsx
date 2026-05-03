@@ -41,7 +41,7 @@ import {
 } from '@/dashboard/components/ui/alert-dialog'
 import { API_URL } from '@/dashboard/constants/api-url.cont'
 import { useAuth } from '@/dashboard/context-providers/auth.provider'
-import { formatDateIdStandard } from '@/dashboard/lib/time-converter.util'
+import { formatDateIdStandard, formatTimeOnly } from '@/dashboard/lib/time-converter.util'
 import { EmailMessageServiceGenerator, GetEmailMessageParamsSchema } from '@/dashboard/services/email-message.service'
 import { EmailSubjectServiceGenerator } from '@/dashboard/services/email-subject.service'
 
@@ -235,7 +235,7 @@ function RouteComponent() {
             <TableHeader className="bg-secondary text-secondary-foreground">
               <TableRow className="*:p-4">
                 <TableHead>Context</TableHead>
-                <TableHead>Subject Email</TableHead>
+                <TableHead className="hidden lg:table-cell">Subject Email</TableHead>
                 <TableHead className="text-center">Akses Buyer</TableHead>
                 <TableHead className="text-right">Aksi</TableHead>
               </TableRow>
@@ -247,7 +247,7 @@ function RouteComponent() {
                 <TableRow><TableCell colSpan={4} className="text-center py-6 text-muted-foreground">No subjects registered.</TableCell></TableRow>
               ) : (
                 paginatedSubjects?.map((s) => (
-                  <TableRow key={s.id} className="group *:px-4 *:py-6 h-16">
+                  <TableRow key={s.id} className="group *:px-2 lg:*:px-4 *:py-4 lg:*:py-6 h-16">
                     <TableCell>
                       <span className={`text-[11px] font-bold uppercase px-3 py-1 rounded-md ${
                         s.context === 'NETFLIX_OTP' ? 'bg-blue-500/20 text-blue-400' :
@@ -257,7 +257,7 @@ function RouteComponent() {
                         {s.context.replace('NETFLIX_', '').replace('_', ' ')}
                       </span>
                     </TableCell>
-                    <TableCell className="font-medium text-base">{s.subject}</TableCell>
+                    <TableCell className="font-medium text-base hidden lg:table-cell">{s.subject}</TableCell>
                     <TableCell className="text-center">
                       <div className="flex justify-center">
                         <Switch
@@ -350,24 +350,27 @@ function RouteComponent() {
                     <TableHeader className="bg-secondary text-secondary-foreground">
                       <TableRow className="*:p-4">
                         <TableHead>Akun Email</TableHead>
-                        <TableHead>Subject</TableHead>
-                        <TableHead>Context</TableHead>
-                        <TableHead>Parsed Data</TableHead>
+                        <TableHead className="hidden lg:table-cell">Subject</TableHead>
+                        <TableHead className="hidden lg:table-cell">Context</TableHead>
+                        <TableHead className="hidden lg:table-cell">Parsed Data</TableHead>
                         <TableHead>Email Date</TableHead>
-                        <TableHead className="text-right">Aksi</TableHead>
+                        <TableHead className="text-center lg:text-right">Aksi</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {emailMessages.items.map(emailMessage => (
-                        <TableRow key={emailMessage.id} className="*:px-4 *:py-6">
-                          <TableCell className="font-medium">{emailMessage.recipient_email || emailMessage.from_email}</TableCell>
-                          <TableCell className="max-w-sm truncate text-muted-foreground">{emailMessage.subject}</TableCell>
-                          <TableCell>
+                        <TableRow key={emailMessage.id} className="*:px-2 lg:*:px-4 *:py-4 lg:*:py-6">
+                          <TableCell className="font-medium max-w-[140px] lg:max-w-none truncate">{emailMessage.recipient_email || emailMessage.from_email}</TableCell>
+                          <TableCell className="max-w-sm truncate text-muted-foreground hidden lg:table-cell">{emailMessage.subject}</TableCell>
+                          <TableCell className="hidden lg:table-cell">
                             <span className="text-[11px] font-bold px-3 py-1 bg-accent rounded-md">{emailMessage.parsed_context}</span>
                           </TableCell>
-                          <TableCell className="max-w-xs truncate font-mono text-xs">{emailMessage.parsed_data}</TableCell>
-                          <TableCell className="text-sm">{formatDateIdStandard(emailMessage.email_date)}</TableCell>
-                          <TableCell className="text-right">
+                          <TableCell className="max-w-xs truncate font-mono text-xs hidden lg:table-cell">{emailMessage.parsed_data}</TableCell>
+                          <TableCell className="text-sm">
+                            <span className="hidden lg:inline">{formatDateIdStandard(emailMessage.email_date)}</span>
+                            <span className="lg:hidden font-medium">{formatTimeOnly(emailMessage.email_date)}</span>
+                          </TableCell>
+                          <TableCell className="text-center lg:text-right">
                             <div className="flex justify-end gap-2">
                               {emailMessage.parsed_data.startsWith('http') && (
                                 <Button

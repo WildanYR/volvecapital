@@ -15,6 +15,7 @@ import {
   ShoppingBag,
   SlidersHorizontal,
   Trash2,
+  LayoutDashboard,
 } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -307,27 +308,27 @@ function RouteComponent() {
                 <Table>
                   <TableHeader className="bg-secondary text-secondary-foreground">
                     <TableRow className="*:p-4">
-                      <TableHead className="w-[100px]">ID</TableHead>
-                      <TableHead>Tanggal</TableHead>
+                      <TableHead className="w-[100px] hidden lg:table-cell">ID</TableHead>
+                      <TableHead className="hidden md:table-cell">Tanggal</TableHead>
                       <TableHead>Preview Item</TableHead>
-                      <TableHead>Customer</TableHead>
-                      <TableHead>Platform</TableHead>
-                      <TableHead>Harga</TableHead>
-                      <TableHead>Aksi</TableHead>
+                      <TableHead className="hidden lg:table-cell">Customer</TableHead>
+                      <TableHead className="hidden lg:table-cell">Platform</TableHead>
+                      <TableHead className="hidden lg:table-cell">Harga</TableHead>
+                      <TableHead className="text-center lg:text-right">Aksi</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {transactions.items.map(transaction => (
-                      <TableRow key={transaction.id} className="*:px-4 *:py-6">
-                        <TableCell>
+                      <TableRow key={transaction.id} className="*:px-2 lg:*:px-4 *:py-4 lg:*:py-6">
+                        <TableCell className="hidden lg:table-cell">
                           <span className="text-xs text-muted-foreground">
                             {transaction.id}
                           </span>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden md:table-cell">
                           <div className="flex gap-2 items-center">
                             <Calendar className="size-4" />
-                            <p>{formatDateIdStandard(transaction.created_at)}</p>
+                            <p className="text-xs lg:text-sm">{formatDateIdStandard(transaction.created_at)}</p>
                           </div>
                         </TableCell>
                         <TableCell>
@@ -347,8 +348,8 @@ function RouteComponent() {
                                   >
                                     <Copy className="size-4" />
                                   </Button>
-                                  <div>
-                                    <p className="font-bold">
+                                  <div className="max-w-[150px] lg:max-w-none">
+                                    <p className="font-bold truncate">
                                       {transaction.items[0].user?.account.email.email}
                                     </p>
                                     <p className="text-muted-foreground text-xs">
@@ -374,8 +375,8 @@ function RouteComponent() {
                                 <span className="italic">No Item</span>
                               )}
                         </TableCell>
-                        <TableCell>{transaction.customer}</TableCell>
-                        <TableCell>
+                        <TableCell className="hidden lg:table-cell">{transaction.customer}</TableCell>
+                        <TableCell className="hidden lg:table-cell">
                           <div className="flex gap-2 items-center">
                             {transaction.platform === 'Shopee'
                               ? (
@@ -389,17 +390,23 @@ function RouteComponent() {
                                       <WhatsappLogo className="size-6" />
                                     </div>
                                   )
-                                : (
-                                    <div className="p-1 bg-neutral-500/20 text-neutral-500 w-min rounded-md">
-                                      <CircleQuestionMark className="size-6" />
-                                    </div>
-                                  )}
+                                : transaction.platform.toLowerCase() === 'dashboard'
+                                  ? (
+                                      <div className="p-1 bg-blue-500/20 text-blue-500 w-min rounded-md">
+                                        <LayoutDashboard className="size-6" />
+                                      </div>
+                                    )
+                                  : (
+                                      <div className="p-1 bg-neutral-500/20 text-neutral-500 w-min rounded-md">
+                                        <CircleQuestionMark className="size-6" />
+                                      </div>
+                                    )}
                             <p>{transaction.platform}</p>
                           </div>
                         </TableCell>
-                        <TableCell>{formatRupiah(transaction.total_price)}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
+                        <TableCell className="hidden lg:table-cell">{formatRupiah(transaction.total_price)}</TableCell>
+                        <TableCell className="text-center lg:text-right">
+                          <div className="flex justify-center lg:justify-end gap-2">
                             <Button
                               variant="secondary"
                               size="sm"
@@ -407,12 +414,15 @@ function RouteComponent() {
                                 handleViewItemDetail(transaction)
                               }}
                               className="cursor-pointer"
+                              title={`${transaction.items.length} Item`}
                             >
                               <ShoppingBag className="size-4" />
-                              {' '}
-                              {transaction.items.length}
-                              {' '}
-                              Item
+                              <span className="hidden lg:inline ml-1">
+                                {' '}
+                                {transaction.items.length}
+                                {' '}
+                                Item
+                              </span>
                             </Button>
                             <Button
                               variant="destructive"
@@ -421,10 +431,13 @@ function RouteComponent() {
                                 handleDeleteTransaction(transaction)
                               }}
                               className="cursor-pointer"
+                              title="Hapus"
                             >
                               <Trash2 className="size-4" />
-                              {' '}
-                              Hapus
+                              <span className="hidden lg:inline ml-1">
+                                {' '}
+                                Hapus
+                              </span>
                             </Button>
                           </div>
                         </TableCell>
