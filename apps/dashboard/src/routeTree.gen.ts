@@ -22,7 +22,6 @@ import { Route as DashboardTransactionIndexRouteImport } from './routes/dashboar
 import { Route as DashboardSettingIndexRouteImport } from './routes/dashboard/setting/index'
 import { Route as DashboardProductIndexRouteImport } from './routes/dashboard/product/index'
 import { Route as DashboardPlatformProductIndexRouteImport } from './routes/dashboard/platform-product/index'
-import { Route as DashboardLogsIndexRouteImport } from './routes/dashboard/logs/index'
 import { Route as DashboardEmailIndexRouteImport } from './routes/dashboard/email/index'
 import { Route as DashboardEmailMessageIndexRouteImport } from './routes/dashboard/email-message/index'
 import { Route as DashboardAccountIndexRouteImport } from './routes/dashboard/account/index'
@@ -107,11 +106,6 @@ const DashboardPlatformProductIndexRoute =
     path: '/platform-product/',
     getParentRoute: () => DashboardRouteRoute,
   } as any)
-const DashboardLogsIndexRoute = DashboardLogsIndexRouteImport.update({
-  id: '/logs/',
-  path: '/logs/',
-  getParentRoute: () => DashboardRouteRoute,
-} as any)
 const DashboardEmailIndexRoute = DashboardEmailIndexRouteImport.update({
   id: '/email/',
   path: '/email/',
@@ -216,7 +210,6 @@ export interface FileRoutesByFullPath {
   '/dashboard/account': typeof DashboardAccountIndexRoute
   '/dashboard/email-message': typeof DashboardEmailMessageIndexRoute
   '/dashboard/email': typeof DashboardEmailIndexRoute
-  '/dashboard/logs': typeof DashboardLogsIndexRoute
   '/dashboard/platform-product': typeof DashboardPlatformProductIndexRoute
   '/dashboard/product': typeof DashboardProductIndexRoute
   '/dashboard/setting': typeof DashboardSettingIndexRoute
@@ -246,7 +239,6 @@ export interface FileRoutesByTo {
   '/dashboard/account': typeof DashboardAccountIndexRoute
   '/dashboard/email-message': typeof DashboardEmailMessageIndexRoute
   '/dashboard/email': typeof DashboardEmailIndexRoute
-  '/dashboard/logs': typeof DashboardLogsIndexRoute
   '/dashboard/platform-product': typeof DashboardPlatformProductIndexRoute
   '/dashboard/product': typeof DashboardProductIndexRoute
   '/dashboard/setting': typeof DashboardSettingIndexRoute
@@ -278,7 +270,6 @@ export interface FileRoutesById {
   '/dashboard/account/': typeof DashboardAccountIndexRoute
   '/dashboard/email-message/': typeof DashboardEmailMessageIndexRoute
   '/dashboard/email/': typeof DashboardEmailIndexRoute
-  '/dashboard/logs/': typeof DashboardLogsIndexRoute
   '/dashboard/platform-product/': typeof DashboardPlatformProductIndexRoute
   '/dashboard/product/': typeof DashboardProductIndexRoute
   '/dashboard/setting/': typeof DashboardSettingIndexRoute
@@ -311,7 +302,6 @@ export interface FileRouteTypes {
     | '/dashboard/account'
     | '/dashboard/email-message'
     | '/dashboard/email'
-    | '/dashboard/logs'
     | '/dashboard/platform-product'
     | '/dashboard/product'
     | '/dashboard/setting'
@@ -341,7 +331,6 @@ export interface FileRouteTypes {
     | '/dashboard/account'
     | '/dashboard/email-message'
     | '/dashboard/email'
-    | '/dashboard/logs'
     | '/dashboard/platform-product'
     | '/dashboard/product'
     | '/dashboard/setting'
@@ -372,7 +361,6 @@ export interface FileRouteTypes {
     | '/dashboard/account/'
     | '/dashboard/email-message/'
     | '/dashboard/email/'
-    | '/dashboard/logs/'
     | '/dashboard/platform-product/'
     | '/dashboard/product/'
     | '/dashboard/setting/'
@@ -485,13 +473,6 @@ declare module '@tanstack/react-router' {
       path: '/platform-product'
       fullPath: '/dashboard/platform-product'
       preLoaderRoute: typeof DashboardPlatformProductIndexRouteImport
-      parentRoute: typeof DashboardRouteRoute
-    }
-    '/dashboard/logs/': {
-      id: '/dashboard/logs/'
-      path: '/logs'
-      fullPath: '/dashboard/logs'
-      preLoaderRoute: typeof DashboardLogsIndexRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
     '/dashboard/email/': {
@@ -615,7 +596,6 @@ interface DashboardRouteRouteChildren {
   DashboardAccountIndexRoute: typeof DashboardAccountIndexRoute
   DashboardEmailMessageIndexRoute: typeof DashboardEmailMessageIndexRoute
   DashboardEmailIndexRoute: typeof DashboardEmailIndexRoute
-  DashboardLogsIndexRoute: typeof DashboardLogsIndexRoute
   DashboardPlatformProductIndexRoute: typeof DashboardPlatformProductIndexRoute
   DashboardProductIndexRoute: typeof DashboardProductIndexRoute
   DashboardSettingIndexRoute: typeof DashboardSettingIndexRoute
@@ -639,7 +619,6 @@ const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardAccountIndexRoute: DashboardAccountIndexRoute,
   DashboardEmailMessageIndexRoute: DashboardEmailMessageIndexRoute,
   DashboardEmailIndexRoute: DashboardEmailIndexRoute,
-  DashboardLogsIndexRoute: DashboardLogsIndexRoute,
   DashboardPlatformProductIndexRoute: DashboardPlatformProductIndexRoute,
   DashboardProductIndexRoute: DashboardProductIndexRoute,
   DashboardSettingIndexRoute: DashboardSettingIndexRoute,
