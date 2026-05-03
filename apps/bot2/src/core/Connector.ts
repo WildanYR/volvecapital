@@ -155,7 +155,33 @@ export class Connector {
     // Subscribe ke EventBus untuk task completion events
     this.subscribeToTaskEvents();
 
+    // Listen for local subscription requests from modules
+    this.eventBus.on('socket:subscribe', (eventName: string) => {
+      this.subscribeToEvent(eventName);
+    });
+    this.eventBus.on('socket:unsubscribe', (eventName: string) => {
+      this.unsubscribeToEvent(eventName);
+    });
+
     this.logger.debug("Command handlers registered");
+  }
+
+  /**
+   * Subscribe to an event on the server
+   */
+  subscribeToEvent(eventName: string): void {
+    if (!this.socket || !this.isConnected) return;
+    this.socket.emit("subscribe-event", { eventName });
+    this.logger.debug(`Sent subscribe-event for: ${eventName}`);
+  }
+
+  /**
+   * Unsubscribe from an event on the server
+   */
+  unsubscribeToEvent(eventName: string): void {
+    if (!this.socket || !this.isConnected) return;
+    this.socket.emit("unsubscribe-event", { eventName });
+    this.logger.debug(`Sent unsubscribe-event for: ${eventName}`);
   }
 
   /**
