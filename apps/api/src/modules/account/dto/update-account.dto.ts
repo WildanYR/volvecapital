@@ -38,4 +38,8 @@ export class UpdateAccountDto {
   @IsOptional()
   @IsBoolean()
   pinned?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  switch_to_harian?: boolean;
 }

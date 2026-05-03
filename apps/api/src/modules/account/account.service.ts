@@ -11,6 +11,7 @@ import {
   ACCOUNT_REPOSITORY,
   ACCOUNT_USER_REPOSITORY,
   ACCOUNT_CAPITAL_REPOSITORY,
+  PRODUCT_VARIANT_REPOSITORY,
 } from 'src/constants/database.const';
 import {
   NETFLIX_RESET_PASSWORD,
@@ -60,6 +61,8 @@ export class AccountService {
     private readonly accountUserRepository: typeof AccountUser,
     @Inject(ACCOUNT_CAPITAL_REPOSITORY)
     private readonly accountCapitalRepository: typeof AccountCapital,
+    @Inject(PRODUCT_VARIANT_REPOSITORY)
+    private readonly productVariantRepository: typeof ProductVariant,
   ) {}
 
   async findAll(
@@ -441,6 +444,39 @@ export class AccountService {
         );
         accountUpdateData.batch_start_date = null;
         accountUpdateData.batch_end_date = null;
+      }
+
+      if (updateAccountDto.switch_to_harian) {
+        const currentAccount = await this.accountRepository.findOne({
+          where: { id: accountId },
+          include: [{ model: ProductVariant, as: 'product_variant' }],
+          transaction,
+        });
+
+        if (currentAccount?.product_variant?.product_id) {
+          console.log(`[DEBUG] Switching account ${accountId} to Harian. ProductID: ${currentAccount.product_variant.product_id}`);
+          
+          const harianVariant = await this.productVariantRepository.findOne({
+            where: {
+              product_id: currentAccount.product_variant.product_id,
+              name: { [Op.iLike]: '%Harian%' },
+            },
+            transaction,
+          });
+
+          if (harianVariant) {
+            console.log(`[DEBUG] Found Harian variant ID: ${harianVariant.id}`);
+            accountUpdateData.product_variant_id = harianVariant.id;
+          } else {
+            console.log(`[DEBUG] Harian variant NOT FOUND for product ${currentAccount.product_variant.product_id}`);
+            
+            const allVariants = await this.productVariantRepository.findAll({
+                where: { product_id: currentAccount.product_variant.product_id },
+                transaction
+            });
+            console.log(`[DEBUG] Available variants for this product:`, JSON.stringify(allVariants.map(v => ({ id: v.id, name: v.name })), null, 2));
+          }
+        }
       }
 
       await account.update(accountUpdateData, { transaction });
@@ -974,6 +1010,53 @@ export class AccountService {
         capitals,
         revenues,
       };
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
+
+  async triggerReset(tenantId: string, accountId: string) {
+    const transaction = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema(tenantId, transaction);
+
+      const account = await this.accountRepository.findOne({
+        where: { id: accountId },
+        include: [
+          { model: Email, as: 'email' },
+          { model: ProductVariant, as: 'product_variant' },
+        ],
+        transaction,
+      });
+
+      if (!account) {
+        throw new NotFoundException('Account not found');
+      }
+
+      const payload: NetflixResetPasswordPayload = {
+        id: Date.now().toString(),
+        accountId: account.id,
+        email: account.email.email,
+        password: account.account_password,
+        newPassword: '', // Biarkan Bot yang generate
+        subscription_expiry: account.subscription_expiry.toISOString(),
+        variant_name: account.product_variant.name,
+      };
+
+      const task: UpsertTaskQueueDto = {
+        execute_at: new Date(),
+        subject_id: account.id,
+        context: NETFLIX_RESET_PASSWORD,
+        payload: JSON.stringify(payload),
+        status: 'QUEUED',
+        tenant_id: tenantId,
+      };
+
+      await this.taskQueueService.upsert([task]);
+      await transaction.commit();
+
+      return { message: 'Reset task triggered successfully' };
     } catch (error) {
       await transaction.rollback();
       throw error;

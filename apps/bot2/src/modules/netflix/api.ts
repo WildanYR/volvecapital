@@ -6,6 +6,8 @@ export async function updateNetflixAccountStatus(
   credentials: AuthCredentials,
   accountId: string,
   newPassword: string,
+  status: string = 'ready',
+  switch_to_harian: boolean = false,
 ): Promise<void> {
   const headers = authHeaders(credentials);
   const url = `${apiBaseUrl}/account/${accountId}`;
@@ -13,7 +15,11 @@ export async function updateNetflixAccountStatus(
   const res = await fetch(url, {
     method: 'PATCH',
     headers,
-    body: JSON.stringify({ status: 'ready', account_password: newPassword })
+    body: JSON.stringify({ 
+      status, 
+      account_password: newPassword,
+      switch_to_harian
+    })
   })
 
   if (!res.ok) {

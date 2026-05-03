@@ -41,6 +41,7 @@ import {
   Pin,
   PinOff,
   Plus,
+  RefreshCw,
   SlidersHorizontal,
   SquarePen,
   SquareUser,
@@ -757,6 +758,32 @@ function RouteComponent() {
     pinAccountMutation.mutate({ accountId, pinned })
   }
 
+  const triggerResetMutation = useMutation({
+    mutationFn: (accountId: string) => accountService.triggerReset(accountId),
+    onSuccess: () => {
+      toast.success('Tugas reset berhasil ditambahkan ke antrian.')
+    },
+    onError: (error) => {
+      toast.error(`Gagal memicu reset: ${error.message}`)
+    },
+  })
+
+  const handleTriggerReset = (account: Account) => {
+    showAlertDialog({
+      title: 'Trigger Reset Password?',
+      description: (
+        <>
+          Apakah Anda yakin ingin memicu reset password sekarang untuk akun 
+          <span className="font-bold"> {account.email.email}</span>? 
+          Bot akan segera memproses reset ini.
+        </>
+      ),
+      confirmText: 'Reset Now',
+      isConfirming: triggerResetMutation.isPending,
+      onConfirm: () => triggerResetMutation.mutate(account.id),
+    })
+  }
+
   return (
     <>
       <div className="flex flex-col gap-8">
@@ -1083,6 +1110,16 @@ function RouteComponent() {
                                 </span>
                                 {' '}
                                 Clear
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onSelect={() => handleTriggerReset(account)}
+                                className="text-blue-500 focus:text-blue-600 font-bold"
+                              >
+                                <span>
+                                  <RefreshCw className={triggerResetMutation.isPending ? 'animate-spin' : ''} />
+                                </span>
+                                {' '}
+                                Reset Now
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>

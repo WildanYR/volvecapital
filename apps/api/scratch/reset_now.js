@@ -29,9 +29,10 @@ async function run() {
         for (const tenant of tenants) {
             try {
                 const res = await pg.query(`
-                    SELECT a.id, a.account_password, e.email 
+                    SELECT a.id, a.account_password, a.subscription_expiry, pv.name as variant_name, e.email 
                     FROM ${tenant}.account a 
                     JOIN ${tenant}.email e ON e.id = a.email_id 
+                    JOIN ${tenant}.product_variant pv ON pv.id = a.product_variant_id
                     WHERE e.email = $1
                 `, [emailInput]);
 
@@ -40,7 +41,9 @@ async function run() {
                         tenant,
                         id: res.rows[0].id,
                         email: res.rows[0].email,
-                        password: res.rows[0].account_password
+                        password: res.rows[0].account_password,
+                        subscription_expiry: res.rows[0].subscription_expiry,
+                        variant_name: res.rows[0].variant_name
                     };
                     break;
                 }
@@ -53,12 +56,14 @@ async function run() {
         }
 
         console.log(`✅ Ditemukan! Tenant: ${targetAccount.tenant}, ID: ${targetAccount.id}`);
+        console.log(`   Expiry: ${targetAccount.subscription_expiry}`);
+        console.log(`   Variant: ${targetAccount.variant_name}`);
 
         // 3. Siapkan waktu eksekusi (10 detik lagi)
         const executeAt = new Date();
         executeAt.setSeconds(executeAt.getSeconds() + 10);
         const randomSuffix = Math.floor(Math.random() * 1000);
-        const newPassword = `VolveReset${randomSuffix}!`; // Password lebih kuat (Besar, Kecil, Angka, Simbol)
+        const newPassword = `VolveReset${randomSuffix}!`; 
 
         // 4. Update Database
         await pg.query(`UPDATE ${targetAccount.tenant}.account SET batch_end_date = $1 WHERE id = $2`, [executeAt, targetAccount.id]);
@@ -68,7 +73,9 @@ async function run() {
             accountId: targetAccount.id,
             email: targetAccount.email,
             password: targetAccount.password,
-            newPassword: newPassword
+            newPassword: newPassword,
+            subscription_expiry: targetAccount.subscription_expiry,
+            variant_name: targetAccount.variant_name
         });
 
         await pg.query(`

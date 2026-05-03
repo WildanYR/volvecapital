@@ -666,5 +666,21 @@ export function AccountServiceGenerator(apiUrl: string, accessToken: string, ten
         throw new Error(errorData.message || 'Failed to add capital')
       }
     },
+    triggerReset: async (accountId: string): Promise<void> => {
+      const response = await generateApiFetch(
+        apiUrl,
+        accessToken,
+        tenantId,
+        `/account/${accountId}/reset`,
+        undefined,
+        {
+          method: 'POST',
+        },
+      )
+      if (!response.ok) {
+        const errorData = await parseApiResponse(response)
+        throw new Error(errorData.message || 'Failed to trigger reset')
+      }
+    },
   }
 }

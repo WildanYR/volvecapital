@@ -21,4 +21,6 @@ export interface NetflixResetPasswordPayload {
   password: string;
   newPassword: string;
   accountId: string;
+  subscription_expiry: string;
+  variant_name: string;
 }

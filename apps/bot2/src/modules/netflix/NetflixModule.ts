@@ -67,7 +67,15 @@ export class NetflixModule extends BaseModule {
 
   async resetPassword(task: Task): Promise<void> {
     const payload = task.payload as unknown as ResetPasswordPayload;
-    const { email, password, newPassword } = payload;
+    const email = payload.email;
+    const password = payload.password;
+    let newPassword = payload.newPassword;
+
+    // Jika API tidak mengirim password baru, Bot buat sendiri (V3 Logic: 6 char, lower + numbers)
+    if (!newPassword || newPassword.trim() === "") {
+        newPassword = this.generateRandomPassword(6);
+        this.logger.info(`No password provided from API, generated new one: ${newPassword}`);
+    }
 
     const contextName = `${sanitizeEmail(email)}`;
     this.logger.info(
@@ -106,7 +114,22 @@ export class NetflixModule extends BaseModule {
 
       await this.handlePostSubmission(page);
       this.logger.info("Password reset/change submitted successfully");
-      await this.notifyApiSuccess(payload, email, newPassword);
+
+      // 5. Update Status ke API (V3 Logic)
+      const { status, reason } = this.calculateAccountState(payload.subscription_expiry);
+      const shouldSwitch = payload.variant_name.toLowerCase() !== 'harian';
+      const variantLog = shouldSwitch ? `SWITCHED (${payload.variant_name} -> Harian)` : "TETAP (Harian)";
+
+      this.logger.info(`RESET SUKSES | Email: ${email} | Pass: ${newPassword} | Status: ${status.toUpperCase()} (${reason}) | Variant: ${variantLog}`);
+
+      await updateNetflixAccountStatus(
+        this.apiBaseUrl,
+        this.authCredentials,
+        payload.accountId,
+        newPassword,
+        status,
+        shouldSwitch
+      );
 
     } catch (error) {
       await this.handleTaskError(error, email, newPassword);
@@ -197,7 +220,15 @@ export class NetflixModule extends BaseModule {
               const pwInput = getPasswordInput(page);
               if (await pwInput.isVisible({ timeout: 5000 })) {
                   await pwInput.fill(password);
-                  await getSignInButton(page).click();
+                  await this.sleep(1000); // Tunggu sebentar agar tombol enabled
+                  
+                  const signInBtn = getSignInButton(page);
+                  if (await signInBtn.isEnabled({ timeout: 5000 })) {
+                      await signInBtn.click();
+                  } else {
+                      this.logger.warn("Sign in button still disabled, trying Enter key...");
+                      await pwInput.press('Enter');
+                  }
                   
                   await this.sleep(3000);
                   
@@ -360,5 +391,54 @@ export class NetflixModule extends BaseModule {
         await ctx.close();
         this.invalidateContext(contextName);
       }
+  }
+
+  /**
+   * Logika V3: Hitung status enable/disable berdasarkan expiry & jam 15:00 WIB
+   */
+  private calculateAccountState(subscriptionExpiry: string): { status: string; reason: string } {
+    const now = new Date(); 
+    const expiry = new Date(subscriptionExpiry);
+    
+    // 1. Jika sudah lewat tanggal
+    if (now > expiry) {
+        return { status: 'disable', reason: 'Sudah lewat tanggal (Kadaluarsa)' };
+    }
+
+    // 2. Jika hari ini adalah H-1 (Hari terakhir masa aktif)
+    const oneDayInMs = 24 * 60 * 60 * 1000;
+    const timeToExpiry = expiry.getTime() - now.getTime();
+    const isLastDay = timeToExpiry <= oneDayInMs;
+
+    if (isLastDay) {
+        // Cek jam 15:00 (Asumsi server/bot di WIB)
+        const hour = now.getHours();
+        if (hour >= 15) {
+            return { status: 'disable', reason: 'Sudah lewat jam 15:00 (Hari Terakhir)' };
+        }
+    }
+
+    return { status: 'ready', reason: 'Masih aktif' };
+  }
+
+  /**
+   * Menghasilkan password acak (lowercase + angka) sepanjang N karakter
+   */
+  private generateRandomPassword(length: number): string {
+    const letters = 'abcdefghijklmnopqrstuvwxyz';
+    const numbers = '0123456789';
+    let result = '';
+    
+    // 3 Karakter pertama: Huruf
+    for (let i = 0; i < 3; i++) {
+        result += letters.charAt(Math.floor(Math.random() * letters.length));
+    }
+    
+    // 3 Karakter berikutnya: Angka
+    for (let i = 0; i < 3; i++) {
+        result += numbers.charAt(Math.floor(Math.random() * numbers.length));
+    }
+    
+    return result;
   }
 }

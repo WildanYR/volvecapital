@@ -141,4 +141,9 @@ export class AccountController {
       addAccountCapitalDto,
     );
   }
+
+  @Post(':id/reset')
+  resetAccount(@Param('id') id: string, @Request() request: AppRequest) {
+    return this.accountService.triggerReset(request.tenant_id!, id);
+  }
 }

@@ -8,4 +8,6 @@ export interface ResetPasswordPayload {
   password?: string;     // Old password (for change password flow)
   newPassword: string;   // New password
   accountId: string;     // Account.id used for PATCH /account/:id
+  subscription_expiry: string;
+  variant_name: string;
 }
