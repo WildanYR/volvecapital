@@ -42,7 +42,10 @@ export class EmailForwardService {
 
         for (const es of emailSubject) {
           for (const e of payload.emails) {
-            if (e.subject === es.dataValues.subject) {
+            const incomingSubject = e.subject.trim().toLowerCase();
+            const dbSubject = es.dataValues.subject.trim().toLowerCase();
+            
+            if (incomingSubject === dbSubject) {
               let data: string | null = null;
               let context: string | null = null;
 
@@ -74,14 +77,21 @@ export class EmailForwardService {
                   }, { transaction });
 
                 // 2. Send via Socket
-                const sanitizeEmail = this.emailParser.sanitizeEmail(e.from);
-                const eventName = `${sanitizeEmail}:${context}`;
-                this.socketGateway.sendEvent(eventName, {
-                  from: e.from,
-                  date: e.date,
-                  subject: e.subject,
-                  data,
-                });
+                // Hanya kirim sinyal jika email baru (kurang dari 2 menit yang lalu)
+                const twoMinutesAgo = Date.now() - (2 * 60 * 1000);
+                const isRecent = new Date(e.date).getTime() > twoMinutesAgo;
+
+                if (isRecent) {
+                    const sanitizeEmail = this.emailParser.sanitizeEmail(e.recipient);
+                    const eventName = `${sanitizeEmail}:${context}`;
+                    
+                    this.socketGateway.sendEvent(eventName, {
+                        from: e.from,
+                        date: e.date,
+                        subject: e.subject,
+                        data,
+                    });
+                }
               }
             }
           }

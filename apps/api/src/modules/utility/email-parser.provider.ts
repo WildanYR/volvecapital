@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 @Injectable()
 export class EmailParser {
   sanitizeEmail(email: string) {
-    return email.replace(/[.@]/g, '_');
+    return email.toLowerCase().replace(/[.@]/g, '_');
   }
 
   extractNetflixResetLink(emailText: string) {
