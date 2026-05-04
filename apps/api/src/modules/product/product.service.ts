@@ -8,9 +8,11 @@ import { Op, QueryTypes, WhereOptions } from 'sequelize';
 import {
   PRODUCT_REPOSITORY,
   PRODUCT_VARIANT_REPOSITORY,
+  VOUCHER_REPOSITORY,
 } from 'src/constants/database.const';
 import { ProductVariant } from 'src/database/models/product-variant.model';
 import { Product } from 'src/database/models/product.model';
+import { Voucher } from 'src/database/models/voucher.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
 import { PaginationProvider } from '../utility/pagination.provider';
 import { BaseGetAllUrlQuery } from '../utility/types/base-get-all-url-query.type';
@@ -28,6 +30,8 @@ export class ProductService {
     private readonly productRepository: typeof Product,
     @Inject(PRODUCT_VARIANT_REPOSITORY)
     private readonly productVariantRepository: typeof ProductVariant,
+    @Inject(VOUCHER_REPOSITORY)
+    private readonly voucherRepository: typeof Voucher,
   ) {}
 
   async findAll(
@@ -286,6 +290,7 @@ export class ProductService {
 
       const product = await this.productRepository.findOne({
         where: { id: productId },
+        include: [{ model: ProductVariant, as: 'variants' }],
         transaction,
       });
 
@@ -294,6 +299,26 @@ export class ProductService {
           `product dengan id: ${productId} tidak ditemukan`,
         );
       }
+
+      const variants = (product as any).variants as ProductVariant[];
+
+      if (variants && variants.length > 0) {
+        const variantIds = variants.map((v) => v.id);
+
+        // 1. Hapus semua voucher yang terkait variant terlebih dahulu
+        await this.voucherRepository.destroy({
+          where: { product_variant_id: variantIds },
+          transaction,
+        });
+
+        // 2. Hapus semua variant
+        await this.productVariantRepository.destroy({
+          where: { product_id: productId },
+          transaction,
+        });
+      }
+
+      // 3. Baru hapus produknya
       await product.destroy({ transaction });
       await transaction.commit();
     }
