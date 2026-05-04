@@ -103,6 +103,11 @@ export function ProductGrid({ products }: ProductGridProps) {
                         </span>
                       </div>
                       <div className="text-right">
+                        {variant.strike_price && (
+                          <span className="text-[10px] text-slate-400 line-through block mb-0.5">
+                            {formatCurrency(variant.strike_price)}
+                          </span>
+                        )}
                         <span className="text-[#f97316] font-black text-lg block">
                           {formatCurrency(variant.price)}
                         </span>

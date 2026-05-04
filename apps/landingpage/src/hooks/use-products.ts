@@ -9,6 +9,7 @@ export interface ProductVariant {
   duration_unit: string
   copy_template?: string
   description?: string
+  strike_price?: number
 }
 
 export interface Product {

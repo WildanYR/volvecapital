@@ -154,7 +154,12 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
                         Durasi: {formatDuration(variant.duration)}
                       </span>
                     </div>
-                    <div className="text-right relative z-10">
+                    <div className="text-right relative z-10 flex flex-col items-end">
+                      {variant.strike_price && (
+                        <span className="text-[10px] text-slate-400 line-through font-bold mb-0.5">
+                          {formatCurrency(variant.strike_price)}
+                        </span>
+                      )}
                       <span className={`font-black text-2xl md:text-3xl block transition-colors ${selectedVariant?.id === variant.id ? 'text-[#0f172a]' : 'text-[#0f172a]'}`}>
                         {formatCurrency(variant.price)}
                       </span>
@@ -257,9 +262,16 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
                   </div>
                   <div className="flex justify-between items-center pt-4 border-t border-slate-50 mt-4">
                     <span className="text-[#0f172a] font-black uppercase tracking-widest text-xs">Total Bayar</span>
-                    <span className="text-[#f97316] font-black text-4xl">
-                      {selectedVariant ? formatCurrency(selectedVariant.price) : 'Rp 0'}
-                    </span>
+                    <div className="text-right">
+                      {selectedVariant?.strike_price && (
+                        <span className="text-xs text-slate-400 line-through font-bold block -mb-1">
+                          {formatCurrency(selectedVariant.strike_price)}
+                        </span>
+                      )}
+                      <span className="text-[#f97316] font-black text-4xl">
+                        {selectedVariant ? formatCurrency(selectedVariant.price) : 'Rp 0'}
+                      </span>
+                    </div>
                   </div>
                 </div>
 

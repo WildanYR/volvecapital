@@ -47,7 +47,7 @@ export default function ProductPage() {
               </div>
               <input 
                 type="text"
-                placeholder="Cari layanan (Netflix, Spotify...)"
+                placeholder="Cari Produk"
                 className="w-full bg-transparent border-none py-4 text-xl font-bold text-[#0f172a] focus:outline-none placeholder:text-slate-300"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
@@ -106,7 +106,14 @@ export default function ProductPage() {
                       className="p-5 rounded-3xl bg-slate-50 border border-slate-100 flex justify-between items-center group/item hover:bg-orange-50 hover:border-orange-200 transition-all"
                     >
                       <span className="font-black text-[#0f172a] text-base group-hover/item:text-[#f97316] transition-colors">{variant.name}</span>
-                      <span className="text-[#f97316] font-black text-base">{formatCurrency(variant.price)}</span>
+                      <div className="text-right">
+                        {variant.strike_price && (
+                          <span className="text-[10px] text-slate-400 line-through block -mb-1">
+                            {formatCurrency(variant.strike_price)}
+                          </span>
+                        )}
+                        <span className="text-[#f97316] font-black text-base">{formatCurrency(variant.price)}</span>
+                      </div>
                     </div>
                   ))}
                 </div>

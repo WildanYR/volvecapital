@@ -39,6 +39,7 @@ export interface ProductVariantAttributes {
   tutorial_id?: string;
   tutorial?: TutorialAttributes;
   low_stock_threshold?: number;
+  strike_price?: number;
 }
 
 interface ProductVariantCreationAttributes
@@ -118,4 +119,7 @@ export class ProductVariant extends Model<
 
   @Column({ type: DataType.INTEGER, defaultValue: 5 })
   declare low_stock_threshold: number;
+  
+  @Column(DataType.INTEGER)
+  declare strike_price?: number;
 }

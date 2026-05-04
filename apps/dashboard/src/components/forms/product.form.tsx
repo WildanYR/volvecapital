@@ -40,6 +40,7 @@ function getInitialData(data?: Product): ProductFormSubmitData {
           description: '',
           tutorial_id: '__none__',
           low_stock_threshold: '5',
+          strike_price: '',
           custom_fields: [],
         },
       ],
@@ -59,6 +60,7 @@ function getInitialData(data?: Product): ProductFormSubmitData {
       price: v.price?.toString() ?? '0',
       voucher_expiry_hours: v.voucher_expiry_hours?.toString() ?? '',
       low_stock_threshold: v.low_stock_threshold?.toString() ?? '5',
+      strike_price: v.strike_price?.toString() ?? '',
       description: v.description ?? '',
       tutorial_id: v.tutorial_id ?? '__none__',
       show_email: v.redeem_display_config?.show_email ?? true,
@@ -124,6 +126,7 @@ export function ProductForm({
           show_copy_template: v.show_copy_template,
           show_buyer_portal: v.show_buyer_portal,
           low_stock_threshold: v.low_stock_threshold ? Number.parseInt(v.low_stock_threshold) : 5,
+          strike_price: v.strike_price ? Number.parseInt(v.strike_price) : undefined,
           custom_fields: v.custom_fields,
         }
       })
@@ -183,16 +186,28 @@ export function ProductForm({
                         />
                       )}
                     />
-                    <form.AppField
-                      name={`variants[${i}].price`}
-                      children={subfield => (
-                        <subfield.TextField
-                          label="Harga (Rp)"
-                          type="number"
-                          placeholder="contoh: 50000"
-                        />
-                      )}
-                    />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <form.AppField
+                        name={`variants[${i}].price`}
+                        children={subfield => (
+                          <subfield.TextField
+                            label="Harga Jual (Rp)"
+                            type="number"
+                            placeholder="contoh: 50000"
+                          />
+                        )}
+                      />
+                      <form.AppField
+                        name={`variants[${i}].strike_price`}
+                        children={subfield => (
+                          <subfield.TextField
+                            label="Harga Coret (Rp)"
+                            type="number"
+                            placeholder="contoh: 100000"
+                          />
+                        )}
+                      />
+                    </div>
                     <form.AppField
                       name={`variants[${i}].voucher_expiry_hours`}
                       children={subfield => (
@@ -268,6 +283,7 @@ export function ProductForm({
                       description: '',
                       tutorial_id: '__none__',
                       low_stock_threshold: '5',
+                      strike_price: '',
                       custom_fields: [],
                     })}
                   className="w-full cursor-pointer"

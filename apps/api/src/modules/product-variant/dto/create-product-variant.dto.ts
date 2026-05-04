@@ -46,5 +46,9 @@ export class CreateProductVariantDto {
   product_id: string;
 
   @IsOptional()
+  @IsNumber()
+  strike_price?: number;
+
+  @IsOptional()
   redeem_display_config?: any;
 }

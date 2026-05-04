@@ -54,6 +54,7 @@ export function ProductVariantForm({
       custom_fields: initialData?.redeem_display_config?.custom_fields ?? [],
       tutorial_id: initialData?.tutorial_id ?? '',
       low_stock_threshold: initialData?.low_stock_threshold?.toString() ?? '5',
+      strike_price: initialData?.strike_price?.toString() ?? '',
     },
     onSubmit: ({ value }) => {
       const duration = convertTimeUnit(
@@ -92,6 +93,7 @@ export function ProductVariantForm({
         },
         tutorial_id: (value.tutorial_id && value.tutorial_id !== '__none__') ? value.tutorial_id : undefined,
         low_stock_threshold: value.low_stock_threshold?.trim() ? Number.parseInt(value.low_stock_threshold) : 5,
+        strike_price: value.strike_price?.trim() ? Number.parseInt(value.strike_price) : undefined,
       } as any
       
       onSubmit(payload)
@@ -117,16 +119,28 @@ export function ProductVariantForm({
               />
             )}
           />
-          <form.AppField
-            name="price"
-            children={field => (
-              <field.TextField
-                label="Harga (Rp)"
-                type="number"
-                placeholder="contoh: 50000"
-              />
-            )}
-          />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <form.AppField
+              name="price"
+              children={field => (
+                <field.TextField
+                  label="Harga Jual (Rp)"
+                  type="number"
+                  placeholder="contoh: 50000"
+                />
+              )}
+            />
+            <form.AppField
+              name="strike_price"
+              children={field => (
+                <field.TextField
+                  label="Harga Coret / Promo (Rp)"
+                  type="number"
+                  placeholder="contoh: 100000"
+                />
+              )}
+            />
+          </div>
           <form.AppField
             name="description"
             children={field => (
