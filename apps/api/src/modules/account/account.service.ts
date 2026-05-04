@@ -1186,13 +1186,25 @@ export class AccountService {
   async bulkAction(
     tenantId: string,
     ids: string[],
-    action: 'pin' | 'unpin' | 'freeze' | 'unfreeze' | 'delete' | 'clear' | 'reset_now' | 'auto_reload'
+    action: 'pin' | 'unpin' | 'freeze' | 'unfreeze' | 'delete' | 'clear' | 'reset_now' | 'auto_reload' | 'enable' | 'disable'
   ) {
     const transaction = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema(tenantId, transaction);
 
       switch (action) {
+        case 'enable':
+          await this.accountRepository.update(
+            { status: 'ready', freeze_until: null },
+            { where: { id: { [Op.in]: ids } }, transaction }
+          );
+          break;
+        case 'disable':
+          await this.accountRepository.update(
+            { status: 'disable' },
+            { where: { id: { [Op.in]: ids } }, transaction }
+          );
+          break;
         case 'pin':
           await this.accountRepository.update(
             { pinned: true },

@@ -1104,6 +1104,14 @@ function RouteComponent() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start" className="w-48">
+                      <DropdownMenuItem onSelect={() => handleBulkActionClick('enable')}>
+                        <Check className="mr-2 h-4 w-4 text-green-600" />
+                        Bulk Enable
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => handleBulkActionClick('disable')}>
+                        <X className="mr-2 h-4 w-4 text-red-600" />
+                        Bulk Disable
+                      </DropdownMenuItem>
                       <DropdownMenuItem onSelect={() => handleBulkActionClick('pin')}>
                         <Pin className="mr-2 h-4 w-4" />
                         Bulk Pin
