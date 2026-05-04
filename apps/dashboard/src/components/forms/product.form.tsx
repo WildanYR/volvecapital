@@ -39,6 +39,7 @@ function getInitialData(data?: Product): ProductFormSubmitData {
           show_buyer_portal: true,
           description: '',
           tutorial_id: '__none__',
+          low_stock_threshold: '5',
           custom_fields: [],
         },
       ],
@@ -57,6 +58,7 @@ function getInitialData(data?: Product): ProductFormSubmitData {
       copy_template: v.copy_template || '',
       price: v.price?.toString() ?? '0',
       voucher_expiry_hours: v.voucher_expiry_hours?.toString() ?? '',
+      low_stock_threshold: v.low_stock_threshold?.toString() ?? '5',
       description: v.description ?? '',
       tutorial_id: v.tutorial_id ?? '__none__',
       show_email: v.redeem_display_config?.show_email ?? true,
@@ -121,6 +123,7 @@ export function ProductForm({
           show_expired_at: v.show_expired_at,
           show_copy_template: v.show_copy_template,
           show_buyer_portal: v.show_buyer_portal,
+          low_stock_threshold: v.low_stock_threshold ? Number.parseInt(v.low_stock_threshold) : 5,
           custom_fields: v.custom_fields,
         }
       })
@@ -264,6 +267,7 @@ export function ProductForm({
                       show_buyer_portal: true,
                       description: '',
                       tutorial_id: '__none__',
+                      low_stock_threshold: '5',
                       custom_fields: [],
                     })}
                   className="w-full cursor-pointer"

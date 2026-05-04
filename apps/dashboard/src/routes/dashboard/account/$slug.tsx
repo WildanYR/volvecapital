@@ -832,16 +832,6 @@ function RouteComponent() {
     },
   })
 
-  const confirmTopupMutation = useMutation({
-    mutationFn: (accountId: string) => accountService.confirmTopup(accountId),
-    onSuccess: () => {
-      setPendingTopup(null)
-      toast.success('Konfirmasi top-up berhasil dikirim! Bot akan melanjutkan.')
-    },
-    onError: (error) => {
-      toast.error(`Gagal konfirmasi topup: ${error.message}`)
-    },
-  })
 
   const handleTriggerReset = (account: Account) => {
     showAlertDialog({
