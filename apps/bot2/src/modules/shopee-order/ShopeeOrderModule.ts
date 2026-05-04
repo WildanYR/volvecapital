@@ -127,7 +127,7 @@ export class ShopeeOrderModule extends BaseModule {
   async executeLoop(): Promise<void> {
     // Gunakan dedicated page untuk loop, buat baru jika belum ada atau sudah ditutup
     if (!this.loopPage || this.loopPage.isClosed()) {
-      const context = await this.getOrCreateContext("shopee", { blockAssets: true });
+      const context = await this.getOrCreateContext("shopee", { blockAssets: false });
       this.loopPage = await context.newPage();
       this.loopPage.setDefaultTimeout(DEFAULT_TIMEOUT_MS);
     }
@@ -249,7 +249,7 @@ export class ShopeeOrderModule extends BaseModule {
     this.logger.info(`Processing order ${orderId}`);
 
     let orderStatus = initialStatus;
-    const context = await this.getOrCreateContext("shopee", { blockAssets: true });
+    const context = await this.getOrCreateContext("shopee", { blockAssets: false });
     const page = await context.newPage();
     page.setDefaultTimeout(DEFAULT_TIMEOUT_MS);
 
