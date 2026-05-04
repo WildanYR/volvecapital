@@ -309,82 +309,84 @@ export class NetflixModule extends BaseModule {
   private async handleEmailResetFlow(page: any, task: Task, email: string, newPassword: string): Promise<void> {
     this.logger.info(`[${email}] Proceeding with email reset flow...`);
     
-    let success = false;
-    for (let attempt = 1; attempt <= 3; attempt++) {
-        // Clear Cookies sebelum retry (jika bukan attempt pertama)
-        if (attempt > 1) {
-            this.logger.info(`[${email}] Attempt ${attempt}: Clearing cookies before retry...`);
-            await page.goto("https://www.netflix.com/clearcookies");
-            await this.sleep(2000);
-        }
-
-        await page.goto(REQUEST_RESET_URL);
-        await this.sleep(1000);
-
-        await getEmailRadio(page).click();
-        await getEmailInput(page).fill(email);
-        await getSendEmailButton(page).click();
-        
-        this.logger.info(`[${email}] Attempt ${attempt}: Waiting for response from Netflix (up to 10s)...`);
-
-        // Cek apakah muncul pesan error "Terjadi Kesalahan" dengan waitFor (lebih akurat daripada sleep)
-        const errorCallout = getResetErrorCallout(page).first();
-        let hasError = false;
-        try {
-            await errorCallout.waitFor({ state: 'visible', timeout: 10000 });
-            hasError = true;
-        } catch (e) {
-            // Jika timeout, berarti tidak ada error yang muncul dalam 10 detik
-            hasError = false;
-        }
-
-        if (hasError) {
-            const errorMsg = await errorCallout.innerText();
-            this.logger.warn(`[${email}] Email reset attempt ${attempt} failed with error: "${errorMsg}".`);
-            
-            if (attempt === 3) {
-                this.logger.error(`[${email}] reset gagal terjadi kesalahan silahkan ambil link manual`);
-                throw new Error("reset gagal terjadi kesalahan silahkan ambil link manual");
-            }
-            
-            // Lanjut ke loop berikutnya (akan clear cookies di awal loop)
-            continue;
-        }
-
-        // Jika TIDAK ADA error setelah menunggu 10 detik, kita anggap berhasil
-        success = true;
-        break;
-    }
-
-    if (!success) return;
-
-    this.logger.info(`[${email}] Reset email requested successfully (no error detected after wait), waiting for event...`);
-
     const eventName = `${sanitizeEmail(email)}:NETFLIX_REQ_RESET_PASSWORD`;
     this.eventBus.emit('socket:subscribe', eventName);
 
-    const eventData = await this.waitForTaskEvent<ResetPasswordEventData>(
-      task.id,
-      eventName,
-    );
+    try {
+        let success = false;
+        for (let attempt = 1; attempt <= 3; attempt++) {
+            // Clear Cookies sebelum retry (jika bukan attempt pertama)
+            if (attempt > 1) {
+                this.logger.info(`[${email}] Attempt ${attempt}: Clearing cookies before retry...`);
+                await page.goto("https://www.netflix.com/clearcookies");
+                await this.sleep(2000);
+            }
 
-    this.eventBus.emit('socket:unsubscribe', eventName);
+            await page.goto(REQUEST_RESET_URL);
+            await this.sleep(1000);
 
-    const resetLink = eventData.data;
-    this.logger.info(`[${email}] Received reset link: ${resetLink}`);
+            await getEmailRadio(page).click();
+            await getEmailInput(page).fill(email);
+            await getSendEmailButton(page).click();
+            
+            this.logger.info(`[${email}] Attempt ${attempt}: Waiting for response from Netflix (up to 10s)...`);
 
-    await page.goto(resetLink);
-    await getNewPasswordInput(page).waitFor({ state: "visible" });
+            // Cek apakah muncul pesan error "Terjadi Kesalahan" dengan waitFor (lebih akurat daripada sleep)
+            const errorCallout = getResetErrorCallout(page).first();
+            let hasError = false;
+            try {
+                await errorCallout.waitFor({ state: 'visible', timeout: 10000 });
+                hasError = true;
+            } catch (e) {
+                // Jika timeout, berarti tidak ada error yang muncul dalam 10 detik
+                hasError = false;
+            }
 
-    await getNewPasswordInput(page).fill(newPassword);
-    await getConfirmNewPasswordInput(page).fill(newPassword);
+            if (hasError) {
+                const errorMsg = await errorCallout.innerText();
+                this.logger.warn(`[${email}] Email reset attempt ${attempt} failed with error: "${errorMsg}".`);
+                
+                if (attempt === 3) {
+                    this.logger.error(`[${email}] reset gagal terjadi kesalahan silahkan ambil link manual`);
+                    throw new Error("reset gagal terjadi kesalahan silahkan ambil link manual");
+                }
+                
+                // Lanjut ke loop berikutnya (akan clear cookies di awal loop)
+                continue;
+            }
 
-    const checkbox = getLogAllDevicesCheckbox(page);
-    if (!(await checkbox.isChecked())) {
-      await checkbox.check();
+            // Jika TIDAK ADA error setelah menunggu 10 detik, kita anggap berhasil
+            success = true;
+            break;
+        }
+
+        if (!success) return;
+
+        this.logger.info(`[${email}] Reset email requested successfully, waiting for link from event...`);
+
+        const eventData = await this.waitForTaskEvent<ResetPasswordEventData>(
+          task.id,
+          eventName,
+        );
+
+        const resetLink = eventData.data;
+        this.logger.info(`[${email}] Received reset link: ${resetLink}`);
+
+        await page.goto(resetLink);
+        await getNewPasswordInput(page).waitFor({ state: "visible", timeout: 30000 });
+
+        await getNewPasswordInput(page).fill(newPassword);
+        await getConfirmNewPasswordInput(page).fill(newPassword);
+
+        const checkbox = getLogAllDevicesCheckbox(page);
+        if (!(await checkbox.isChecked())) {
+          await checkbox.check();
+        }
+
+        await getSubmitButton(page).click();
+    } finally {
+        this.eventBus.emit('socket:unsubscribe', eventName);
     }
-
-    await getSubmitButton(page).click();
   }
 
   private async handleChangePasswordFlow(page: any, email: string, newPassword: string, password?: string): Promise<boolean> {
