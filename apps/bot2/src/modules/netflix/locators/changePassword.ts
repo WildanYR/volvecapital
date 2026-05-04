@@ -10,3 +10,4 @@ export const getNewPasswordInput = (page: Page) => page.locator('[data-uia="chan
 export const getConfirmNewPasswordInput = (page: Page) => page.locator('[data-uia="change-password-form+reeneter-new-password-input"]');
 export const getLogAllDevicesCheckbox = (page: Page) => page.locator('[data-uia="change-password-form+soad-checkbox"]');
 export const getSubmitButton = (page: Page) => page.locator('[data-uia="change-password-form+save-button"]');
+export const getCurrentPasswordError = (page: Page) => page.locator('[data-uia*="current-password-input+validationMessage"]');

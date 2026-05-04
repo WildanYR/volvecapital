@@ -77,6 +77,14 @@ export class AccountController {
     return this.accountService.create(request.tenant_id!, createAccountDto);
   }
 
+  @Patch('bulk')
+  bulkAction(
+    @Body() body: { ids: string[]; action: any },
+    @Request() request: AppRequest,
+  ) {
+    return this.accountService.bulkAction(request.tenant_id!, body.ids, body.action);
+  }
+
   @Patch(':id')
   @UsePipes(AtLeastOnePropertyPipe)
   update(

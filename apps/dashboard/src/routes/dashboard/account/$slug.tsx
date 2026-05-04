@@ -36,6 +36,7 @@ import {
   Copy,
   EllipsisVertical,
   Info,
+  ListChecks,
   LockKeyholeOpen,
   Package,
   Pin,
@@ -57,6 +58,7 @@ import {
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { useDebouncedCallback } from 'use-debounce'
+import { Checkbox } from '@/dashboard/components/ui/checkbox'
 import { AccountStatus } from '@/dashboard/components/account-status'
 import { FinancialDetailDialog } from '@/dashboard/components/financial-detail-dialog'
 import { AccountEditForm } from '@/dashboard/components/forms/account-edit.form'
@@ -83,6 +85,7 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -175,9 +178,25 @@ function RouteComponent() {
     = useState<boolean>(false)
   const [dialogFreezeOpen, setDialogFreezeOpen] = useState<boolean>(false)
   const [dialogFinancialDetailOpen, setDialogFinancialDetailOpen] = useState<boolean>(false)
+  const [dialogBulkConfirmOpen, setDialogBulkConfirmOpen] = useState<boolean>(false)
+  const [bulkActionType, setBulkActionType] = useState<string>('')
 
   const [selectedAccountState, setSelectedAccount] = useState<Account>()
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
   
+  const bulkActionMutation = useMutation({
+    mutationFn: ({ ids, action }: { ids: string[]; action: string }) => 
+      accountService.bulkAction(ids, action),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['account'] })
+      queryClient.invalidateQueries({ queryKey: ['countAccount'] })
+      toast.success(`Operasi ${variables.action} massal berhasil.`)
+      setSelectedIds([]) // Reset seleksi setelah sukses
+    },
+    onError: (error) => {
+      toast.error(`Gagal melakukan operasi massal: ${error.message}`)
+    },
+  })
   const [selectedAccountProfile, setSelectedAccountProfile]
     = useState<AccountProfile>()
   const [selectedEmail, setSelectedEmail] = useState<Email>()
@@ -236,6 +255,40 @@ function RouteComponent() {
   const handleAccountSelectedEdit = (account: Account) => {
     setSelectedAccount(account)
     setDialogAccountOpen(true)
+  }
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    )
+  }
+
+  const toggleSelectAll = () => {
+    if (!accounts?.items) return
+    const allIds = accounts.items.map(a => a.id)
+    const isAllSelected = allIds.every(id => selectedIds.includes(id))
+    
+    if (isAllSelected) {
+      setSelectedIds(prev => prev.filter(id => !allIds.includes(id)))
+    } else {
+      setSelectedIds(prev => Array.from(new Set([...prev, ...allIds])))
+    }
+  }
+
+  const [confirmInput, setConfirmInput] = useState('')
+  const handleBulkActionClick = (action: string) => {
+    setBulkActionType(action)
+    setConfirmInput('')
+    setDialogBulkConfirmOpen(true)
+  }
+
+  const handleBulkConfirm = () => {
+    if (bulkActionType === 'delete' && confirmInput !== 'HAPUS') {
+      toast.error('Konfirmasi kata kunci salah.')
+      return
+    }
+    bulkActionMutation.mutate({ ids: selectedIds, action: bulkActionType })
+    setDialogBulkConfirmOpen(false)
   }
 
   const handleAccountEditSubmit = (value: AccountEditFormSubmitData) => {
@@ -1032,6 +1085,87 @@ function RouteComponent() {
             />
           </div>
         )}
+        {!!accounts?.items?.length && (
+          <div className="flex items-center justify-between bg-secondary/30 p-3 rounded-lg border border-secondary mb-4 sticky top-0 z-30 backdrop-blur-md">
+            <div className="flex items-center gap-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={toggleSelectAll}
+                className="flex gap-2 items-center h-8"
+              >
+                <ListChecks className="size-4" />
+                {accounts.items.every(id => selectedIds.includes(id.id)) ? 'Deselect All' : 'Select All'}
+              </Button>
+              
+              <div className="flex items-center gap-2 border-l pl-3 border-secondary">
+                <p className="text-sm text-muted-foreground">
+                  <span className="font-bold text-red-600">{selectedIds.length}</span>
+                  {' '}
+                  akun terpilih
+                </p>
+
+                {selectedIds.length > 0 && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="secondary" size="sm" className="h-7 gap-2 text-xs">
+                        <Cog className="size-3 animate-spin-slow" />
+                        Aksi Massal
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="w-48">
+                      <DropdownMenuItem onSelect={() => handleBulkActionClick('pin')}>
+                        <Pin className="mr-2 h-4 w-4" />
+                        Bulk Pin
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => handleBulkActionClick('unpin')}>
+                        <PinOff className="mr-2 h-4 w-4" />
+                        Bulk Unpin
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => handleBulkActionClick('freeze')}>
+                        <ClockFading className="mr-2 h-4 w-4" />
+                        Bulk Freeze (7d)
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => handleBulkActionClick('unfreeze')}>
+                        <Timer className="mr-2 h-4 w-4" />
+                        Bulk Unfreeze
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => handleBulkActionClick('reset_now')}>
+                        <RefreshCw className="mr-2 h-4 w-4" />
+                        Bulk Reset
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => handleBulkActionClick('auto_reload')}>
+                        <RotateCw className="mr-2 h-4 w-4" />
+                        Bulk Reload
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => handleBulkActionClick('clear')}>
+                        <BrushCleaning className="mr-2 h-4 w-4" />
+                        Bulk Clear
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        onSelect={() => handleBulkActionClick('delete')}
+                        className="text-red-600 focus:text-red-700"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Bulk Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+              </div>
+            </div>
+            {selectedIds.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedIds([])}
+                className="text-muted-foreground hover:text-red-600 h-8"
+              >
+                Clear Selection
+              </Button>
+            )}
+          </div>
+        )}
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
           {isFetchAccountLoading
             ? (
@@ -1044,15 +1178,25 @@ function RouteComponent() {
             : accounts?.items.length
               ? (
                   accounts.items.map(account => (
-                    <Card key={`account-${account.id}`}>
-                      <CardHeader>
-                        <CardTitle className="flex gap-2">
+                    <Card 
+                      key={`account-${account.id}`}
+                      className={selectedIds.includes(account.id) ? 'border-red-600 bg-red-600/5 transition-all duration-300' : 'transition-all duration-300'}
+                    >
+                      <CardHeader className="relative">
+                        <div className="absolute top-4 right-14">
+                          <Checkbox 
+                            checked={selectedIds.includes(account.id)}
+                            onCheckedChange={() => toggleSelect(account.id)}
+                            className="size-5 border-2"
+                          />
+                        </div>
+                        <CardTitle className="flex gap-2 pr-12">
                           {account.pinned
                             ? (
-                                <Pin className="size-6" />
+                                <Pin className="size-6 text-red-600" />
                               )
                             : null}
-                          <p>{account.email.email}</p>
+                          <p className="truncate">{account.email.email}</p>
                         </CardTitle>
                         <CardDescription>
                           <p>{account.account_password}</p>
@@ -1666,6 +1810,63 @@ function RouteComponent() {
         open={dialogFinancialDetailOpen}
         onOpenChange={setDialogFinancialDetailOpen}
       />
+
+      {/* Bulk Confirm Dialog */}
+      <Dialog open={dialogBulkConfirmOpen} onOpenChange={setDialogBulkConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ListChecks className="size-5 text-red-600" />
+              Konfirmasi Operasi Massal
+            </DialogTitle>
+            <DialogDescription>
+              Tinjau kembali aksi massal yang akan Anda lakukan sebelum mengeksekusi.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <p className="text-sm text-muted-foreground">
+              Apakah Anda yakin ingin melakukan aksi <span className="font-bold text-foreground uppercase">{bulkActionType}</span> pada <span className="font-bold text-red-600">{selectedIds.length}</span> akun terpilih?
+            </p>
+            
+            {bulkActionType === 'delete' && (
+              <div className="space-y-2 p-3 bg-red-600/5 border border-red-600/20 rounded-md">
+                <Label className="text-xs font-bold text-red-600">KEAMANAN EKSTRA</Label>
+                <p className="text-xs">Ketik <span className="font-bold">HAPUS</span> untuk mengonfirmasi penghapusan massal.</p>
+                <Input 
+                  value={confirmInput} 
+                  onChange={(e) => setConfirmInput(e.target.value.toUpperCase())}
+                  placeholder="Ketik HAPUS di sini..."
+                  className="border-red-600/50 focus-visible:ring-red-600"
+                />
+              </div>
+            )}
+            
+            {bulkActionMutation.isPending && (
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs">
+                  <span>Memproses...</span>
+                  <span>Harap tunggu</span>
+                </div>
+                <div className="w-full bg-secondary h-2 rounded-full overflow-hidden">
+                  <div className="bg-red-600 h-full animate-progress" style={{ width: '100%' }} />
+                </div>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="ghost" disabled={bulkActionMutation.isPending}>Batal</Button>
+            </DialogClose>
+            <Button 
+              variant={bulkActionType === 'delete' ? 'destructive' : 'default'}
+              onClick={handleBulkConfirm}
+              disabled={bulkActionMutation.isPending || (bulkActionType === 'delete' && confirmInput !== 'HAPUS')}
+            >
+              {bulkActionMutation.isPending ? 'Memproses...' : 'Ya, Eksekusi'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

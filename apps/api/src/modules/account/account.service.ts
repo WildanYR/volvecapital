@@ -1182,6 +1182,113 @@ export class AccountService {
     const key = `${tenantId}:${accountId}`;
     this.pendingTopupStore.delete(key);
   }
+
+  async bulkAction(
+    tenantId: string,
+    ids: string[],
+    action: 'pin' | 'unpin' | 'freeze' | 'unfreeze' | 'delete' | 'clear' | 'reset_now' | 'auto_reload'
+  ) {
+    const transaction = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema(tenantId, transaction);
+
+      switch (action) {
+        case 'pin':
+          await this.accountRepository.update(
+            { pinned: true },
+            { where: { id: { [Op.in]: ids } }, transaction }
+          );
+          break;
+        case 'unpin':
+          await this.accountRepository.update(
+            { pinned: false },
+            { where: { id: { [Op.in]: ids } }, transaction }
+          );
+          break;
+        case 'freeze':
+          const freezeUntil = new Date();
+          freezeUntil.setDate(freezeUntil.getDate() + 7); // Default 7 hari
+          await this.accountRepository.update(
+            { status: 'freeze', freeze_until: freezeUntil },
+            { where: { id: { [Op.in]: ids } }, transaction }
+          );
+          break;
+        case 'unfreeze':
+          await this.accountRepository.update(
+            { status: 'ready', freeze_until: null },
+            { where: { id: { [Op.in]: ids } }, transaction }
+          );
+          break;
+        case 'delete':
+          await this.accountRepository.destroy({
+            where: { id: { [Op.in]: ids } },
+            transaction
+          });
+          break;
+        case 'clear':
+          // 1. Hapus semua user yang terhubung ke akun-akun ini
+          await this.accountUserRepository.destroy({
+            where: { account_id: { [Op.in]: ids } },
+            transaction
+          });
+          // 2. Kosongkan metadata di profil akun
+          await this.accountProfileRepository.update(
+            { metadata: JSON.stringify([]) },
+            { where: { account_id: { [Op.in]: ids } }, transaction }
+          );
+          // 3. Kembalikan status akun menjadi 'ready'
+          await this.accountRepository.update(
+            { status: 'ready' },
+            { where: { id: { [Op.in]: ids } }, transaction }
+          );
+          break;
+        case 'reset_now':
+        case 'auto_reload':
+          // Trigger bot tasks for all selected IDs
+          const tasks: UpsertTaskQueueDto[] = [];
+          const accounts = await this.accountRepository.findAll({
+            where: { id: { [Op.in]: ids } },
+            include: [
+              { model: Email, as: 'email' },
+              { model: ProductVariant, as: 'product_variant' }
+            ],
+            transaction
+          });
+
+          for (const account of accounts) {
+            const taskType = action === 'reset_now' ? NETFLIX_RESET_PASSWORD : NETFLIX_AUTO_RELOAD;
+            const payload = action === 'reset_now' 
+              ? { email: account.email?.email || account.email_id, password: account.account_password }
+              : { 
+                  accountId: account.id, 
+                  email: account.email?.email || account.email_id, 
+                  password: account.account_password,
+                  billing: account.billing,
+                  variant_name: account.product_variant?.name || ''
+                };
+
+            tasks.push({
+              execute_at: new Date(),
+              subject_id: account.id,
+              context: taskType,
+              payload: JSON.stringify(payload),
+              status: 'QUEUED',
+              tenant_id: tenantId,
+            });
+          }
+          if (tasks.length > 0) {
+            await this.taskQueueService.upsert(tasks);
+          }
+          break;
+      }
+
+      await transaction.commit();
+      return { message: `Bulk ${action} completed for ${ids.length} accounts` };
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
 }
 
 

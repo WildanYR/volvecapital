@@ -114,22 +114,6 @@ export function Footer({ config: initialConfig }: FooterProps) {
             <ul className="space-y-5">
               <li><Link href="/terms" className="text-slate-400 hover:text-white transition-colors text-base font-bold">Syarat & Ketentuan</Link></li>
               <li><Link href="/privacy" className="text-slate-400 hover:text-white transition-colors text-base font-bold">Kebijakan Privasi</Link></li>
-              <li>
-                <a 
-                  href={`https://wa.me/${config?.email.replace(/[^0-9]/g, '') || ''}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-6 flex items-center gap-3 px-5 py-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 hover:border-primary/50 transition-all group/wa"
-                >
-                  <div className="p-2 bg-green-500/20 rounded-lg group-hover/wa:bg-green-500/30 transition-colors">
-                    <MessageCircle className="size-4 text-green-500" />
-                  </div>
-                  <div className="text-left">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 leading-none mb-1">WhatsApp</p>
-                    <p className="text-sm font-bold text-white leading-none">Support</p>
-                  </div>
-                </a>
-              </li>
             </ul>
           </div>
         </div>

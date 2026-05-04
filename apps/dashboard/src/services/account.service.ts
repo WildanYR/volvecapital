@@ -740,5 +740,23 @@ export function AccountServiceGenerator(apiUrl: string, accessToken: string, ten
       }
       return await response.json()
     },
+    bulkAction: async (ids: string[], action: string): Promise<void> => {
+      const response = await generateApiFetch(
+        apiUrl,
+        accessToken,
+        tenantId,
+        '/account/bulk',
+        undefined,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids, action }),
+        },
+      )
+      if (!response.ok) {
+        const errorData = await parseApiResponse(response)
+        throw new Error(errorData.message || 'Failed to perform bulk action')
+      }
+    },
   }
 }

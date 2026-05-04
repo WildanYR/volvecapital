@@ -27,6 +27,7 @@ import {
   getConfirmNewPasswordInput,
   getLogAllDevicesCheckbox,
   getSubmitButton,
+  getCurrentPasswordError,
 } from "./locators/changePassword.js";
 import {
   getEmailRadio,
@@ -133,7 +134,10 @@ export class NetflixModule extends BaseModule {
       if (loginState === "not_logged_in") {
         await this.handleEmailResetFlow(page, task, email, newPassword);
       } else {
-        await this.handleChangePasswordFlow(page, email, newPassword, password);
+        const changeSuccess = await this.handleChangePasswordFlow(page, email, newPassword, password);
+        if (!changeSuccess) {
+            await this.handleEmailResetFlow(page, task, email, newPassword);
+        }
       }
 
       await this.handlePostSubmission(page, email);
@@ -383,7 +387,7 @@ export class NetflixModule extends BaseModule {
     await getSubmitButton(page).click();
   }
 
-  private async handleChangePasswordFlow(page: any, email: string, newPassword: string, password?: string): Promise<void> {
+  private async handleChangePasswordFlow(page: any, email: string, newPassword: string, password?: string): Promise<boolean> {
     this.logger.info(`[${email}] Already logged in, proceeding to change password`);
 
     if (!password) {
@@ -400,6 +404,21 @@ export class NetflixModule extends BaseModule {
     }
 
     await getSubmitButton(page).click();
+
+    // Check for "Incorrect password" error (Fallback V4)
+    const errorEl = getCurrentPasswordError(page);
+    try {
+        await errorEl.waitFor({ state: 'visible', timeout: 5000 });
+        const errorText = await errorEl.innerText();
+        if (errorText.toLowerCase().includes('incorrect') || errorText.toLowerCase().includes('salah')) {
+            this.logger.warn(`[${email}] Ganti password gagal karena password lama SALAH. Mencoba alur RESET EMAIL sebagai cadangan...`);
+            return false;
+        }
+    } catch (e) {
+        // Tidak ada error terlihat dalam 5 detik, anggap berhasil submit
+    }
+
+    return true;
   }
 
   private async handlePostSubmission(page: any, email: string): Promise<void> {
