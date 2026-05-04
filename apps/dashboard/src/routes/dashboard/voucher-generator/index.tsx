@@ -147,7 +147,7 @@ function RouteComponent() {
     { title: 'Total Tersedia', value: stats?.totalTersedia, icon: Zap },
     { title: 'Redeem & Tersedia', value: stats?.totalRedeemedDanTersedia, icon: BarChart3 },
     { title: 'Total Unused', value: stats?.totalUnused, icon: Clock },
-    { title: 'Total Used', value: stats?.totalUsed, icon: User },
+    { title: 'Total Pending', value: stats?.totalPending, icon: AlertTriangle },
     { title: 'Total Aktif', value: stats?.totalAktif, icon: Activity },
     { title: 'Total Kadaluarsa', value: stats?.totalKadaluarsa, icon: AlertTriangle },
   ]
@@ -288,6 +288,7 @@ function RouteComponent() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="ALL">Semua</SelectItem>
+                    <SelectItem value="PENDING">Pending</SelectItem>
                     <SelectItem value="UNUSED">Unused</SelectItem>
                     <SelectItem value="USED">Used</SelectItem>
                     <SelectItem value="EXPIRED">Expired</SelectItem>
@@ -322,6 +323,8 @@ function RouteComponent() {
                                 ? 'bg-red-500/10 text-red-500' 
                                 : v.status === 'EXPIRED' 
                                 ? 'bg-slate-500/10 text-slate-500'
+                                : v.status === 'PENDING'
+                                ? 'bg-yellow-500/10 text-yellow-500'
                                 : 'bg-green-500/10 text-green-500'
                             }`}>
                               {v.status}
@@ -350,7 +353,7 @@ function RouteComponent() {
                           <div className="space-y-1">
                             <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Status Voucher</p>
                             <p className={`text-lg font-black ${
-                              v.status === 'USED' ? 'text-red-500' : 'text-green-500'
+                              v.status === 'USED' ? 'text-red-500' : v.status === 'PENDING' ? 'text-yellow-500' : 'text-green-500'
                             }`}>{v.status}</p>
                           </div>
                           <div className="text-right space-y-1">

@@ -364,7 +364,7 @@ export class PublicService {
           product_variant_id: variant.id,
           payment_id: orderId,
           payment_status: 'PENDING',
-          status: 'UNUSED',
+          status: 'PENDING',
           expired_at: voucherExpiry,
         },
         { transaction },
@@ -512,7 +512,7 @@ export class PublicService {
       let shouldSendEmail = false;
       if (isPaid && voucher.payment_status !== 'PAID') {
         shouldSendEmail = true;
-        await voucher.update({ payment_status: 'PAID' }, { transaction: dbTransaction });
+        await voucher.update({ payment_status: 'PAID', status: 'UNUSED' }, { transaction: dbTransaction });
       }
       else if (isExpiredOrFailed) {
         await voucher.update(

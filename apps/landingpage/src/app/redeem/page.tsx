@@ -117,9 +117,19 @@ export default function RedeemPage() {
                       <span className={`px-4 py-1.5 rounded-full text-[10px] font-black tracking-[0.2em] uppercase ${
                         result.voucher.status === 'USED' 
                         ? 'bg-red-50 text-red-500 border border-red-100' 
+                        : result.voucher.status === 'PENDING'
+                        ? 'bg-yellow-50 text-yellow-600 border border-yellow-100'
+                        : result.voucher.status === 'EXPIRED'
+                        ? 'bg-slate-50 text-slate-500 border border-slate-100'
                         : 'bg-emerald-50 text-emerald-600 border border-emerald-100'
                       }`}>
-                        {result.voucher.status === 'USED' ? 'Sudah Digunakan' : 'Siap Digunakan'}
+                        {result.voucher.status === 'USED' 
+                          ? 'Sudah Digunakan' 
+                          : result.voucher.status === 'PENDING'
+                          ? 'Belum Dibayar'
+                          : result.voucher.status === 'EXPIRED'
+                          ? 'Kadaluarsa'
+                          : 'Siap Digunakan'}
                       </span>
                     </div>
                   </div>

@@ -186,6 +186,7 @@ export class VoucherService {
           COUNT(*) FILTER (WHERE status = 'USED')::INT as "totalRedeemed",
           COUNT(*) FILTER (WHERE status = 'UNUSED' AND payment_status = 'PAID' AND expired_at > NOW())::INT as "totalTersedia",
           COUNT(*) FILTER (WHERE status = 'UNUSED')::INT as "totalUnused",
+          COUNT(*) FILTER (WHERE status = 'PENDING')::INT as "totalPending",
           COUNT(*) FILTER (WHERE status = 'UNUSED' AND expired_at <= NOW())::INT as "totalKadaluarsa"
         FROM "voucher"
       `, { 
@@ -216,6 +217,7 @@ export class VoucherService {
         totalTersedia: stats.totalTersedia || 0,
         totalRedeemedDanTersedia: (stats.totalRedeemed || 0) + (stats.totalTersedia || 0),
         totalUnused: stats.totalUnused || 0,
+        totalPending: stats.totalPending || 0,
         totalUsed: stats.totalRedeemed || 0,
         totalAktif: aktifResult.count || 0,
         totalKadaluarsa: stats.totalKadaluarsa || 0,
@@ -249,7 +251,7 @@ export class VoucherService {
             { status: 'EXPIRED' },
             {
               where: {
-                status: 'UNUSED',
+                status: { [Op.in]: ['UNUSED', 'PENDING'] },
                 expired_at: { [Op.lte]: new Date() },
               },
               transaction,

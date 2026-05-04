@@ -13,7 +13,7 @@ import { ProductVariant, ProductVariantAttributes } from './product-variant.mode
 import { Transaction, TransactionAttributes } from './transaction.model';
 import { TransactionItem } from './transaction-item.model';
 
-export type VoucherStatus = 'UNUSED' | 'USED' | 'EXPIRED';
+export type VoucherStatus = 'PENDING' | 'UNUSED' | 'USED' | 'EXPIRED';
 export type PaymentStatus = 'PENDING' | 'PAID' | 'FAILED' | 'EXPIRED';
 
 export interface VoucherAttributes {
