@@ -11,3 +11,14 @@ export interface ResetPasswordPayload {
   subscription_expiry: string;
   variant_name: string;
 }
+
+/**
+ * Netflix Auto Reload Task Payload
+ */
+export interface AutoReloadPayload {
+  accountId: string;    // Account.id untuk update DB setelah selesai
+  email: string;        // Email akun Netflix
+  password: string;     // Password akun (untuk login jika diperlukan)
+  billing: string;      // Metode bayar (GoPay, ShopeePay, dll) — ditampilkan ke admin
+  variant_name: string; // Nama varian — menentukan plan yang dipilih
+}

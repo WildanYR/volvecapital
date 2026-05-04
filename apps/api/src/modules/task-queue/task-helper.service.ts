@@ -8,7 +8,7 @@ import { AppLoggerService } from '../logger/logger.service';
 import { SyslogService } from '../logger/syslog.service';
 import { SocketGateway } from '../socket/socket.gateway';
 import { EmailParser } from '../utility/email-parser.provider';
-import { AccountSubsEndNotifyPayload, AccountUnfreezePayload, NetflixResetPasswordPayload } from './types/task-context.type';
+import { AccountSubsEndNotifyPayload, AccountUnfreezePayload, NetflixAutoReloadPayload, NetflixResetPasswordPayload } from './types/task-context.type';
 
 @Injectable()
 export class TaskHelperService {
@@ -76,6 +76,26 @@ export class TaskHelperService {
     catch (error) {
       await transaction.rollback();
       this.logger.error(error.message, error.stack, 'TaskProcessorNetflixResetPassword');
+    }
+  }
+
+  async netflixAutoReload(taskId: string, tenantId: string, payload: NetflixAutoReloadPayload) {
+    try {
+      // Dispatch task ke bot via socket
+      const clientId = await this.socketGateway.dispatchTask(taskId, tenantId, {
+        module: 'netflix',
+        type: 'autoReload',
+        payload,
+      });
+
+      if (clientId) {
+        // Subscribe bot ke event konfirmasi top-up dari dashboard
+        const topupEventName = `${payload.accountId}:NETFLIX_TOPUP_CONFIRM`;
+        this.socketGateway.subscribeClientToEvent(clientId, topupEventName);
+      }
+    }
+    catch (error) {
+      this.logger.error(error.message, error.stack, 'TaskProcessorNetflixAutoReload');
     }
   }
 }

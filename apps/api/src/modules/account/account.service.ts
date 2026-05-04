@@ -15,6 +15,7 @@ import {
 } from 'src/constants/database.const';
 import {
   NETFLIX_RESET_PASSWORD,
+  NETFLIX_AUTO_RELOAD,
   UNFREEZE_ACCOUNT,
 } from 'src/constants/task.const';
 import { AccountModifier } from 'src/database/models/account-modifier.model';
@@ -31,7 +32,7 @@ import { Product } from 'src/database/models/product.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
 import { UpsertTaskQueueDto } from '../task-queue/dto/upsert-task-queue.dto';
 import { TaskQueueService } from '../task-queue/task-queue.service';
-import { AccountSubsEndNotifyPayload, NetflixResetPasswordPayload } from '../task-queue/types/task-context.type';
+import { AccountSubsEndNotifyPayload, NetflixAutoReloadPayload, NetflixResetPasswordPayload } from '../task-queue/types/task-context.type';
 import { DateConverterProvider } from '../utility/date-converter.provider';
 import { PaginationProvider } from '../utility/pagination.provider';
 import { BaseGetAllUrlQuery } from '../utility/types/base-get-all-url-query.type';
@@ -46,6 +47,9 @@ import { SubsEndNotifyMetadata } from './types/subs-end-notify-metadata.type';
 
 @Injectable()
 export class AccountService {
+  // In-memory store for pending topup requests (auto-cleared after 15 min)
+  private pendingTopupStore: Map<string, { accountId: string; email: string; billing: string; taskId: string; tenantId: string; createdAt: Date }> = new Map();
+
   constructor(
     private readonly paginationProvider: PaginationProvider,
     private readonly dateConverterProvider: DateConverterProvider,
@@ -1062,5 +1066,122 @@ export class AccountService {
       throw error;
     }
   }
+
+  async triggerReload(tenantId: string, accountId: string) {
+    const transaction = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema(tenantId, transaction);
+
+      const account = await this.accountRepository.findOne({
+        where: { id: accountId },
+        include: [
+          { model: Email, as: 'email' },
+          { model: ProductVariant, as: 'product_variant' },
+        ],
+        transaction,
+      });
+
+      if (!account) {
+        throw new NotFoundException('Account not found');
+      }
+
+      const payload: NetflixAutoReloadPayload = {
+        accountId: account.id,
+        email: account.email.email,
+        password: account.account_password,
+        billing: account.billing ?? '',
+        variant_name: account.product_variant.name,
+      };
+
+      const task: UpsertTaskQueueDto = {
+        execute_at: new Date(),
+        subject_id: account.id,
+        context: NETFLIX_AUTO_RELOAD,
+        payload: JSON.stringify(payload),
+        status: 'QUEUED',
+        tenant_id: tenantId,
+      };
+
+      await this.taskQueueService.upsert([task]);
+      await transaction.commit();
+
+      return { message: 'Auto reload task triggered successfully' };
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
+
+  registerPendingTopup(
+    tenantId: string,
+    accountId: string,
+    data: { email: string; billing: string; taskId: string },
+  ) {
+    // Hapus entri lama yang sudah > 15 menit
+    const now = new Date();
+    for (const [key, val] of this.pendingTopupStore.entries()) {
+      const age = now.getTime() - val.createdAt.getTime();
+      if (age > 15 * 60 * 1000) {
+        this.pendingTopupStore.delete(key);
+      }
+    }
+
+    const key = `${tenantId}:${accountId}`;
+    this.pendingTopupStore.set(key, {
+      accountId,
+      email: data.email,
+      billing: data.billing,
+      taskId: data.taskId,
+      tenantId,
+      createdAt: new Date(),
+    });
+
+    return { message: 'Pending topup registered' };
+  }
+
+  getPendingTopups(tenantId: string) {
+    try {
+      if (!tenantId) {
+        return [];
+      }
+
+      if (!this.pendingTopupStore) {
+        this.pendingTopupStore = new Map();
+        return [];
+      }
+
+      const results: { accountId: string; email: string; billing: string; taskId: string }[] = [];
+      const now = new Date();
+      const entries = Array.from(this.pendingTopupStore.entries());
+
+      for (const [key, val] of entries) {
+        if (val.tenantId !== tenantId) continue;
+
+        const age = now.getTime() - val.createdAt.getTime();
+        if (age > 15 * 60 * 1000) {
+          this.pendingTopupStore.delete(key);
+          continue;
+        }
+
+        results.push({
+          accountId: val.accountId,
+          email: val.email,
+          billing: val.billing,
+          taskId: val.taskId,
+        });
+      }
+
+      return results;
+    } catch (error) {
+      console.error('[AccountService] Error in getPendingTopups:', error);
+      return []; // Return empty instead of crashing
+    }
+  }
+
+  clearPendingTopup(tenantId: string, accountId: string) {
+    const key = `${tenantId}:${accountId}`;
+    this.pendingTopupStore.delete(key);
+  }
 }
+
 

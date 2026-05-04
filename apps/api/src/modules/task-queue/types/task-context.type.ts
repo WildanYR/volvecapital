@@ -24,3 +24,11 @@ export interface NetflixResetPasswordPayload {
   subscription_expiry: string;
   variant_name: string;
 }
+
+export interface NetflixAutoReloadPayload {
+  accountId: string;
+  email: string;
+  password: string;
+  billing: string;
+  variant_name: string;
+}

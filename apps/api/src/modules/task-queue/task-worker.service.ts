@@ -8,6 +8,7 @@ import { REDIS_CLIENT } from 'src/constants/provider.const';
 import { CONSUMER_GROUP, STREAM_KEY, TASK_REFERENCE_KEY, ZSET_KEY } from 'src/constants/scheduler.const';
 import {
   NETFLIX_RESET_PASSWORD,
+  NETFLIX_AUTO_RELOAD,
   SUBS_END_NOTIFY,
   UNFREEZE_ACCOUNT,
 } from 'src/constants/task.const';
@@ -16,7 +17,7 @@ import { PostgresProvider } from 'src/database/postgres.provider';
 import { UnknownTaskError } from 'src/exceptions/unknown-task.error';
 import { AppLoggerService } from '../logger/logger.service';
 import { TaskHelperService } from './task-helper.service';
-import { AccountSubsEndNotifyPayload, AccountUnfreezePayload, NetflixResetPasswordPayload } from './types/task-context.type';
+import { AccountSubsEndNotifyPayload, AccountUnfreezePayload, NetflixAutoReloadPayload, NetflixResetPasswordPayload } from './types/task-context.type';
 import { TaskMessage } from './types/task-message.type';
 import { TaskQueueContext } from './types/task-queue-data.type';
 import { TaskQueueUpdate } from './types/task-queue-update.type';
@@ -239,6 +240,9 @@ export class TaskWorkerService {
         }
         else if (tm.taskData.context === NETFLIX_RESET_PASSWORD) {
           await this.taskHelperService.netflixResetPassword(tm.taskData.id, tm.taskData.tenant_id, tm.taskData.payload as NetflixResetPasswordPayload);
+        }
+        else if (tm.taskData.context === NETFLIX_AUTO_RELOAD) {
+          await this.taskHelperService.netflixAutoReload(tm.taskData.id, tm.taskData.tenant_id, tm.taskData.payload as NetflixAutoReloadPayload);
         }
         else if (tm.taskData.context === UNFREEZE_ACCOUNT) {
           await this.taskHelperService.unfreezeAccount(tm.taskData.tenant_id, tm.taskData.payload as AccountUnfreezePayload);

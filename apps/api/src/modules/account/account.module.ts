@@ -8,5 +8,6 @@ import { AccountService } from './account.service';
   imports: [UtilityModule, TaskQueueModule],
   providers: [AccountService],
   controllers: [AccountController],
+  exports: [AccountService],
 })
 export class AccountModule {}

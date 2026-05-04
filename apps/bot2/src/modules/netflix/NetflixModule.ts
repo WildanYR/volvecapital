@@ -1,5 +1,5 @@
 /**
- * Netflix Reset Password Module
+ * Netflix Module — Reset Password & Auto Reload
  */
 
 import { BaseModule } from "../../core/BaseModule.js";
@@ -10,12 +10,16 @@ import {
   CHANGE_PASSWORD_URL,
   REQUEST_RESET_URL,
   LOGIN_PATH,
+  MEMBERSHIP_URL,
+  CANCEL_PLAN_URL,
+  PLAN_MOBILE_ID,
+  PLAN_STANDARD_ID,
 } from "./constants.js";
 import { sanitizeEmail } from "./utils.js";
-import { ResetPasswordPayload } from "./types/payload.type.js";
+import { ResetPasswordPayload, AutoReloadPayload } from "./types/payload.type.js";
 import { ResetPasswordEventData } from "./types/event.type.js";
 
-// Locators
+// Locators — Change Password
 import {
   getLoginHelpAnchor,
   getCurrentPasswordInput,
@@ -41,7 +45,26 @@ import {
   getSignInButton,
   getLoginErrorCallout,
 } from "./locators/manualLogin.js";
-import { updateNetflixAccountStatus } from "./api.js";
+
+// Locators — Auto Reload
+import {
+  getRestartMembershipButton,
+  getExpandCancelButton,
+  getFinishCancellationButton,
+  getRestartHeroButton,
+  getWelcomeBackHeading,
+  getNextButton,
+  getMobilePlanLabel,
+  getStandardPlanLabel,
+  getNextPlanButton,
+  getLastStepHeading,
+  getLastStepNextButton,
+  getLegalCheckbox,
+  getConfirmStartButton,
+  getOrderFinalButton,
+} from "./locators/reload.js";
+
+import { updateNetflixAccountStatus, updateNetflixReloadStatus, notifyTopupPending } from "./api.js";
 
 export class NetflixModule extends BaseModule {
   constructor(
@@ -141,19 +164,25 @@ export class NetflixModule extends BaseModule {
   }
 
   private async detectLoginState(page: any): Promise<"logged_in" | "not_logged_in"> {
-    return await Promise.race([
-        getLoginHelpAnchor(page)
-          .waitFor({ state: "visible", timeout: 15000 })
-          .then(() => "not_logged_in" as const),
-        getCurrentPasswordInput(page)
-          .waitFor({ state: "visible", timeout: 15000 })
-          .then(() => "logged_in" as const),
-        page
-          .waitForURL((url: any) => url.toString().includes(LOGIN_PATH), {
-            timeout: 15000,
-          })
-          .then(() => "not_logged_in" as const),
-      ]).catch(() => "not_logged_in" as const);
+    try {
+      // Tunggu salah satu indikator muncul
+      const result = await Promise.race([
+        // Indikator Belum Login: Link Bantuan Login atau URL /login
+        getLoginHelpAnchor(page).waitFor({ state: "visible", timeout: 10000 }).then(() => "not_logged_in" as const),
+        page.waitForURL((url: any) => url.toString().includes(LOGIN_PATH), { timeout: 10000 }).then(() => "not_logged_in" as const),
+        
+        // Indikator Sudah Login: Tombol Restart, Input Password (halaman reset), Link Logout, atau Menu Akun
+        getRestartMembershipButton(page).waitFor({ state: "visible", timeout: 10000 }).then(() => "logged_in" as const),
+        getCurrentPasswordInput(page).waitFor({ state: "visible", timeout: 10000 }).then(() => "logged_in" as const),
+        page.locator('a[href*="/logout"]').waitFor({ state: "visible", timeout: 10000 }).then(() => "logged_in" as const),
+        page.locator('[data-uia="account-menu-item"], [data-uia="header-profile-link"]').waitFor({ state: "attached", timeout: 10000 }).then(() => "logged_in" as const),
+      ]);
+      return result;
+    } catch (e) {
+      // Jika timeout dan URL mengandung 'login', anggap belum login. Selain itu, anggap sudah login (mungkin di halaman internal).
+      const currentUrl = page.url();
+      return currentUrl.includes(LOGIN_PATH) ? "not_logged_in" : "logged_in";
+    }
   }
 
   private async attemptManualLogin(page: any, email: string, password?: string): Promise<boolean> {
@@ -162,7 +191,9 @@ export class NetflixModule extends BaseModule {
       try {
           // 1. Input Email
           const emailInput = getUserLoginIdInput(page);
-          await emailInput.waitFor({ state: 'visible', timeout: 5000 });
+          this.logger.info(`[${email}] Menunggu kolom email login muncul...`);
+          await emailInput.waitFor({ state: 'visible', timeout: 15000 });
+          await this.sleep(1000);
           await emailInput.fill(email);
           await getContinueButton(page).click();
 
@@ -206,34 +237,46 @@ export class NetflixModule extends BaseModule {
               const usePwBtn = getUsePasswordInsteadItem(page);
               if (await usePwBtn.isVisible()) {
                   await usePwBtn.click();
-                  this.logger.info(`[${email}] Tombol 'Gunakan sandi' berhasil diklik.`);
-                  await this.sleep(2000);
+                  this.logger.info(`[${email}] Tombol 'Gunakan sandi' berhasil diklik. Menunggu 10 detik...`);
+                  await this.sleep(10000); // Jeda 10 detik sesuai permintaan
               } else {
                   this.logger.warn(`[${email}] Tombol 'Gunakan sandi' tidak terlihat setelah klik bantuan.`);
                   return false;
               }
           } else {
               this.logger.info(`[${email}] Neither OTP nor Rejoin screen detected, checking if direct password input available...`);
+              await this.sleep(5000);
           }
 
           // 3. Input Password (Coba 2x jika gagal sekali)
           for (let attempt = 1; attempt <= 2; attempt++) {
+              this.logger.info(`[${email}] Mencoba input password (Attempt ${attempt})...`);
+              
+              // Cek dulu apakah kita tiba-tiba sudah login (misal auto-redirect)
+              const currentUrl = page.url();
+              if (currentUrl.includes('/browse') || currentUrl.includes('/account') || currentUrl.includes('/YourAccount')) {
+                  this.logger.info(`[${email}] Terdeteksi sudah login via URL: ${currentUrl}`);
+                  return true;
+              }
+
               const pwInput = getPasswordInput(page);
-              if (await pwInput.isVisible({ timeout: 5000 })) {
+              if (await pwInput.isVisible({ timeout: 15000 })) {
                   await pwInput.fill(password);
-                  await this.sleep(1000); // Tunggu sebentar agar tombol enabled
+                  await this.sleep(2000); 
                   
                   const signInBtn = getSignInButton(page);
-                  if (await signInBtn.isEnabled({ timeout: 5000 })) {
+                  if (await signInBtn.isEnabled({ timeout: 10000 })) {
                       await signInBtn.click();
                   } else {
                       this.logger.warn("Sign in button still disabled, trying Enter key...");
                       await pwInput.press('Enter');
                   }
                   
-                  await this.sleep(3000);
+                  this.logger.info(`[${email}] Klik login selesai, menunggu respon 10 detik...`);
+                  await this.sleep(10000);
                   
-                  if (page.url().includes('/browse') || page.url().includes('/password')) {
+                  const finalUrl = page.url();
+                  if (finalUrl.includes('/browse') || finalUrl.includes('/account') || finalUrl.includes('/YourAccount') || finalUrl.includes('/password')) {
                       return true;
                   }
 
@@ -242,11 +285,13 @@ export class NetflixModule extends BaseModule {
                       const errorMsg = await error.innerText();
                       this.logger.warn(`[${email}] Login attempt ${attempt} failed: ${errorMsg}`);
                       if (attempt === 2) return false;
-                      await this.sleep(2000);
+                      await this.sleep(5000);
                   }
               } else {
-                  this.logger.warn(`[${email}] Sign in button or password input not found on attempt ${attempt}`);
-                  return false;
+                  this.logger.warn(`[${email}] Password input tidak ditemukan pada attempt ${attempt}. Menunggu 5 detik...`);
+                  if (attempt === 2) return false;
+                  await this.sleep(5000);
+                  // Lanjut loop ke attempt 2
               }
           }
           
@@ -487,6 +532,305 @@ export class NetflixModule extends BaseModule {
         result += numbers.charAt(Math.floor(Math.random() * numbers.length));
     }
     
+    return result;
+  }
+
+  // ==========================================================================
+  // Auto Reload Flow
+  // ==========================================================================
+
+  async autoReload(task: Task): Promise<void> {
+    const payload = task.payload as unknown as AutoReloadPayload;
+    const { email, password, billing, variant_name, accountId } = payload;
+    const contextName = sanitizeEmail(email);
+
+    this.logger.info(`[AutoReload][${email}] Memulai proses reload. Varian: ${variant_name}, Billing: ${billing}`);
+
+    const context = await this.getOrCreateContext(contextName);
+    const page = await context.newPage();
+
+    try {
+      // STEP 1: Navigasi & Cek status login
+      await page.goto(MEMBERSHIP_URL);
+      this.logger.info(`[AutoReload][${email}] Navigasi ke halaman membership...`);
+      await this.sleep(3000);
+
+      // Cek dulu apakah tombol restart sudah ada (berarti pasti sudah login)
+      let restartBtn = getRestartMembershipButton(page);
+      let restartVisible = await restartBtn.isVisible({ timeout: 5000 }).catch(() => false);
+
+      if (!restartVisible) {
+        // Jika tidak terlihat, mungkin belum login atau memang akun masih aktif
+        const loginState = await this.detectLoginState(page);
+        if (loginState === 'not_logged_in') {
+          this.logger.info(`[AutoReload][${email}] Belum login, mencoba manual login...`);
+          try {
+            const loginOk = await this.attemptManualLogin(page, email, password);
+            if (!loginOk) {
+              throw new Error("Manual login returned false");
+            }
+          } catch (err) {
+            this.logger.warn(`[AutoReload][${email}] Login manual gagal, mencoba alur RESET PASSWORD otomatis sebagai cadangan...`);
+            
+            // Buat password baru untuk reset (6 karakter acak)
+            const newPassword = this.generateRandomPassword(6);
+            this.logger.info(`[AutoReload][${email}] Menjalankan reset email dengan password baru: ${newPassword}`);
+            
+            await this.handleEmailResetFlow(page, task, email, newPassword);
+
+            // PENTING: Update password baru ke database setelah reset berhasil
+            await updateNetflixAccountStatus(
+              this.apiBaseUrl,
+              this.authCredentials,
+              payload.accountId,
+              newPassword,
+              'ready'
+            );
+            this.logger.info(`[AutoReload][${email}] Password baru berhasil dicatat di database.`);
+          }
+
+          await page.goto(MEMBERSHIP_URL);
+          await this.sleep(5000);
+          
+          // Re-check restart button
+          restartBtn = getRestartMembershipButton(page);
+          restartVisible = await restartBtn.isVisible({ timeout: 10000 }).catch(() => false);
+        }
+      }
+
+      // STEP 2: Cek apakah tombol restart sudah ada
+      this.logger.info(`[AutoReload][${email}] Mengecek tombol Restart Membership...`);
+      // Gunakan variabel yang sudah ada (tidak perlu const lagi)
+      restartVisible = await restartBtn.isVisible({ timeout: 5000 }).catch(() => false);
+
+      if (!restartVisible) {
+        // Sub-alur: perlu cancel plan dulu
+        this.logger.info(`[AutoReload][${email}] Tombol restart tidak ada, memulai sub-alur cancel plan...`);
+        await this.handleCancelPlanFlow(page, email);
+      }
+
+      // STEP 3: Klik Restart Membership
+      this.logger.info(`[AutoReload][${email}] Klik tombol Restart Membership...`);
+      await getRestartMembershipButton(page).waitFor({ state: 'visible', timeout: 15000 });
+      await getRestartMembershipButton(page).click();
+      await this.sleep(3000);
+
+      // STEP 4: Klik "Mulai Lagi Keanggotaanmu" (Hero Card)
+      // Kita buat tangguh: Cek apakah tombol ini memang ada, atau kita sudah terlanjur lompat ke halaman selanjutnya
+      this.logger.info(`[AutoReload][${email}] Mengecek status setelah klik Restart...`);
+      
+      const heroVisible = await getRestartHeroButton(page).isVisible({ timeout: 5000 }).catch(() => false);
+      const alreadyNext = await Promise.race([
+        getWelcomeBackHeading(page).isVisible().then((v: boolean) => v ? 'step5' : null),
+        getLegalCheckbox(page).isVisible().then((v: boolean) => v ? 'step9' : null),
+      ]).catch(() => null);
+
+      if (alreadyNext) {
+        this.logger.info(`[AutoReload][${email}] Sudah berada di ${alreadyNext}, melewati Step 4.`);
+      } else if (heroVisible) {
+        this.logger.info(`[AutoReload][${email}] Klik hero card restart (Mulai Lagi Keanggotaanmu)...`);
+        await getRestartHeroButton(page).click({ force: true, delay: 500 });
+        await page.waitForLoadState('networkidle').catch(() => {});
+        await this.sleep(3000);
+      } else {
+        this.logger.warn(`[AutoReload][${email}] Tombol hero card tidak ditemukan, mencoba deteksi halaman selanjutnya...`);
+      }
+
+      // STEP 5: Smart Navigation - Deteksi apakah langsung ke Checkout atau perlu pilih Plan
+      this.logger.info(`[AutoReload][${email}] Mendeteksi halaman selanjutnya...`);
+      const nextStep = await Promise.race([
+        getWelcomeBackHeading(page).waitFor({ state: 'visible', timeout: 15000 }).then(() => 'step5' as const),
+        getLegalCheckbox(page).waitFor({ state: 'visible', timeout: 15000 }).then(() => 'step9' as const),
+      ]).catch(() => 'timeout' as const);
+
+      if (nextStep === 'step9') {
+        this.logger.info(`[AutoReload][${email}] Terdeteksi langsung di halaman checkout, melewati Step 5-8.`);
+      } else if (nextStep === 'step5') {
+        this.logger.info(`[AutoReload][${email}] Menunggu halaman Selamat Datang Kembali...`);
+        await getNextButton(page).click();
+        await this.sleep(2000);
+
+        // STEP 6: Pilih plan
+        const isMobilePlan = /harian|mingguan/i.test(variant_name);
+        const planLabel = isMobilePlan ? getMobilePlanLabel(page) : getStandardPlanLabel(page);
+        const planName = isMobilePlan ? `Ponsel (${PLAN_MOBILE_ID})` : `Standar (${PLAN_STANDARD_ID})`;
+        this.logger.info(`[AutoReload][${email}] Memilih plan: ${planName}`);
+        await planLabel.waitFor({ state: 'visible', timeout: 15000 });
+        await planLabel.click();
+        await this.sleep(1000);
+
+        // STEP 7: Klik Berikutnya setelah pilih plan
+        await getNextPlanButton(page).waitFor({ state: 'visible', timeout: 10000 });
+        await getNextPlanButton(page).click();
+        await this.sleep(2000);
+
+        // STEP 8: Halaman "Yang terakhir" — klik Berikutnya
+        this.logger.info(`[AutoReload][${email}] Menunggu halaman Yang Terakhir...`);
+        await getLastStepHeading(page).waitFor({ state: 'visible', timeout: 15000 });
+        await getLastStepNextButton(page).click();
+        await this.sleep(2000);
+      } else {
+        throw new Error(`[AutoReload] Gagal mendeteksi halaman selanjutnya setelah klik hero card.`);
+      }
+
+      // STEP 9: Centang checkbox legal
+      this.logger.info(`[AutoReload][${email}] Mencentang checkbox legal...`);
+      const checkbox = getLegalCheckbox(page);
+      await checkbox.waitFor({ state: 'visible', timeout: 10000 });
+      if (!(await checkbox.isChecked())) {
+        await checkbox.check();
+      }
+      await this.sleep(1000);
+
+      // STEP 10: Notify API tentang pending top-up, tunggu konfirmasi dari dashboard (10 menit)
+      const topupEventName = `${accountId}:NETFLIX_TOPUP_CONFIRM`;
+      const cancelEventName = `${accountId}:NETFLIX_TOPUP_CANCEL`;
+      this.logger.info(`[AutoReload][${email}] Memberitahu API tentang pending top-up (maks 10 menit)... Billing: ${billing}`);
+
+      // Panggil API endpoint untuk notify pending topup
+      await notifyTopupPending(
+        this.apiBaseUrl,
+        this.authCredentials,
+        accountId,
+        email,
+        billing,
+        task.id,
+      );
+
+      // Kita tunggu event: BISA KONFIRMASI atau PEMBATALAN
+      this.eventBus.emit('socket:subscribe', topupEventName);
+      this.eventBus.emit('socket:subscribe', cancelEventName);
+
+      try {
+        const eventData = await Promise.race([
+          this.waitForTaskEvent<any>(task.id, topupEventName).then(data => ({ type: 'confirm', data })),
+          this.waitForTaskEvent<any>(task.id, cancelEventName).then(data => ({ type: 'cancel', data })),
+        ]);
+
+        this.eventBus.emit('socket:unsubscribe', topupEventName);
+        this.eventBus.emit('socket:unsubscribe', cancelEventName);
+
+        if (eventData.type === 'cancel') {
+          this.logger.warn(`[AutoReload][${email}] Reload dibatalkan oleh admin.`);
+          throw new Error("Reload dibatalkan oleh admin.");
+        }
+
+        this.logger.info(`[AutoReload][${email}] Konfirmasi top-up diterima! Melanjutkan...`);
+      } catch (err) {
+        this.eventBus.emit('socket:unsubscribe', topupEventName);
+        this.eventBus.emit('socket:unsubscribe', cancelEventName);
+        throw err;
+      }
+
+      // STEP 11: Klik "Mulai Keanggotaan"
+      this.logger.info(`[AutoReload][${email}] Klik tombol konfirmasi mulai keanggotaan...`);
+      await getConfirmStartButton(page).waitFor({ state: 'visible', timeout: 15000 });
+      await getConfirmStartButton(page).click();
+      await this.sleep(3000);
+
+      // STEP 12: Halaman Akhir (orderfinal) — Klik Berikutnya
+      this.logger.info(`[AutoReload][${email}] Menunggu halaman konfirmasi akhir (orderfinal)...`);
+      try {
+        await getOrderFinalButton(page).waitFor({ state: 'visible', timeout: 15000 });
+        await getOrderFinalButton(page).click();
+        this.logger.info(`[AutoReload][${email}] Tombol konfirmasi akhir diklik.`);
+        await this.sleep(2000);
+      } catch (err) {
+        this.logger.warn(`[AutoReload][${email}] Tombol konfirmasi akhir tidak muncul atau gagal diklik. Melanjutkan...`);
+      }
+
+      // STEP 13: Hitung expiry baru & update DB
+      const newExpiry = this.calculateReloadExpiry(variant_name);
+      this.logger.info(`[AutoReload][${email}] Reload selesai! Subscription baru: ${newExpiry.toISOString()}`);
+
+      await updateNetflixReloadStatus(
+        this.apiBaseUrl,
+        this.authCredentials,
+        accountId,
+        newExpiry,
+      );
+
+      this.logger.info(`[AutoReload][${email}] Database berhasil diperbarui. Proses selesai!`);
+
+    } catch (error) {
+      this.logger.error(
+        `[AutoReload] Gagal reload akun ${email}: ${error instanceof Error ? error.message : String(error)}`,
+        { instanceId: this.instanceId },
+        {
+          level: 'NEED_ACTION',
+          context: 'NetflixAutoReload',
+          customMessage: `‼️ Gagal auto reload Netflix\nEmail: ${email}\nBilling: ${billing}\n\nSilakan lakukan reload manual.`,
+        },
+      );
+      throw error;
+    } finally {
+      await this.cleanupTask(page, contextName);
+    }
+  }
+
+  /**
+   * Sub-alur: cancel plan yang masih aktif agar tombol restart muncul
+   */
+  private async handleCancelPlanFlow(page: any, email: string): Promise<void> {
+    this.logger.info(`[AutoReload][${email}] Navigasi ke cancelplan...`);
+    await page.goto(CANCEL_PLAN_URL);
+    
+    // Coba klik tombol expand "Tampilkan isi pilihan"
+    const expandBtn = getExpandCancelButton(page);
+    const finishBtn = getFinishCancellationButton(page);
+    
+    try {
+      // Tunggu salah satu muncul: tombol expand atau tombol finish (jika sudah terbuka)
+      await Promise.race([
+        expandBtn.waitFor({ state: 'visible', timeout: 8000 }),
+        finishBtn.waitFor({ state: 'visible', timeout: 8000 })
+      ]);
+
+      if (await expandBtn.isVisible()) {
+        this.logger.info(`[AutoReload][${email}] Klik tombol expand...`);
+        await expandBtn.click();
+        await this.sleep(1500);
+      }
+    } catch (err) {
+      this.logger.warn(`[AutoReload][${email}] Tombol expand tidak ditemukan atau menu sudah terbuka, mencoba cek tombol Finish...`);
+    }
+
+    // Klik "Selesaikan Pembatalan" (Finish Cancellation)
+    await finishBtn.waitFor({ state: 'visible', timeout: 10000 });
+    await finishBtn.click();
+    this.logger.info(`[AutoReload][${email}] Pembatalan selesai, kembali ke halaman membership...`);
+    await this.sleep(2000);
+
+    // Balik ke membership, tunggu tombol restart muncul
+    await page.goto(MEMBERSHIP_URL);
+    await getRestartMembershipButton(page).waitFor({ state: 'visible', timeout: 20000 });
+    this.logger.info(`[AutoReload][${email}] Tombol Restart Membership sudah muncul!`);
+  }
+
+  /**
+   * Hitung subscription_expiry baru berdasarkan tipe varian
+   * - Harian/Mingguan: +9 hari (jam < 22:00 WIB) atau +10 hari (jam >= 22:00 WIB)
+   * - Bulanan/Sharing Bulanan: +1 bulan
+   */
+  private calculateReloadExpiry(variantName: string): Date {
+    const now = new Date();
+    const isHarianOrMingguan = /harian|mingguan/i.test(variantName);
+
+    if (isHarianOrMingguan) {
+      const WIB_OFFSET_MS = 7 * 60 * 60 * 1000; // UTC+7
+      const nowWIB = new Date(now.getTime() + WIB_OFFSET_MS);
+      const hourWIB = nowWIB.getUTCHours();
+      const daysToAdd = hourWIB >= 22 ? 10 : 9;
+      const result = new Date(now);
+      result.setDate(result.getDate() + daysToAdd);
+      this.logger.info(`Expiry calc [${variantName}]: jam WIB=${hourWIB}, +${daysToAdd} hari → ${result.toISOString()}`);
+      return result;
+    }
+
+    // Bulanan / Sharing Bulanan
+    const result = new Date(now);
+    result.setMonth(result.getMonth() + 1);
+    this.logger.info(`Expiry calc [${variantName}]: +1 bulan → ${result.toISOString()}`);
     return result;
   }
 }

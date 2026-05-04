@@ -54,6 +54,11 @@ export class AccountController {
     });
   }
 
+  @Get('pending-topups')
+  getPendingTopups(@Request() request: AppRequest) {
+    return this.accountService.getPendingTopups(request.tenant_id!);
+  }
+
   @Get(':id')
   findById(@Param('id') id: string, @Request() request: AppRequest) {
     return this.accountService.findOne(request.tenant_id!, id);
@@ -145,5 +150,19 @@ export class AccountController {
   @Post(':id/reset')
   resetAccount(@Param('id') id: string, @Request() request: AppRequest) {
     return this.accountService.triggerReset(request.tenant_id!, id);
+  }
+
+  @Post(':id/reload')
+  reloadAccount(@Param('id') id: string, @Request() request: AppRequest) {
+    return this.accountService.triggerReload(request.tenant_id!, id);
+  }
+
+  @Post(':id/request-topup')
+  requestTopup(
+    @Param('id') id: string,
+    @Body() body: { email: string; billing: string; taskId: string },
+    @Request() request: AppRequest,
+  ) {
+    return this.accountService.registerPendingTopup(request.tenant_id!, id, body);
   }
 }

@@ -12,11 +12,17 @@ import { CreatePaymentDto } from './dto/create-payment.dto';
 import { RegisterTenantDto } from './dto/register-tenant.dto';
 import { RedeemVoucherDto } from './dto/redeem-voucher.dto';
 import { PublicService } from './public.service';
+import { SocketGateway } from '../socket/socket.gateway';
+import { AccountService } from '../account/account.service';
 
 @Controller('public')
 @PublicRoute()
 export class PublicController {
-  constructor(private readonly publicService: PublicService) {}
+  constructor(
+    private readonly publicService: PublicService,
+    private readonly socketGateway: SocketGateway,
+    private readonly accountService: AccountService,
+  ) {}
 
   private getTenantId(host: string, xTenantId?: string): string {
     // 1. Priority: x-tenant-id header (sent by frontend)
@@ -202,5 +208,45 @@ export class PublicController {
   @Post('auth/reset-password')
   async resetPassword(@Body() data: any) {
     return await this.publicService.resetPassword(data.token, data.password);
+  }
+
+  @Post('reload/confirm-topup')
+  async confirmTopup(
+    @Headers() headers: any,
+    @Body('account_id') accountId: string,
+  ) {
+    const host = headers.host || '';
+    const xTenantId = headers['x-tenant-id'];
+    const tenantId = this.getTenantId(host, xTenantId);
+    if (!accountId) throw new BadRequestException('account_id is required');
+
+    // Emit event ke bot yang sedang menunggu konfirmasi top-up
+    const eventName = `${accountId}:NETFLIX_TOPUP_CONFIRM`;
+    this.socketGateway.sendEvent(eventName, { accountId, tenantId });
+
+    // Bersihkan dari in-memory store
+    this.accountService.clearPendingTopup(tenantId, accountId);
+
+    return { message: 'Top-up confirmed, bot will proceed.' };
+  }
+
+  @Post('reload/cancel-topup')
+  async cancelTopup(
+    @Headers() headers: any,
+    @Body('account_id') accountId: string,
+  ) {
+    const host = headers.host || '';
+    const xTenantId = headers['x-tenant-id'];
+    const tenantId = this.getTenantId(host, xTenantId);
+    if (!accountId) throw new BadRequestException('account_id is required');
+
+    // Emit event pembatalan ke bot
+    const eventName = `${accountId}:NETFLIX_TOPUP_CANCEL`;
+    this.socketGateway.sendEvent(eventName, { accountId, tenantId });
+
+    // Bersihkan dari in-memory store
+    this.accountService.clearPendingTopup(tenantId, accountId);
+
+    return { message: 'Reload cancelled, bot will stop.' };
   }
 }

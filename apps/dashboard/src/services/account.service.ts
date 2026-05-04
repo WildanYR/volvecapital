@@ -682,5 +682,63 @@ export function AccountServiceGenerator(apiUrl: string, accessToken: string, ten
         throw new Error(errorData.message || 'Failed to trigger reset')
       }
     },
+    triggerReload: async (accountId: string): Promise<void> => {
+      const response = await generateApiFetch(
+        apiUrl,
+        accessToken,
+        tenantId,
+        `/account/${accountId}/reload`,
+        undefined,
+        {
+          method: 'POST',
+        },
+      )
+      if (!response.ok) {
+        const errorData = await parseApiResponse(response)
+        throw new Error(errorData.message || 'Failed to trigger reload')
+      }
+    },
+    confirmTopup: async (accountId: string): Promise<void> => {
+      const response = await fetch(`${apiUrl}/public/reload/confirm-topup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-tenant-id': tenantId,
+          'Authorization': `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ account_id: accountId }),
+      })
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({})) as any
+        throw new Error(errorData.message || 'Failed to confirm topup')
+      }
+    },
+    cancelTopup: async (accountId: string): Promise<void> => {
+      const response = await fetch(`${apiUrl}/public/reload/cancel-topup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-tenant-id': tenantId,
+          'Authorization': `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ account_id: accountId }),
+      })
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({})) as any
+        throw new Error(errorData.message || 'Failed to cancel topup')
+      }
+    },
+    getPendingTopups: async (): Promise<{ accountId: string; email: string; billing: string; taskId: string }[]> => {
+      const response = await generateApiFetch(
+        apiUrl,
+        accessToken,
+        tenantId,
+        '/account/pending-topups',
+      )
+      if (!response.ok) {
+        return []
+      }
+      return await response.json()
+    },
   }
 }

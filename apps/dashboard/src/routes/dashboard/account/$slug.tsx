@@ -42,6 +42,7 @@ import {
   PinOff,
   Plus,
   RefreshCw,
+  RotateCw,
   SlidersHorizontal,
   SquarePen,
   SquareUser,
@@ -768,6 +769,27 @@ function RouteComponent() {
     },
   })
 
+  const triggerReloadMutation = useMutation({
+    mutationFn: (accountId: string) => accountService.triggerReload(accountId),
+    onSuccess: () => {
+      toast.success('Tugas Auto Reload ditambahkan ke antrian. Bot segera memproses...')
+    },
+    onError: (error) => {
+      toast.error(`Gagal memicu reload: ${error.message}`)
+    },
+  })
+
+  const confirmTopupMutation = useMutation({
+    mutationFn: (accountId: string) => accountService.confirmTopup(accountId),
+    onSuccess: () => {
+      setPendingTopup(null)
+      toast.success('Konfirmasi top-up berhasil dikirim! Bot akan melanjutkan.')
+    },
+    onError: (error) => {
+      toast.error(`Gagal konfirmasi topup: ${error.message}`)
+    },
+  })
+
   const handleTriggerReset = (account: Account) => {
     showAlertDialog({
       title: 'Trigger Reset Password?',
@@ -781,6 +803,21 @@ function RouteComponent() {
       confirmText: 'Reset Now',
       isConfirming: triggerResetMutation.isPending,
       onConfirm: () => triggerResetMutation.mutate(account.id),
+    })
+  }
+
+  const handleTriggerReload = (account: Account) => {
+    showAlertDialog({
+      title: 'Auto Reload Akun Netflix?',
+      description: (
+        <>
+          Bot akan membuka Netflix, restart membership, dan menunggu konfirmasi top-up dari Anda untuk akun{' '}
+          <span className="font-bold">{account.email.email}</span>. Pastikan billing <span className="font-bold">{account.billing || 'tidak diset'}</span> siap digunakan.
+        </>
+      ),
+      confirmText: 'Mulai Auto Reload',
+      isConfirming: triggerReloadMutation.isPending,
+      onConfirm: () => triggerReloadMutation.mutate(account.id),
     })
   }
 
@@ -1120,6 +1157,16 @@ function RouteComponent() {
                                 </span>
                                 {' '}
                                 Reset Now
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onSelect={() => handleTriggerReload(account)}
+                                className="text-orange-500 focus:text-orange-600 font-bold"
+                              >
+                                <span>
+                                  <RotateCw className={triggerReloadMutation.isPending ? 'animate-spin' : ''} />
+                                </span>
+                                {' '}
+                                Auto Reload
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
