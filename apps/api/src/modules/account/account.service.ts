@@ -742,7 +742,7 @@ export class AccountService {
             email: account.email.email,
             password: account.account_password,
             newPassword,
-            subscription_expiry: account.dataValues.subscription_expiry,
+            subscription_expiry: account.dataValues.subscription_expiry?.toISOString?.() || '',
             variant_name: account.product_variant?.dataValues?.name ?? '',
           } as NetflixResetPasswordPayload),
         });

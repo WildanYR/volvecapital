@@ -487,7 +487,7 @@ export class AccountUserService {
                 email: accountUser.dataValues.account.email.email,
                 password: accountUser.dataValues.account.account_password,
                 newPassword,
-                subscription_expiry: accountUser.dataValues.account.subscription_expiry,
+                subscription_expiry: accountUser.dataValues.account.subscription_expiry?.toISOString?.() || '',
                 variant_name: accountUser.dataValues.account.product_variant?.name ?? '',
               } as NetflixResetPasswordPayload),
             },
