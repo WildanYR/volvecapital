@@ -31,7 +31,9 @@ export class EmailForwardService {
 
       const emailSubject = await this.emailSubjectRepository.findAll({
         where: {
-          subject: emailSubjects,
+          subject: {
+            [Op.or]: payload.emails.map(e => ({ [Op.iLike]: e.subject.trim() }))
+          }
         },
         transaction,
       });
