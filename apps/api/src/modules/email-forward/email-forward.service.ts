@@ -7,7 +7,7 @@ import { AppLoggerService } from '../logger/logger.service';
 import { SocketGateway } from '../socket/socket.gateway';
 import { EmailParser } from '../utility/email-parser.provider';
 import { RecieveEmailDto } from './dto/recieve-email.dto';
-
+import { Op } from 'sequelize';
 import { EmailMessage } from 'src/database/models/email-message.model';
 
 @Injectable()
