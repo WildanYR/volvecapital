@@ -127,8 +127,8 @@ function PortalPage() {
   const account = data?.account
   const messages = (data?.messages || []).filter((msg: any) => {
     const emailDate = new Date(msg.email_date)
-    const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000)
-    return emailDate >= fifteenMinutesAgo
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
+    return emailDate >= twentyFourHoursAgo
   })
   const limit = data?.limit
 

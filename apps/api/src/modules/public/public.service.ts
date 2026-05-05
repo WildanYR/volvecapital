@@ -991,7 +991,7 @@ export class PublicService {
 
       const messages = await this.emailMessageRepository.findAll({
         where: {
-          recipient_email: accountEmail,
+          recipient_email: { [Op.iLike]: accountEmail },
           parsed_context: { [Op.in]: allowedContexts },
         },
         order: [['email_date', 'DESC']],
