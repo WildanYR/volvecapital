@@ -738,9 +738,12 @@ export class AccountService {
           status: 'QUEUED',
           payload: JSON.stringify({
             id: account.id,
+            accountId: account.id,
             email: account.email.email,
             password: account.account_password,
             newPassword,
+            subscription_expiry: account.dataValues.subscription_expiry,
+            variant_name: account.product_variant?.dataValues?.name ?? '',
           } as NetflixResetPasswordPayload),
         });
       }

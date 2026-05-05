@@ -2,7 +2,7 @@ import { Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import Redis from 'ioredis';
-import { QueryTypes } from 'sequelize';
+import { Op, QueryTypes } from 'sequelize';
 import { TASK_QUEUE_REPOSITORY } from 'src/constants/database.const';
 import { REDIS_CLIENT } from 'src/constants/provider.const';
 import { CONSUMER_GROUP, STREAM_KEY, TASK_REFERENCE_KEY, ZSET_KEY } from 'src/constants/scheduler.const';
@@ -57,15 +57,21 @@ export class TaskWorkerService {
    * Recovery mechanism: saat API restart, Redis ZSET kosong.
    * Method ini membaca semua task yang belum selesai dari PostgreSQL
    * dan mendaftarkannya kembali ke Redis ZSET agar terjadwal dengan benar.
+   * CATATAN: Hanya reload task yang execute_at >= 5 menit yang lalu (buffer),
+   * agar task lama yang sudah lewat tidak ikut dieksekusi ulang.
    */
   private async reloadQueuedTasksToRedis() {
     const transaction = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema('master', transaction);
 
+      // Buffer 5 menit: task yang sudah > 5 menit lewat dianggap sudah tidak relevan
+      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+
       const pendingTasks = await this.taskQueueRepository.findAll({
         where: {
           status: ['QUEUED', 'DISPATCHED'],
+          execute_at: { [Op.gte]: fiveMinutesAgo },
         },
         transaction,
       });
@@ -93,6 +99,7 @@ export class TaskWorkerService {
       this.logger.error(`TaskWorker: Gagal reload task ke Redis: ${error.message}`, error.stack, 'TaskWorkerInit');
     }
   }
+
 
   async consumeTasks() {
     while (true) {
