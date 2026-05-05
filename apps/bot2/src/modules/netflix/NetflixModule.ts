@@ -28,6 +28,10 @@ import {
   getLogAllDevicesCheckbox,
   getSubmitButton,
   getCurrentPasswordError,
+  getGenericErrorAlert,
+  getMfaEmailButton,
+  getOtpInput,
+  getOtpSubmitButton,
 } from "./locators/changePassword.js";
 import {
   getEmailRadio,
@@ -134,7 +138,7 @@ export class NetflixModule extends BaseModule {
       if (loginState === "not_logged_in") {
         await this.handleEmailResetFlow(page, task, email, newPassword);
       } else {
-        const changeSuccess = await this.handleChangePasswordFlow(page, email, newPassword, password);
+        const changeSuccess = await this.handleChangePasswordFlow(page, task, email, newPassword, password);
         if (!changeSuccess) {
             await this.handleEmailResetFlow(page, task, email, newPassword);
         }
@@ -145,8 +149,9 @@ export class NetflixModule extends BaseModule {
 
       // 5. Update Status ke API (V3 Logic)
       const { status, reason } = this.calculateAccountState(payload.subscription_expiry);
-      const shouldSwitch = payload.variant_name.toLowerCase() !== 'harian';
-      const variantLog = shouldSwitch ? `SWITCHED (${payload.variant_name} -> Harian)` : "TETAP (Harian)";
+      const variantName = payload.variant_name || '';
+      const shouldSwitch = variantName.toLowerCase() !== 'harian' && variantName !== '';
+      const variantLog = shouldSwitch ? `SWITCHED (${variantName} -> Harian)` : "TETAP (Harian)";
 
       this.logger.info(`RESET SUKSES | Email: ${email} | Pass: ${newPassword} | Status: ${status.toUpperCase()} (${reason}) | Variant: ${variantLog}`);
 
@@ -258,44 +263,60 @@ export class NetflixModule extends BaseModule {
               
               // Cek dulu apakah kita tiba-tiba sudah login (misal auto-redirect)
               const currentUrl = page.url();
-              if (currentUrl.includes('/browse') || currentUrl.includes('/account') || currentUrl.includes('/YourAccount')) {
+              if (currentUrl.includes('/browse') || currentUrl.includes('/account') || currentUrl.includes('/YourAccount') || currentUrl.includes('/profiles') || (currentUrl === 'https://www.netflix.com/' && !currentUrl.includes('login'))) {
                   this.logger.info(`[${email}] Terdeteksi sudah login via URL: ${currentUrl}`);
                   return true;
               }
 
               const pwInput = getPasswordInput(page);
-              if (await pwInput.isVisible({ timeout: 15000 })) {
-                  await pwInput.fill(password);
-                  await this.sleep(2000); 
-                  
-                  const signInBtn = getSignInButton(page);
-                  if (await signInBtn.isEnabled({ timeout: 10000 })) {
+              // Wait for password input up to 15 seconds, gracefully return false if not found
+              try {
+                  await pwInput.waitFor({ state: 'visible', timeout: 15000 });
+              } catch (e) {
+                  this.logger.warn(`[${email}] Password input tidak ditemukan pada attempt ${attempt}. Menunggu 5 detik...`);
+                  if (attempt === 2) return false;
+                  await this.sleep(5000);
+                  continue; // Lanjut loop ke attempt 2
+              }
+
+              await pwInput.fill(password);
+              await this.sleep(2000); 
+              
+              const signInBtn = getSignInButton(page);
+              try {
+                  const isEnabled = await signInBtn.isEnabled({ timeout: 5000 });
+                  if (isEnabled) {
                       await signInBtn.click();
                   } else {
                       this.logger.warn("Sign in button still disabled, trying Enter key...");
                       await pwInput.press('Enter');
                   }
-                  
-                  this.logger.info(`[${email}] Klik login selesai, menunggu respon 10 detik...`);
-                  await this.sleep(10000);
-                  
-                  const finalUrl = page.url();
-                  if (finalUrl.includes('/browse') || finalUrl.includes('/account') || finalUrl.includes('/YourAccount') || finalUrl.includes('/password')) {
-                      return true;
-                  }
+              } catch (e) {
+                  this.logger.warn("Error checking sign in button, trying Enter key...");
+                  await pwInput.press('Enter');
+              }
+              
+              this.logger.info(`[${email}] Klik login selesai, menunggu respon 10 detik...`);
+              await this.sleep(10000);
+              
+              // Cek apakah login sukses dengan fungsi detectLoginState
+              const loginState = await this.detectLoginState(page);
+              if (loginState === 'logged_in') {
+                  this.logger.info(`[${email}] Berhasil login secara manual!`);
+                  return true;
+              }
 
-                  const error = getLoginErrorCallout(page);
-                  if (await error.isVisible()) {
-                      const errorMsg = await error.innerText();
-                      this.logger.warn(`[${email}] Login attempt ${attempt} failed: ${errorMsg}`);
-                      if (attempt === 2) return false;
-                      await this.sleep(5000);
-                  }
-              } else {
-                  this.logger.warn(`[${email}] Password input tidak ditemukan pada attempt ${attempt}. Menunggu 5 detik...`);
+              const finalUrl = page.url();
+              if (finalUrl.includes('/browse') || finalUrl.includes('/account') || finalUrl.includes('/YourAccount') || finalUrl.includes('/password') || finalUrl.includes('/profiles')) {
+                  return true;
+              }
+
+              const error = getLoginErrorCallout(page);
+              if (await error.isVisible()) {
+                  const errorMsg = await error.innerText();
+                  this.logger.warn(`[${email}] Login attempt ${attempt} failed: ${errorMsg}`);
                   if (attempt === 2) return false;
                   await this.sleep(5000);
-                  // Lanjut loop ke attempt 2
               }
           }
           
@@ -389,15 +410,34 @@ export class NetflixModule extends BaseModule {
     }
   }
 
-  private async handleChangePasswordFlow(page: any, email: string, newPassword: string, password?: string): Promise<boolean> {
+  private async handleChangePasswordFlow(page: any, task: Task, email: string, newPassword: string, password?: string, isRetry: boolean = false): Promise<boolean> {
     this.logger.info(`[${email}] Already logged in, proceeding to change password`);
 
     if (!password) {
       throw new Error("Current password is required for logged-in change password flow");
     }
 
-    await getCurrentPasswordInput(page).fill(password);
-    await getNewPasswordInput(page).fill(newPassword);
+    // Tunggu sampai salah satu input muncul (sandi lama ATAU sandi baru)
+    const currentPasswordInput = getCurrentPasswordInput(page);
+    const newPasswordInput = getNewPasswordInput(page);
+    
+    try {
+      await Promise.race([
+        currentPasswordInput.waitFor({ state: "visible", timeout: 15000 }),
+        newPasswordInput.waitFor({ state: "visible", timeout: 15000 }),
+      ]);
+    } catch (e) {
+      this.logger.warn(`[${email}] Timeout menunggu form change password muncul.`);
+    }
+
+    if (await currentPasswordInput.isVisible()) {
+      this.logger.info(`[${email}] Input sandi lama terdeteksi, memasukkan sandi lama.`);
+      await currentPasswordInput.fill(password);
+    } else {
+      this.logger.info(`[${email}] Input sandi lama tidak ada, langsung memasukkan sandi baru.`);
+    }
+
+    await newPasswordInput.fill(newPassword);
     await getConfirmNewPasswordInput(page).fill(newPassword);
 
     const checkbox = getLogAllDevicesCheckbox(page);
@@ -406,6 +446,58 @@ export class NetflixModule extends BaseModule {
     }
 
     await getSubmitButton(page).click();
+
+    // Check for generic error "Terjadi kesalahan" that requires MFA
+    const genericError = getGenericErrorAlert(page);
+    try {
+        await genericError.waitFor({ state: 'visible', timeout: 5000 });
+        this.logger.warn(`[${email}] Terdeteksi error "Terjadi kesalahan". Melakukan verifikasi MFA...`);
+        
+        // 1. Redirect to manageaccountaccess
+        await page.goto("https://www.netflix.com/manageaccountaccess");
+        
+        // 2. Click Kirim kode melalui email
+        const mfaBtn = getMfaEmailButton(page);
+        await mfaBtn.waitFor({ state: 'visible', timeout: 15000 });
+        await mfaBtn.click();
+        
+        // 3. Tunggu kode OTP
+        const otpEventName = `${sanitizeEmail(email)}:NETFLIX_OTP`;
+        this.eventBus.emit('socket:subscribe', otpEventName);
+        this.logger.info(`[${email}] Menunggu OTP dari email...`);
+        
+        try {
+            const eventData = await this.waitForTaskEvent<any>(task.id, otpEventName);
+            const otpCode = eventData.data;
+            this.logger.info(`[${email}] Mendapatkan OTP: ${otpCode}. Memasukkan kode...`);
+            
+            // 4. Input OTP
+            const otpInput = getOtpInput(page);
+            await otpInput.waitFor({ state: 'visible', timeout: 15000 });
+            await otpInput.fill(otpCode);
+            
+            // 5. Submit OTP
+            await getOtpSubmitButton(page).click();
+            await this.sleep(3000); // Tunggu proses verifikasi selesai
+            
+            this.logger.info(`[${email}] OTP berhasil disubmit, mengulangi proses ganti sandi...`);
+            
+            // 6. Redirect kembali ke halaman ganti sandi dan coba lagi (hanya 1 kali retry untuk mencegah infinite loop)
+            if (!isRetry) {
+                await page.goto(CHANGE_PASSWORD_URL);
+                return await this.handleChangePasswordFlow(page, task, email, newPassword, password, true);
+            } else {
+                this.logger.error(`[${email}] Gagal mengganti sandi meskipun sudah diverifikasi OTP.`);
+                return false;
+            }
+            
+        } finally {
+            this.eventBus.emit('socket:unsubscribe', otpEventName);
+        }
+        
+    } catch (e) {
+        // Tidak ada generic error, lanjut cek error password salah
+    }
 
     // Check for "Incorrect password" error (Fallback V4)
     const errorEl = getCurrentPasswordError(page);

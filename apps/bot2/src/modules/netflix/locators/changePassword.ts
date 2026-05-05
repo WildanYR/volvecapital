@@ -11,3 +11,7 @@ export const getConfirmNewPasswordInput = (page: Page) => page.locator('[data-ui
 export const getLogAllDevicesCheckbox = (page: Page) => page.locator('[data-uia="change-password-form+soad-checkbox"]');
 export const getSubmitButton = (page: Page) => page.locator('[data-uia="change-password-form+save-button"]');
 export const getCurrentPasswordError = (page: Page) => page.locator('[data-uia*="current-password-input+validationMessage"]');
+export const getGenericErrorAlert = (page: Page) => page.locator('[role="alert"]:has-text("Terjadi kesalahan")');
+export const getMfaEmailButton = (page: Page) => page.locator('[data-uia="account-mfa-button-OTP_EMAIL+label"]');
+export const getOtpInput = (page: Page) => page.locator('[data-uia="collect-otp-input-modal-entry"], input[name="challengeOtp"]');
+export const getOtpSubmitButton = (page: Page) => page.locator('[data-uia="collect-input-submit-cta"]');

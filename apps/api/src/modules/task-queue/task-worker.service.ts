@@ -46,8 +46,52 @@ export class TaskWorkerService {
         throw err;
     }
 
-    // 2. Jalankan loop consumer biasa
+    // 2. Reload semua task QUEUED/DISPATCHED dari DB ke Redis (recovery setelah restart)
+    await this.reloadQueuedTasksToRedis();
+
+    // 3. Jalankan loop consumer biasa
     this.consumeTasks();
+  }
+
+  /**
+   * Recovery mechanism: saat API restart, Redis ZSET kosong.
+   * Method ini membaca semua task yang belum selesai dari PostgreSQL
+   * dan mendaftarkannya kembali ke Redis ZSET agar terjadwal dengan benar.
+   */
+  private async reloadQueuedTasksToRedis() {
+    const transaction = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema('master', transaction);
+
+      const pendingTasks = await this.taskQueueRepository.findAll({
+        where: {
+          status: ['QUEUED', 'DISPATCHED'],
+        },
+        transaction,
+      });
+
+      if (!pendingTasks.length) {
+        this.logger.log('TaskWorker: Tidak ada task pending yang perlu di-reload ke Redis.', 'TaskWorkerInit');
+        await transaction.commit();
+        return;
+      }
+
+      this.logger.log(`TaskWorker: Mereload ${pendingTasks.length} task ke Redis ZSET...`, 'TaskWorkerInit');
+
+      const redisPipeline = this.redisClient.pipeline();
+      for (const task of pendingTasks) {
+        const executeAt = new Date(task.dataValues.execute_at).getTime();
+        redisPipeline.zadd(ZSET_KEY, executeAt, `${TASK_REFERENCE_KEY}:${task.id}`);
+      }
+      await redisPipeline.exec();
+
+      await transaction.commit();
+      this.logger.log(`TaskWorker: Berhasil reload ${pendingTasks.length} task ke Redis.`, 'TaskWorkerInit');
+    }
+    catch (error) {
+      await transaction.rollback();
+      this.logger.error(`TaskWorker: Gagal reload task ke Redis: ${error.message}`, error.stack, 'TaskWorkerInit');
+    }
   }
 
   async consumeTasks() {
