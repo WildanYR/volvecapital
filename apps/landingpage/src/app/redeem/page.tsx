@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { Navbar } from '@/components/navbar'
 import { Footer } from '@/components/footer'
+import { EmailPortal } from '@/components/email-portal'
 import Link from 'next/link'
 import { useTenant } from '@/hooks/use-tenant'
 
@@ -182,7 +183,7 @@ export default function RedeemPage() {
                   };
 
                   return (
-                    <div className="bg-slate-50/50 rounded-[32px] p-8 md:p-10 border border-slate-100 space-y-10 shadow-inner">
+                    <div className="space-y-10">
                       {(showEmail || showPassword) && (
                         <div className={cn(
                           "grid gap-8",
@@ -192,7 +193,7 @@ export default function RedeemPage() {
                             <div className="space-y-3">
                               <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-1">Email / Username</label>
                               <div className="flex items-center justify-between bg-white p-4 rounded-2xl border border-slate-200 group transition-all hover:border-[#f97316]">
-                                <span className="text-base font-mono text-[#0f172a] font-bold truncate mr-4">{result.account.email}</span>
+                                <span className="text-base font-mono text-[#0f172a] font-bold break-all mr-4">{result.account.email}</span>
                                 <button onClick={() => copyToClipboard(result.account.email)} className="text-[#f97316] hover:text-[#ef4444] transition-colors shrink-0 p-1">
                                   <Copy className="size-5" />
                                 </button>
@@ -203,7 +204,7 @@ export default function RedeemPage() {
                             <div className="space-y-3">
                               <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-1">Password</label>
                               <div className="flex items-center justify-between bg-white p-4 rounded-2xl border border-slate-200 group transition-all hover:border-[#f97316]">
-                                <span className="text-base font-mono text-[#0f172a] font-bold truncate mr-4">{result.account.password}</span>
+                                <span className="text-base font-mono text-[#0f172a] font-bold break-all mr-4">{result.account.password}</span>
                                 <button onClick={() => copyToClipboard(result.account.password)} className="text-[#f97316] hover:text-[#ef4444] transition-colors shrink-0 p-1">
                                   <Copy className="size-5" />
                                 </button>
@@ -249,7 +250,7 @@ export default function RedeemPage() {
                             <div key={idx} className="space-y-3">
                               <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-1">{field.label}</label>
                               <div className="flex items-center justify-between bg-white p-4 rounded-2xl border border-slate-200 group transition-all hover:border-[#f97316]">
-                                <span className="text-base font-mono text-[#0f172a] font-bold truncate mr-4">{resolve(field.value)}</span>
+                                <span className="text-base font-mono text-[#0f172a] font-bold break-all mr-4">{resolve(field.value)}</span>
                                 <button onClick={() => copyToClipboard(resolve(field.value))} className="text-[#f97316] hover:text-[#ef4444] transition-colors shrink-0 p-1">
                                   <Copy className="size-5" />
                                 </button>
@@ -267,39 +268,8 @@ export default function RedeemPage() {
                       )}
 
                       {showPortal && accessToken && (
-                        <div className="mt-6 p-6 bg-blue-50 rounded-[32px] border border-blue-100 flex flex-col md:flex-row items-center justify-between gap-6">
-                          <div>
-                            <p className="text-xs font-black text-blue-600 uppercase tracking-[0.2em] mb-1">📧 Portal Email OTP</p>
-                            <p className="text-sm text-slate-500 font-medium">Pantau kode OTP & link reset Netflix akun Anda secara real-time.</p>
-                          </div>
-                          {(() => {
-                            const portalBase = process.env.NEXT_PUBLIC_PORTAL_URL || 'http://localhost:3000';
-                            let finalPortalUrl = portalBase;
-                            
-                            if (tenantId && tenantId !== 'master') {
-                              try {
-                                const url = new URL(portalBase);
-                                if (!url.hostname.startsWith(`${tenantId}.`)) {
-                                  url.hostname = `${tenantId}.${url.hostname}`;
-                                }
-                                finalPortalUrl = url.toString().replace(/\/$/, '');
-                              } catch(e) {
-                                finalPortalUrl = portalBase;
-                              }
-                            }
-
-                            return (
-                                <a
-                                  href={`${finalPortalUrl}/portal/${tenantId || 'master'}/${accessToken}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="shrink-0 px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white font-black rounded-2xl transition-all flex items-center gap-2 text-sm shadow-xl"
-                                >
-                                  <ExternalLink className="size-4" />
-                                  Akses Portal
-                                </a>
-                            );
-                          })()}
+                        <div className="mt-6">
+                          <EmailPortal token={accessToken} />
                         </div>
                       )}
 

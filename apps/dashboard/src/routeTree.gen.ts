@@ -16,7 +16,6 @@ import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as DashboardRouteRouteImport } from './routes/dashboard/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
-import { Route as PortalTokenRouteImport } from './routes/portal/$token'
 import { Route as DashboardVoucherGeneratorIndexRouteImport } from './routes/dashboard/voucher-generator/index'
 import { Route as DashboardTransactionIndexRouteImport } from './routes/dashboard/transaction/index'
 import { Route as DashboardSettingIndexRouteImport } from './routes/dashboard/setting/index'
@@ -25,7 +24,6 @@ import { Route as DashboardPlatformProductIndexRouteImport } from './routes/dash
 import { Route as DashboardEmailIndexRouteImport } from './routes/dashboard/email/index'
 import { Route as DashboardEmailMessageIndexRouteImport } from './routes/dashboard/email-message/index'
 import { Route as DashboardAccountIndexRouteImport } from './routes/dashboard/account/index'
-import { Route as PortalTenantIdTokenRouteImport } from './routes/portal/$tenantId.$token'
 import { Route as DashboardTransactionCreateRouteImport } from './routes/dashboard/transaction/create'
 import { Route as DashboardProductCreateRouteImport } from './routes/dashboard/product/create'
 import { Route as DashboardPlatformProductCreateRouteImport } from './routes/dashboard/platform-product/create'
@@ -73,11 +71,6 @@ const DashboardIndexRoute = DashboardIndexRouteImport.update({
   path: '/',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
-const PortalTokenRoute = PortalTokenRouteImport.update({
-  id: '/portal/$token',
-  path: '/portal/$token',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const DashboardVoucherGeneratorIndexRoute =
   DashboardVoucherGeneratorIndexRouteImport.update({
     id: '/voucher-generator/',
@@ -121,11 +114,6 @@ const DashboardAccountIndexRoute = DashboardAccountIndexRouteImport.update({
   id: '/account/',
   path: '/account/',
   getParentRoute: () => DashboardRouteRoute,
-} as any)
-const PortalTenantIdTokenRoute = PortalTenantIdTokenRouteImport.update({
-  id: '/portal/$tenantId/$token',
-  path: '/portal/$tenantId/$token',
-  getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardTransactionCreateRoute =
   DashboardTransactionCreateRouteImport.update({
@@ -196,7 +184,6 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/portal/$token': typeof PortalTokenRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/dashboard/account/$slug': typeof DashboardAccountSlugRoute
   '/dashboard/account/create': typeof DashboardAccountCreateRoute
@@ -206,7 +193,6 @@ export interface FileRoutesByFullPath {
   '/dashboard/platform-product/create': typeof DashboardPlatformProductCreateRoute
   '/dashboard/product/create': typeof DashboardProductCreateRoute
   '/dashboard/transaction/create': typeof DashboardTransactionCreateRoute
-  '/portal/$tenantId/$token': typeof PortalTenantIdTokenRoute
   '/dashboard/account': typeof DashboardAccountIndexRoute
   '/dashboard/email-message': typeof DashboardEmailMessageIndexRoute
   '/dashboard/email': typeof DashboardEmailIndexRoute
@@ -225,7 +211,6 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/portal/$token': typeof PortalTokenRoute
   '/dashboard': typeof DashboardIndexRoute
   '/dashboard/account/$slug': typeof DashboardAccountSlugRoute
   '/dashboard/account/create': typeof DashboardAccountCreateRoute
@@ -235,7 +220,6 @@ export interface FileRoutesByTo {
   '/dashboard/platform-product/create': typeof DashboardPlatformProductCreateRoute
   '/dashboard/product/create': typeof DashboardProductCreateRoute
   '/dashboard/transaction/create': typeof DashboardTransactionCreateRoute
-  '/portal/$tenantId/$token': typeof PortalTenantIdTokenRoute
   '/dashboard/account': typeof DashboardAccountIndexRoute
   '/dashboard/email-message': typeof DashboardEmailMessageIndexRoute
   '/dashboard/email': typeof DashboardEmailIndexRoute
@@ -256,7 +240,6 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/portal/$token': typeof PortalTokenRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/dashboard/account/$slug': typeof DashboardAccountSlugRoute
   '/dashboard/account/create': typeof DashboardAccountCreateRoute
@@ -266,7 +249,6 @@ export interface FileRoutesById {
   '/dashboard/platform-product/create': typeof DashboardPlatformProductCreateRoute
   '/dashboard/product/create': typeof DashboardProductCreateRoute
   '/dashboard/transaction/create': typeof DashboardTransactionCreateRoute
-  '/portal/$tenantId/$token': typeof PortalTenantIdTokenRoute
   '/dashboard/account/': typeof DashboardAccountIndexRoute
   '/dashboard/email-message/': typeof DashboardEmailMessageIndexRoute
   '/dashboard/email/': typeof DashboardEmailIndexRoute
@@ -288,7 +270,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/reset-password'
-    | '/portal/$token'
     | '/dashboard/'
     | '/dashboard/account/$slug'
     | '/dashboard/account/create'
@@ -298,7 +279,6 @@ export interface FileRouteTypes {
     | '/dashboard/platform-product/create'
     | '/dashboard/product/create'
     | '/dashboard/transaction/create'
-    | '/portal/$tenantId/$token'
     | '/dashboard/account'
     | '/dashboard/email-message'
     | '/dashboard/email'
@@ -317,7 +297,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/reset-password'
-    | '/portal/$token'
     | '/dashboard'
     | '/dashboard/account/$slug'
     | '/dashboard/account/create'
@@ -327,7 +306,6 @@ export interface FileRouteTypes {
     | '/dashboard/platform-product/create'
     | '/dashboard/product/create'
     | '/dashboard/transaction/create'
-    | '/portal/$tenantId/$token'
     | '/dashboard/account'
     | '/dashboard/email-message'
     | '/dashboard/email'
@@ -347,7 +325,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/reset-password'
-    | '/portal/$token'
     | '/dashboard/'
     | '/dashboard/account/$slug'
     | '/dashboard/account/create'
@@ -357,7 +334,6 @@ export interface FileRouteTypes {
     | '/dashboard/platform-product/create'
     | '/dashboard/product/create'
     | '/dashboard/transaction/create'
-    | '/portal/$tenantId/$token'
     | '/dashboard/account/'
     | '/dashboard/email-message/'
     | '/dashboard/email/'
@@ -378,8 +354,6 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
-  PortalTokenRoute: typeof PortalTokenRoute
-  PortalTenantIdTokenRoute: typeof PortalTenantIdTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -432,13 +406,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard/'
       preLoaderRoute: typeof DashboardIndexRouteImport
       parentRoute: typeof DashboardRouteRoute
-    }
-    '/portal/$token': {
-      id: '/portal/$token'
-      path: '/portal/$token'
-      fullPath: '/portal/$token'
-      preLoaderRoute: typeof PortalTokenRouteImport
-      parentRoute: typeof rootRouteImport
     }
     '/dashboard/voucher-generator/': {
       id: '/dashboard/voucher-generator/'
@@ -495,13 +462,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard/account'
       preLoaderRoute: typeof DashboardAccountIndexRouteImport
       parentRoute: typeof DashboardRouteRoute
-    }
-    '/portal/$tenantId/$token': {
-      id: '/portal/$tenantId/$token'
-      path: '/portal/$tenantId/$token'
-      fullPath: '/portal/$tenantId/$token'
-      preLoaderRoute: typeof PortalTenantIdTokenRouteImport
-      parentRoute: typeof rootRouteImport
     }
     '/dashboard/transaction/create': {
       id: '/dashboard/transaction/create'
@@ -640,8 +600,6 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
   ResetPasswordRoute: ResetPasswordRoute,
-  PortalTokenRoute: PortalTokenRoute,
-  PortalTenantIdTokenRoute: PortalTenantIdTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

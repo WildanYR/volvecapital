@@ -35,7 +35,7 @@ export function DecisionSplit() {
             initial={{ opacity: 0, x: -20 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            className="group p-10 md:p-14 bg-white rounded-[48px] border border-slate-100 shadow-xl hover:shadow-2xl hover:border-orange-200 hover:-translate-y-4 transition-all duration-500 flex flex-col items-center text-center relative overflow-hidden"
+            className="group p-10 md:p-14 bg-white rounded-3xl border border-slate-100 shadow-xl hover:shadow-2xl hover:border-orange-200 hover:-translate-y-4 transition-all duration-500 flex flex-col items-center text-center relative overflow-hidden"
           >
             <div className="size-20 bg-orange-50 rounded-3xl flex items-center justify-center mb-10 group-hover:scale-110 group-hover:bg-orange-100 transition-all duration-500">
               <Key className="size-10 text-[#f97316]" />
@@ -59,7 +59,7 @@ export function DecisionSplit() {
             initial={{ opacity: 0, x: 20 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            className="group p-10 md:p-14 bg-white rounded-[48px] border border-slate-100 shadow-xl hover:shadow-2xl hover:border-orange-200 hover:-translate-y-4 transition-all duration-500 flex flex-col items-center text-center relative overflow-hidden"
+            className="group p-10 md:p-14 bg-white rounded-3xl border border-slate-100 shadow-xl hover:shadow-2xl hover:border-orange-200 hover:-translate-y-4 transition-all duration-500 flex flex-col items-center text-center relative overflow-hidden"
           >
             <div className="size-20 bg-orange-50 rounded-3xl flex items-center justify-center mb-10 group-hover:scale-110 group-hover:bg-orange-100 transition-all duration-500">
               <ShoppingCart className="size-10 text-[#f97316]" />

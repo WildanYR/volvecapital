@@ -47,7 +47,7 @@ export function ProductGrid({ products }: ProductGridProps) {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.1 }}
                 viewport={{ once: true }}
-                className={`group p-8 rounded-[40px] flex flex-col h-full relative border transition-all duration-500 hover:-translate-y-4 ${
+                className={`group p-8 rounded-3xl flex flex-col h-full relative border transition-all duration-500 hover:-translate-y-4 ${
                   isFeatured 
                   ? 'bg-[#0f172a] border-[#0f172a] shadow-2xl scale-105 z-20 hover:scale-[1.08]' 
                   : 'bg-white border-slate-100 shadow-sm hover:shadow-2xl'

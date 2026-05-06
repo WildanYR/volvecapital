@@ -45,7 +45,7 @@ export function Features({ config }: FeaturesProps) {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: index * 0.1 }}
-              className="p-10 rounded-[40px] bg-white border border-slate-100 hover:shadow-2xl transition-all duration-500 group text-center flex flex-col items-center"
+              className="p-10 rounded-3xl bg-white border border-slate-100 hover:shadow-2xl transition-all duration-500 group text-center flex flex-col items-center"
             >
               <div className={`p-6 rounded-[30px] mb-8 group-hover:scale-110 transition-transform duration-500 ${feature.color || 'bg-orange-50 text-orange-500'}`}>
                 {feature.lucideIcon ? <feature.lucideIcon className="size-8" /> : <Zap className="size-8" />}

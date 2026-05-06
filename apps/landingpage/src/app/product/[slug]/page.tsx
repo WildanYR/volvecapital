@@ -2,12 +2,13 @@
 
 import { useState, use } from 'react'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Zap, ArrowRight, Loader2, Sparkles, ShoppingBag, ShieldCheck, Mail, MessageSquare, User } from 'lucide-react'
+import { ArrowLeft, Zap, ArrowRight, Loader2, Sparkles, ShieldCheck, MessageSquare } from 'lucide-react'
 import { useProducts, Product, ProductVariant } from '@/hooks/use-products'
 import { useTenant } from '@/hooks/use-tenant'
 import { formatCurrency, formatDuration } from '@/lib/format'
 import { Navbar } from '@/components/navbar'
 import { Footer } from '@/components/footer'
+import { CheckoutModal } from '@/components/checkout-modal'
 import { api } from '@/lib/api'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
@@ -28,38 +29,25 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
   const product = products?.find(p => p.slug === slug)
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
-  
-  const [formData, setFormData] = useState({
-    buyer_name: '',
-    buyer_email: '',
-    buyer_whatsapp: ''
-  })
+  const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false)
+  const [isVariantShaking, setIsVariantShaking] = useState(false)
 
-  const handleCheckout = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!selectedVariant || !tenantId) return
-
-    setIsProcessing(true)
-    try {
-      const { data } = await api.post('/public/payment/create', {
-        product_variant_id: selectedVariant.id,
-        ...formData
+  const handleContinueCheckout = () => {
+    if (!selectedVariant) {
+      setIsVariantShaking(true)
+      toast.error('Silahkan pilih varian produk terlebih dahulu', {
+        position: 'top-center',
+        className: 'font-bold uppercase text-[10px] tracking-widest'
       })
-
-      if (data.payment_url) {
-        if (window.loadJokulCheckout) {
-          window.loadJokulCheckout(data.payment_url)
-        } else {
-          window.location.href = data.payment_url
-        }
-      } else {
-        toast.error('Gagal mendapatkan link pembayaran')
-      }
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Terjadi kesalahan saat membuat pembayaran')
-    } finally {
-      setIsProcessing(false)
+      setTimeout(() => setIsVariantShaking(false), 500)
+      return
     }
+    setIsCheckoutModalOpen(true)
+  }
+
+  const shakeAnimation = {
+    x: [0, -10, 10, -10, 10, 0],
+    transition: { duration: 0.4 }
   }
 
   if (productsLoading) {
@@ -130,7 +118,10 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
               </motion.div>
             </div>
 
-            <div className="space-y-6">
+            <motion.div 
+              animate={isVariantShaking ? shakeAnimation : {}}
+              className="space-y-6"
+            >
               <h3 className="text-[#0f172a] font-black uppercase tracking-widest text-xs">Pilih Varian Paket</h3>
               <div className="grid grid-cols-1 gap-4">
                 {product.variants.map((variant, idx) => (
@@ -140,7 +131,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 + idx * 0.1 }}
                     onClick={() => setSelectedVariant(variant)}
-                    className={`p-6 md:p-8 rounded-[32px] border transition-all duration-500 text-left flex justify-between items-center group relative overflow-hidden ${
+                    className={`p-6 md:p-8 rounded-2xl border transition-all duration-500 text-left flex justify-between items-center group relative overflow-hidden ${
                       selectedVariant?.id === variant.id 
                       ? 'bg-white border-[#f97316] shadow-[0_20px_40px_rgba(249,115,22,0.15)] ring-1 ring-[#f97316]' 
                       : 'bg-slate-50 border-slate-100 hover:border-slate-200'
@@ -167,138 +158,99 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
                   </motion.button>
                 ))}
               </div>
+            </motion.div>
+
             </div>
 
-            {/* Trust Badges */}
-            <div className="pt-12 border-t border-slate-100 grid grid-cols-2 gap-10">
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 text-[#0f172a] font-black text-sm uppercase tracking-wider">
-                  <div className="bg-emerald-50 p-2 rounded-xl">
-                    <ShieldCheck className="size-5 text-emerald-500" />
+          {/* Right Side: CTA Button and Visual */}
+          <div className="lg:sticky lg:top-40 space-y-8">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="hidden lg:block bg-slate-900 rounded-[48px] p-12 text-white relative overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 w-64 h-64 bg-orange-500/10 blur-[100px] -translate-y-1/2 translate-x-1/2" />
+              
+              <div className="relative z-10">
+                <h2 className="text-3xl md:text-4xl font-black mb-6 uppercase tracking-tighter leading-tight">Siap Untuk Berlangganan?</h2>
+                <p className="text-slate-400 font-medium mb-10 leading-relaxed">Pilih varian paket yang Anda inginkan dan nikmati layanan premium secara instan tanpa ribet.</p>
+                
+                <button 
+                  onClick={handleContinueCheckout}
+                  className="w-full py-6 bg-gradient-to-r from-[#f97316] to-[#ef4444] text-white font-black rounded-[24px] hover:scale-[1.02] active:scale-95 transition-all shadow-2xl shadow-orange-500/20 flex items-center justify-center gap-3 uppercase tracking-widest text-sm"
+                >
+                  Lanjutkan ke Pembayaran
+                  <ArrowRight className="size-5" />
+                </button>
+                
+                <div className="mt-8 flex items-center justify-center gap-6">
+                  <div className="flex -space-x-3">
+                    {[1,2,3,4].map(i => (
+                      <div key={i} className="size-8 rounded-full border-2 border-slate-900 bg-slate-800" />
+                    ))}
                   </div>
-                  Legal 100%
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+                    <span className="text-white">1000+</span> Pengguna Aktif
+                  </p>
                 </div>
-                <p className="text-xs text-slate-400 leading-relaxed font-medium">Semua akun kami berasal dari sumber resmi dan bergaransi penuh.</p>
               </div>
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 text-[#0f172a] font-black text-sm uppercase tracking-wider">
-                  <div className="bg-orange-50 p-2 rounded-xl">
-                    <Zap className="size-5 text-[#f97316]" />
-                  </div>
-                  Instan Aktif
-                </div>
-                <p className="text-xs text-slate-400 leading-relaxed font-medium">Voucher dikirim otomatis sesaat setelah pembayaran Anda terverifikasi.</p>
+            </motion.div>
+
+            {/* Trust Badges Individual Cards */}
+            <div className="p-8 border border-slate-100 rounded-2xl flex gap-6 items-center group hover:border-emerald-100 transition-colors h-full">
+              <div className="bg-emerald-50 p-4 rounded-2xl group-hover:bg-emerald-100 transition-colors shrink-0">
+                <ShieldCheck className="size-6 text-emerald-500" />
+              </div>
+              <div>
+                <h4 className="font-black text-[#0f172a] uppercase tracking-wider text-xs mb-1">Legal 100%</h4>
+                <p className="text-xs text-slate-400 font-medium leading-relaxed">Semua akun kami berasal dari sumber resmi dan bergaransi penuh.</p>
+              </div>
+            </div>
+
+            <div className="p-8 border border-slate-100 rounded-2xl flex gap-6 items-center group hover:border-orange-100 transition-colors h-full">
+              <div className="bg-orange-50 p-4 rounded-2xl group-hover:bg-orange-100 transition-colors shrink-0">
+                <Zap className="size-6 text-[#f97316]" />
+              </div>
+              <div>
+                <h4 className="font-black text-[#0f172a] uppercase tracking-wider text-xs mb-1">Instan Aktif</h4>
+                <p className="text-xs text-slate-400 font-medium leading-relaxed">Voucher dikirim otomatis sesaat setelah pembayaran Anda terverifikasi.</p>
+              </div>
+            </div>
+
+            {/* Support Info */}
+            <div className="p-8 border border-slate-100 rounded-2xl flex gap-6 items-center group hover:border-orange-100 transition-colors h-full">
+              <div className="bg-orange-50 p-4 rounded-2xl group-hover:bg-orange-100 transition-colors shrink-0">
+                <MessageSquare className="size-6 text-[#f97316]" />
+              </div>
+              <div>
+                <h4 className="font-black text-[#0f172a] uppercase tracking-wider text-xs mb-1">Butuh Bantuan?</h4>
+                <p className="text-xs text-slate-400 font-medium leading-relaxed">Tim support kami siap membantu Anda 24/7 via WhatsApp.</p>
               </div>
             </div>
           </div>
-
-          {/* Right Side: Checkout Form */}
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="sticky top-40"
-          >
-            <div className="bg-white rounded-[48px] p-8 md:p-12 border border-slate-100 shadow-[0_30px_60px_rgba(15,23,42,0.08)] relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-[#f97316] to-[#ef4444]" />
-              
-              <div className="flex items-center gap-4 mb-10">
-                <div className="bg-[#0f172a] p-4 rounded-2xl">
-                  <ShoppingBag className="size-6 text-white" />
-                </div>
-                <h2 className="text-2xl font-black text-[#0f172a] uppercase tracking-tighter">Konfirmasi Pembelian</h2>
-              </div>
-
-              <form onSubmit={handleCheckout} className="space-y-6">
-                <div className="space-y-2">
-                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
-                    <User className="size-3" /> Nama Lengkap
-                  </label>
-                  <input 
-                    required
-                    type="text"
-                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-5 px-6 text-[#0f172a] focus:outline-none focus:border-[#f97316] focus:bg-white focus:ring-4 focus:ring-orange-500/5 transition-all font-bold placeholder:text-slate-300"
-                    placeholder="Masukkan nama lengkap"
-                    value={formData.buyer_name}
-                    onChange={e => setFormData({...formData, buyer_name: e.target.value})}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
-                    <Mail className="size-3" /> Email Pengiriman
-                  </label>
-                  <input 
-                    required
-                    type="email"
-                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-5 px-6 text-[#0f172a] focus:outline-none focus:border-[#f97316] focus:bg-white focus:ring-4 focus:ring-orange-500/5 transition-all font-bold placeholder:text-slate-300"
-                    placeholder="email@anda.com"
-                    value={formData.buyer_email}
-                    onChange={e => setFormData({...formData, buyer_email: e.target.value})}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
-                    <MessageSquare className="size-3" /> No. WhatsApp
-                  </label>
-                  <input 
-                    required
-                    type="tel"
-                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-5 px-6 text-[#0f172a] focus:outline-none focus:border-[#f97316] focus:bg-white focus:ring-4 focus:ring-orange-500/5 transition-all font-bold placeholder:text-slate-300"
-                    placeholder="08123456xxxx"
-                    value={formData.buyer_whatsapp}
-                    onChange={e => setFormData({...formData, buyer_whatsapp: e.target.value})}
-                  />
-                </div>
-
-                <div className="pt-8 border-t border-slate-50 space-y-4 mt-8">
-                  <div className="flex justify-between items-center text-slate-500 text-sm font-bold uppercase tracking-wide">
-                    <span>Layanan</span>
-                    <span className="text-[#0f172a] font-black">{product.name}</span>
-                  </div>
-                  <div className="flex justify-between items-center text-slate-500 text-sm font-bold uppercase tracking-wide">
-                    <span>Varian</span>
-                    <span className="text-[#0f172a] font-black">{selectedVariant?.name || 'Belum dipilih'}</span>
-                  </div>
-                  <div className="flex justify-between items-center pt-4 border-t border-slate-50 mt-4">
-                    <span className="text-[#0f172a] font-black uppercase tracking-widest text-xs">Total Bayar</span>
-                    <div className="text-right">
-                      {selectedVariant?.strike_price && (
-                        <span className="text-xs text-slate-400 line-through font-bold block -mb-1">
-                          {formatCurrency(selectedVariant.strike_price)}
-                        </span>
-                      )}
-                      <span className="text-[#f97316] font-black text-4xl">
-                        {selectedVariant ? formatCurrency(selectedVariant.price) : 'Rp 0'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <button 
-                  disabled={!selectedVariant || isProcessing}
-                  type="submit"
-                  className="w-full py-6 bg-gradient-to-r from-[#f97316] to-[#ef4444] text-white font-black rounded-[24px] hover:scale-[1.02] active:scale-95 transition-all shadow-2xl shadow-orange-500/20 disabled:opacity-30 disabled:hover:scale-100 flex items-center justify-center gap-3 uppercase tracking-widest text-sm mt-10"
-                >
-                  {isProcessing ? (
-                    <Loader2 className="size-5 animate-spin" />
-                  ) : (
-                    <>
-                      Bayar Sekarang
-                      <ArrowRight className="size-5" />
-                    </>
-                  )}
-                </button>
-                <p className="text-[10px] text-slate-300 text-center font-bold uppercase tracking-widest pt-4">
-                  Pembayaran Aman & Instan via DOKU QRIS
-                </p>
-              </form>
-            </div>
-          </motion.div>
         </div>
       </div>
+
+      {/* Mobile Fixed CTA - Moved outside for absolute viewport positioning */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 px-6 py-4 bg-white border-t border-slate-100 z-[100] shadow-[0_-20px_40px_rgba(0,0,0,0.05)]">
+        <button 
+          onClick={handleContinueCheckout}
+          className="w-full py-5 bg-gradient-to-r from-[#f97316] to-[#ef4444] text-white font-black rounded-2xl active:scale-95 transition-all shadow-xl shadow-orange-500/20 flex items-center justify-center gap-3 uppercase tracking-widest text-sm"
+        >
+          Lanjutkan Pembayaran
+          <ArrowRight className="size-5" />
+        </button>
+      </div>
+
+      <CheckoutModal 
+        isOpen={isCheckoutModalOpen}
+        onClose={() => setIsCheckoutModalOpen(false)}
+        product={product}
+        variant={selectedVariant}
+      />
 
       <Footer />
     </main>
   )
 }
+
