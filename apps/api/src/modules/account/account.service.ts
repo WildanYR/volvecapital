@@ -512,7 +512,8 @@ export class AccountService {
     }
 
     if (
-      modifiers.length
+      account
+      && modifiers.length
       && (accountUpdateData.batch_end_date
         || accountUpdateData.subscription_expiry)
     ) {
