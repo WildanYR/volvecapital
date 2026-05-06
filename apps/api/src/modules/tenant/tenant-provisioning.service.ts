@@ -66,7 +66,7 @@ export class TenantProvisioningService {
       // 4. Insert Sample Data
       await this.postgresProvider.setSchema(schema, transaction);
       await this.tutorialRepository.create({
-        title: 'Selamat Datang di Volve Capital',
+        title: 'Selamat Datang di Digital Premium',
         slug: 'selamat-datang',
         subtitle: 'Ini adalah tutorial pertama Anda. Di sini Anda bisa mengelola voucher dan produk Anda.',
         is_published: true,

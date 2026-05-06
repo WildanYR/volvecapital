@@ -59,10 +59,12 @@ export function Navbar({ config: initialConfig }: NavbarProps) {
   const brandName = config?.logoText || 'VOLVECAPITAL'
   const logoIcon = config?.logoIconEmbed
 
+
+
   const renderLogoIcon = () => {
     if (!logoIcon) {
       return (
-        <div className="size-10 bg-gradient-to-br from-[#f97316] to-[#ef4444] rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/20 group-hover:scale-110 transition-transform">
+        <div className="h-10 w-10 bg-gradient-to-br from-[#f97316] to-[#ef4444] rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/20 transition-transform">
           <Crown className="size-6 text-white" />
         </div>
       )
@@ -71,15 +73,25 @@ export function Navbar({ config: initialConfig }: NavbarProps) {
     if (logoIcon.startsWith('<svg')) {
       return (
         <div 
-          className="size-10 flex items-center justify-center group-hover:scale-110 transition-transform"
+          className="h-11 w-auto flex items-center justify-center transition-all duration-500"
+          style={{
+            filter: !isTransparent ? 'invert(58%) sepia(91%) saturate(2643%) hue-rotate(345deg) brightness(102%) contrast(97%)' : 'none'
+          }}
           dangerouslySetInnerHTML={{ __html: logoIcon }}
         />
       )
     }
 
     return (
-      <div className="size-10 flex items-center justify-center group-hover:scale-110 transition-transform">
-        <img src={logoIcon} alt={brandName} className="size-full object-contain" />
+      <div className="h-11 w-auto flex items-center justify-center transition-all duration-500">
+        <img 
+          src={logoIcon} 
+          alt={brandName} 
+          className="h-full w-auto object-contain transition-all duration-500"
+          style={{
+            filter: !isTransparent ? 'invert(58%) sepia(91%) saturate(2643%) hue-rotate(345deg) brightness(102%) contrast(97%)' : 'none'
+          }}
+        />
       </div>
     )
   }

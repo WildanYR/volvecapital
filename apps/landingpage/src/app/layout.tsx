@@ -13,11 +13,11 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "Volve Capital — Premium Streaming Voucher System",
+  title: "Digital Premium — Premium Streaming Voucher System",
   description: "Dapatkan akses premium untuk Netflix, Spotify, Disney+, dan layanan streaming lainnya dengan harga terjangkau dan proses instan.",
-  keywords: ["streaming voucher", "netflix premium", "spotify premium", "volve capital"],
+  keywords: ["streaming voucher", "netflix premium", "spotify premium", "digital premium"],
   openGraph: {
-    title: "Volve Capital — Premium Streaming Voucher",
+    title: "Digital Premium — Premium Streaming Voucher",
     description: "Sistem voucher streaming otomatis, cepat, dan terpercaya.",
     type: "website",
   },

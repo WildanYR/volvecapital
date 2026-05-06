@@ -54,20 +54,20 @@ export default function DisclaimerPage() {
           <section>
             <h2 className="text-2xl font-black text-white uppercase tracking-tight mb-4">4. Akurasi Informasi</h2>
             <p>
-              Seluruh informasi di website ini disediakan "sebagaimana adanya" tanpa jaminan apa pun. Volve Capital berusaha memberikan deskripsi produk yang akurat, namun tidak bertanggung jawab atas kerugian yang timbul akibat kesalahan penulisan atau perubahan kebijakan mendadak dari penyedia layanan pihak ketiga.
+              Seluruh informasi di website ini disediakan "sebagaimana adanya" tanpa jaminan apa pun. Digital Premium berusaha memberikan deskripsi produk yang akurat, namun tidak bertanggung jawab atas kerugian yang timbul akibat kesalahan penulisan atau perubahan kebijakan mendadak dari penyedia layanan pihak ketiga.
             </p>
           </section>
 
           <section>
             <h2 className="text-2xl font-black text-white uppercase tracking-tight mb-4">5. Batasan Tanggung Jawab</h2>
             <p>
-              Dalam keadaan apa pun, Volve Capital tidak bertanggung jawab atas kerugian tidak langsung, konsekuensial, atau khusus yang timbul dari penggunaan atau ketidakmampuan penggunaan layanan kami.
+              Dalam keadaan apa pun, Digital Premium tidak bertanggung jawab atas kerugian tidak langsung, konsekuensial, atau khusus yang timbul dari penggunaan atau ketidakmampuan penggunaan layanan kami.
             </p>
           </section>
 
           <section className="pt-10 border-t border-white/5 text-center">
             <p className="text-sm italic">
-              Dengan melanjutkan transaksi di Volve Capital, Anda dianggap telah memahami dan menyetujui seluruh poin dalam penyangkalan ini.
+              Dengan melanjutkan transaksi di Digital Premium, Anda dianggap telah memahami dan menyetujui seluruh poin dalam penyangkalan ini.
             </p>
           </section>
         </motion.div>

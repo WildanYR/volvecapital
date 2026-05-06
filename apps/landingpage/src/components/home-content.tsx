@@ -45,7 +45,7 @@ export function HomeContent({ initialProducts, settings }: HomeContentProps) {
   if (settings.LANDING_FEATURES) {
     const parsed = JSON.parse(settings.LANDING_FEATURES)
     if (Array.isArray(parsed)) {
-      featuresConfig = { sectionTitle: 'Kenapa Memilih Volve Capital?', items: parsed }
+      featuresConfig = { sectionTitle: 'Kenapa Memilih Digital Premium?', items: parsed }
     } else {
       featuresConfig = parsed
     }

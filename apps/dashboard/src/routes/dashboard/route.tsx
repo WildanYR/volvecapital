@@ -108,7 +108,7 @@ function RouteComponent() {
         <SidebarHeader className="py-4">
           <SidebarMenu>
             <SidebarMenuItem>
-              <img src={logo} alt="volve capital logo" className="h-8" />
+              <img src={logo} alt="digital premium logo" className="h-8" />
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarHeader>

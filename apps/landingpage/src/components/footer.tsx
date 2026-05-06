@@ -13,7 +13,7 @@ interface FooterProps {
 
 export function Footer({ config: initialConfig }: FooterProps) {
   const [config, setConfig] = useState<LandingFooterConfig | null>(initialConfig || null)
-  const [brandName, setBrandName] = useState('VOLVE CAPITAL')
+  const [brandName, setBrandName] = useState('DIGITAL PREMIUM')
   const [logoIcon, setLogoIcon] = useState<string | null>(null)
   const { tenantId } = useTenant()
 

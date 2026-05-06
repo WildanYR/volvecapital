@@ -144,12 +144,12 @@ export class PublicService {
     });
 
     await transporter.sendMail({
-      from: `"Volve Capital" <${from}>`,
+      from: `"Digital Premium" <${from}>`,
       to: email,
-      subject: 'Selamat Datang di Volve Capital!',
+      subject: 'Selamat Datang di Digital Premium!',
       html: `<div style="font-family: sans-serif; line-height: 1.6; color: #333;">
         <h2>Halo ${username}! 👋</h2>
-        <p>Terima kasih telah mendaftar di Volve Capital. Akun Anda telah berhasil dibuat.</p>
+        <p>Terima kasih telah mendaftar di Digital Premium. Akun Anda telah berhasil dibuat.</p>
         <p>Anda sekarang dapat login ke dashboard menggunakan email dan password yang telah Anda buat.</p>
         <div style="text-align: center; margin: 30px 0;">
           <a href="${this.configService.get('FRONTEND_URL')}/login" style="background: #4CAF50; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">Login ke Dashboard</a>
@@ -246,9 +246,9 @@ export class PublicService {
     const resetUrl = `${this.configService.get('FRONTEND_URL')}/reset-password?token=${token}`;
 
     await transporter.sendMail({
-      from: `"Volve Capital" <${from}>`,
+      from: `"Digital Premium" <${from}>`,
       to: email,
-      subject: 'Reset Password Volve Capital',
+      subject: 'Reset Password Digital Premium',
       html: `<div style="font-family: sans-serif; line-height: 1.6; color: #333;">
         <h2>Halo ${name}!</h2>
         <p>Anda menerima email ini karena kami menerima permintaan reset password untuk akun Anda.</p>
@@ -861,14 +861,14 @@ export class PublicService {
     });
 
     await transporter.sendMail({
-      from: `"Volve Capital" <${from}>`,
+      from: `"Digital Premium" <${from}>`,
       to: email,
       subject: `Pembayaran Berhasil! Kode Voucher: ${voucherCode}`,
       text: `Halo ${buyerName}! 🎉\n\nPembayaran kamu untuk ${productName} telah berhasil dikonfirmasi.\n\nBerikut adalah kode voucher kamu:\n${voucherCode}\n\nSilakan gunakan kode ini untuk aktivasi akun kamu di website kami.\n\nTerima kasih! 🙏`,
       html: `<div style="font-family: sans-serif; line-height: 1.6; color: #333;">
         <h2 style="color: #4CAF50;">Pembayaran Berhasil! 🎉</h2>
         <p>Halo <strong>${buyerName}</strong>,</p>
-        <p>Terima kasih telah melakukan pembelian di Volve Capital. Pembayaran untuk <strong>${productName}</strong> telah kami terima.</p>
+        <p>Terima kasih telah melakukan pembelian di Digital Premium. Pembayaran untuk <strong>${productName}</strong> telah kami terima.</p>
         <div style="background: #f4f4f4; padding: 20px; border-radius: 10px; margin: 20px 0; text-align: center;">
           <p style="margin: 5px 0;">Kode Voucher Anda:</p>
           <h1 style="color: #FFB800; margin: 10px 0; letter-spacing: 2px;">${voucherCode}</h1>
@@ -907,14 +907,14 @@ export class PublicService {
     }).format(amount);
 
     await transporter.sendMail({
-      from: `"Volve Capital" <${from}>`,
+      from: `"Digital Premium" <${from}>`,
       to: email,
       subject: `Invoice Pembayaran ${productName}`,
       text: `Halo ${buyerName}! 👋\n\nTerima kasih telah memesan ${productName}.\n\nTotal Pembayaran: ${amountFormatted}\n\nSilakan selesaikan pembayaran melalui link berikut:\n${paymentUrl}\n\nLink ini akan kadaluarsa dalam 24 jam.\n\nTerima kasih! 🙏`,
       html: `<div style="font-family: sans-serif; line-height: 1.6; color: #333;">
         <h2 style="color: #2196F3;">Invoice Pembayaran 👋</h2>
         <p>Halo <strong>${buyerName}</strong>,</p>
-        <p>Terima kasih telah melakukan pemesanan di Volve Capital. Berikut adalah detail pesanan Anda:</p>
+        <p>Terima kasih telah melakukan pemesanan di Digital Premium. Berikut adalah detail pesanan Anda:</p>
         <div style="background: #f4f4f4; padding: 20px; border-radius: 10px; margin: 20px 0;">
           <p style="margin: 5px 0;">📦 <strong>Produk:</strong> ${productName}</p>
           <p style="margin: 5px 0;">💰 <strong>Total:</strong> ${amountFormatted}</p>

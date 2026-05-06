@@ -19,7 +19,7 @@ export function Features({ config }: FeaturesProps) {
   ]
 
   const items = config?.items && config.items.length > 0 ? config.items : defaultFeatures
-  const sectionTitle = config?.sectionTitle || "Keunggulan Volve Capital"
+  const sectionTitle = config?.sectionTitle || "Keunggulan Digital Premium"
   const titleParts = sectionTitle.split(' ')
   const lastWord = titleParts.pop()
   const mainTitle = titleParts.join(' ')
