@@ -152,7 +152,7 @@ export function CheckoutModal({ isOpen, onClose, product, variant }: CheckoutMod
                           <div className="space-y-4">
                             <div className="space-y-2">
                               <label className="text-xs font-semibold text-slate-600 ml-1">
-                                Nama Lengkap
+                                Nama Anda
                               </label>
                               <input 
                                 type="text"
@@ -165,7 +165,7 @@ export function CheckoutModal({ isOpen, onClose, product, variant }: CheckoutMod
 
                             <div className="space-y-2">
                               <label className="text-xs font-semibold text-slate-600 ml-1">
-                                Alamat Email
+                                Alamat Email (Voucher akan dikirimkan ke email ini)
                               </label>
                               <input 
                                 type="email"
@@ -194,7 +194,7 @@ export function CheckoutModal({ isOpen, onClose, product, variant }: CheckoutMod
                         <div className="p-4 bg-orange-50/50 rounded-xl border border-orange-100/50 flex items-start gap-3">
                           <AlertCircle className="size-4 text-[#f97316] shrink-0 mt-0.5" />
                           <p className="text-xs text-orange-700 font-medium leading-relaxed">
-                            Pilih metode (QRIS, Transfer Bank, E-Wallet) setelah menekan tombol Bayar Sekarang.
+                            Metode pembayaran QRIS (Dukungan Semua Bank & E-Wallet) akan muncul setelah menekan tombol Bayar Sekarang.
                           </p>
                         </div>
                       </motion.div>

@@ -51,7 +51,7 @@ export function Footer({ config: initialConfig }: FooterProps) {
   const renderLogoIcon = () => {
     if (!logoIcon) {
       return (
-        <div className="bg-gradient-to-br from-[#f97316] to-[#ef4444] p-2.5 rounded-2xl shadow-lg group-hover:scale-110 transition-transform duration-300">
+        <div className="bg-gradient-to-br from-[#f97316] to-[#ef4444] p-2.5 rounded-2xl shadow-lg transition-transform duration-300">
           <Crown className="size-6 text-white" />
         </div>
       )
@@ -60,15 +60,15 @@ export function Footer({ config: initialConfig }: FooterProps) {
     if (logoIcon.startsWith('<svg')) {
       return (
         <div 
-          className="size-11 flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
+          className="h-11 w-auto flex items-center justify-center transition-transform duration-300"
           dangerouslySetInnerHTML={{ __html: logoIcon }}
         />
       )
     }
 
     return (
-      <div className="size-11 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-        <img src={logoIcon} alt={brandName} className="size-full object-contain" />
+      <div className="h-11 w-auto flex items-center justify-center transition-transform duration-300">
+        <img src={logoIcon} alt={brandName} className="h-full w-auto object-contain" />
       </div>
     )
   }
