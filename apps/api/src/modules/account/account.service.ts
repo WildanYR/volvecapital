@@ -1287,14 +1287,22 @@ export class AccountService {
 
           for (const account of accounts) {
             const taskType = action === 'reset_now' ? NETFLIX_RESET_PASSWORD : NETFLIX_AUTO_RELOAD;
-            const payload = action === 'reset_now' 
-              ? { email: account.email?.email || account.email_id, password: account.account_password }
-              : { 
-                  accountId: account.id, 
-                  email: account.email?.email || account.email_id, 
+            const payload = action === 'reset_now'
+              ? {
+                  id: Date.now().toString(),
+                  accountId: account.id,
+                  email: account.email?.email || account.email_id,
+                  password: account.account_password,
+                  newPassword: '',
+                  subscription_expiry: account.subscription_expiry?.toISOString() || '',
+                  variant_name: account.product_variant?.name || '',
+                }
+              : {
+                  accountId: account.id,
+                  email: account.email?.email || account.email_id,
                   password: account.account_password,
                   billing: account.billing,
-                  variant_name: account.product_variant?.name || ''
+                  variant_name: account.product_variant?.name || '',
                 };
 
             tasks.push({
