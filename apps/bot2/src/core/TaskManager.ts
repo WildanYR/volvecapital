@@ -107,11 +107,16 @@ export class TaskManager {
         
         const maxRetries = input.maxRetries ?? 3;
 
-        this.db.run(
-            `INSERT INTO sys_tasks (id, module_instance_id, type, source, status, payload, execute_at, created_at, max_retries, retry_count)
+        const result = this.db.run(
+            `INSERT OR IGNORE INTO sys_tasks (id, module_instance_id, type, source, status, payload, execute_at, created_at, max_retries, retry_count)
        VALUES (?, ?, ?, ?, 'PENDING', ?, ?, ?, ?, 0)`,
             [id, input.moduleInstanceId, input.type, source, JSON.stringify(input.payload || {}), executeAt, now, maxRetries]
         );
+
+        if (result.changes === 0) {
+            this.logger.debug(`Task ${id} already exists in local database, skipping enqueue`);
+            return id;
+        }
 
         this.logger.debug(`Task enqueued: ${id} (${input.type}) for ${input.moduleInstanceId}, source: ${source}, execute_at: ${executeAt}, max_retries: ${maxRetries}`);
         return id;
