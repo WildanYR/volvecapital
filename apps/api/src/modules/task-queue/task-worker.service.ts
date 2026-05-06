@@ -65,13 +65,9 @@ export class TaskWorkerService {
     try {
       await this.postgresProvider.setSchema('master', transaction);
 
-      // Buffer 5 menit: task yang sudah > 5 menit lewat dianggap sudah tidak relevan
-      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-
       const pendingTasks = await this.taskQueueRepository.findAll({
         where: {
           status: ['QUEUED', 'DISPATCHED'],
-          execute_at: { [Op.gte]: fiveMinutesAgo },
         },
         transaction,
       });
