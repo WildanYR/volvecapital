@@ -1458,6 +1458,9 @@ function RouteComponent() {
         <DialogContent className="md:min-w-4xl">
           <DialogHeader>
             <DialogTitle>Filter Akun</DialogTitle>
+            <DialogDescription>
+              Atur filter untuk menyaring daftar akun yang ditampilkan.
+            </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-4">
             <div className="grid gap-3">
@@ -1517,6 +1520,9 @@ function RouteComponent() {
         <DialogContent className="md:min-w-4xl">
           <DialogHeader>
             <DialogTitle>Ubah Akun</DialogTitle>
+            <DialogDescription>
+              Perbarui detail informasi akun dan konfigurasi langganan.
+            </DialogDescription>
           </DialogHeader>
           <AccountEditForm
             initialData={selectedAccount}
@@ -1538,6 +1544,9 @@ function RouteComponent() {
               {' '}
               Profil Akun
             </DialogTitle>
+            <DialogDescription>
+              Kelola pengaturan profil dan kapasitas pengguna.
+            </DialogDescription>
           </DialogHeader>
           <AccountProfileForm
             initialData={selectedAccountProfile}
@@ -1557,6 +1566,9 @@ function RouteComponent() {
         <DialogContent className="md:min-w-4xl">
           <DialogHeader>
             <DialogTitle>Ubah Modifier Akun</DialogTitle>
+            <DialogDescription>
+              Konfigurasi fitur otomatisasi dan tambahan untuk akun ini.
+            </DialogDescription>
           </DialogHeader>
           <AccountModifierEditForm
             initialData={selectedAccount?.modifier}
@@ -1573,6 +1585,9 @@ function RouteComponent() {
         <DialogContent className="md:min-w-4xl">
           <DialogHeader>
             <DialogTitle>Buat User Akun</DialogTitle>
+            <DialogDescription>
+              Tambahkan pengguna baru ke dalam profil akun yang dipilih.
+            </DialogDescription>
           </DialogHeader>
           <AccountUserForm
             initialData={accountUserInitialData}
@@ -1590,6 +1605,9 @@ function RouteComponent() {
         <DialogContent className="md:min-w-4xl">
           <DialogHeader>
             <DialogTitle>Ubah User Akun</DialogTitle>
+            <DialogDescription>
+              Perbarui detail masa aktif dan informasi pengguna.
+            </DialogDescription>
           </DialogHeader>
           {selectedAccountUser
             ? (
@@ -1630,6 +1648,9 @@ function RouteComponent() {
                 </Button>
               </div>
             </DialogTitle>
+            <DialogDescription>
+              Detail profil dan alokasi pengguna pada akun ini.
+            </DialogDescription>
           </DialogHeader>
           {selectedAccount
             ? (
@@ -1795,6 +1816,9 @@ function RouteComponent() {
         <DialogContent className="md:min-w-4xl">
           <DialogHeader>
             <DialogTitle>Bekukan Akun</DialogTitle>
+            <DialogDescription>
+              Hentikan sementara penggunaan akun untuk durasi tertentu.
+            </DialogDescription>
           </DialogHeader>
           <AccountFreezeForm
             isPending={accountFreezeMutation.isPending}

@@ -101,7 +101,7 @@ export function ProductVariantSelect({
               )}
         </Button>
       </DialogTrigger>
-      <DialogContent className="w-screen h-screen sm:max-w-none max-w-none rounded-none flex flex-col p-4 md:p-14">
+      <DialogContent aria-describedby={undefined} className="w-screen h-screen sm:max-w-none max-w-none rounded-none flex flex-col p-4 md:p-14">
         <DialogHeader>
           <DialogTitle>Pilih Varian Produk</DialogTitle>
           <div className="flex flex-col md:flex-row justify-center items-center gap-4">

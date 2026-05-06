@@ -80,7 +80,7 @@ export function FinancialDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="md:min-w-[700px] max-h-[90vh] flex flex-col">
+      <DialogContent aria-describedby={undefined} className="md:min-w-[700px] max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <TrendingUp className="size-5 text-primary" />

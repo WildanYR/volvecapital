@@ -490,6 +490,20 @@ export class AccountService {
         transaction,
       });
 
+      // Re-fetch account with associations to ensure registerModifierToTaskQueue has what it needs
+      account = await this.accountRepository.findOne({
+        where: { id: accountId },
+        include: [
+          { model: Email, as: 'email' },
+          {
+            model: ProductVariant,
+            as: 'product_variant',
+            include: [{ model: Product, as: 'product' }],
+          },
+        ],
+        transaction,
+      });
+
       await transaction.commit();
     }
     catch (error) {
