@@ -65,9 +65,13 @@ export class TaskWorkerService {
     try {
       await this.postgresProvider.setSchema('master', transaction);
 
+      // Ambil tugas yang belum selesai (maksimal yang dijadwalkan 10 menit lalu)
+      // untuk menghindari "spam" eksekusi tugas lama saat server restart
+      const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
       const pendingTasks = await this.taskQueueRepository.findAll({
         where: {
           status: ['QUEUED', 'DISPATCHED'],
+          execute_at: { [Op.gte]: tenMinutesAgo },
         },
         transaction,
       });
