@@ -306,7 +306,7 @@ export class PublicService {
       }
 
       // 3. Create order record (Payment Status: PENDING)
-      const orderId = `VC-${tenantId.toUpperCase()}-${Date.now()}`;
+      const orderId = `INV-${tenantId.toUpperCase()}-${Date.now()}`;
       const grossAmount = variant.price;
 
       // Build DOKU callback URL with tenant subdomain

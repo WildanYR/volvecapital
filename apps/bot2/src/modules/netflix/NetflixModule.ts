@@ -246,8 +246,17 @@ export class NetflixModule extends BaseModule {
               const usePwBtn = getUsePasswordInsteadItem(page);
               if (await usePwBtn.isVisible()) {
                   await usePwBtn.click();
-                  this.logger.info(`[${email}] Tombol 'Gunakan sandi' berhasil diklik. Menunggu 10 detik...`);
-                  await this.sleep(10000); // Jeda 10 detik sesuai permintaan
+                  this.logger.info(`[${email}] Tombol 'Gunakan sandi' berhasil diklik. Menunggu form password muncul...`);
+                  
+                  // Tunggu sampai form password benar-benar stabil
+                  const pwInput = getPasswordInput(page);
+                  try {
+                    await pwInput.waitFor({ state: 'visible', timeout: 15000 });
+                    await this.sleep(2000); // Buffer tambahan agar input siap
+                  } catch (e) {
+                    this.logger.warn(`[${email}] Form password tidak muncul setelah klik 'Gunakan sandi'.`);
+                    return false;
+                  }
               } else {
                   this.logger.warn(`[${email}] Tombol 'Gunakan sandi' tidak terlihat setelah klik bantuan.`);
                   return false;
@@ -261,7 +270,6 @@ export class NetflixModule extends BaseModule {
           for (let attempt = 1; attempt <= 2; attempt++) {
               this.logger.info(`[${email}] Mencoba input password (Attempt ${attempt})...`);
               
-              // Cek dulu apakah kita tiba-tiba sudah login (misal auto-redirect)
               const currentUrl = page.url();
               if (currentUrl.includes('/browse') || currentUrl.includes('/account') || currentUrl.includes('/YourAccount') || currentUrl.includes('/profiles') || (currentUrl === 'https://www.netflix.com/' && !currentUrl.includes('login'))) {
                   this.logger.info(`[${email}] Terdeteksi sudah login via URL: ${currentUrl}`);
@@ -269,35 +277,36 @@ export class NetflixModule extends BaseModule {
               }
 
               const pwInput = getPasswordInput(page);
-              // Wait for password input up to 15 seconds, gracefully return false if not found
               try {
-                  await pwInput.waitFor({ state: 'visible', timeout: 15000 });
+                  await pwInput.waitFor({ state: 'visible', timeout: 10000 });
+                  
+                  // Pastikan elemen bisa diinteraksi
+                  await pwInput.scrollIntoViewIfNeeded();
+                  await pwInput.click({ timeout: 5000 }); 
+                  await pwInput.fill(password);
+                  await this.sleep(1500); 
               } catch (e) {
-                  this.logger.warn(`[${email}] Password input tidak ditemukan pada attempt ${attempt}. Menunggu 5 detik...`);
+                  this.logger.warn(`[${email}] Gagal berinteraksi dengan input password pada attempt ${attempt}.`);
                   if (attempt === 2) return false;
-                  await this.sleep(5000);
-                  continue; // Lanjut loop ke attempt 2
+                  await this.sleep(3000);
+                  continue;
               }
 
-              await pwInput.fill(password);
-              await this.sleep(2000); 
-              
               const signInBtn = getSignInButton(page);
               try {
-                  const isEnabled = await signInBtn.isEnabled({ timeout: 5000 });
-                  if (isEnabled) {
+                  await signInBtn.waitFor({ state: 'visible', timeout: 5000 });
+                  if (await signInBtn.isEnabled()) {
                       await signInBtn.click();
                   } else {
-                      this.logger.warn("Sign in button still disabled, trying Enter key...");
                       await pwInput.press('Enter');
                   }
               } catch (e) {
-                  this.logger.warn("Error checking sign in button, trying Enter key...");
                   await pwInput.press('Enter');
               }
               
-              this.logger.info(`[${email}] Klik login selesai, menunggu respon 10 detik...`);
-              await this.sleep(10000);
+              this.logger.info(`[${email}] Klik login selesai, menunggu respon status...`);
+              await this.sleep(5000);
+
               
               // Cek apakah login sukses dengan fungsi detectLoginState
               const loginState = await this.detectLoginState(page);

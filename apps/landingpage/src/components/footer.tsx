@@ -125,7 +125,7 @@ export function Footer({ config: initialConfig }: FooterProps) {
           </p>
           <div className="flex items-center justify-center md:justify-end gap-2 text-[10px] text-slate-600 font-black uppercase tracking-widest w-full md:w-auto">
             <span>Powered by</span>
-            <span className="text-slate-400">Volve Infrastructure</span>
+            <span className="text-slate-400">Digital Premium Infrastructure</span>
           </div>
         </div>
       </div>

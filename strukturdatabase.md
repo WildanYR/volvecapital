@@ -153,8 +153,15 @@ Varian/paket dari sebuah produk (misal: Netflix 1 Bulan, Netflix 3 Bulan).
 | `duration` | BIGINT | NOT NULL | Durasi akses dalam hari |
 | `interval` | BIGINT | NOT NULL | Interval pengecekan/renewal dalam jam |
 | `cooldown` | BIGINT | NOT NULL | Cooldown setelah reset dalam menit |
+| `price` | INTEGER | NOT NULL, DEFAULT 0 | Harga jual varian |
+| `strike_price` | INTEGER | NULLABLE | Harga coret (diskon) |
+| `description` | TEXT | NULLABLE | Deskripsi detail varian |
 | `copy_template` | TEXT | NULLABLE | Template pesan yang dikirim ke buyer saat akun diberikan |
+| `voucher_expiry_hours` | INTEGER | NULLABLE | Durasi berlaku voucher dalam jam |
+| `low_stock_threshold` | INTEGER | DEFAULT 5 | Ambang batas stok tipis |
 | `product_id` | BIGINT | FK product.id, NOT NULL | Produk induk |
+| `tutorial_id` | UUID | FK tutorial.id, NULLABLE | Tutorial terkait varian ini |
+| `redeem_display_config` | JSONB | NULLABLE | Konfigurasi tampilan halaman redeem |
 | `created_at` | TIMESTAMP | NOT NULL | |
 | `updated_at` | TIMESTAMP | NOT NULL | |
 
