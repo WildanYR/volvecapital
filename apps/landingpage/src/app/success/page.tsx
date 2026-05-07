@@ -2,7 +2,7 @@
 
 import { useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { CheckCircle2, Copy, Home, MessageSquare, ArrowRight, Sparkles, Loader2 } from 'lucide-react'
+import { CheckCircle2, Copy, Home, MessageSquare, ArrowRight, Sparkles, Loader2, Zap } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { Suspense, useState, useEffect } from 'react'
@@ -17,6 +17,7 @@ function SuccessContent() {
   const orderId = searchParams.get('order_id')
   const [voucherData, setVoucherData] = useState<any>(null)
   const [isChecking, setIsChecking] = useState(false)
+  const [isClaiming, setIsClaiming] = useState(false)
 
   // Polling for payment status if only orderId is present
   useEffect(() => {
@@ -53,6 +54,26 @@ function SuccessContent() {
     if (code) {
       navigator.clipboard.writeText(code)
       toast.success('Kode voucher disalin!')
+    }
+  }
+
+  const handleClaim = async () => {
+    if (!code) return
+    setIsClaiming(true)
+    try {
+      await api.post('/public/voucher/redeem', { voucher_code: code })
+      toast.success('Voucher berhasil diklaim! Mengalihkan ke halaman akun...')
+      // Refresh voucher data to get access_token, then redirect
+      const res = await api.get(`/public/voucher/${code}`)
+      const accessToken = res.data?.voucher?.access_token
+      if (accessToken) {
+        window.location.href = `/redeem?code=${code}`
+      } else {
+        window.location.href = `/redeem?code=${code}`
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Gagal mengklaim voucher. Coba gunakan halaman Redeem.')
+      setIsClaiming(false)
     }
   }
 
@@ -113,16 +134,31 @@ function SuccessContent() {
           )}
 
           <div className="flex flex-col gap-4">
-            <Link 
-              href="/redeem"
-              className="w-full bg-gradient-to-br from-[#f97316] to-[#ef4444] text-white font-black py-5 rounded-2xl flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-95 transition-all uppercase tracking-widest text-sm"
+            {/* Primary: Claim directly from this page */}
+            {code && voucherData?.status === 'UNUSED' && (
+              <button
+                onClick={handleClaim}
+                disabled={isClaiming}
+                className="w-full bg-gradient-to-br from-[#f97316] to-[#ef4444] text-white font-black py-5 rounded-2xl flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-95 transition-all uppercase tracking-widest text-sm shadow-[0_10px_30px_rgba(249,115,22,0.3)] disabled:opacity-60 disabled:scale-100"
+              >
+                {isClaiming ? (
+                  <><Loader2 className="size-5 animate-spin" /> Memproses Klaim...</>
+                ) : (
+                  <><Zap className="size-5" /> Claim Sekarang</>
+                )}
+              </button>
+            )}
+            {/* Secondary: Go to redeem page manually */}
+            <Link
+              href={code ? `/redeem?code=${code}` : '/redeem'}
+              className="w-full py-5 bg-slate-50 text-[#0f172a] font-black rounded-2xl flex items-center justify-center gap-3 hover:bg-slate-100 hover:text-[#f97316] transition-all uppercase tracking-widest text-sm border border-slate-100"
             >
-              Aktivasi Voucher Sekarang
-              <ArrowRight className="size-5" />
+              Aktivasi Manual di Halaman Redeem
+              <ArrowRight className="size-4" />
             </Link>
-            <Link 
+            <Link
               href="/"
-              className="w-full py-5 bg-slate-50 text-[#0f172a] font-black rounded-2xl flex items-center justify-center gap-3 hover:bg-slate-100 hover:text-[#f97316] transition-all uppercase tracking-widest text-xs"
+              className="w-full py-5 bg-white text-slate-400 font-black rounded-2xl flex items-center justify-center gap-3 hover:text-[#0f172a] transition-all uppercase tracking-widest text-xs"
             >
               <Home className="size-4" />
               Kembali ke Beranda
