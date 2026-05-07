@@ -527,10 +527,12 @@ export class PublicService {
         const productName = `${(voucher.product_variant as any)?.product?.name ?? 'Produk'} - ${voucher.product_variant?.name ?? ''}`;
         this.logger.log(`[PaymentNotify] Sending confirmation email for voucher ${voucher.id} to ${voucher.buyer_email}`);
         this.sendPaymentConfirmationEmail(
+          tenantId,
           voucher.buyer_email,
           voucher.buyer_name,
           voucher.id,
           productName,
+          voucher.expired_at,
         ).catch((err) => {
           this.logger.error(`[PaymentNotify] Failed to send email for voucher ${voucher.id}: ${err.message}`);
         });
@@ -740,6 +742,7 @@ export class PublicService {
           status: 'USED',
           access_token: accessToken,
           used_at: new Date(),
+          expired_at: expiredAt,
         },
         { transaction },
       );
@@ -841,10 +844,12 @@ export class PublicService {
   // ─── EMAIL UTILS ─────────────────────────────────────────────────────────────
 
   private async sendPaymentConfirmationEmail(
+    tenantId: string,
     email: string,
     buyerName: string,
     voucherCode: string,
     productName: string,
+    expiredAt: Date,
   ): Promise<void> {
     const host = this.configService.get<string>('mail.host');
     const port = this.configService.get<number>('mail.port');
@@ -854,28 +859,103 @@ export class PublicService {
 
     if (!host || !user || !pass) return;
 
+    // Get SITE_NAME from settings
+    let siteName = 'Digital Premium';
+    try {
+      const setting = await this.tenantSettingRepository.findOne({
+        where: { tenant_id: tenantId, key: 'SITE_NAME' } as any,
+      });
+      if (setting) siteName = setting.value;
+    } catch (e) {
+      this.logger.error(`Failed to fetch SITE_NAME for email: ${e.message}`);
+    }
+
     const transporter = nodemailer.createTransport({
       host,
       port,
       auth: { user, pass },
     });
 
+    // Build Redeem URL
+    let frontendBaseUrl = this.configService.get<string>('FRONTEND_URL') || 'localhost:3001';
+    if (!frontendBaseUrl.startsWith('http')) frontendBaseUrl = `https://${frontendBaseUrl}`;
+    
+    let redeemUrl = '';
+    try {
+      const url = new URL(frontendBaseUrl);
+      if (!url.hostname.startsWith(`${tenantId}.`)) {
+        url.hostname = `${tenantId}.${url.hostname}`;
+      }
+      redeemUrl = `${url.toString().replace(/\/$/, '')}/redeem?code=${voucherCode}`;
+    } catch (e) {
+      const cleanBase = frontendBaseUrl.replace('https://', '').replace('http://', '');
+      redeemUrl = `https://${tenantId}.${cleanBase}/redeem?code=${voucherCode}`;
+    }
+
+    const expiryFormatted = new Date(expiredAt).toLocaleDateString('id-ID', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
     await transporter.sendMail({
-      from: `"Digital Premium" <${from}>`,
+      from: `"${siteName}" <${from}>`,
       to: email,
-      subject: `Pembayaran Berhasil! Kode Voucher: ${voucherCode}`,
-      text: `Halo ${buyerName}! 🎉\n\nPembayaran kamu untuk ${productName} telah berhasil dikonfirmasi.\n\nBerikut adalah kode voucher kamu:\n${voucherCode}\n\nSilakan gunakan kode ini untuk aktivasi akun kamu di website kami.\n\nTerima kasih! 🙏`,
-      html: `<div style="font-family: sans-serif; line-height: 1.6; color: #333;">
-        <h2 style="color: #4CAF50;">Pembayaran Berhasil! 🎉</h2>
-        <p>Halo <strong>${buyerName}</strong>,</p>
-        <p>Terima kasih telah melakukan pembelian di Digital Premium. Pembayaran untuk <strong>${productName}</strong> telah kami terima.</p>
-        <div style="background: #f4f4f4; padding: 20px; border-radius: 10px; margin: 20px 0; text-align: center;">
-          <p style="margin: 5px 0;">Kode Voucher Anda:</p>
-          <h1 style="color: #FFB800; margin: 10px 0; letter-spacing: 2px;">${voucherCode}</h1>
+      subject: `Voucher ${productName} Anda telah berhasil dibuat`,
+      html: `
+        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden;">
+          <div style="background: linear-gradient(135deg, #f97316 0%, #ef4444 100%); padding: 40px 20px; text-align: center; color: white;">
+            <h1 style="margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.025em;">Voucher Berhasil Dibuat! 🎉</h1>
+            <p style="margin: 10px 0 0 0; opacity: 0.9; font-size: 16px;">Terima kasih telah berbelanja di ${siteName}</p>
+          </div>
+          
+          <div style="padding: 32px 24px;">
+            <p style="margin: 0 0 20px 0; font-size: 16px;">Halo <strong>${buyerName}</strong>,</p>
+            <p style="margin: 0 0 24px 0;">Terima kasih telah melakukan pembelian di <strong>${siteName}</strong>. Berikut adalah detail voucher Anda:</p>
+            
+            <div style="background-color: #f8fafc; border: 1px solid #f1f5f9; border-radius: 12px; padding: 20px; margin-bottom: 32px;">
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                  <td style="padding: 8px 0; color: #64748b; font-size: 14px; width: 40%;">Produk</td>
+                  <td style="padding: 8px 0; color: #0f172a; font-size: 14px; font-weight: 600;">: ${productName}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #64748b; font-size: 14px;">Kode Voucher</td>
+                  <td style="padding: 8px 0; color: #f97316; font-size: 16px; font-weight: 800; letter-spacing: 1px;">: ${voucherCode}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #64748b; font-size: 14px;">Batas Klaim</td>
+                  <td style="padding: 8px 0; color: #ef4444; font-size: 14px; font-weight: 600;">: ${expiryFormatted}</td>
+                </tr>
+              </table>
+            </div>
+
+            <h3 style="margin: 0 0 16px 0; font-size: 16px; font-weight: 700; color: #0f172a;">Cara Redeem Voucher:</h3>
+            <ol style="margin: 0 0 32px 0; padding-left: 20px; color: #475569;">
+              <li style="margin-bottom: 8px;">Klik tombol <strong>"Redeem Voucher"</strong> di bawah ini.</li>
+              <li style="margin-bottom: 8px;">Kode voucher akan terisi otomatis (atau masukkan manual jika tidak muncul).</li>
+              <li style="margin-bottom: 8px;">Klik <strong>"Cek Sekarang"</strong>, lalu klik <strong>"Aktivasi Voucher"</strong>.</li>
+              <li style="margin-bottom: 8px;">Jika berhasil, detail akun yang Anda beli akan muncul seketika.</li>
+            </ol>
+
+            <div style="text-align: center; margin-bottom: 32px;">
+              <a href="${redeemUrl}" style="display: inline-block; background: linear-gradient(135deg, #f97316 0%, #ef4444 100%); color: white; padding: 16px 40px; border-radius: 12px; text-decoration: none; font-weight: 800; font-size: 16px; box-shadow: 0 10px 15px -3px rgba(249, 115, 22, 0.3);">Redeem Voucher Sekarang</a>
+            </div>
+
+            <div style="background-color: #fff7ed; border-left: 4px solid #f97316; padding: 16px; border-radius: 4px; margin-bottom: 32px;">
+              <p style="margin: 0; font-size: 13px; color: #9a3412;"><strong>Hati-hati!</strong> Jangan bagikan kode voucher ini kepada siapapun termasuk pihak yang mengaku sebagai admin.</p>
+            </div>
+
+            <p style="margin: 0; font-size: 14px; color: #64748b; text-align: center;">Terima kasih,<br><strong>${siteName}</strong></p>
+          </div>
+          
+          <div style="background-color: #f8fafc; padding: 20px; text-align: center; border-top: 1px solid #e2e8f0;">
+            <p style="margin: 0; font-size: 12px; color: #94a3b8;">&copy; ${new Date().getFullYear()} ${siteName}. All rights reserved.</p>
+          </div>
         </div>
-        <p>Silakan gunakan kode di atas untuk melakukan aktivasi akun Anda melalui halaman redeem kami.</p>
-        <p style="font-size: 12px; color: #777; margin-top: 30px;">Jika Anda membutuhkan bantuan, silakan hubungi admin kami.</p>
-      </div>`,
+      `,
     });
   }
 

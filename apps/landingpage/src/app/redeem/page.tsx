@@ -11,6 +11,7 @@ import { Footer } from '@/components/footer'
 import { EmailPortal } from '@/components/email-portal'
 import Link from 'next/link'
 import { useTenant } from '@/hooks/use-tenant'
+import { useSearchParams } from 'next/navigation'
 
 export default function RedeemPage() {
   const [code, setCode] = useState('')
@@ -19,6 +20,8 @@ export default function RedeemPage() {
   const [copied, setCopied] = useState(false)
   const [accessToken, setAccessToken] = useState<string | null>(null)
   const { tenantId } = useTenant()
+  const searchParams = useSearchParams()
+  const urlCode = searchParams.get('code')
 
   const handleSearch = async (e?: React.FormEvent) => {
     if (e) e.preventDefault()
@@ -40,6 +43,16 @@ export default function RedeemPage() {
       setIsLoading(false)
     }
   }
+
+  useEffect(() => {
+    if (urlCode && !result && !isLoading) {
+      setCode(urlCode.toUpperCase())
+      const timer = setTimeout(() => {
+        handleSearch()
+      }, 500)
+      return () => clearTimeout(timer)
+    }
+  }, [urlCode, tenantId])
 
   const handleRedeem = async () => {
     setIsLoading(true)
