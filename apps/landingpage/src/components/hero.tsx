@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion'
 import { ArrowRight, Zap } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
 
 import type { LandingHeroConfig } from '@volvecapital/shared/types'
 
@@ -22,10 +23,12 @@ export function Hero({ config }: HeroProps) {
       {/* Background Image & Double Gradient Overlay (Rapatonline Style) */}
       {config?.backgroundImageUrl && (
         <div className="absolute inset-0 z-0">
-          <img 
+          <Image 
             src={config.backgroundImageUrl} 
             alt="Hero Background" 
-            className="w-full h-full object-cover opacity-50"
+            fill
+            priority
+            className="object-cover opacity-50"
           />
           {/* Layer 1: Horizontal Tint with Multiply Blend */}
           <div className="absolute inset-0 bg-gradient-to-r from-blue-950/95 via-blue-900/90 to-indigo-900/80 mix-blend-multiply" />
