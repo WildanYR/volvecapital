@@ -70,72 +70,65 @@ export default function ProductPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
             {filteredProducts.map((product, idx) => (
-              <div 
+              <motion.div
                 key={product.id}
-                className="relative h-full"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.05 }}
+                className="bg-white rounded-[40px] p-8 md:p-10 border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-orange-500/5 transition-all duration-500 hover:-translate-y-4 flex flex-col group relative overflow-hidden h-full"
               >
-                {/* Main Card Link - Covers background */}
-                <Link 
-                  href={`/product/${product.slug}`}
-                  className="absolute inset-0 z-0"
-                />
+                {/* Subtle Hover Pattern */}
+                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-0 group-hover:opacity-[0.02] transition-opacity pointer-events-none" />
 
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.05 }}
-                  className="bg-white rounded-[40px] p-8 md:p-10 border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-orange-500/5 transition-all duration-500 hover:-translate-y-4 flex flex-col group relative overflow-hidden h-full pointer-events-none"
-                >
-                  {/* Subtle Hover Pattern */}
-                  <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-0 group-hover:opacity-[0.02] transition-opacity pointer-events-none" />
-
-                  <div className="flex items-center justify-between mb-8 relative z-10">
-                    <div className="bg-orange-50 p-4 rounded-[24px] border border-orange-100 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500">
-                      <Package className="size-6 text-[#f97316]" />
+                <div className="flex items-center justify-between mb-8 relative z-10">
+                  <div className="bg-orange-50 p-4 rounded-[24px] border border-orange-100 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500">
+                    <Package className="size-6 text-[#f97316]" />
+                  </div>
+                  {idx < 3 && (
+                    <div className="bg-emerald-50 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest text-emerald-600 border border-emerald-100 shadow-sm">
+                      Best Seller
                     </div>
-                    {idx < 3 && (
-                      <div className="bg-emerald-50 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest text-emerald-600 border border-emerald-100 shadow-sm">
-                        Best Seller
+                  )}
+                </div>
+
+                <div className="mb-10 relative z-10">
+                  <h3 className="text-3xl font-black text-[#0f172a] group-hover:text-[#f97316] transition-colors tracking-tight">{product.name}</h3>
+                  <div className="flex items-center gap-1.5 mt-2">
+                    <Zap className="size-4 text-[#f97316] fill-[#f97316]" />
+                    <span className="text-[11px] text-slate-400 font-bold uppercase tracking-widest">Premium Service</span>
+                  </div>
+                </div>
+
+                <div className="space-y-4 flex-grow mb-10 relative z-10">
+                  {product.variants.map((variant) => (
+                    <Link 
+                      key={variant.id}
+                      href={`/product/${product.slug}?variant=${variant.id}`}
+                      className="p-5 rounded-3xl bg-slate-50 border border-slate-100 flex justify-between items-center group/item hover:bg-orange-50 hover:border-orange-200 transition-all block"
+                    >
+                      <span className="font-black text-[#0f172a] text-base group-hover/item:text-[#f97316] transition-colors">{variant.name}</span>
+                      <div className="text-right">
+                        {variant.strike_price && (
+                          <span className="text-[10px] text-slate-400 line-through block -mb-1">
+                            {formatCurrency(variant.strike_price)}
+                          </span>
+                        )}
+                        <span className="text-[#f97316] font-black text-base">{formatCurrency(variant.price)}</span>
                       </div>
-                    )}
-                  </div>
+                    </Link>
+                  ))}
+                </div>
 
-                  <div className="mb-10 relative z-10">
-                    <h3 className="text-3xl font-black text-[#0f172a] group-hover:text-[#f97316] transition-colors tracking-tight">{product.name}</h3>
-                    <div className="flex items-center gap-1.5 mt-2">
-                      <Zap className="size-4 text-[#f97316] fill-[#f97316]" />
-                      <span className="text-[11px] text-slate-400 font-bold uppercase tracking-widest">Premium Service</span>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4 flex-grow mb-10 relative z-10 pointer-events-auto">
-                    {product.variants.map((variant) => (
-                      <Link 
-                        key={variant.id}
-                        href={`/product/${product.slug}?variant=${variant.id}`}
-                        className="p-5 rounded-3xl bg-slate-50 border border-slate-100 flex justify-between items-center group/item hover:bg-orange-50 hover:border-orange-200 transition-all block"
-                      >
-                        <span className="font-black text-[#0f172a] text-base group-hover/item:text-[#f97316] transition-colors">{variant.name}</span>
-                        <div className="text-right">
-                          {variant.strike_price && (
-                            <span className="text-[10px] text-slate-400 line-through block -mb-1">
-                              {formatCurrency(variant.strike_price)}
-                            </span>
-                          )}
-                          <span className="text-[#f97316] font-black text-base">{formatCurrency(variant.price)}</span>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-
-                  <div className="pt-8 border-t border-slate-100 relative z-10">
-                    <div className="w-full py-5 bg-[#0f172a] text-white rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] group-hover:bg-gradient-to-br group-hover:from-[#f97316] group-hover:to-[#ef4444] transition-all flex items-center justify-center gap-3 shadow-lg">
-                      Mulai Berlangganan
-                      <ArrowRight className="size-4" />
-                    </div>
-                  </div>
-                </motion.div>
-              </div>
+                <div className="pt-8 border-t border-slate-100 relative z-10">
+                  <Link 
+                    href={`/product/${product.slug}`}
+                    className="w-full py-5 bg-[#0f172a] text-white rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] hover:bg-gradient-to-br hover:from-[#f97316] hover:to-[#ef4444] transition-all flex items-center justify-center gap-3 shadow-lg"
+                  >
+                    Mulai Berlangganan
+                    <ArrowRight className="size-4" />
+                  </Link>
+                </div>
+              </motion.div>
             ))}
           </div>
         )}
