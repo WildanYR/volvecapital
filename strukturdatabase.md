@@ -264,7 +264,34 @@ Modifier/pengaturan tambahan yang diterapkan pada akun tertentu.
 
 ---
 
-### 13. `transaction`
+---
+
+### 13. `voucher`
+Voucher untuk redeem akses produk (bisa digenerate otomatis lewat pembayaran atau manual lewat dashboard).
+
+| Kolom | Tipe | Constraint | Keterangan |
+|-------|------|-----------|------------|
+| `id` | VARCHAR | PK, NOT NULL | Kode voucher (unik) |
+| `product_variant_id` | BIGINT | FK product_variant.id, NOT NULL | Varian produk yang dibeli |
+| `status` | VARCHAR | NOT NULL | `PENDING` / `UNUSED` / `USED` / `EXPIRED` |
+| `payment_status` | VARCHAR | NOT NULL | `PENDING` / `PAID` / `FAILED` / `EXPIRED` |
+| `buyer_name` | VARCHAR | NOT NULL | Nama pembeli |
+| `buyer_email` | VARCHAR | NOT NULL | Email pembeli |
+| `buyer_whatsapp` | VARCHAR | NOT NULL | Nomor WhatsApp pembeli |
+| `expired_at` | TIMESTAMP | NOT NULL | Batas waktu redeem voucher |
+| `used_at` | TIMESTAMP | NULLABLE | Waktu voucher di-redeem |
+| `payment_id` | VARCHAR | NULLABLE | ID pembayaran (External/Manual) |
+| `access_token` | VARCHAR | NULLABLE | Token akses setelah redeem |
+| `access_count_today`| INTEGER | DEFAULT 0 | Hit penghitungan akses harian |
+| `last_access_at` | TIMESTAMP | NULLABLE | Waktu terakhir akses |
+| `transaction_id` | VARCHAR | FK transaction.id, NULLABLE | ID transaksi terkait |
+| `transaction_item_id`| BIGINT | FK transaction_item.id, NULLABLE | ID item transaksi terkait |
+| `created_at` | TIMESTAMP | NOT NULL | |
+| `updated_at` | TIMESTAMP | NOT NULL | |
+
+---
+
+### 14. `transaction`
 Data transaksi penjualan dari berbagai platform.
 
 | Kolom | Tipe | Constraint | Keterangan |
@@ -423,13 +450,14 @@ platform_statistics        (standalone, agregasi)
 | 10 | `account_profile` | tenant | Profile dalam akun streaming |
 | 11 | `account_user` | tenant | Penyewa aktif per profile |
 | 12 | `account_modifier` | tenant | Pengaturan tambahan akun |
-| 13 | `transaction` | tenant | Data transaksi penjualan |
-| 14 | `transaction_item` | tenant | Item detail dalam transaksi |
-| 15 | `email_subject` | tenant | Pola parsing email masuk |
-| 16 | `revenue_statistics` | tenant | Statistik pendapatan |
-| 17 | `product_sales_statistics` | tenant | Statistik penjualan produk |
-| 18 | `peak_hour_statistics` | tenant | Statistik jam puncak |
-| 19 | `platform_statistics` | tenant | Statistik per platform |
+| 13 | `voucher` | tenant | Voucher redeem (otomatis & manual) |
+| 14 | `transaction` | tenant | Data transaksi penjualan |
+| 15 | `transaction_item` | tenant | Item detail dalam transaksi |
+| 16 | `email_subject` | tenant | Pola parsing email masuk |
+| 17 | `revenue_statistics` | tenant | Statistik pendapatan |
+| 18 | `product_sales_statistics` | tenant | Statistik penjualan produk |
+| 19 | `peak_hour_statistics` | tenant | Statistik jam puncak |
+| 20 | `platform_statistics` | tenant | Statistik per platform |
 
 ---
 

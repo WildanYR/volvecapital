@@ -54,6 +54,7 @@ export class VoucherService {
       const variant = await this.productVariantRepository.findOne({
         where: { id: dto.product_variant_id },
         include: [{ model: Product, as: 'product' }],
+        attributes: ['id', 'name', 'price', 'voucher_expiry_hours', 'duration'],
         transaction,
       });
       if (!variant) throw new NotFoundException('Varian produk tidak ditemukan');
@@ -70,7 +71,7 @@ export class VoucherService {
           id: orderId,
           customer: dto.buyer_name,
           platform: 'dashboard',
-          total_price: variant.price, // Uses variant price instead of 0
+          total_price: Number(variant.price || 0),
         },
         { transaction },
       );

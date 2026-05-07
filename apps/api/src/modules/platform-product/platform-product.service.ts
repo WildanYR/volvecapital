@@ -196,8 +196,10 @@ export class PlatformProductService {
       const results = items.map((item) => {
         const found = platformProducts.find(
           pp =>
-            pp.name === item.name
-            && (pp.variant === item.variant || (!pp.variant && !item.variant)),
+            pp.name.trim().toLowerCase() === item.name.trim().toLowerCase()
+            && (
+              (pp.variant?.trim().toLowerCase() || null) === (item.variant?.trim().toLowerCase() || null)
+            ),
         );
 
         if (found) {

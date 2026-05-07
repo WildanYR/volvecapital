@@ -34,6 +34,11 @@ import { ProductServiceGenerator } from '@/dashboard/services/product.service'
 import { VoucherServiceGenerator } from '@/dashboard/services/voucher.service'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/dashboard/components/ui/dialog'
 import { Separator } from '@/dashboard/components/ui/separator'
+import { SettingServiceGenerator } from '@/dashboard/services/setting.service'
+import { Label } from '@/dashboard/components/ui/label'
+import { Textarea } from '@/dashboard/components/ui/textarea'
+import { ChevronDown, Save, LayoutTemplate } from 'lucide-react'
+import { cn } from '@/dashboard/lib/utils'
 
 export const Route = createFileRoute('/dashboard/voucher-generator/')({
   component: RouteComponent,
@@ -44,6 +49,7 @@ function RouteComponent() {
   const queryClient = useQueryClient()
   const productService = ProductServiceGenerator(API_URL, auth.tenant!.accessToken, auth.tenant!.id)
   const voucherService = VoucherServiceGenerator(API_URL, auth.tenant!.accessToken, auth.tenant!.id)
+  const settingService = SettingServiceGenerator(API_URL, auth.tenant!.accessToken, auth.tenant!.id)
 
   const [formData, setFormData] = useState({
     product_variant_id: '',
@@ -52,6 +58,11 @@ function RouteComponent() {
     buyer_whatsapp: '',
   })
   const [generatedVoucher, setGeneratedVoucher] = useState<any>(null)
+  
+  // Template Setting State
+  const [copyTemplate, setCopyTemplate] = useState('')
+  const [isTemplateSaving, setIsTemplateSaving] = useState(false)
+  const [showTemplateEditor, setShowTemplateEditor] = useState(false)
   
   // Search and Pagination State
   const [search, setSearch] = useState('')
@@ -84,6 +95,20 @@ function RouteComponent() {
     queryFn: () => voucherService.list({ page, limit, search: debouncedSearch, status: statusFilter }),
   })
 
+  const { data: settings } = useQuery({
+    queryKey: ['settings'],
+    queryFn: () => settingService.getSettings(),
+  })
+
+  useEffect(() => {
+    if (settings?.VOUCHER_COPY_TEMPLATE) {
+      setCopyTemplate(settings.VOUCHER_COPY_TEMPLATE)
+    } else {
+      // Default Template if not set
+      setCopyTemplate(`Terima kasih telah melakukan pembelian di Digital Premium. Berikut adalah detail voucher Anda:\n\nProduk\t: $$product\nKode Voucher\t: $$voucher\nBatas Klaim\t: $$batasklaim\nLink redeem\t: $$linkredeem\n\nCara Redeem Voucher:\n1. Klik link redeem di atas.\n2. Kode voucher akan terisi otomatis.\n3. Klik "Cek Sekarang", lalu klik "Aktivasi Voucher".\n4. Jika berhasil, detail akun akan muncul seketika.`)
+    }
+  }, [settings])
+
   const generateMutation = useMutation({
     mutationFn: (data: typeof formData) => voucherService.generate(data),
     onSuccess: (data) => {
@@ -96,9 +121,50 @@ function RouteComponent() {
     },
   })
 
-  const handleCopy = (text: string, label: string = 'Kode voucher') => {
-    if (!text) return
+  const handleCopy = (voucher: any, label: string = 'Kode voucher') => {
+    if (!voucher) return
     
+    // If it's a string, just copy as is. If it's a voucher object, use template.
+    let text = typeof voucher === 'string' ? voucher : voucher.id
+    
+    if (typeof voucher === 'object' && copyTemplate) {
+      let productName = `${voucher.product_variant?.product?.name || ''} - ${voucher.product_variant?.name || ''}`.trim()
+      
+      // Fallback: If productName is empty or just "-", find it in productsData
+      if ((!productName || productName === '-') && productsData) {
+        const variantId = voucher.product_variant_id || formData.product_variant_id
+        for (const p of productsData.items) {
+          const v = p.variants.find((v: any) => v.id === variantId)
+          if (v) {
+            productName = `${p.name} - ${v.name}`
+            break
+          }
+        }
+      }
+
+      const voucherCode = voucher.id
+      const expiryDate = formatDate(voucher.expired_at)
+      
+      // Determine base URL for link redeem
+      const hostname = window.location.hostname
+      let baseUrl = hostname.includes('dashboard.') 
+        ? hostname.replace('dashboard.', '') 
+        : hostname
+      
+      // Force digitalpremium.id if on localhost for development testing
+      if (hostname === 'localhost') {
+        baseUrl = `${auth.tenant!.id}.digitalpremium.id`
+      }
+
+      const linkRedeem = `${baseUrl}/redeem?code=${voucherCode}`
+
+      text = copyTemplate
+        .replace(/\$\$product/g, productName)
+        .replace(/\$\$voucher/g, voucherCode)
+        .replace(/\$\$batasklaim/g, expiryDate)
+        .replace(/\$\$linkredeem/g, linkRedeem)
+    }
+
     const performCopy = async () => {
       try {
         if (navigator.clipboard && window.isSecureContext) {
@@ -254,13 +320,68 @@ function RouteComponent() {
                 <p className="text-sm font-bold text-primary">Voucher Berhasil Dibuat!</p>
                 <div className="flex items-center justify-between bg-background p-3 rounded-lg border border-border">
                   <code className="text-lg font-black">{generatedVoucher.id}</code>
-                  <Button size="sm" variant="ghost" onClick={() => handleCopy(generatedVoucher.id)}>
+                  <Button size="sm" variant="ghost" onClick={() => handleCopy(generatedVoucher)}>
                     <Copy className="size-4" />
                   </Button>
                 </div>
-                <p className="text-[10px] text-muted-foreground italic">Berikan kode ini ke user untuk di-redeem di Landing Page.</p>
+                <p className="text-[10px] text-muted-foreground italic">Klik tombol salin di atas untuk menyalin template instruksi lengkap.</p>
               </div>
             )}
+
+            <div className="pt-4 border-t border-border mt-4">
+              <div 
+                className="flex items-center justify-between cursor-pointer group"
+                onClick={() => setShowTemplateEditor(!showTemplateEditor)}
+              >
+                <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground uppercase tracking-widest group-hover:text-primary transition-colors">
+                  <LayoutTemplate className="size-3" />
+                  Pengaturan Template Salin
+                </div>
+                <ChevronDown className={cn("size-4 text-muted-foreground transition-transform duration-200", showTemplateEditor && "rotate-180")} />
+              </div>
+              
+              {showTemplateEditor && (
+                <div className="pt-4 space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-[10px] font-black uppercase text-muted-foreground">Isi Template</Label>
+                      <div className="flex flex-wrap gap-1">
+                         <span className="text-[8px] bg-secondary px-1 py-0.5 rounded text-muted-foreground">$$product</span>
+                         <span className="text-[8px] bg-secondary px-1 py-0.5 rounded text-muted-foreground">$$voucher</span>
+                         <span className="text-[8px] bg-secondary px-1 py-0.5 rounded text-muted-foreground">$$batasklaim</span>
+                         <span className="text-[8px] bg-secondary px-1 py-0.5 rounded text-muted-foreground">$$linkredeem</span>
+                      </div>
+                    </div>
+                    <Textarea 
+                      className="text-xs min-h-[150px] font-mono leading-relaxed"
+                      placeholder="Masukkan template instruksi..."
+                      value={copyTemplate}
+                      onChange={(e) => setCopyTemplate(e.target.value)}
+                    />
+                  </div>
+                  <Button 
+                    size="sm" 
+                    className="w-full h-8 text-xs" 
+                    variant="secondary"
+                    disabled={isTemplateSaving}
+                    onClick={async () => {
+                      setIsTemplateSaving(true)
+                      try {
+                        await settingService.updateSetting('VOUCHER_COPY_TEMPLATE', copyTemplate)
+                        toast.success('Template berhasil disimpan!')
+                      } catch (err: any) {
+                        toast.error(`Gagal menyimpan: ${err.message}`)
+                      } finally {
+                        setIsTemplateSaving(false)
+                      }
+                    }}
+                  >
+                    {isTemplateSaving ? <Loader2 className="size-3 animate-spin mr-2" /> : <Save className="size-3 mr-2" />}
+                    Simpan Template
+                  </Button>
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
 
@@ -332,7 +453,7 @@ function RouteComponent() {
                           </div>
                           <Button size="icon" variant="ghost" className="size-8" onClick={(e) => {
                             e.stopPropagation();
-                            handleCopy(v.id);
+                            handleCopy(v);
                           }}>
                             <Copy className="size-4" />
                           </Button>
@@ -486,9 +607,9 @@ function RouteComponent() {
                         )}
                         
                         <div className="flex flex-col sm:flex-row gap-2 pt-2">
-                          <Button className="flex-1 gap-2" variant="outline" onClick={() => handleCopy(v.id)}>
+                          <Button className="flex-1 gap-2" variant="outline" onClick={() => handleCopy(v)}>
                             <Copy className="size-4" />
-                            Salin Kode Voucher
+                            Salin Template Lengkap
                           </Button>
                           <Button className="flex-1 gap-2 bg-primary/10 text-primary hover:bg-primary/20 border-primary/20" variant="ghost" onClick={() => {
                             const landingUrl = window.location.origin.replace('dashboard.', '').replace(':3000', ':3001')

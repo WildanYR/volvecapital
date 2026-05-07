@@ -664,12 +664,18 @@ export class ShopeeOrderModule extends BaseModule {
 
         let normalizedVariant: string | undefined;
 
-        // Only look for "Variasi:" and ignore "Kode Variasi"
+        // Look for "Variasi:" or "Kode Variasi:"
         const variasi = metaTexts.find((t) =>
           t.trim().toLowerCase().startsWith("variasi:")
         );
+        const kodeVariasi = metaTexts.find((t) =>
+          t.trim().toLowerCase().startsWith("kode variasi:")
+        );
+
         if (variasi) {
           normalizedVariant = variasi.replace(/^Variasi:\s*/i, "").trim();
+        } else if (kodeVariasi) {
+          normalizedVariant = kodeVariasi.replace(/^Kode Variasi:\s*/i, "").trim();
         }
 
         return {
