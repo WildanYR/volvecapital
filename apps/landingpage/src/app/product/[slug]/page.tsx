@@ -11,8 +11,9 @@ import { Footer } from '@/components/footer'
 import { CheckoutModal } from '@/components/checkout-modal'
 import { api } from '@/lib/api'
 import { toast } from 'sonner'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import { useEffect } from 'react'
 
 declare global {
   interface Window {
@@ -25,12 +26,24 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
   const { tenantId } = useTenant()
   const { data: products, isLoading: productsLoading } = useProducts(tenantId)
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const variantId = searchParams.get('variant')
 
   const product = products?.find(p => p.slug === slug)
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false)
   const [isVariantShaking, setIsVariantShaking] = useState(false)
+
+  // Auto-select variant from query param
+  useEffect(() => {
+    if (product && variantId && !selectedVariant) {
+      const variant = product.variants.find(v => v.id === variantId)
+      if (variant) {
+        setSelectedVariant(variant)
+      }
+    }
+  }, [product, variantId, selectedVariant])
 
   const handleContinueCheckout = () => {
     if (!selectedVariant) {
