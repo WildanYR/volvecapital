@@ -23,19 +23,36 @@ function SuccessContent() {
   useEffect(() => {
     if (orderId && !code) {
       setIsChecking(true)
-      const interval = setInterval(async () => {
+
+      // Check immediately on mount first
+      const checkStatus = async () => {
         try {
           const res = await api.get(`/public/payment/status/${orderId}`)
           if (res.data.payment_status === 'PAID') {
             setCode(res.data.voucher_code)
             setIsChecking(false)
-            clearInterval(interval)
-            toast.success('Pembayaran terkonfirmasi!')
+            return true
           }
         } catch (err) {
           console.error('Gagal mengecek status pembayaran:', err)
         }
-      }, 3000)
+        return false
+      }
+
+      let interval: NodeJS.Timeout
+
+      checkStatus().then((done) => {
+        if (!done) {
+          // If not confirmed yet, poll every 1 second
+          interval = setInterval(async () => {
+            const confirmed = await checkStatus()
+            if (confirmed) {
+              clearInterval(interval)
+              toast.success('Pembayaran terkonfirmasi!')
+            }
+          }, 1000)
+        }
+      })
 
       return () => clearInterval(interval)
     }
