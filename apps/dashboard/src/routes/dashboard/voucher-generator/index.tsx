@@ -147,14 +147,20 @@ function RouteComponent() {
       
       // Determine base URL for link redeem
       const hostname = window.location.hostname
-      let baseUrl = hostname.includes('dashboard.') 
-        ? hostname.replace('dashboard.', '') 
-        : hostname
       
-      // Force digitalpremium.id if on localhost for development testing
-      if (hostname === 'localhost') {
-        baseUrl = `${auth.tenant!.id}.digitalpremium.id`
+      // Root domain logic
+      let rootDomain = hostname
+      if (hostname.includes('digitalpremium.id')) {
+        rootDomain = 'digitalpremium.id'
+      } else if (hostname.includes('dashboard.')) {
+        rootDomain = hostname.replace(/.*dashboard\./, '')
       }
+      
+      // If rootDomain is still a single word (like localhost), keep it
+      // Otherwise, prepend tenant ID
+      const baseUrl = rootDomain === 'localhost' 
+        ? `${auth.tenant!.id}.localhost:3001` // for local dev testing
+        : `${auth.tenant!.id}.${rootDomain}`
 
       const linkRedeem = `${baseUrl}/redeem?code=${voucherCode}`
 
