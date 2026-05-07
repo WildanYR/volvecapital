@@ -223,6 +223,8 @@ export class AccountUserService {
               ap.account_id,
               pv.cooldown,
               ap.max_user,
+              a.subscription_expiry,
+              a.updated_at AS account_updated_at,
               COUNT(au.id) AS current_user_count,
               MAX(au.created_at) AS last_user_created_at
             FROM
@@ -238,7 +240,7 @@ export class AccountUserService {
               AND a.status != 'disable'
               AND a.freeze_until IS NULL
             GROUP BY
-              ap.id, pv.cooldown, ap.max_user, ap.account_id
+              ap.id, pv.cooldown, ap.max_user, ap.account_id, a.subscription_expiry, a.updated_at
           )
           SELECT
             cs.profile_id AS "candidateProfileId",
@@ -256,6 +258,7 @@ export class AccountUserService {
           WHERE
             cs.current_user_count < cs.max_user
           ORDER BY
+            -- 1. Utamakan yang tidak sedang cooldown
             CASE
               WHEN (
                 cs.last_user_created_at IS NULL OR
@@ -263,6 +266,11 @@ export class AccountUserService {
               ) THEN 1
               ELSE 2
             END ASC,
+            -- 2. Prioritas Expiry (Smart Expiry) - H-1, H-2 didahulukan
+            cs.subscription_expiry ASC,
+            -- 3. FIFO Anti-Spam (Siapa yang lebih lama stand-by/ready)
+            cs.account_updated_at ASC,
+            -- 4. Jika semua sama, prioritaskan profile yang sudah mulai terisi (opsional, tetap dipertahankan)
             CASE
               WHEN cs.current_user_count > 0 THEN 0
               ELSE 1

@@ -689,6 +689,10 @@ export class PublicService {
             where: { allow_generate: true },
           },
         ],
+        order: [
+          ['subscription_expiry', 'ASC'],
+          ['updated_at', 'ASC'],
+        ],
         transaction,
       });
 
