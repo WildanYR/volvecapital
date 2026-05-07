@@ -341,6 +341,7 @@ export class PublicService {
           amount: grossAmount,
           currency: 'IDR',
           callback_url: callbackUrl,
+          auto_redirect: true,
         },
         customer: {
           name: dto.buyer_name,
