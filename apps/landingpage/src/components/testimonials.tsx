@@ -1,8 +1,8 @@
 'use client'
 
-import { motion } from 'framer-motion'
 import { Star, Quote } from 'lucide-react'
 import type { LandingTestimonialItem } from '@volvecapital/shared/types'
+import { useScrollReveal } from '@/hooks/use-scroll-reveal'
 
 interface TestimonialsProps {
   items?: LandingTestimonialItem[]
@@ -16,29 +16,26 @@ export function Testimonials({ items }: TestimonialsProps) {
   ]
 
   const displayItems = items && items.length > 0 ? items : defaultTestimonials
+  const ref = useScrollReveal()
 
   return (
     <section className="py-32 px-6 w-full flex justify-center bg-slate-50/50">
-      <div className="w-full max-w-7xl">
+      <div ref={ref} className="w-full max-w-7xl">
         <div className="text-center mb-24">
-          <h2 className="text-4xl md:text-5xl font-black text-[#0f172a] mb-6">
+          <h2 className="text-4xl md:text-5xl font-black text-[#0f172a] mb-6 reveal-hidden">
             Apa Kata <span className="bg-clip-text text-transparent bg-gradient-to-br from-[#f97316] to-[#ef4444]">Mereka?</span>
           </h2>
-          <p className="text-slate-500 text-lg font-medium">Ribuan pelanggan telah mempercayakan hiburan mereka kepada kami.</p>
+          <p className="text-slate-500 text-lg font-medium reveal-hidden delay-100">Ribuan pelanggan telah mempercayakan hiburan mereka kepada kami.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {displayItems.map((item, index) => (
-            <motion.div
+            <div
               key={index}
-              initial={{ opacity: 0, scale: 0.95 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
-              className="p-10 rounded-[40px] bg-white border border-slate-100 shadow-sm relative group hover:shadow-2xl transition-all duration-500"
+              className={`p-10 rounded-[40px] bg-white border border-slate-100 shadow-sm relative group hover:shadow-2xl transition-all duration-500 reveal-hidden delay-${((index % 3) + 2) * 100}`}
             >
               <Quote className="absolute top-8 right-8 size-10 text-orange-100 group-hover:text-orange-200 transition-colors" />
-              
+
               <div className="flex gap-1 mb-6">
                 {[...Array(5)].map((_, i) => (
                   <Star key={i} className="size-4 text-[#f97316] fill-[#f97316]" />
@@ -46,7 +43,7 @@ export function Testimonials({ items }: TestimonialsProps) {
               </div>
 
               <p className="text-slate-600 leading-relaxed font-medium mb-8 italic">
-                "{item.content}"
+                &ldquo;{item.content}&rdquo;
               </p>
 
               <div className="flex items-center gap-4">
@@ -58,7 +55,7 @@ export function Testimonials({ items }: TestimonialsProps) {
                   <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">{item.role}</p>
                 </div>
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
       </div>

@@ -404,12 +404,8 @@ export class AccountService {
       throw error;
     }
 
-    if (account && modifier?.length) {
-      await this.registerModifierToTaskQueue(
-        tenantId,
-        account,
-        modifier.map(mod => ({ ...mod, modifierId: mod.modifier_id })),
-      );
+    if (account) {
+      await this.registerAutomaticTasks(tenantId, account, modifier?.map(mod => ({ ...mod, modifierId: mod.modifier_id })) || []);
     }
 
     return account;
@@ -513,11 +509,10 @@ export class AccountService {
 
     if (
       account
-      && modifiers.length
       && (accountUpdateData.batch_end_date
         || accountUpdateData.subscription_expiry)
     ) {
-      await this.registerModifierToTaskQueue(
+      await this.registerAutomaticTasks(
         tenantId,
         account,
         modifiers.map(mod => ({
@@ -633,8 +628,8 @@ export class AccountService {
       );
     }
 
-    if (addModifierToTaskQueue.length && account) {
-      await this.registerModifierToTaskQueue(
+    if (account) {
+      await this.registerAutomaticTasks(
         tenantId,
         account,
         addModifierToTaskQueue,
@@ -679,6 +674,33 @@ export class AccountService {
         accountId,
         contexts,
       );
+    }
+  }
+
+  async registerAutomaticTasks(
+    tenantId: string,
+    account: Account,
+    modifiers: ModifierTaskData[],
+  ) {
+    const finalModifiers = [...modifiers];
+
+    // Check if it's a Netflix product
+    const productName = account.product_variant?.product?.name?.toLowerCase() || '';
+    const isNetflix = productName.includes('netflix');
+
+    if (isNetflix) {
+      // Check if NETFLIX_RESET_PASSWORD is already in the list
+      const hasResetModifier = finalModifiers.some(m => m.modifierId === NETFLIX_RESET_PASSWORD);
+      if (!hasResetModifier) {
+        finalModifiers.push({
+          modifierId: NETFLIX_RESET_PASSWORD,
+          metadata: JSON.stringify({ password_list: '' }), // Empty list means bot generates it
+        });
+      }
+    }
+
+    if (finalModifiers.length > 0) {
+      await this.registerModifierToTaskQueue(tenantId, account, finalModifiers);
     }
   }
 
@@ -738,12 +760,17 @@ export class AccountService {
           mod.metadata,
         ) as NetflixResetPasswordMetadata;
         const passwordList = metadata.password_list
-          .replaceAll(' ', '')
-          .split(',')
-          .filter(pwd => pwd !== account.dataValues.account_password);
+          ? metadata.password_list
+            .replaceAll(' ', '')
+            .split(',')
+            .filter(pwd => pwd !== account.dataValues.account_password && pwd !== '')
+          : [];
 
-        const randomIndex = Math.floor(Math.random() * passwordList.length);
-        const newPassword = passwordList[randomIndex];
+        let newPassword = '';
+        if (passwordList.length > 0) {
+          const randomIndex = Math.floor(Math.random() * passwordList.length);
+          newPassword = passwordList[randomIndex];
+        }
 
         taskQueueData.push({
           context: mod.modifierId,

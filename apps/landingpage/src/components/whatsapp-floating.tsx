@@ -11,8 +11,13 @@ export function WhatsAppFloating() {
   const { data: settings } = useSettings(tenantId || '')
   const [isHovered, setIsHovered] = useState(false)
   const [showTooltip, setShowTooltip] = useState(false)
+  const [isClient, setIsClient] = useState(false)
 
   const whatsappNumber = settings?.whatsapp_number || '6285189307255'
+
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
 
   // Periodic tooltip for mobile/auto-attention
   useEffect(() => {
@@ -28,7 +33,7 @@ export function WhatsAppFloating() {
 
   return (
     <motion.div
-      drag
+      drag={isClient && window.innerWidth > 768}
       dragMomentum={false}
       initial={{ opacity: 0, scale: 0.8, y: 20 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -44,15 +49,16 @@ export function WhatsAppFloating() {
         setShowTooltip(false)
       }}
       className="fixed bottom-8 right-8 z-[100] w-16 h-16 flex items-center justify-center cursor-grab active:cursor-grabbing"
-      style={{ touchAction: 'none' }}
+      style={{ touchAction: 'none', transform: 'translateZ(0)' }}
     >
       <AnimatePresence>
         {(isHovered || showTooltip) && (
           <motion.div
-            initial={{ opacity: 0, y: 10, scale: 0.5, filter: 'blur(10px)' }}
-            animate={{ opacity: 1, y: -60, scale: 1, filter: 'blur(0px)' }}
-            exit={{ opacity: 0, y: 10, scale: 0.5, filter: 'blur(10px)' }}
+            initial={{ opacity: 0, y: 10, scale: 0.5 }}
+            animate={{ opacity: 1, y: -60, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.5 }}
             className="absolute right-0 bg-white text-[#0f172a] text-[10px] font-black px-4 py-2 rounded-2xl shadow-[0_15px_30px_rgba(0,0,0,0.15)] border border-slate-100 whitespace-nowrap uppercase tracking-widest flex items-center gap-2 pointer-events-none"
+            style={{ transform: 'translateZ(0)' }}
           >
             <div className="size-2 bg-[#25D366] rounded-full animate-pulse" />
             Butuh Bantuan?

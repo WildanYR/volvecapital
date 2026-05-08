@@ -1,5 +1,4 @@
 import type { AccountEditFormSubmitData } from '@/dashboard/components/forms/account-edit.form'
-import type { AccountModifierEditFormSubmitData } from '@/dashboard/components/forms/account-modifier-edit.form'
 import type { AccountProfileFormSubmitData } from '@/dashboard/components/forms/account-profile.form'
 import type { AccountUserUpdateFormSubmitData } from '@/dashboard/components/forms/account-user-update-form'
 import type {
@@ -14,7 +13,6 @@ import type {
   CreateAccountProfilePayload,
   CreateAccountUserPayload,
   FreezeAccountPayload,
-  UpdateAccountModifierPayload,
   UpdateAccountPayload,
   UpdateAccountProfilePayload,
   UpdateAccountUserPayload,
@@ -63,7 +61,6 @@ import { AccountStatus } from '@/dashboard/components/account-status'
 import { FinancialDetailDialog } from '@/dashboard/components/financial-detail-dialog'
 import { AccountEditForm } from '@/dashboard/components/forms/account-edit.form'
 import { AccountFreezeForm } from '@/dashboard/components/forms/account-freeze.form'
-import { AccountModifierEditForm } from '@/dashboard/components/forms/account-modifier-edit.form'
 import { AccountProfileForm } from '@/dashboard/components/forms/account-profile.form'
 import { AccountUserUpdateForm } from '@/dashboard/components/forms/account-user-update-form'
 import { AccountUserForm } from '@/dashboard/components/forms/account-user.form'
@@ -169,8 +166,6 @@ function RouteComponent() {
     = useState<boolean>(false)
   const [dialogAccountOpen, setDialogAccountOpen] = useState<boolean>(false)
   const [dialogAccountProfileOpen, setDialogAccountProfileOpen]
-    = useState<boolean>(false)
-  const [dialogAccountModifierOpen, setDialogAccountModifierOpen]
     = useState<boolean>(false)
   const [dialogAccountUserOpen, setDialogAccountUserOpen]
     = useState<boolean>(false)
@@ -479,45 +474,10 @@ function RouteComponent() {
     })
   }
 
-  const accountModifierEditMutation = useMutation({
-    mutationFn: ({
-      id,
-      payload,
-    }: {
-      id: string
-      payload: UpdateAccountModifierPayload
-    }) => accountService.updateAccountModifier(id, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['account'] })
-      toast.success('Modifier Akun berhasil diperbarui.')
-    },
-    onError: (error) => {
-      toast.error(`Gagal memperbarui modifier akun: ${error.message}`)
-    },
-    onSettled: () => {
-      setDialogAccountModifierOpen(false)
-    },
-  })
-
   const handleModifierClick = (account: Account) => {
     setSelectedAccount(account)
-    setDialogAccountModifierOpen(true)
   }
 
-  const handleAccountModifierEditSubmit = (
-    value: AccountModifierEditFormSubmitData,
-  ) => {
-    const payload = {
-      modifier: value.modifier.map(mod => ({
-        action: mod.action,
-        modifier_id: mod.modifier_id,
-        metadata: mod.metadata
-          ? convertMetadataObjectToString(mod.metadata)
-          : undefined,
-      })),
-    }
-    accountModifierEditMutation.mutate({ id: selectedAccount!.id, payload })
-  }
 
   const handleCopyTemplate = (profile: AccountProfile, account: Account) => {
     const template = copyAccountTemplate(profile, account)
@@ -1222,14 +1182,6 @@ function RouteComponent() {
                                 {' '}
                                 Update
                               </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onSelect={() => handleModifierClick(account)}
-                              >
-                                <span>
-                                  <Cog />
-                                </span>
-                                Modifier
-                              </DropdownMenuItem>
                               {!account.pinned
                                 ? (
                                     <DropdownMenuItem
@@ -1555,25 +1507,6 @@ function RouteComponent() {
               || accountProfileEditMutation.isPending
             }
             onSubmit={handleAccountProfileFormSubmit}
-          />
-        </DialogContent>
-      </Dialog>
-      {/* Edit Modifier Dialog */}
-      <Dialog
-        open={dialogAccountModifierOpen}
-        onOpenChange={setDialogAccountModifierOpen}
-      >
-        <DialogContent className="md:min-w-4xl">
-          <DialogHeader>
-            <DialogTitle>Ubah Modifier Akun</DialogTitle>
-            <DialogDescription>
-              Konfigurasi fitur otomatisasi dan tambahan untuk akun ini.
-            </DialogDescription>
-          </DialogHeader>
-          <AccountModifierEditForm
-            initialData={selectedAccount?.modifier}
-            isPending={accountModifierEditMutation.isPending}
-            onSubmit={handleAccountModifierEditSubmit}
           />
         </DialogContent>
       </Dialog>

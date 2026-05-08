@@ -1,8 +1,8 @@
 'use client'
 
-import { motion } from 'framer-motion'
 import { UserMinus, Zap, Clock, MessageCircle, ShieldCheck, CreditCard } from 'lucide-react'
 import type { LandingFeatureConfig } from '@volvecapital/shared/types'
+import { useScrollReveal } from '@/hooks/use-scroll-reveal'
 
 interface FeaturesProps {
   config?: LandingFeatureConfig | null
@@ -24,28 +24,26 @@ export function Features({ config }: FeaturesProps) {
   const lastWord = titleParts.pop()
   const mainTitle = titleParts.join(' ')
 
+  const ref = useScrollReveal()
+
   return (
     <section className="py-32 px-6 w-full flex justify-center bg-white">
-      <div className="w-full max-w-7xl">
+      <div ref={ref} className="w-full max-w-7xl">
         <div className="text-center mb-24">
-          <h2 className="text-4xl md:text-5xl font-black text-[#0f172a] mb-6">
+          <h2 className="text-4xl md:text-5xl font-black text-[#0f172a] mb-6 reveal-hidden">
             {mainTitle}{' '}
             <span className="bg-clip-text text-transparent bg-gradient-to-br from-[#f97316] to-[#ef4444]">
               {lastWord}
             </span>
           </h2>
-          <p className="text-slate-500 text-lg font-medium">Layanan terbaik dengan teknologi otomatisasi terdepan.</p>
+          <p className="text-slate-500 text-lg font-medium reveal-hidden delay-100">Layanan terbaik dengan teknologi otomatisasi terdepan.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
           {items.map((feature: any, index: number) => (
-            <motion.div
+            <div
               key={feature.id || index}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
-              className="p-10 rounded-3xl bg-white border border-slate-100 hover:shadow-2xl transition-all duration-500 group text-center flex flex-col items-center"
+              className={`p-10 rounded-3xl bg-white border border-slate-100 hover:shadow-2xl transition-all duration-500 group text-center flex flex-col items-center reveal-hidden delay-${((index % 3) + 2) * 100}`}
             >
               <div className={`p-6 rounded-[30px] mb-8 group-hover:scale-110 transition-transform duration-500 ${feature.color || 'bg-orange-50 text-orange-500'}`}>
                 {feature.lucideIcon ? <feature.lucideIcon className="size-8" /> : <Zap className="size-8" />}
@@ -54,7 +52,7 @@ export function Features({ config }: FeaturesProps) {
               <p className="text-slate-500 leading-relaxed font-medium">
                 {feature.description}
               </p>
-            </motion.div>
+            </div>
           ))}
         </div>
       </div>

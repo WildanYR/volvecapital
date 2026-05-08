@@ -30,6 +30,7 @@ import { Product } from 'src/database/models/product.model';
 import { TransactionItem } from 'src/database/models/transaction-item.model';
 import { Transaction } from 'src/database/models/transaction.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
+import { AccountService } from '../account/account.service';
 import { NetflixResetPasswordMetadata } from '../account/types/netflix-reset-password-metadata.type';
 import { AppLoggerService } from '../logger/logger.service';
 import { TaskQueueService } from '../task-queue/task-queue.service';
@@ -49,6 +50,7 @@ export class AccountUserService {
     private readonly snowflakeIdProvider: SnowflakeIdProvider,
     private readonly postgresProvider: PostgresProvider,
     private readonly taskQueueService: TaskQueueService,
+    private readonly accountService: AccountService,
     @Inject(ACCOUNT_REPOSITORY)
     private readonly accountRepository: typeof Account,
     @Inject(ACCOUNT_USER_REPOSITORY)
@@ -452,64 +454,15 @@ export class AccountUserService {
       throw error;
     }
 
-    if (accountUser && accountUser.dataValues.account.batch_end_date) {
-      const netflixResetPasswordModifier
-        = accountUser.dataValues.account.modifier?.find(
-          mod => mod.modifier_id === NETFLIX_RESET_PASSWORD,
-        );
-      if (
-        netflixResetPasswordModifier
-        && netflixResetPasswordModifier.metadata
-      ) {
-        try {
-          const metadata = JSON.parse(
-            netflixResetPasswordModifier.metadata,
-          ) as NetflixResetPasswordMetadata;
-          const passwordList = metadata.password_list
-            ? metadata.password_list
-                .replaceAll(' ', '')
-                .split(',')
-                .filter(
-                  pwd =>
-                    pwd !== accountUser.dataValues.account.account_password,
-                )
-            : [];
-
-          if (!passwordList.length) {
-            throw new Error('List password belum diisi');
-          }
-
-          const randomIndex = Math.floor(Math.random() * passwordList.length);
-          const newPassword = passwordList[randomIndex];
-
-          await this.taskQueueService.upsert([
-            {
-              context: NETFLIX_RESET_PASSWORD,
-              execute_at: accountUser.dataValues.account.batch_end_date,
-              subject_id: accountUser.dataValues.account.id,
-              tenant_id: tenantId,
-              status: 'QUEUED',
-              payload: JSON.stringify({
-                id: accountUser.dataValues.id,
-                accountId: accountUser.dataValues.account.id,
-                email: accountUser.dataValues.account.email.email,
-                password: accountUser.dataValues.account.account_password,
-                newPassword,
-                subscription_expiry: accountUser.dataValues.account.subscription_expiry?.toISOString?.() || '',
-                variant_name: accountUser.dataValues.account.product_variant?.name ?? '',
-              } as NetflixResetPasswordPayload),
-            },
-          ]);
-        }
-        catch (error) {
-          const accountName = `${accountUser.dataValues.account.email.email} (${accountUser.dataValues.account.product_variant.product.name} ${accountUser.dataValues.account.product_variant.name})`;
-          this.logger.error(
-            `Error saat mendaftarkan Task Queue pada akun ${accountName}: ${(error as Error).message}`,
-            (error as Error).stack,
-            'CreateAccountUser',
-          );
-        }
-      }
+    if (accountUser) {
+      await this.accountService.registerAutomaticTasks(
+        tenantId,
+        accountUser.dataValues.account,
+        accountUser.dataValues.account.modifier?.map(mod => ({
+          modifierId: mod.modifier_id,
+          metadata: mod.metadata,
+        })) || [],
+      );
     }
 
     return accountUser;

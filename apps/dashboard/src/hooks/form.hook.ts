@@ -1,5 +1,4 @@
 import { createFormHook, createFormHookContexts } from '@tanstack/react-form'
-import { AccountModifierField } from '@/dashboard/components/forms/common/fields/account-modifier-field'
 import { BooleanCheckboxField } from '@/dashboard/components/forms/common/fields/boolean-checkbox-field'
 import { DatePickerField } from '@/dashboard/components/forms/common/fields/date-picker-field'
 import { EmailSelectField } from '@/dashboard/components/forms/common/fields/email-select-field'
@@ -27,7 +26,6 @@ export const { useAppForm, withFieldGroup } = createFormHook({
     NumberField,
     EmailSelectField,
     ProductVariantSelectField,
-    AccountModifierField,
   },
   formComponents: {
     SubscribeButton,

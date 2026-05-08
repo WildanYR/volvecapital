@@ -5,7 +5,6 @@ import { useAppForm } from '@/dashboard/hooks/form.hook'
 import { cn } from '@/dashboard/lib/utils'
 import { Button } from '../ui/button'
 import { MetadataFieldGroup } from './common/fields/metadata-field-group'
-import { AccountModifierFormSchema } from './common/schemas/account-modifier-form.schema'
 import { AccountProfileFormSchema } from './common/schemas/account-profile-form.schema'
 
 export const AccountFormSchema = z.object({
@@ -18,7 +17,6 @@ export const AccountFormSchema = z.object({
   product_variant_id: z.string().nonempty(),
   capital_price: z.number().min(0).optional(),
   profile: z.array(AccountProfileFormSchema).min(1),
-  modifier: z.array(AccountModifierFormSchema),
 })
 
 export type AccountFormSubmitData = z.infer<typeof AccountFormSchema>
@@ -51,7 +49,6 @@ export function AccountCreateForm({
           metadata: [],
         },
       ],
-      modifier: [],
     } as AccountFormSubmitData,
     onSubmit: ({ value }) => {
       onSubmit(value)
@@ -244,13 +241,6 @@ export function AccountCreateForm({
               </div>
             )}
           </form.AppField>
-          <div className="flex flex-col gap-4">
-            <p className="text-2xl font-bold">Modifier</p>
-            <form.AppField
-              name="modifier"
-              children={field => <field.AccountModifierField />}
-            />
-          </div>
           <form.SubscribeButton
             isPending={isPending}
             label={submitButtonText}

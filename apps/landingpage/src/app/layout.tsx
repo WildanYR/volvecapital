@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
-import { BackgroundBlobs } from "@/components/background-blobs";
 import { WhatsAppFloating } from "@/components/whatsapp-floating";
 import Script from "next/script";
 import { headers } from "next/headers";
@@ -47,7 +46,6 @@ export default async function RootLayout({
       </head>
       <body className="min-h-full flex flex-col font-sans">
         <Providers tenantId={tenantId} hostname={host}>
-          <BackgroundBlobs />
           {children}
           <WhatsAppFloating />
           {/* DOKU Checkout Scripts */}
