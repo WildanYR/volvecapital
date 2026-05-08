@@ -457,8 +457,8 @@ export class AccountUserService {
     if (accountUser) {
       await this.accountService.registerAutomaticTasks(
         tenantId,
-        accountUser.dataValues.account,
-        accountUser.dataValues.account.modifier?.map(mod => ({
+        accountUser.account,
+        accountUser.account.modifier?.map(mod => ({
           modifierId: mod.modifier_id,
           metadata: mod.metadata,
         })) || [],
