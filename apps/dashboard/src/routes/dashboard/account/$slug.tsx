@@ -474,9 +474,6 @@ function RouteComponent() {
     })
   }
 
-  const handleModifierClick = (account: Account) => {
-    setSelectedAccount(account)
-  }
 
 
   const handleCopyTemplate = (profile: AccountProfile, account: Account) => {

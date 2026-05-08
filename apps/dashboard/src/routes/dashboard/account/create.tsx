@@ -48,12 +48,6 @@ function RouteComponent() {
           ? convertMetadataObjectToString(p.metadata)
           : undefined,
       })),
-      modifier: values.modifier.length
-        ? values.modifier.map(m => ({
-            modifier_id: m.modifier_id,
-            metadata: convertMetadataObjectToString(m.metadata),
-          }))
-        : undefined,
     }
     mutation.mutate(payload)
   }
