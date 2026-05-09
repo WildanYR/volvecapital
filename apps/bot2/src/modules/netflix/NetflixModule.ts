@@ -930,60 +930,129 @@ export class NetflixModule extends BaseModule {
         await page.goto(CHANGE_PLAN_URL);
       }
 
-      // STEP 2: Pilih Plan Premium
-      this.logger.info(`[AutoUpgrade][${email}] Mencari pilihan plan Premium (ID: ${PLAN_PREMIUM_ID})...`);
+      // STEP 2: Tunggu halaman changeplan siap, lalu cek status plan
+      this.logger.info(`[AutoUpgrade][${email}] Menunggu halaman changeplan siap...`);
       
       const premiumChoice = page.locator(UPGRADE_LOCATORS.planChoice(PLAN_PREMIUM_ID));
       
       try {
         await premiumChoice.waitFor({ state: 'visible', timeout: 15000 });
       } catch (err) {
-        // Cek apakah sudah di plan Premium
-        if (await page.locator(UPGRADE_LOCATORS.alreadyOnPlanAlert).isVisible()) {
-          this.logger.warn(`[AutoUpgrade][${email}] Akun ini sepertinya sudah menggunakan paket Premium.`);
-          return; // Selesai dengan sukses (sudah sesuai target)
-        }
-        throw new Error("Tombol pilihan plan Premium tidak ditemukan atau tidak tersedia.");
+        // Jika label tidak muncul, URL mungkin berubah (redirect ke membership)
+        this.logger.warn(`[AutoUpgrade][${email}] Label plan tidak ditemukan (URL: ${page.url()}). Mungkin sudah Premium atau belum bisa upgrade.`);
+        throw new Error(`Label plan Premium tidak ditemukan pada URL: ${page.url()}`);
       }
 
-      this.logger.info(`[AutoUpgrade][${email}] Memilih plan Premium...`);
+      // Cek apakah Premium sudah aktif (selected-indicator ada di label Premium)
+      const alreadyPremium = await page.locator(UPGRADE_LOCATORS.selectedIndicator(PLAN_PREMIUM_ID)).isVisible();
+      if (alreadyPremium) {
+        this.logger.warn(`[AutoUpgrade][${email}] Akun sudah menggunakan paket Premium. Proses selesai.`);
+        try {
+          await updateNetflixPlan(this.apiBaseUrl, this.authCredentials, accountId, 'Premium');
+        } catch (_) {}
+        return;
+      }
+
+      this.logger.info(`[AutoUpgrade][${email}] Mengklik pilihan plan Premium (ID: ${PLAN_PREMIUM_ID})...`);
       await premiumChoice.click();
       await this.sleep(1500);
 
       // STEP 3: Klik Lanjutkan
-      this.logger.info(`[AutoUpgrade][${email}] Klik tombol Lanjutkan...`);
+      this.logger.info(`[AutoUpgrade][${email}] Mencari tombol Lanjutkan...`);
       const continueBtn = page.locator(UPGRADE_LOCATORS.continueButton);
-      await continueBtn.waitFor({ state: 'visible', timeout: 10000 });
-      await continueBtn.click();
+
+      // Fallback: cari berdasarkan teks jika data-uia tidak cocok
+      let continueBtnFound = false;
+      try {
+        await continueBtn.first().waitFor({ state: 'visible', timeout: 8000 });
+        continueBtnFound = true;
+      } catch (_) {}
+
+      if (!continueBtnFound) {
+        this.logger.warn(`[AutoUpgrade][${email}] Tombol lanjutkan via data-uia tidak ditemukan, mencoba via teks...`);
+        const textFallback = page.locator('button').filter({ hasText: /lanjutkan|continue|next/i });
+        try {
+          await textFallback.first().waitFor({ state: 'visible', timeout: 5000 });
+          await textFallback.first().click();
+        } catch (_) {
+          throw new Error('Tombol Lanjutkan tidak ditemukan (data-uia maupun teks).');
+        }
+      } else {
+        await continueBtn.first().click();
+      }
       await this.sleep(2000);
 
       // STEP 4: Konfirmasi Upgrade (Halaman Final)
+      // Tombol dari DOM: <button data-uia="action-button">Confirm</button>
       this.logger.info(`[AutoUpgrade][${email}] Menunggu halaman konfirmasi akhir...`);
       const confirmBtn = page.locator(UPGRADE_LOCATORS.confirmUpgradeButton);
-      
+
+      let confirmClicked = false;
       try {
-        await confirmBtn.waitFor({ state: 'visible', timeout: 15000 });
-        this.logger.info(`[AutoUpgrade][${email}] Klik Konfirmasi Perubahan Paket...`);
-        await confirmBtn.click();
+        await confirmBtn.first().waitFor({ state: 'visible', timeout: 15000 });
+        this.logger.info(`[AutoUpgrade][${email}] Klik Konfirmasi Perubahan Paket (via data-uia)...`);
+        await confirmBtn.first().click();
+        confirmClicked = true;
         await this.sleep(3000);
-      } catch (err) {
-        this.logger.warn(`[AutoUpgrade][${email}] Tombol konfirmasi akhir tidak muncul. Mengecek apakah sudah berhasil...`);
+      } catch (_) {}
+
+      // Fallback: cari tombol Confirm via teks
+      if (!confirmClicked) {
+        this.logger.warn(`[AutoUpgrade][${email}] Tombol via data-uia tidak ditemukan, mencoba via teks "Confirm"...`);
+        const textConfirm = page.locator('button').filter({ hasText: /^confirm$/i });
+        try {
+          await textConfirm.first().waitFor({ state: 'visible', timeout: 5000 });
+          this.logger.info(`[AutoUpgrade][${email}] Klik Konfirmasi via teks...`);
+          await textConfirm.first().click();
+          confirmClicked = true;
+          await this.sleep(3000);
+        } catch (_) {
+          this.logger.warn(`[AutoUpgrade][${email}] Tombol konfirmasi tidak ditemukan sama sekali, langsung cek status...`);
+        }
       }
 
-      // STEP 5: Verifikasi Sukses
-      if (await page.locator(UPGRADE_LOCATORS.successMessage).isVisible() || page.url().includes('membership')) {
-        this.logger.info(`[AutoUpgrade][${email}] Upgrade paket Premium BERHASIL!`);
-        
-        // Update database: set variant_name ke Premium
+      // STEP 5: Tunggu & Verifikasi Sukses
+      // Teks sukses dari DOM: "You've successfully changed your plan"
+      this.logger.info(`[AutoUpgrade][${email}] Menunggu konfirmasi sukses dari Netflix...`);
+
+      let isSuccess = false;
+
+      // Prioritas 1: Tunggu teks sukses spesifik (paling akurat)
+      try {
+        await page.locator('text="You\'ve successfully changed your plan"').waitFor({ state: 'visible', timeout: 15000 });
+        isSuccess = true;
+        this.logger.info(`[AutoUpgrade][${email}] ✅ Terdeteksi teks sukses: "You've successfully changed your plan"`);
+      } catch (_) {
+        this.logger.warn(`[AutoUpgrade][${email}] Teks sukses tidak muncul dalam 15s, cek alternatif...`);
+      }
+
+      // Prioritas 2: Cek via data-uia success-message
+      if (!isSuccess) {
+        isSuccess = await page.locator(UPGRADE_LOCATORS.successMessage).isVisible({ timeout: 3000 }).catch(() => false);
+        if (isSuccess) this.logger.info(`[AutoUpgrade][${email}] ✅ Terdeteksi success-message element.`);
+      }
+
+      // Prioritas 3: Cek URL (sudah keluar dari halaman changeplan)
+      const currentUrl = page.url();
+      if (!isSuccess) {
+        isSuccess = currentUrl.includes('membership') || currentUrl.includes('YourAccount');
+        if (isSuccess) this.logger.info(`[AutoUpgrade][${email}] ✅ Terdeteksi redirect sukses ke: ${currentUrl}`);
+      }
+
+      if (isSuccess) {
+        this.logger.info(`[AutoUpgrade][${email}] 🎉 UPGRADE PAKET PREMIUM BERHASIL! URL akhir: ${currentUrl}`);
         try {
           await updateNetflixPlan(this.apiBaseUrl, this.authCredentials, accountId, 'Premium');
-          this.logger.info(`[AutoUpgrade][${email}] Database updated to Premium.`);
+          this.logger.info(`[AutoUpgrade][${email}] Database berhasil diperbarui ke Premium.`);
         } catch (dbErr) {
           this.logger.warn(`[AutoUpgrade][${email}] Gagal update plan di DB: ${dbErr instanceof Error ? dbErr.message : String(dbErr)}`);
         }
       } else {
-        this.logger.warn(`[AutoUpgrade][${email}] Status sukses tidak terdeteksi jelas, namun proses telah selesai.`);
+        this.logger.warn(`[AutoUpgrade][${email}] ❌ Status sukses TIDAK terdeteksi. URL akhir: ${currentUrl}`);
+        throw new Error(`Upgrade selesai namun sukses tidak terdeteksi. URL: ${currentUrl}`);
       }
+
+
 
     } catch (error) {
       this.logger.error(
