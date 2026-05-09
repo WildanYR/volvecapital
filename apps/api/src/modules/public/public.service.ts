@@ -316,7 +316,12 @@ export class PublicService {
       // Validate promo code if provided
       if (dto.promo_code) {
         try {
-          const promoResult = await this.promoService.validate(tenantId, dto.promo_code, grossAmount);
+          const promoResult = await this.promoService.validate(
+            tenantId, 
+            dto.promo_code, 
+            grossAmount, 
+            dto.product_variant_id
+          );
           promoCodeId = promoResult.id;
           discountAmount = promoResult.discount_amount;
           grossAmount -= discountAmount;

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, ShieldCheck, Loader2, AlertCircle, Shield, Lock } from 'lucide-react'
 import { Product, ProductVariant } from '@/hooks/use-products'
@@ -31,6 +31,17 @@ export function CheckoutModal({ isOpen, onClose, product, variant }: CheckoutMod
   const [promoData, setPromoData] = useState<{ id: string, discount_amount: number } | null>(null)
   const [isPromoLoading, setIsPromoLoading] = useState(false)
   const [promoError, setPromoError] = useState('')
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false)
+  
+  // Reset state when variant changes or modal opens to prevent promo "leaking"
+  useEffect(() => {
+    if (isOpen) {
+      setPromoCode('')
+      setPromoData(null)
+      setPromoError('')
+      setStep(1)
+    }
+  }, [variant?.id, isOpen])
 
   const shakeAnimation = {
     x: [0, -10, 10, -10, 10, 0],
@@ -98,13 +109,21 @@ export function CheckoutModal({ isOpen, onClose, product, variant }: CheckoutMod
     if (!product || !variant) return
 
     setIsLoading(true)
+    
+    const finalVariantId = variant.id;
+    const finalPromoCode = (promoData && promoCode) ? promoCode : undefined;
+
+    // Debug log to browser console
+    console.log(`[CHECKOUT] Creating payment for variant: ${variant.name} (${finalVariantId}) with price ${variant.price}`);
+    console.log(`[REAL_SEND] Sending to API - ID: ${finalVariantId}, Promo: ${finalPromoCode}`);
+
     try {
-      const { data } = await api.post('/public/payment/create', {
-        product_variant_id: variant.id,
+      const { data } = await api.post(`/public/payment/create?t=${Date.now()}`, {
+        product_variant_id: finalVariantId,
         buyer_name: formData.name,
         buyer_email: formData.email,
         buyer_whatsapp: formData.whatsapp,
-        promo_code: promoData ? promoCode : undefined
+        promo_code: finalPromoCode
       })
 
       if (data.payment_url) {
@@ -124,15 +143,20 @@ export function CheckoutModal({ isOpen, onClose, product, variant }: CheckoutMod
   }
 
   const handleClose = () => {
-    setStep(1)
-    setFormData({ name: '', email: '', whatsapp: '' })
-    onClose()
+    // Show custom confirmation if in step 2 (payment process)
+    if (step === 2 && !isLoading) {
+      setShowCloseConfirm(true)
+      return
+    }
+
+    // Force a full page reload to clear any DOKU/Jokul cached sessions
+    window.location.reload()
   }
 
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 md:p-6 overflow-y-auto">
+        <div key="modal-portal" className="fixed inset-0 z-[200] flex items-center justify-center p-4 md:p-6 overflow-y-auto">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -365,6 +389,56 @@ export function CheckoutModal({ isOpen, onClose, product, variant }: CheckoutMod
           </motion.div>
         </div>
       )}
+
+      {/* Custom Confirmation Dialog */}
+      <AnimatePresence>
+        {showCloseConfirm && (
+          <div key="confirm-portal" className="fixed inset-0 z-[300] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-[#0f172a]/60 backdrop-blur-sm"
+              onClick={() => setShowCloseConfirm(false)}
+            />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="relative bg-white p-8 rounded-[2.5rem] shadow-2xl max-w-sm w-full text-center space-y-6 overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/5 blur-3xl -mr-16 -mt-16" />
+              
+              <div className="bg-orange-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto relative">
+                <div className="absolute inset-0 bg-orange-200/20 animate-ping rounded-full" />
+                <AlertCircle className="size-10 text-[#f97316] relative" />
+              </div>
+
+              <div className="space-y-2">
+                <h3 className="text-2xl font-black text-[#0f172a]">Batalkan Pesanan?</h3>
+                <p className="text-slate-500 font-medium leading-relaxed">
+                  Proses pembayaran Anda sedang berlangsung. Apakah Anda yakin ingin membatalkan?
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 pt-2">
+                <button 
+                  onClick={() => window.location.reload()}
+                  className="w-full py-4 bg-red-500 hover:bg-red-600 text-white font-black rounded-2xl transition-all shadow-lg shadow-red-500/20 active:scale-95"
+                >
+                  Ya, Batalkan Sekarang
+                </button>
+                <button 
+                  onClick={() => setShowCloseConfirm(false)}
+                  className="w-full py-4 bg-slate-50 hover:bg-slate-100 text-slate-500 font-bold rounded-2xl transition-colors"
+                >
+                  Lanjutkan Pembayaran
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </AnimatePresence>
   )
 }

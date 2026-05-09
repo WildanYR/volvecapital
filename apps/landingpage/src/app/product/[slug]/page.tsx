@@ -256,6 +256,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
       </div>
 
       <CheckoutModal 
+        key={`${selectedVariant?.id}-${isCheckoutModalOpen}`}
         isOpen={isCheckoutModalOpen}
         onClose={() => setIsCheckoutModalOpen(false)}
         product={product}
