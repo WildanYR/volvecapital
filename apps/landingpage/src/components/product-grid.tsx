@@ -4,6 +4,7 @@ import { Package, Zap, ArrowRight, ShieldCheck } from 'lucide-react'
 import { Product } from '@/hooks/use-products'
 import { formatDuration, formatCurrency } from '@/lib/format'
 import Link from 'next/link'
+import { motion } from 'framer-motion'
 import { useScrollReveal } from '@/hooks/use-scroll-reveal'
 
 interface ProductGridProps {
@@ -39,9 +40,13 @@ export function ProductGrid({ products }: ProductGridProps) {
           {popularProducts.map((product, idx) => {
             const isFeatured = idx === 1
             return (
-              <div
+              <motion.div
                 key={product.id}
-                className={`group p-8 rounded-3xl flex flex-col h-full relative border transition-all duration-500 reveal-hidden delay-${(idx + 3) * 100} ${
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: idx * 0.1, ease: [0.21, 0.47, 0.32, 0.98] }}
+                viewport={{ once: true }}
+                className={`group p-8 rounded-3xl flex flex-col h-full relative border transition-all duration-500 ${
                   isFeatured
                   ? 'bg-[#0f172a] border-[#0f172a] shadow-2xl scale-105 z-20 hover:shadow-orange-500/10 hover:-translate-y-4'
                   : 'bg-white border-slate-100 shadow-sm hover:shadow-2xl hover:border-orange-200 hover:-translate-y-4'
@@ -121,7 +126,7 @@ export function ProductGrid({ products }: ProductGridProps) {
                     <ArrowRight className="size-4" />
                   </Link>
                 </div>
-              </div>
+              </motion.div>
             )
           })}
         </div>
