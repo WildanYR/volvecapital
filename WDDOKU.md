@@ -1,0 +1,108 @@
+# Implementasi Sistem Withdrawal (WD) DOKU - Multi-Tenant
+
+Dokumen ini menjelaskan alur kerja dan struktur teknis untuk fitur penarikan dana (Withdrawal) bagi setiap tenant menggunakan layanan **DOKU Payouts (Disbursement)**.
+
+## 1. Arsitektur Saldo
+Dalam sistem multi-tenant, saldo tidak hanya berupa angka, tapi harus bisa ditelusuri sumbernya.
+
+*   **Gross Revenue**: Total uang yang masuk dari transaksi DOKU (Pay-in).
+*   **Platform Fee**: Potongan biaya per transaksi untuk pemilik platform (Digital Premium).
+*   **Net Balance**: Saldo bersih yang bisa ditarik oleh tenant.
+
+### Penyimpanan Data
+*   **Tenant Schema**: Menyimpan data permintaan WD (`withdrawal_request`) dan histori saldo tenant tersebut.
+*   **Master Schema**: Menyimpan konfigurasi API DOKU Payout (Secret Key platform) dan log transaksi global untuk rekonsiliasi.
+
+---
+
+## 2. Struktur Database (Tenant Schema)
+
+Kamu perlu menambahkan tabel baru di setiap schema tenant melalui migrasi:
+
+### Table: `withdrawal_request`
+| Column | Type | Description |
+| :--- | :--- | :--- |
+| `id` | UUID | Primary Key |
+| `amount` | DECIMAL | Jumlah penarikan bersih yang diterima tenant |
+| `admin_fee` | DECIMAL | Biaya transfer (biasanya flat dari DOKU, misal Rp 2.500) |
+| `status` | ENUM | `PENDING`, `APPROVED`, `PROCESSING`, `SUCCESS`, `FAILED` |
+| `bank_info` | JSON | Detail bank tujuan (`{ "bank_name": "BCA", "account_number": "123...", "account_holder": "..." }`) |
+| `doku_reference` | STRING | ID referensi/transaksi dari API DOKU Payout |
+| `created_at` | DATE | Waktu pengajuan penarikan |
+| `updated_at` | DATE | Waktu update status terakhir |
+
+---
+
+## 3. Alur Kerja (Workflow)
+
+### Tahap 1: Akumulasi Saldo
+1. Setiap kali transaksi statusnya menjadi `SUCCESS` di schema tenant, hitung `Net Profit`.
+2. Rumus: `Net Profit = Gross Amount - DOKU MDR - Platform Fee`.
+3. Profit ini secara otomatis menambah "Total Saldo" di dashboard tenant.
+
+### Tahap 2: Pengajuan WD (Dashboard Tenant)
+1. Tenant masuk ke menu **Wallet/Keuangan**.
+2. Sistem menampilkan "Saldo Tersedia" yang bisa ditarik.
+3. Tenant mengisi form penarikan (Jumlah & Rekening Bank).
+4. Sistem mengecek validasi (Saldo cukup? Minimal WD? OTP?).
+5. Record baru dibuat di tabel `withdrawal_request` dengan status `PENDING`.
+
+### Tahap 3: Approval (Super Admin)
+1. Super Admin (kamu) melihat daftar pengajuan di Dashboard Admin Pusat.
+2. Kamu melakukan verifikasi apakah aktivitas tenant tersebut normal (mencegah pencucian uang/fraud).
+3. Klik tombol **"Approve & Transfer"**.
+
+### Tahap 4: Eksekusi DOKU Payout
+1. Saat klik Approve, Backend memanggil **API DOKU Payout**.
+2. DOKU memotong saldo di **Wallet Platform** kamu dan mengirimkannya ke rekening bank tenant.
+3. API mengembalikan respon `PROCESSING` atau `FAILED` secara real-time.
+
+### Tahap 5: Webhook & Konfirmasi Akhir
+1. DOKU mengirimkan **Webhook Notification** ke server kamu setelah transfer benar-benar sampai di bank tujuan.
+2. Server mencari record `withdrawal_request` berdasarkan `doku_reference` dan mengubah statusnya menjadi `SUCCESS`.
+3. Tenant menerima notifikasi bahwa uang telah masuk.
+
+---
+
+## 4. Contoh Payload API DOKU Payout
+
+Ini adalah struktur data yang akan dikirimkan API kamu ke DOKU (Payouts API):
+
+```json
+{
+  "request": {
+    "payouts": [
+      {
+        "amount": 1000000,
+        "beneficiary": {
+          "name": "Sandi Tenant A",
+          "account_number": "0022334455",
+          "bank_code": "014", 
+          "email": "sandi@tenant.com"
+        },
+        "description": "Withdrawal Digital Premium - Tenant Sandi",
+        "external_id": "WD-2024-001-A"
+      }
+    ]
+  }
+}
+```
+
+---
+
+## 5. Keamanan & Best Practices
+
+1.  **Immutability**: Data di `withdrawal_request` tidak boleh bisa diubah oleh tenant setelah statusnya bukan `PENDING`.
+2.  **Audit Trail**: Simpan log siapa admin yang meng-approve penarikan tersebut.
+3.  **T+N Settlement**: Biasanya, jangan izinkan WD di hari yang sama dengan transaksi masuk. Berikan jeda (misal T+1 atau T+2) untuk memastikan dana dari DOKU Pay-in sudah benar-benar cair ke akun platform kamu.
+4.  **Minimal WD**: Tentukan batas minimal penarikan (misal Rp 50.000) untuk menutupi biaya transfer bank.
+
+---
+
+## 6. Rencana Tahapan Coding
+
+1.  **Backend**: Buat migrasi untuk tabel `withdrawal_request`.
+2.  **Backend**: Buat service `WithdrawalService` untuk handle CRUD request.
+3.  **Backend**: Integrasi library DOKU untuk Payout/Disbursement.
+4.  **Frontend (Tenant)**: Buat halaman Wallet sederhana (List histori WD & Tombol Request).
+5.  **Frontend (Admin)**: Buat halaman Approval WD untuk kamu.

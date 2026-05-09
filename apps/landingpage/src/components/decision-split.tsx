@@ -23,7 +23,7 @@ export function DecisionSplit() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
           {/* Card 1: Redeem */}
           <div
-            className="bg-white rounded-[40px] p-8 md:p-10 border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-orange-500/5 transition-all duration-500 hover:-translate-y-4 flex flex-col items-center text-center group relative overflow-hidden h-full reveal-hidden delay-200"
+            className="group p-10 md:p-14 bg-white rounded-3xl border border-slate-100 shadow-xl hover:shadow-2xl hover:border-orange-200 hover:-translate-y-4 transition-all duration-500 flex flex-col items-center text-center relative overflow-hidden"
             style={{ willChange: 'transform' }}
           >
             <div className="size-20 bg-orange-50 rounded-3xl flex items-center justify-center mb-10 group-hover:scale-110 group-hover:bg-orange-100 transition-all duration-500">
@@ -45,7 +45,7 @@ export function DecisionSplit() {
 
           {/* Card 2: Buy */}
           <div
-            className="bg-white rounded-[40px] p-8 md:p-10 border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-orange-500/5 transition-all duration-500 hover:-translate-y-4 flex flex-col items-center text-center group relative overflow-hidden h-full reveal-hidden delay-300"
+            className="group p-10 md:p-14 bg-white rounded-3xl border border-slate-100 shadow-xl hover:shadow-2xl hover:border-orange-200 hover:-translate-y-4 transition-all duration-500 flex flex-col items-center text-center relative overflow-hidden"
             style={{ willChange: 'transform' }}
           >
             <div className="size-20 bg-orange-50 rounded-3xl flex items-center justify-center mb-10 group-hover:scale-110 group-hover:bg-orange-100 transition-all duration-500">

@@ -16,10 +16,6 @@ import {
   AccountCapitalAttributes,
 } from './account-capital.model';
 import {
-  AccountModifier,
-  AccountModifierAttributes,
-} from './account-modifier.model';
-import {
   AccountProfile,
   AccountProfileAttributes,
 } from './account-profile.model';
@@ -46,7 +42,6 @@ export interface AccountAttributes {
   product_variant: ProductVariantAttributes;
   user?: AccountUserAttributes[];
   profile?: AccountProfileAttributes[];
-  modifier?: AccountModifierAttributes[];
   capitals?: AccountCapitalAttributes[];
   pinned?: boolean;
   capital_price: number;
@@ -64,7 +59,6 @@ export interface AccountCreationAttributes
     | 'product_variant'
     | 'user'
     | 'profile'
-    | 'modifier'
     | 'capital_price'
   > {}
 
@@ -132,8 +126,6 @@ export class Account extends Model<
   @HasMany(() => AccountProfile)
   declare profile?: AccountProfile[];
 
-  @HasMany(() => AccountModifier)
-  declare modifier?: AccountModifier[];
 
   @HasMany(() => AccountCapital)
   declare capitals?: AccountCapital[];

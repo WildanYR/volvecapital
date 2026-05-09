@@ -43,8 +43,8 @@ export function ProductGrid({ products }: ProductGridProps) {
                 key={product.id}
                 className={`group p-8 rounded-3xl flex flex-col h-full relative border transition-all duration-500 reveal-hidden delay-${(idx + 3) * 100} ${
                   isFeatured
-                  ? 'bg-[#0f172a] border-[#0f172a] shadow-2xl scale-105 z-20 hover:scale-[1.08] hover:-translate-y-3'
-                  : 'bg-white border-slate-100 shadow-sm hover:shadow-2xl hover:scale-[1.03] hover:-translate-y-3'
+                  ? 'bg-[#0f172a] border-[#0f172a] shadow-2xl scale-105 z-20 hover:shadow-orange-500/10 hover:-translate-y-4'
+                  : 'bg-white border-slate-100 shadow-sm hover:shadow-2xl hover:border-orange-200 hover:-translate-y-4'
                 }`}
                 style={{ willChange: 'transform' }}
               >

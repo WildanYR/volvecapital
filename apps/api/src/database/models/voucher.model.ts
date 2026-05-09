@@ -12,6 +12,7 @@ import {
 import { ProductVariant, ProductVariantAttributes } from './product-variant.model';
 import { Transaction, TransactionAttributes } from './transaction.model';
 import { TransactionItem } from './transaction-item.model';
+import { PromoCode } from './promo-code.model';
 
 export type VoucherStatus = 'PENDING' | 'UNUSED' | 'USED' | 'EXPIRED';
 export type PaymentStatus = 'PENDING' | 'PAID' | 'FAILED' | 'EXPIRED';
@@ -28,6 +29,8 @@ export interface VoucherAttributes {
   transaction_item_id?: string | null;
   payment_id?: string | null;
   payment_status: PaymentStatus;
+  promo_code_id?: string | null;
+  discount_amount?: number | null;
   product_variant?: ProductVariantAttributes;
   transaction?: TransactionAttributes;
   used_at?: Date | null;
@@ -125,4 +128,16 @@ export class Voucher extends Model<VoucherAttributes, VoucherCreationAttributes>
 
   @BelongsTo(() => TransactionItem, 'transaction_item_id')
   declare transaction_item?: TransactionItem;
+
+  @ForeignKey(() => PromoCode)
+  @Column(DataType.UUID)
+  declare promo_code_id?: string | null;
+
+  @Column({
+    type: DataType.DECIMAL(10, 2),
+    get() {
+      return this.getDataValue('discount_amount') ? Number(this.getDataValue('discount_amount')) : 0;
+    },
+  })
+  declare discount_amount?: number | null;
 }

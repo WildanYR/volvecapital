@@ -28,15 +28,6 @@ class CreateAccountProfileDto {
   metadata?: string;
 }
 
-class CreateAccountModifierDto {
-  @IsNotEmpty()
-  @IsString()
-  modifier_id: string;
-
-  @IsNotEmpty()
-  @IsString()
-  metadata: string;
-}
 
 export class CreateAccountDto {
   @IsNotEmpty()
@@ -79,10 +70,4 @@ export class CreateAccountDto {
   @Type(() => CreateAccountProfileDto)
   profile: CreateAccountProfileDto[];
 
-  // modifier
-  @IsOptional()
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => CreateAccountModifierDto)
-  modifier?: CreateAccountModifierDto[];
 }

@@ -41,11 +41,6 @@ export interface AccountProfile {
   user?: Array<AccountProfileUser>
 }
 
-export interface AccountModifier {
-  id: string
-  modifier_id: string
-  metadata: Array<MetadataObject>
-}
 
 export interface Account {
   id: string
@@ -62,7 +57,6 @@ export interface Account {
   email: Email
   product_variant: ProductVariant
   profile: Array<AccountProfile>
-  modifier?: Array<AccountModifier>
   pinned?: boolean
   capital_price: number
   total_capital?: number
@@ -103,10 +97,6 @@ export interface CreateAccountProfilePayload {
   metadata?: string
 }
 
-export interface CreateAccountModifierPayload {
-  modifier_id: string
-  metadata: string
-}
 
 export interface CreateAccountPayload {
   account_password: string
@@ -117,7 +107,6 @@ export interface CreateAccountPayload {
   email_id: string
   product_variant_id: string
   profile?: Array<CreateAccountProfilePayload>
-  modifier?: Array<CreateAccountModifierPayload>
   capital_price?: number
 }
 
@@ -148,13 +137,6 @@ export interface UpdateAccountProfilePayload {
   metadata?: string
 }
 
-export interface UpdateAccountModifierPayload {
-  modifier: Array<{
-    action: 'ADD' | 'UPDATE' | 'REMOVE'
-    modifier_id: string
-    metadata?: string
-  }>
-}
 
 export interface UpdateAccountPayload {
   account_password?: string
@@ -227,14 +209,6 @@ export function AccountServiceGenerator(apiUrl: string, accessToken: string, ten
                 }))
               : undefined,
           })),
-          modifier: account.modifier?.length
-            ? account.modifier.map(modifier => ({
-                ...modifier,
-                metadata: convertStringToMetadataObject(
-                  modifier.metadata as any,
-                ),
-              }))
-            : [],
         }))
       : []
     return {
@@ -276,12 +250,6 @@ export function AccountServiceGenerator(apiUrl: string, accessToken: string, ten
         ...profile,
         metadata: convertStringToMetadataObject(profile.metadata as any),
       })),
-      modifier: account.modifier?.length
-        ? account.modifier.map((modifier: AccountModifier) => ({
-            ...modifier,
-            metadata: convertStringToMetadataObject(modifier.metadata as any),
-          }))
-        : [],
     }
   }
 
@@ -452,31 +420,6 @@ export function AccountServiceGenerator(apiUrl: string, accessToken: string, ten
     return response.json()
   }
 
-  const updateAccountModifier = async (
-    accountId: string,
-    payload: UpdateAccountModifierPayload,
-  ): Promise<void> => {
-    const response = await generateApiFetch(
-      apiUrl,
-      accessToken,
-      tenantId,
-      `/account/${accountId}/modifier`,
-      undefined,
-      {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      },
-    )
-
-    if (!response.ok) {
-      const errorData = await response.json()
-      const errorMessage = Array.isArray(errorData.message)
-        ? errorData.message[0]
-        : errorData.message
-      throw new Error(errorMessage || 'Failed to update account modifier')
-    }
-  }
 
   const freezeAccount = async (
     accountId: string,
@@ -624,7 +567,6 @@ export function AccountServiceGenerator(apiUrl: string, accessToken: string, ten
     updateAccountUser,
     updateAccount,
     updateAccountProfile,
-    updateAccountModifier,
     freezeAccount,
     unfreezeAccount,
     deleteAccount,

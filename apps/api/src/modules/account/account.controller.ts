@@ -20,7 +20,6 @@ import { AddAccountCapitalDto } from './dto/add-account-capital.dto';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { FreezeAccountDto } from './dto/freeze-account.dto';
 import { GetAllAccountQueryUrlDto } from './dto/get-all-account.dto';
-import { UpdateAccountModifierDto } from './dto/update-account-modifier.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
 
 @Controller('account')
@@ -99,19 +98,6 @@ export class AccountController {
     );
   }
 
-  @Patch(':id/modifier')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  async updateAccountModifier(
-    @Param('id') accountId: string,
-    @Body() updateAccountModifierDto: UpdateAccountModifierDto,
-    @Request() request: AppRequest,
-  ) {
-    await this.accountService.updateAccountModifier(
-      request.tenant_id!,
-      accountId,
-      updateAccountModifierDto,
-    );
-  }
 
   @Patch(':id/freeze')
   @HttpCode(HttpStatus.NO_CONTENT)

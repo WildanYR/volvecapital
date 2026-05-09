@@ -3,8 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import * as pg from 'pg';
 import { QueryOptions, Transaction } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
-import { ARTICLE_REPOSITORY, EMAIL_MESSAGE_REPOSITORY, EMAIL_REPOSITORY, EMAIL_SUBJECT_REPOSITORY, PEAK_HOUR_STATISTICS_REPOSITORY, PLATFORM_PRODUCT_REPOSITORY, PLATFORM_STATISTICS_REPOSITORY, PRODUCT_REPOSITORY, PRODUCT_SALES_STATISTICS_REPOSITORY, PRODUCT_VARIANT_REPOSITORY, REVENUE_STATISTICS_REPOSITORY, SYSLOG_REPOSITORY, TASK_QUEUE_REPOSITORY, TENANT_REPOSITORY, TRANSACTION_ITEM_REPOSITORY, TRANSACTION_REPOSITORY, VOUCHER_REPOSITORY, ACCOUNT_REPOSITORY, ACCOUNT_MODIFIER_REPOSITORY, ACCOUNT_PROFILE_REPOSITORY, ACCOUNT_USER_REPOSITORY, TENANT_SETTING_REPOSITORY, TENANT_OWNER_REPOSITORY, TUTORIAL_REPOSITORY } from 'src/constants/database.const';
-import { AccountModifier } from './models/account-modifier.model';
+import { ARTICLE_REPOSITORY, EMAIL_MESSAGE_REPOSITORY, EMAIL_REPOSITORY, EMAIL_SUBJECT_REPOSITORY, PEAK_HOUR_STATISTICS_REPOSITORY, PLATFORM_PRODUCT_REPOSITORY, PLATFORM_STATISTICS_REPOSITORY, PRODUCT_REPOSITORY, PRODUCT_SALES_STATISTICS_REPOSITORY, PRODUCT_VARIANT_REPOSITORY, REVENUE_STATISTICS_REPOSITORY, SYSLOG_REPOSITORY, TASK_QUEUE_REPOSITORY, TENANT_REPOSITORY, TRANSACTION_ITEM_REPOSITORY, TRANSACTION_REPOSITORY, VOUCHER_REPOSITORY, ACCOUNT_REPOSITORY, ACCOUNT_PROFILE_REPOSITORY, ACCOUNT_USER_REPOSITORY, TENANT_SETTING_REPOSITORY, TENANT_OWNER_REPOSITORY, TUTORIAL_REPOSITORY, PROMO_CODE_REPOSITORY } from 'src/constants/database.const';
 import { EmailMessage } from './models/email-message.model';
 import { AccountProfile } from './models/account-profile.model';
 import { AccountUser } from './models/account-user.model';
@@ -29,6 +28,7 @@ import { Tutorial } from './models/tutorial.model';
 import { Article } from './models/article.model';
 import { AccountCapital } from './models/account-capital.model';
 import { TenantOwner } from './models/tenant-owner.model';
+import { PromoCode } from './models/promo-code.model';
 
 @Injectable()
 export class PostgresProvider {
@@ -70,7 +70,6 @@ export class PostgresProvider {
         ProductVariant,
         PlatformProduct,
         Account,
-        AccountModifier,
         AccountProfile,
         AccountUser,
         TransactionModel,
@@ -88,6 +87,7 @@ export class PostgresProvider {
         Article,
         AccountCapital,
         TenantOwner,
+        PromoCode,
       ]);
     }
     else {

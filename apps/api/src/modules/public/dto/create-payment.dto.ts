@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsPhoneNumber, IsString, IsEmail } from 'class-validator';
+import { IsNotEmpty, IsPhoneNumber, IsString, IsEmail, IsOptional } from 'class-validator';
 
 export class CreatePaymentDto {
   @IsString()
@@ -16,4 +16,8 @@ export class CreatePaymentDto {
   @IsString()
   @IsNotEmpty()
   buyer_whatsapp: string;
+
+  @IsString()
+  @IsOptional()
+  promo_code?: string;
 }

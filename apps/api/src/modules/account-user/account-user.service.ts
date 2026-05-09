@@ -20,7 +20,6 @@ import {
   TRANSACTION_REPOSITORY,
 } from 'src/constants/database.const';
 import { NETFLIX_RESET_PASSWORD } from 'src/constants/task.const';
-import { AccountModifier } from 'src/database/models/account-modifier.model';
 import { AccountProfile } from 'src/database/models/account-profile.model';
 import { AccountUser } from 'src/database/models/account-user.model';
 import { Account } from 'src/database/models/account.model';
@@ -427,12 +426,6 @@ export class AccountUserService {
                 as: 'product_variant',
                 include: [{ model: Product, as: 'product' }],
               },
-              {
-                model: AccountModifier,
-                as: 'modifier',
-                where: { enabled: true },
-                required: false,
-              },
             ],
           },
         ],
@@ -458,10 +451,6 @@ export class AccountUserService {
       await this.accountService.registerAutomaticTasks(
         tenantId,
         accountUser.account,
-        accountUser.account.modifier?.map(mod => ({
-          modifierId: mod.modifier_id,
-          metadata: mod.metadata,
-        })) || [],
       );
     }
 

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, ShieldCheck, ArrowRight, Loader2, User, Mail, MessageSquare, AlertCircle, Shield } from 'lucide-react'
+import { X, ShieldCheck, Loader2, AlertCircle, Shield, Lock } from 'lucide-react'
 import { Product, ProductVariant } from '@/hooks/use-products'
 import { api } from '@/lib/api'
 import { toast } from 'sonner'
@@ -27,6 +27,10 @@ export function CheckoutModal({ isOpen, onClose, product, variant }: CheckoutMod
   const [isLoading, setIsLoading] = useState(false)
   const [isShaking, setIsShaking] = useState(false)
   const [paymentUrl, setPaymentUrl] = useState<string | null>(null)
+  const [promoCode, setPromoCode] = useState('')
+  const [promoData, setPromoData] = useState<{ id: string, discount_amount: number } | null>(null)
+  const [isPromoLoading, setIsPromoLoading] = useState(false)
+  const [promoError, setPromoError] = useState('')
 
   const shakeAnimation = {
     x: [0, -10, 10, -10, 10, 0],
@@ -61,6 +65,35 @@ export function CheckoutModal({ isOpen, onClose, product, variant }: CheckoutMod
     setStep(2)
   }
 
+  const handleValidatePromo = async () => {
+    if (!promoCode || !variant) return
+    
+    setIsPromoLoading(true)
+    setPromoError('')
+    setPromoData(null)
+    
+    try {
+      const { data } = await api.post('/public/promo/validate', {
+        code: promoCode,
+        total_purchase: variant.price,
+        product_variant_id: variant.id
+      })
+      setPromoData(data)
+      toast.success('Kode promo berhasil dipasang!', {
+        position: 'top-center',
+        className: 'font-bold uppercase text-[10px] tracking-widest'
+      })
+    } catch (error: any) {
+      setPromoError(error.response?.data?.message || 'Kode promo tidak valid')
+      toast.error(error.response?.data?.message || 'Kode promo tidak valid', {
+        position: 'top-center',
+        className: 'font-bold uppercase text-[10px] tracking-widest'
+      })
+    } finally {
+      setIsPromoLoading(false)
+    }
+  }
+
   const handleFinalCheckout = async () => {
     if (!product || !variant) return
 
@@ -71,6 +104,7 @@ export function CheckoutModal({ isOpen, onClose, product, variant }: CheckoutMod
         buyer_name: formData.name,
         buyer_email: formData.email,
         buyer_whatsapp: formData.whatsapp,
+        promo_code: promoData ? promoCode : undefined
       })
 
       if (data.payment_url) {
@@ -111,15 +145,15 @@ export function CheckoutModal({ isOpen, onClose, product, variant }: CheckoutMod
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            className="relative bg-white w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+            className="relative bg-white w-full max-w-6xl rounded-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[95vh]"
           >
             {/* Header */}
-            <div className="p-6 md:px-10 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white z-20">
+            <div className="p-6 md:px-12 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white z-20 rounded-t-[2rem]">
               <div className="flex items-center gap-3">
                 <div className="bg-[#0f172a] p-2 rounded-lg">
                   <ShieldCheck className="size-5 text-white" />
                 </div>
-                <h2 className="text-lg md:text-xl font-bold text-[#0f172a]">
+                <h2 className="text-xl md:text-2xl font-black text-[#0f172a]">
                   {step === 1 ? 'Detail Pesanan' : 'Konfirmasi Pembayaran'}
                 </h2>
               </div>
@@ -136,27 +170,25 @@ export function CheckoutModal({ isOpen, onClose, product, variant }: CheckoutMod
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 20 }}
-                    className="p-6 md:p-10"
+                    className="p-6 md:p-12"
                   >
-                    <div className="grid grid-cols-1 lg:grid-cols-5 gap-10">
+                    <div className="grid grid-cols-1 lg:grid-cols-5 gap-12 lg:gap-16">
                       {/* Left Side: Form */}
                       <motion.div 
                         animate={isShaking ? shakeAnimation : {}}
                         className="lg:col-span-3 space-y-6"
                       >
-                        <div className="space-y-6">
-                          <h4 className="text-sm font-bold text-[#0f172a] flex items-center gap-2">
-                            Data Pemesan
-                          </h4>
+                        <div className="space-y-8">
+                          <h3 className="text-2xl font-black text-[#0f172a]">Data Pemesan</h3>
                           
                           <div className="space-y-4">
                             <div className="space-y-2">
-                              <label className="text-xs font-semibold text-slate-600 ml-1">
-                                Nama Anda
+                              <label className="text-lg font-bold text-slate-700 ml-1">
+                                Nama Lengkap
                               </label>
                               <input 
                                 type="text"
-                                className="w-full bg-white border border-slate-200 rounded-xl py-3 px-4 text-[#0f172a] focus:outline-none focus:border-[#f97316] focus:bg-white transition-all font-medium placeholder:text-slate-300"
+                                className="w-full bg-white border-2 border-slate-200 rounded-2xl py-5 px-6 text-[#0f172a] focus:outline-none focus:border-[#f97316] focus:bg-white transition-all font-bold placeholder:text-slate-300 text-xl"
                                 placeholder="Masukkan nama Anda"
                                 value={formData.name}
                                 onChange={e => setFormData({...formData, name: e.target.value})}
@@ -164,12 +196,12 @@ export function CheckoutModal({ isOpen, onClose, product, variant }: CheckoutMod
                             </div>
 
                             <div className="space-y-2">
-                              <label className="text-xs font-semibold text-slate-600 ml-1">
-                                Alamat Email (Voucher akan dikirimkan ke email ini)
+                              <label className="text-lg font-bold text-slate-700 ml-1">
+                                Alamat Email
                               </label>
                               <input 
                                 type="email"
-                                className="w-full bg-white border border-slate-200 rounded-xl py-3 px-4 text-[#0f172a] focus:outline-none focus:border-[#f97316] focus:bg-white transition-all font-medium placeholder:text-slate-300"
+                                className="w-full bg-white border-2 border-slate-200 rounded-2xl py-5 px-6 text-[#0f172a] focus:outline-none focus:border-[#f97316] focus:bg-white transition-all font-bold placeholder:text-slate-300 text-xl"
                                 placeholder="email@contoh.com"
                                 value={formData.email}
                                 onChange={e => setFormData({...formData, email: e.target.value})}
@@ -177,12 +209,12 @@ export function CheckoutModal({ isOpen, onClose, product, variant }: CheckoutMod
                             </div>
 
                             <div className="space-y-2">
-                              <label className="text-xs font-semibold text-slate-600 ml-1">
+                              <label className="text-lg font-bold text-slate-700 ml-1">
                                 Nomor WhatsApp
                               </label>
                               <input 
                                 type="tel"
-                                className="w-full bg-white border border-slate-200 rounded-xl py-3 px-4 text-[#0f172a] focus:outline-none focus:border-[#f97316] focus:bg-white transition-all font-medium placeholder:text-slate-300"
+                                className="w-full bg-white border-2 border-slate-200 rounded-2xl py-5 px-6 text-[#0f172a] focus:outline-none focus:border-[#f97316] focus:bg-white transition-all font-bold placeholder:text-slate-300 text-xl"
                                 placeholder="0812..."
                                 value={formData.whatsapp}
                                 onChange={e => setFormData({...formData, whatsapp: e.target.value.replace(/[^0-9]/g, '')})}
@@ -191,9 +223,11 @@ export function CheckoutModal({ isOpen, onClose, product, variant }: CheckoutMod
                           </div>
                         </div>
 
-                        <div className="p-4 bg-orange-50/50 rounded-xl border border-orange-100/50 flex items-start gap-3">
-                          <AlertCircle className="size-4 text-[#f97316] shrink-0 mt-0.5" />
-                          <p className="text-xs text-orange-700 font-medium leading-relaxed">
+                        <div className="p-4 bg-orange-50/50 rounded-2xl border border-orange-100/50 flex items-center gap-3">
+                          <div className="bg-[#f97316] p-1.5 rounded-full shrink-0">
+                            <AlertCircle className="size-3.5 text-white" />
+                          </div>
+                          <p className="text-xs text-orange-700 font-bold leading-relaxed">
                             Metode pembayaran QRIS (Dukungan Semua Bank & E-Wallet) akan muncul setelah menekan tombol Bayar Sekarang.
                           </p>
                         </div>
@@ -202,40 +236,78 @@ export function CheckoutModal({ isOpen, onClose, product, variant }: CheckoutMod
                       {/* Right Side: Summary */}
                       <div className="lg:col-span-2">
                         <div className="bg-slate-50/50 rounded-2xl p-6 border border-slate-100 h-full flex flex-col">
-                          <h4 className="text-xs font-bold text-[#0f172a] mb-6">Ringkasan</h4>
+                          <h4 className="text-lg font-black text-[#0f172a] mb-6">Ringkasan</h4>
                           
                           <div className="bg-white rounded-xl p-4 border border-slate-100 shadow-sm mb-6">
-                            <div className="flex items-center gap-4">
-                              <div className="bg-orange-50 p-2 rounded-lg">
-                                <ShieldCheck className="size-5 text-[#f97316]" />
+                            <div className="flex items-center gap-5">
+                              <div className="bg-orange-50 p-3 rounded-2xl">
+                                <ShieldCheck className="size-6 text-[#f97316]" />
                               </div>
                               <div>
-                                <p className="text-sm font-bold text-[#0f172a] leading-tight">{product?.name}</p>
-                                <p className="text-[10px] font-bold text-[#f97316] uppercase tracking-wider mt-0.5">{variant?.name}</p>
+                                <p className="text-xl font-black text-[#0f172a] leading-tight">{product?.name}</p>
+                                <p className="text-xs font-black text-[#f97316] uppercase tracking-[0.2em] mt-1">{variant?.name}</p>
                               </div>
                             </div>
                           </div>
 
-                          <div className="space-y-3 flex-grow">
-                            <div className="flex justify-between text-xs font-medium text-slate-500">
+                          <div className="space-y-4 flex-grow">
+                            <div className="flex justify-between text-base font-bold text-slate-500">
                               <span>Harga Paket</span>
                               <span className="text-[#0f172a]">{formatCurrency(variant?.price || 0)}</span>
                             </div>
-                            <div className="flex justify-between text-xs font-medium text-slate-500">
+                            <div className="flex justify-between text-base font-bold text-slate-500">
                               <span>Biaya Admin</span>
-                              <span className="text-emerald-600 font-bold">GRATIS</span>
+                              <span className="text-emerald-600 font-black">GRATIS</span>
                             </div>
-                            <div className="pt-4 border-t border-slate-200 border-dashed flex justify-between items-center">
-                              <span className="text-sm font-bold text-[#0f172a]">Total Bayar</span>
-                              <span className="text-xl font-bold text-[#f97316]">{formatCurrency(variant?.price || 0)}</span>
+
+                            <div className="pt-6 border-t border-slate-100">
+                              <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Punya Kode Promo?</p>
+                              <div className="flex items-stretch border-2 border-slate-100 rounded-2xl overflow-hidden focus-within:border-[#f97316] transition-all bg-white">
+                                <input 
+                                  type="text" 
+                                  placeholder="Masukkan kode..."
+                                  className="flex-1 min-w-0 px-5 py-4 text-sm font-black focus:outline-none uppercase placeholder:text-slate-300"
+                                  value={promoCode}
+                                  onChange={(e) => {
+                                    setPromoCode(e.target.value)
+                                    if (promoError) setPromoError('')
+                                    if (promoData) setPromoData(null)
+                                  }}
+                                />
+                                <button 
+                                  onClick={handleValidatePromo}
+                                  disabled={isPromoLoading || !promoCode || !!promoData}
+                                  className="bg-black text-white px-8 font-black hover:bg-zinc-900 transition-colors disabled:opacity-50 shrink-0 flex items-center justify-center border-l-2 border-slate-100 text-xs"
+                                >
+                                  {isPromoLoading ? <Loader2 className="size-4 animate-spin" /> : (promoData ? 'OK' : 'Gunakan')}
+                                </button>
+                              </div>
+                              {promoError && (
+                                <p className="text-[10px] text-red-500 font-bold mt-2 ml-1 uppercase tracking-wider">{promoError}</p>
+                              )}
+                            </div>
+
+                            <div className="pt-6 border-t-2 border-slate-100 border-dashed space-y-4">
+                              {promoData && (
+                                <div className="flex justify-between text-sm font-bold text-slate-500">
+                                  <span>Potongan Promo</span>
+                                  <span className="text-red-500">-{formatCurrency(promoData.discount_amount)}</span>
+                                </div>
+                              )}
+                              <div className="flex justify-between items-center py-2">
+                                <span className="text-lg font-bold text-slate-400">Total Bayar</span>
+                                <span className="text-3xl font-black text-[#f97316] tracking-tight">
+                                  {formatCurrency((variant?.price || 0) - (promoData?.discount_amount || 0))}
+                                </span>
+                              </div>
                             </div>
                           </div>
 
                           <button 
                             onClick={handleStep1Submit}
-                            className="w-full mt-6 py-4 bg-[#0f172a] hover:bg-slate-800 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 text-sm shadow-xl active:scale-95"
+                            className="w-full mt-6 py-5 bg-gradient-to-r from-[#f97316] to-[#ef4444] text-white font-black rounded-2xl transition-all flex items-center justify-center gap-3 text-base shadow-xl shadow-orange-500/20 active:scale-95"
                           >
-                            <ShieldCheck className="size-4" />
+                            <ShieldCheck className="size-5" />
                             Bayar Sekarang
                           </button>
                         </div>
@@ -266,7 +338,9 @@ export function CheckoutModal({ isOpen, onClose, product, variant }: CheckoutMod
 
                     <div className="w-full max-w-sm bg-slate-50 border border-slate-100 rounded-3xl p-8 space-y-2">
                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Tagihan</p>
-                      <p className="text-4xl font-black text-[#0f172a] tracking-tighter">{formatCurrency(variant?.price || 0)}</p>
+                      <p className="text-4xl font-black text-[#0f172a] tracking-tighter">
+                        {formatCurrency((variant?.price || 0) - (promoData?.discount_amount || 0))}
+                      </p>
                     </div>
 
                     <div className="w-full max-w-sm space-y-4">

@@ -1,6 +1,5 @@
 import type { Provider } from '@nestjs/common';
 import {
-  ACCOUNT_MODIFIER_REPOSITORY,
   ACCOUNT_PROFILE_REPOSITORY,
   ACCOUNT_REPOSITORY,
   ACCOUNT_USER_REPOSITORY,
@@ -25,8 +24,8 @@ import {
   ARTICLE_REPOSITORY,
   ACCOUNT_CAPITAL_REPOSITORY,
   TENANT_OWNER_REPOSITORY,
+  PROMO_CODE_REPOSITORY,
 } from 'src/constants/database.const';
-import { AccountModifier } from './models/account-modifier.model';
 import { AccountProfile } from './models/account-profile.model';
 import { AccountUser } from './models/account-user.model';
 import { Account } from './models/account.model';
@@ -51,6 +50,7 @@ import { Tutorial } from './models/tutorial.model';
 import { Article } from './models/article.model';
 import { AccountCapital } from './models/account-capital.model';
 import { TenantOwner } from './models/tenant-owner.model';
+import { PromoCode } from './models/promo-code.model';
 
 export const RepositoryProvider: Provider[] = [
   { provide: TENANT_REPOSITORY, useValue: Tenant },
@@ -62,7 +62,6 @@ export const RepositoryProvider: Provider[] = [
   { provide: ACCOUNT_REPOSITORY, useValue: Account },
   { provide: ACCOUNT_PROFILE_REPOSITORY, useValue: AccountProfile },
   { provide: ACCOUNT_USER_REPOSITORY, useValue: AccountUser },
-  { provide: ACCOUNT_MODIFIER_REPOSITORY, useValue: AccountModifier },
   { provide: TRANSACTION_REPOSITORY, useValue: Transaction },
   { provide: TRANSACTION_ITEM_REPOSITORY, useValue: TransactionItem },
   { provide: REVENUE_STATISTICS_REPOSITORY, useValue: RevenueStatistics },
@@ -81,4 +80,5 @@ export const RepositoryProvider: Provider[] = [
   { provide: ARTICLE_REPOSITORY, useValue: Article },
   { provide: ACCOUNT_CAPITAL_REPOSITORY, useValue: AccountCapital },
   { provide: TENANT_OWNER_REPOSITORY, useValue: TenantOwner },
+  { provide: PROMO_CODE_REPOSITORY, useValue: PromoCode },
 ];

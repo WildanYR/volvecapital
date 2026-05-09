@@ -45,6 +45,7 @@ import { Tutorial } from 'src/database/models/tutorial.model';
 import { Article } from 'src/database/models/article.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
 import { TenantProvisioningService } from '../tenant/tenant-provisioning.service';
+import { PromoService } from '../promo/promo.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { RegisterTenantDto } from './dto/register-tenant.dto';
 import { RedeemVoucherDto } from './dto/redeem-voucher.dto';
@@ -85,6 +86,7 @@ export class PublicService {
     @Inject(ARTICLE_REPOSITORY)
     private readonly articleRepository: typeof Article,
     private readonly tenantProvisioningService: TenantProvisioningService,
+    private readonly promoService: PromoService,
   ) {}
 
   async getSettings(tenantId: string) {
@@ -307,7 +309,24 @@ export class PublicService {
 
       // 3. Create order record (Payment Status: PENDING)
       const orderId = `INV-${tenantId.toUpperCase()}-${Date.now()}`;
-      const grossAmount = variant.price;
+      let grossAmount = variant.price;
+      let discountAmount = 0;
+      let promoCodeId: string | null = null;
+
+      // Validate promo code if provided
+      if (dto.promo_code) {
+        try {
+          const promoResult = await this.promoService.validate(tenantId, dto.promo_code, grossAmount);
+          promoCodeId = promoResult.id;
+          discountAmount = promoResult.discount_amount;
+          grossAmount -= discountAmount;
+          
+          // Ensure amount is not negative
+          if (grossAmount < 0) grossAmount = 0;
+        } catch (error: any) {
+          throw new BadRequestException(error.message || 'Kode promo tidak valid');
+        }
+      }
 
       // Build DOKU callback URL with tenant subdomain
       let frontendBaseUrl = this.configService.get<string>('FRONTEND_URL') || 'localhost:3001';
@@ -367,6 +386,8 @@ export class PublicService {
           payment_status: 'PENDING',
           status: 'PENDING',
           expired_at: voucherExpiry,
+          promo_code_id: promoCodeId,
+          discount_amount: discountAmount,
         },
         { transaction },
       );
@@ -514,6 +535,17 @@ export class PublicService {
       if (isPaid && voucher.payment_status !== 'PAID') {
         shouldSendEmail = true;
         await voucher.update({ payment_status: 'PAID', status: 'UNUSED' }, { transaction: dbTransaction });
+
+        // Update promo code usage if applicable
+        if (voucher.promo_code_id) {
+          const promo = await this.postgresProvider.rawQuery(
+            `UPDATE promo_code SET current_usage = current_usage + 1 WHERE id = :id`,
+            {
+              replacements: { id: voucher.promo_code_id },
+              transaction: dbTransaction,
+            }
+          );
+        }
       }
       else if (isExpiredOrFailed) {
         await voucher.update(

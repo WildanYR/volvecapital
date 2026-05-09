@@ -19,6 +19,7 @@ import {
   Search,
   ShieldCheck, 
   Ticket, 
+  Trash2,
   User, 
   Zap 
 } from 'lucide-react'
@@ -35,6 +36,7 @@ import { VoucherServiceGenerator } from '@/dashboard/services/voucher.service'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/dashboard/components/ui/dialog'
 import { Separator } from '@/dashboard/components/ui/separator'
 import { SettingServiceGenerator } from '@/dashboard/services/setting.service'
+import { PromoServiceGenerator } from '@/dashboard/services/promo.service'
 import { Label } from '@/dashboard/components/ui/label'
 import { Textarea } from '@/dashboard/components/ui/textarea'
 import { ChevronDown, Save, LayoutTemplate } from 'lucide-react'
@@ -50,6 +52,7 @@ function RouteComponent() {
   const productService = ProductServiceGenerator(API_URL, auth.tenant!.accessToken, auth.tenant!.id)
   const voucherService = VoucherServiceGenerator(API_URL, auth.tenant!.accessToken, auth.tenant!.id)
   const settingService = SettingServiceGenerator(API_URL, auth.tenant!.accessToken, auth.tenant!.id)
+  const promoService = PromoServiceGenerator(API_URL, auth.tenant!.accessToken, auth.tenant!.id)
 
   const [formData, setFormData] = useState({
     product_variant_id: '',
@@ -70,6 +73,17 @@ function RouteComponent() {
   const [statusFilter, setStatusFilter] = useState('ALL')
   const [page, setPage] = useState(1)
   const limit = 10
+  
+  // Promo State
+  const [promoFormData, setPromoFormData] = useState({
+    code: '',
+    type: 'FIXED',
+    value: 0,
+    max_usage: 0,
+    min_purchase: 0,
+    is_active: true,
+    product_variant_id: ''
+  })
 
   // Debounce search
   useEffect(() => {
@@ -100,6 +114,11 @@ function RouteComponent() {
     queryFn: () => settingService.getSettings(),
   })
 
+  const { data: promoCodes, isLoading: isPromoLoading } = useQuery({
+    queryKey: ['promo', 'list'],
+    queryFn: () => promoService.list({ limit: 100 }),
+  })
+
   useEffect(() => {
     if (settings?.VOUCHER_COPY_TEMPLATE) {
       setCopyTemplate(settings.VOUCHER_COPY_TEMPLATE)
@@ -118,6 +137,37 @@ function RouteComponent() {
     },
     onError: (error: any) => {
       toast.error(`Gagal membuat voucher: ${error.message}`)
+    },
+  })
+
+  const createPromoMutation = useMutation({
+    mutationFn: (data: typeof promoFormData) => promoService.create(data),
+    onSuccess: () => {
+      toast.success('Kode promo berhasil dibuat!')
+      setPromoFormData({
+        code: '',
+        type: 'FIXED',
+        value: 0,
+        max_usage: 0,
+        min_purchase: 0,
+        is_active: true,
+        product_variant_id: ''
+      })
+      queryClient.invalidateQueries({ queryKey: ['promo'] })
+    },
+    onError: (error: any) => {
+      toast.error(`Gagal membuat promo: ${error.message}`)
+    },
+  })
+
+  const deletePromoMutation = useMutation({
+    mutationFn: (id: string) => promoService.remove(id),
+    onSuccess: () => {
+      toast.success('Kode promo berhasil dihapus!')
+      queryClient.invalidateQueries({ queryKey: ['promo'] })
+    },
+    onError: (error: any) => {
+      toast.error(`Gagal menghapus promo: ${error.message}`)
     },
   })
 
@@ -253,8 +303,9 @@ function RouteComponent() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Form Section */}
-        <Card className="h-fit">
+        <div className="flex flex-col gap-8">
+          {/* Form Section */}
+          <Card className="h-fit">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Plus className="size-5" />
@@ -390,6 +441,153 @@ function RouteComponent() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Promo Code Section */}
+        <Card className="h-fit">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+              <Zap className="size-5 text-orange-500" />
+              Manajemen Kode Promo
+            </CardTitle>
+            <CardDescription className="text-[10px] sm:text-xs">Kelola diskon untuk pembelian di landing page.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Create Promo Form */}
+            <div className="space-y-4 p-4 bg-muted/20 rounded-xl border border-dashed border-border">
+              <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Buat Promo Baru</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase">Kode</label>
+                  <Input 
+                    placeholder="CONTOH: HEMAT10" 
+                    className="h-8 text-xs uppercase"
+                    value={promoFormData.code}
+                    onChange={e => setPromoFormData({ ...promoFormData, code: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase">Tipe</label>
+                  <Select 
+                    value={promoFormData.type}
+                    onValueChange={(val: any) => setPromoFormData({ ...promoFormData, type: val })}
+                  >
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="FIXED">Potongan Rp</SelectItem>
+                      <SelectItem value="PERCENTAGE">Potongan %</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase">Nilai</label>
+                  <Input 
+                    type="number"
+                    placeholder="10000 / 10" 
+                    className="h-8 text-xs"
+                    value={promoFormData.value}
+                    onChange={e => setPromoFormData({ ...promoFormData, value: Number(e.target.value) })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase">Kuota</label>
+                  <Input 
+                    type="number"
+                    placeholder="0 = Tanpa Batas" 
+                    className="h-8 text-xs"
+                    value={promoFormData.max_usage}
+                    onChange={e => setPromoFormData({ ...promoFormData, max_usage: Number(e.target.value) })}
+                  />
+                </div>
+                <div className="space-y-2 col-span-2">
+                  <label className="text-[10px] font-bold uppercase">Target Produk (Opsional)</label>
+                  <Select 
+                    value={promoFormData.product_variant_id || "GLOBAL"}
+                    onValueChange={(val: string) => setPromoFormData({ ...promoFormData, product_variant_id: val === "GLOBAL" ? "" : val })}
+                  >
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue placeholder="Pilih Produk..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="GLOBAL">Semua Produk (Global)</SelectItem>
+                      {productsData?.items?.map((product: any) => (
+                        product.variants.map((variant: any) => (
+                          <SelectItem key={variant.id} value={variant.id}>
+                            {product.name} - {variant.name}
+                          </SelectItem>
+                        ))
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <Button 
+                className="w-full h-8 text-xs font-bold" 
+                disabled={createPromoMutation.isPending || !promoFormData.code || !promoFormData.value}
+                onClick={() => createPromoMutation.mutate(promoFormData)}
+              >
+                {createPromoMutation.isPending ? <Loader2 className="size-3 animate-spin" /> : 'Simpan Kode Promo'}
+              </Button>
+            </div>
+
+            {/* Promo List */}
+            <div className="space-y-3">
+              <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Daftar Kode Promo</p>
+              <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+                {isPromoLoading ? (
+                  <div className="flex justify-center py-4"><Loader2 className="size-4 animate-spin" /></div>
+                ) : promoCodes?.items?.length ? (
+                  promoCodes.items.map((promo: any) => (
+                    <div key={promo.id} className="flex items-center justify-between p-3 bg-background border border-border rounded-lg group">
+                      <div className="flex flex-col gap-0.5">
+                        <div className="flex items-center gap-2">
+                          <span className="font-black text-xs uppercase tracking-tight">{promo.code}</span>
+                          <span className="text-[8px] px-1.5 py-0.5 bg-secondary rounded-full font-bold uppercase">
+                            {promo.type === 'FIXED' ? 'Rp' : '%'}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-muted-foreground font-medium">
+                          Potongan {promo.type === 'FIXED' ? `Rp ${promo.value.toLocaleString()}` : `${promo.value}%`} 
+                          {' • '} 
+                          {promo.current_usage} / {promo.max_usage === 0 ? '∞' : promo.max_usage} Terpakai
+                        </p>
+                        {promo.product_variant_id && (
+                          <p className="text-[9px] text-orange-500 font-bold uppercase tracking-tight">
+                            Target: {
+                              (() => {
+                                for (const p of productsData?.items || []) {
+                                  const v = p.variants.find((v: any) => v.id === promo.product_variant_id)
+                                  if (v) return `${p.name} - ${v.name}`
+                                }
+                                return 'Produk Tidak Ditemukan'
+                              })()
+                            }
+                          </p>
+                        )}
+                      </div>
+                      <Button 
+                        size="icon" 
+                        variant="ghost" 
+                        className="size-7 opacity-0 group-hover:opacity-100 transition-opacity text-red-500 hover:text-red-600 hover:bg-red-50"
+                        onClick={() => {
+                          if (confirm('Hapus kode promo ini?')) {
+                            deletePromoMutation.mutate(promo.id)
+                          }
+                        }}
+                      >
+                        <Trash2 className="size-3.5" />
+                      </Button>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-center text-[10px] text-muted-foreground py-4 italic">Belum ada kode promo.</p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        </div>
 
         {/* History Section */}
         <Card className="flex flex-col">

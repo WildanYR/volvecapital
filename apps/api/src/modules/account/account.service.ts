@@ -6,9 +6,8 @@ import {
 } from '@nestjs/common';
 import { Op, Order, QueryTypes, WhereOptions } from 'sequelize';
 import {
-  ACCOUNT_MODIFIER_REPOSITORY,
-  ACCOUNT_PROFILE_REPOSITORY,
   ACCOUNT_REPOSITORY,
+  ACCOUNT_PROFILE_REPOSITORY,
   ACCOUNT_USER_REPOSITORY,
   ACCOUNT_CAPITAL_REPOSITORY,
   PRODUCT_VARIANT_REPOSITORY,
@@ -17,8 +16,8 @@ import {
   NETFLIX_RESET_PASSWORD,
   NETFLIX_AUTO_RELOAD,
   UNFREEZE_ACCOUNT,
+  SUBS_END_NOTIFY,
 } from 'src/constants/task.const';
-import { AccountModifier } from 'src/database/models/account-modifier.model';
 import { AccountProfile } from 'src/database/models/account-profile.model';
 import { AccountUser } from 'src/database/models/account-user.model';
 import {
@@ -38,10 +37,8 @@ import { PaginationProvider } from '../utility/pagination.provider';
 import { BaseGetAllUrlQuery } from '../utility/types/base-get-all-url-query.type';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { FreezeAccountDto } from './dto/freeze-account.dto';
-import { UpdateAccountModifierDto } from './dto/update-account-modifier.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
 import { IAccountGetFilter } from './filter/account-get.filter';
-import { ModifierTaskData } from './types/modifier-task-data.type';
 import { NetflixResetPasswordMetadata } from './types/netflix-reset-password-metadata.type';
 import { SubsEndNotifyMetadata } from './types/subs-end-notify-metadata.type';
 
@@ -59,8 +56,6 @@ export class AccountService {
     private readonly accountRepository: typeof Account,
     @Inject(ACCOUNT_PROFILE_REPOSITORY)
     private readonly accountProfileRepository: typeof AccountProfile,
-    @Inject(ACCOUNT_MODIFIER_REPOSITORY)
-    private readonly accountModifierRepository: typeof AccountModifier,
     @Inject(ACCOUNT_USER_REPOSITORY)
     private readonly accountUserRepository: typeof AccountUser,
     @Inject(ACCOUNT_CAPITAL_REPOSITORY)
@@ -151,12 +146,6 @@ export class AccountService {
               required: !!filter?.user,
             },
           ],
-        },
-        {
-          model: AccountModifier,
-          as: 'modifier',
-          where: { enabled: true },
-          required: false,
         },
       ];
 
@@ -267,12 +256,7 @@ export class AccountService {
             as: 'profile',
             include: [{ model: AccountUser, as: 'user' }],
           },
-          {
-            model: AccountModifier,
-            as: 'modifier',
-            where: { enabled: true },
-            required: false,
-          },
+
         ],
         transaction,
       });
@@ -329,7 +313,7 @@ export class AccountService {
   }
 
   async create(tenantId: string, createAccountDto: CreateAccountDto) {
-    const { profile, modifier, ...accountData } = createAccountDto;
+    const { profile, ...accountData } = createAccountDto;
 
     let account: Account | null;
     const transaction = await this.postgresProvider.transaction();
@@ -362,17 +346,6 @@ export class AccountService {
         transaction,
       });
 
-      if (modifier?.length) {
-        const modifierData = modifier.map(mod => ({
-          ...mod,
-          account_id: newAccount.id,
-          enabled: true,
-        }));
-        await this.accountModifierRepository.bulkCreate(modifierData, {
-          transaction,
-        });
-      }
-
       account = await this.accountRepository.findOne({
         where: { id: newAccount.id },
         include: [
@@ -387,28 +360,21 @@ export class AccountService {
             as: 'profile',
             include: [{ model: AccountUser, as: 'user' }],
           },
-          {
-            model: AccountModifier,
-            as: 'modifier',
-            where: { enabled: true },
-            required: false,
-          },
         ],
         transaction,
       });
 
       await transaction.commit();
+      
+      if (account) {
+        await this.registerAutomaticTasks(tenantId, account);
+      }
+      return account;
     }
     catch (error) {
       await transaction.rollback();
       throw error;
     }
-
-    if (account) {
-      await this.registerAutomaticTasks(tenantId, account, modifier?.map(mod => ({ ...mod, modifierId: mod.modifier_id })) || []);
-    }
-
-    return account;
   }
 
   async update(
@@ -416,14 +382,12 @@ export class AccountService {
     accountId: string,
     updateAccountDto: UpdateAccountDto,
   ) {
-    let account: Account | null;
     let accountUpdateData: Partial<AccountCreationAttributes>;
-    let modifiers: AccountModifier[];
     const transaction = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema(tenantId, transaction);
 
-      account = await this.accountRepository.findOne({
+      let account = await this.accountRepository.findOne({
         where: { id: accountId },
         transaction,
       });
@@ -454,8 +418,6 @@ export class AccountService {
         });
 
         if (currentAccount?.product_variant?.product_id) {
-          console.log(`[DEBUG] Switching account ${accountId} to Harian. ProductID: ${currentAccount.product_variant.product_id}`);
-          
           const harianVariant = await this.productVariantRepository.findOne({
             where: {
               product_id: currentAccount.product_variant.product_id,
@@ -465,28 +427,13 @@ export class AccountService {
           });
 
           if (harianVariant) {
-            console.log(`[DEBUG] Found Harian variant ID: ${harianVariant.id}`);
             accountUpdateData.product_variant_id = harianVariant.id;
-          } else {
-            console.log(`[DEBUG] Harian variant NOT FOUND for product ${currentAccount.product_variant.product_id}`);
-            
-            const allVariants = await this.productVariantRepository.findAll({
-                where: { product_id: currentAccount.product_variant.product_id },
-                transaction
-            });
-            console.log(`[DEBUG] Available variants for this product:`, JSON.stringify(allVariants.map(v => ({ id: v.id, name: v.name })), null, 2));
           }
         }
       }
 
       await account.update(accountUpdateData, { transaction });
 
-      modifiers = await this.accountModifierRepository.findAll({
-        where: { account_id: account.id, enabled: true },
-        transaction,
-      });
-
-      // Re-fetch account with associations to ensure registerModifierToTaskQueue has what it needs
       account = await this.accountRepository.findOne({
         where: { id: accountId },
         include: [
@@ -501,151 +448,33 @@ export class AccountService {
       });
 
       await transaction.commit();
+
+      if (
+        account
+        && (accountUpdateData.batch_end_date
+          || accountUpdateData.subscription_expiry)
+      ) {
+        await this.registerAutomaticTasks(
+          tenantId,
+          account,
+        );
+      }
+
+      return account;
     }
     catch (error) {
       await transaction.rollback();
       throw error;
-    }
-
-    if (
-      account
-      && (accountUpdateData.batch_end_date
-        || accountUpdateData.subscription_expiry)
-    ) {
-      await this.registerAutomaticTasks(
-        tenantId,
-        account,
-        modifiers.map(mod => ({
-          modifierId: mod.modifier_id,
-          metadata: mod.metadata,
-        })),
-      );
-    }
-
-    return account;
-  }
-
-  async updateAccountModifier(
-    tenantId: string,
-    accountId: string,
-    updateAccountModifierDto: UpdateAccountModifierDto,
-  ) {
-    let account: Account | null;
-    const addModifierToTaskQueue: ModifierTaskData[] = [];
-    const removedModifierContexts: string[] = [];
-    const transaction = await this.postgresProvider.transaction();
-    try {
-      await this.postgresProvider.setSchema(tenantId, transaction);
-
-      const { modifier: modifiers } = updateAccountModifierDto;
-
-      // Ambil semua modifier_id terkait account dalam sekali query
-      const modifierIds = modifiers.map(m => m.modifier_id);
-      const existingModifiers = await this.accountModifierRepository.findAll({
-        where: { account_id: accountId, modifier_id: modifierIds },
-        transaction,
-      });
-
-      // Buat map untuk akses cepat
-      const existingModifierMap = new Map<string, AccountModifier>();
-
-      existingModifiers.forEach((mod) => {
-        existingModifierMap.set(mod.dataValues.modifier_id, mod);
-      });
-
-      // Jalankan semua update/insert secara paralel
-      await Promise.all(
-        modifiers.map(async ({ modifier_id, metadata, action }) => {
-          const existing = existingModifierMap.get(modifier_id);
-
-          if (action === 'ADD') {
-            await this.accountModifierRepository.create(
-              {
-                account_id: accountId,
-                modifier_id,
-                metadata: metadata!,
-                enabled: true,
-              },
-              { transaction },
-            );
-            addModifierToTaskQueue.push({
-              modifierId: modifier_id,
-              metadata: metadata!,
-            });
-          }
-
-          if (action === 'UPDATE' && existing) {
-            await existing.update({ metadata, enabled: true }, { transaction });
-            addModifierToTaskQueue.push({
-              modifierId: existing.dataValues.modifier_id,
-              metadata: existing.dataValues.metadata,
-            });
-          }
-
-          if (action === 'REMOVE' && existing) {
-            await existing.update({ enabled: false }, { transaction });
-            removedModifierContexts.push(existing.dataValues.modifier_id);
-          }
-        }),
-      );
-
-      account = await this.accountRepository.findOne({
-        where: { id: accountId },
-        include: [
-          { model: Email, as: 'email' },
-          {
-            model: ProductVariant,
-            as: 'product_variant',
-            include: [{ model: Product, as: 'product' }],
-          },
-          {
-            model: AccountProfile,
-            as: 'profile',
-            include: [{ model: AccountUser, as: 'user' }],
-          },
-          {
-            model: AccountModifier,
-            as: 'modifier',
-            where: { enabled: true },
-            required: false,
-          },
-        ],
-        transaction,
-      });
-
-      await transaction.commit();
-    }
-    catch (error) {
-      await transaction.rollback();
-      throw error;
-    }
-
-    if (removedModifierContexts.length) {
-      await this.taskQueueService.removeByAccount(
-        tenantId,
-        accountId,
-        removedModifierContexts,
-      );
-    }
-
-    if (account) {
-      await this.registerAutomaticTasks(
-        tenantId,
-        account,
-        addModifierToTaskQueue,
-      );
     }
   }
 
   async remove(tenantId: string, accountId: string) {
-    let contexts: string[];
     const transaction = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema(tenantId, transaction);
 
       const account = await this.accountRepository.findOne({
         where: { id: accountId },
-        include: [{ model: AccountModifier, as: 'modifier' }],
         transaction,
       });
 
@@ -654,10 +483,6 @@ export class AccountService {
           `account dengan id: ${accountId} tidak ditemukan`,
         );
       }
-
-      contexts = account.modifier
-        ? account.modifier.map(mod => mod.dataValues.modifier_id)
-        : [];
 
       await account.destroy({ transaction });
 
@@ -668,129 +493,91 @@ export class AccountService {
       throw error;
     }
 
-    if (contexts.length) {
-      await this.taskQueueService.removeByAccount(
-        tenantId,
-        accountId,
-        contexts,
-      );
-    }
+    await this.taskQueueService.removeByAccount(
+      tenantId,
+      accountId,
+      [NETFLIX_RESET_PASSWORD, SUBS_END_NOTIFY],
+    );
   }
 
   async registerAutomaticTasks(
     tenantId: string,
     account: Account,
-    modifiers: ModifierTaskData[],
   ) {
-    const finalModifiers = [...modifiers];
-
     // Check if it's a Netflix product
     const productName = account.product_variant?.product?.name?.toLowerCase() || '';
     const isNetflix = productName.includes('netflix');
 
     if (isNetflix) {
-      // Check if NETFLIX_RESET_PASSWORD is already in the list
-      const hasResetModifier = finalModifiers.some(m => m.modifierId === NETFLIX_RESET_PASSWORD);
-      if (!hasResetModifier) {
-        finalModifiers.push({
-          modifierId: NETFLIX_RESET_PASSWORD,
-          metadata: JSON.stringify({ password_list: '' }), // Empty list means bot generates it
-        });
-      }
+      await this.registerNetflixResetTask(tenantId, account);
     }
-
-    if (finalModifiers.length > 0) {
-      await this.registerModifierToTaskQueue(tenantId, account, finalModifiers);
-    }
+    
+    // Add default SUBS_END_NOTIFY if needed (e.g. 1 day before)
+    await this.registerDefaultSubsNotifyTask(tenantId, account);
   }
 
-  async registerModifierToTaskQueue(
-    tenantId: string,
-    account: Account,
-    modifiers: ModifierTaskData[],
-  ) {
-    const taskQueueData: UpsertTaskQueueDto[] = [];
+  async registerNetflixResetTask(tenantId: string, account: Account) {
+    if (!account.dataValues.batch_end_date) return;
 
-    for (const mod of modifiers) {
-      if (mod.modifierId === 'SUBS_END_NOTIFY') {
-        const metadata = JSON.parse(mod.metadata) as SubsEndNotifyMetadata;
-        const dday = new Date(account.dataValues.subscription_expiry);
-        dday.setHours(7, 0, 0, 0);
+    await this.taskQueueService.upsert([{
+      context: NETFLIX_RESET_PASSWORD,
+      execute_at: account.dataValues.batch_end_date,
+      subject_id: account.id,
+      tenant_id: tenantId,
+      status: 'QUEUED',
+      payload: JSON.stringify({
+        id: account.id,
+        accountId: account.id,
+        email: account.email.email,
+        password: account.account_password,
+        newPassword: '', // Bot will generate its own password
+        subscription_expiry: account.dataValues.subscription_expiry?.toISOString?.() || '',
+        variant_name: account.product_variant?.dataValues?.name ?? '',
+      } as NetflixResetPasswordPayload),
+    }]);
+  }
 
-        const minDDay = new Date(account.dataValues.subscription_expiry);
-        minDDay.setHours(7, 0, 0, 0);
-        minDDay.setDate(minDDay.getDate() - Number.parseInt(metadata.dday));
+  async registerDefaultSubsNotifyTask(tenantId: string, account: Account) {
+    if (!account.dataValues.subscription_expiry) return;
 
-        const dDayFormatted = this.dateConverterProvider.formatDateIdStandard(
-          account.dataValues.subscription_expiry,
-          { hideTime: true },
-        );
+    const dday = new Date(account.dataValues.subscription_expiry);
+    dday.setHours(7, 0, 0, 0);
 
-        taskQueueData.push({
-          context: mod.modifierId,
-          execute_at: dday,
-          subject_id: account.id,
+    const minDDay = new Date(account.dataValues.subscription_expiry);
+    minDDay.setHours(7, 0, 0, 0);
+    minDDay.setDate(minDDay.getDate() - 1); // Default notify 1 day before
+
+    const dDayFormatted = this.dateConverterProvider.formatDateIdStandard(
+      account.dataValues.subscription_expiry,
+      { hideTime: true },
+    );
+
+    await this.taskQueueService.upsert([
+      {
+        context: SUBS_END_NOTIFY,
+        execute_at: dday,
+        subject_id: account.id,
+        tenant_id: tenantId,
+        status: 'QUEUED',
+        payload: JSON.stringify({
+          context: 'NEED_ACTION',
           tenant_id: tenantId,
-          status: 'QUEUED',
-          payload: JSON.stringify({
-            context: 'NEED_ACTION',
-            tenant_id: tenantId,
-            message: `Langganan (Subscription) akun ${account.email.email} [${account.product_variant.product.name}] telah berakhir hari ini ${dDayFormatted}.\n\nSilahkan lakukan tindakan`,
-          } as AccountSubsEndNotifyPayload),
-        });
-        taskQueueData.push({
-          context: mod.modifierId,
-          execute_at: minDDay,
-          subject_id: account.id,
+          message: `Langganan (Subscription) akun ${account.email.email} [${account.product_variant.product.name}] telah berakhir hari ini ${dDayFormatted}.\n\nSilahkan lakukan tindakan`,
+        } as AccountSubsEndNotifyPayload),
+      },
+      {
+        context: SUBS_END_NOTIFY,
+        execute_at: minDDay,
+        subject_id: account.id,
+        tenant_id: tenantId,
+        status: 'QUEUED',
+        payload: JSON.stringify({
+          context: 'NEED_ACTION',
           tenant_id: tenantId,
-          status: 'QUEUED',
-          payload: JSON.stringify({
-            context: 'NEED_ACTION',
-            tenant_id: tenantId,
-            message: `Langganan (Subscription) akun ${account.email.email} [${account.product_variant.product.name}] akan berakhir ${metadata.dday} hari lagi pada ${dDayFormatted}.\n\nSilahkan lakukan tindakan`,
-          } as AccountSubsEndNotifyPayload),
-        });
+          message: `Langganan (Subscription) akun ${account.email.email} [${account.product_variant.product.name}] akan berakhir 1 hari lagi pada ${dDayFormatted}.\n\nSilahkan lakukan tindakan`,
+        } as AccountSubsEndNotifyPayload),
       }
-
-      if (
-        mod.modifierId === NETFLIX_RESET_PASSWORD
-        && account.dataValues.batch_end_date
-      ) {
-        const metadata = JSON.parse(
-          mod.metadata,
-        ) as NetflixResetPasswordMetadata;
-        const passwordList = metadata.password_list
-          ? metadata.password_list
-            .replaceAll(' ', '')
-            .split(',')
-            .filter(pwd => pwd !== account.dataValues.account_password && pwd !== '')
-          : [];
-
-        let newPassword = '';
-        if (passwordList.length > 0) {
-          const randomIndex = Math.floor(Math.random() * passwordList.length);
-          newPassword = passwordList[randomIndex];
-        }
-
-        taskQueueData.push({
-          context: mod.modifierId,
-          execute_at: account.dataValues.batch_end_date,
-          subject_id: account.id,
-          tenant_id: tenantId,
-          status: 'QUEUED',
-          payload: JSON.stringify({
-            id: account.id,
-            accountId: account.id,
-            email: account.email.email,
-            password: account.account_password,
-            newPassword,
-            subscription_expiry: account.dataValues.subscription_expiry?.toISOString?.() || '',
-            variant_name: account.product_variant?.dataValues?.name ?? '',
-          } as NetflixResetPasswordPayload),
-        });
-      }
-    }
-    await this.taskQueueService.upsert(taskQueueData);
+    ]);
   }
 
   async freezeAccount(

@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
-import { Outfit } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 import { WhatsAppFloating } from "@/components/whatsapp-floating";
 import Script from "next/script";
 import { headers } from "next/headers";
 
-const outfit = Outfit({
-  variable: "--font-outfit",
+const plusJakartaSans = Plus_Jakarta_Sans({
+  variable: "--font-plus-jakarta-sans",
   subsets: ["latin"],
 });
 
@@ -41,7 +41,7 @@ export default async function RootLayout({
   }
 
   return (
-    <html lang="id" className={`${outfit.variable} h-full antialiased`}>
+    <html lang="id" className={`${plusJakartaSans.variable} h-full antialiased`}>
       <head>
       </head>
       <body className="min-h-full flex flex-col font-sans">

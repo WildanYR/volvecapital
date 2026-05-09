@@ -39,6 +39,7 @@ import { EmailMessageModule } from './modules/email-message/email-message.module
 import { EmailSubjectModule } from './modules/email-subject/email-subject.module';
 import { TutorialModule } from './modules/tutorial/tutorial.module';
 import { ArticleModule } from './modules/article/article.module';
+import { PromoModule } from './modules/promo/promo.module';
 
 @Module({
   imports: [
@@ -86,6 +87,7 @@ import { ArticleModule } from './modules/article/article.module';
     EmailSubjectModule,
     TutorialModule,
     ArticleModule,
+    PromoModule,
   ],
   controllers: [AppController],
   providers: [{ provide: APP_GUARD, useClass: VcAuthGuard }, AppService],

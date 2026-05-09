@@ -5,9 +5,10 @@ import { PublicService } from './public.service';
 import { TenantModule } from '../tenant/tenant.module';
 import { SocketModule } from '../socket/socket.module';
 import { AccountModule } from '../account/account.module';
+import { PromoModule } from '../promo/promo.module';
 
 @Module({
-  imports: [DatabaseModule, TenantModule, SocketModule, AccountModule],
+  imports: [DatabaseModule, TenantModule, SocketModule, AccountModule, PromoModule],
   controllers: [PublicController],
   providers: [PublicService],
 })
