@@ -151,6 +151,11 @@ export class AccountController {
     return this.accountService.triggerReload(request.tenant_id!, id);
   }
 
+  @Post(':id/upgrade')
+  upgradeAccount(@Param('id') id: string, @Request() request: AppRequest) {
+    return this.accountService.triggerUpgrade(request.tenant_id!, id);
+  }
+
   @Post(':id/request-topup')
   requestTopup(
     @Param('id') id: string,

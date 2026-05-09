@@ -15,6 +15,7 @@ import {
 import {
   NETFLIX_RESET_PASSWORD,
   NETFLIX_AUTO_RELOAD,
+  NETFLIX_AUTO_UPGRADE,
   UNFREEZE_ACCOUNT,
   SUBS_END_NOTIFY,
 } from 'src/constants/task.const';
@@ -944,6 +945,51 @@ export class AccountService {
     }
   }
 
+  async triggerUpgrade(tenantId: string, accountId: string) {
+    const transaction = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema(tenantId, transaction);
+
+      const account = await this.accountRepository.findOne({
+        where: { id: accountId },
+        include: [
+          { model: Email, as: 'email' },
+          { model: ProductVariant, as: 'product_variant' },
+        ],
+        transaction,
+      });
+
+      if (!account) {
+        throw new NotFoundException('Account not found');
+      }
+
+      const payload = {
+        accountId: account.id,
+        email: account.email.email,
+        password: account.account_password,
+        subscription_expiry: account.subscription_expiry.toISOString(),
+        variant_name: account.product_variant.name,
+      };
+
+      const task: UpsertTaskQueueDto = {
+        execute_at: new Date(),
+        subject_id: account.id,
+        context: NETFLIX_AUTO_UPGRADE,
+        payload: JSON.stringify(payload),
+        status: 'QUEUED',
+        tenant_id: tenantId,
+      };
+
+      await this.taskQueueService.upsert([task]);
+      await transaction.commit();
+
+      return { message: 'Auto upgrade task triggered successfully' };
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
+
   registerPendingTopup(
     tenantId: string,
     accountId: string,
@@ -1018,7 +1064,7 @@ export class AccountService {
   async bulkAction(
     tenantId: string,
     ids: string[],
-    action: 'pin' | 'unpin' | 'freeze' | 'unfreeze' | 'delete' | 'clear' | 'reset_now' | 'auto_reload' | 'enable' | 'disable'
+    action: 'pin' | 'unpin' | 'freeze' | 'unfreeze' | 'delete' | 'clear' | 'reset_now' | 'auto_reload' | 'auto_upgrade' | 'enable' | 'disable'
   ) {
     const transaction = await this.postgresProvider.transaction();
     try {
@@ -1088,6 +1134,7 @@ export class AccountService {
           break;
         case 'reset_now':
         case 'auto_reload':
+        case 'auto_upgrade':
           // Trigger bot tasks for all selected IDs
           const tasks: UpsertTaskQueueDto[] = [];
           const accounts = await this.accountRepository.findAll({
@@ -1100,24 +1147,39 @@ export class AccountService {
           });
 
           for (const account of accounts) {
-            const taskType = action === 'reset_now' ? NETFLIX_RESET_PASSWORD : NETFLIX_AUTO_RELOAD;
-            const payload = action === 'reset_now'
-              ? {
-                  id: Date.now().toString(),
-                  accountId: account.id,
-                  email: account.email?.email || account.email_id,
-                  password: account.account_password,
-                  newPassword: '',
-                  subscription_expiry: account.subscription_expiry?.toISOString() || '',
-                  variant_name: account.product_variant?.name || '',
-                }
-              : {
-                  accountId: account.id,
-                  email: account.email?.email || account.email_id,
-                  password: account.account_password,
-                  billing: account.billing,
-                  variant_name: account.product_variant?.name || '',
-                };
+            let payload: any;
+            let taskType: string;
+
+            if (action === 'reset_now') {
+              taskType = NETFLIX_RESET_PASSWORD;
+              payload = {
+                id: Date.now().toString(),
+                accountId: account.id,
+                email: account.email?.email || account.email_id,
+                password: account.account_password,
+                newPassword: '',
+                subscription_expiry: account.subscription_expiry?.toISOString() || '',
+                variant_name: account.product_variant?.name || '',
+              };
+            } else if (action === 'auto_reload') {
+              taskType = NETFLIX_AUTO_RELOAD;
+              payload = {
+                accountId: account.id,
+                email: account.email?.email || account.email_id,
+                password: account.account_password,
+                billing: account.billing,
+                variant_name: account.product_variant?.name || '',
+              };
+            } else {
+              taskType = NETFLIX_AUTO_UPGRADE;
+              payload = {
+                accountId: account.id,
+                email: account.email?.email || account.email_id,
+                password: account.account_password,
+                subscription_expiry: account.subscription_expiry?.toISOString() || '',
+                variant_name: account.product_variant?.name || '',
+              };
+            }
 
             tasks.push({
               execute_at: new Date(),

@@ -1,4 +1,4 @@
-export type TaskQueueContext = 'SUBS_END_NOTIFY' | 'NETFLIX_RESET_PASSWORD' | 'NETFLIX_AUTO_RELOAD' | 'UNFREEZE_ACCOUNT';
+export type TaskQueueContext = 'SUBS_END_NOTIFY' | 'NETFLIX_RESET_PASSWORD' | 'NETFLIX_AUTO_RELOAD' | 'NETFLIX_AUTO_UPGRADE' | 'UNFREEZE_ACCOUNT';
 
 export interface TaskQueueData {
   id: string;

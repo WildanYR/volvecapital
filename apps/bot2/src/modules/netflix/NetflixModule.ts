@@ -12,8 +12,10 @@ import {
   LOGIN_PATH,
   MEMBERSHIP_URL,
   CANCEL_PLAN_URL,
+  CHANGE_PLAN_URL,
   PLAN_MOBILE_ID,
   PLAN_STANDARD_ID,
+  PLAN_PREMIUM_ID,
 } from "./constants.js";
 import { sanitizeEmail } from "./utils.js";
 import { ResetPasswordPayload, AutoReloadPayload } from "./types/payload.type.js";
@@ -69,7 +71,10 @@ import {
   getOrderFinalButton,
 } from "./locators/reload.js";
 
-import { updateNetflixAccountStatus, updateNetflixReloadStatus, notifyTopupPending } from "./api.js";
+// Locators — Upgrade
+import { UPGRADE_LOCATORS } from "./locators/upgrade.js";
+
+import { updateNetflixAccountStatus, updateNetflixReloadStatus, updateNetflixPlan, notifyTopupPending } from "./api.js";
 
 export class NetflixModule extends BaseModule {
   constructor(
@@ -887,6 +892,173 @@ export class NetflixModule extends BaseModule {
       throw error;
     } finally {
       await this.cleanupTask(page, contextName);
+    }
+  }
+
+  /**
+   * TASK: Auto Upgrade Plan ke Premium
+   */
+  async autoUpgradePlan(task: Task): Promise<void> {
+    const payload = task.payload as any;
+    const email = payload.email;
+    const password = payload.password;
+    const accountId = payload.accountId;
+
+    const contextName = `upgrade_${sanitizeEmail(email)}`;
+    this.logger.info(`[AutoUpgrade][${email}] Memulai proses upgrade ke Premium...`);
+
+    const context = await this.getOrCreateContext(contextName);
+    const page = await context.newPage();
+
+    try {
+      // STEP 1: Cek Login
+      await page.goto(CHANGE_PLAN_URL);
+      let loginState = await this.detectLoginState(page);
+
+      if (loginState === "not_logged_in") {
+        this.logger.info(`[AutoUpgrade][${email}] Belum login, mencoba login manual...`);
+        const loginSuccess = await this.attemptManualLogin(page, email, password);
+        
+        if (!loginSuccess) {
+          this.logger.warn(`[AutoUpgrade][${email}] Login manual gagal, mencoba fallback via Reset Link...`);
+          const fallbackSuccess = await this.handleFallbackLoginViaReset(page, task, email);
+          if (!fallbackSuccess) {
+            throw new Error("Gagal login manual maupun via Reset Link untuk proses upgrade.");
+          }
+        }
+        
+        await page.goto(CHANGE_PLAN_URL);
+      }
+
+      // STEP 2: Pilih Plan Premium
+      this.logger.info(`[AutoUpgrade][${email}] Mencari pilihan plan Premium (ID: ${PLAN_PREMIUM_ID})...`);
+      
+      const premiumChoice = page.locator(UPGRADE_LOCATORS.planChoice(PLAN_PREMIUM_ID));
+      
+      try {
+        await premiumChoice.waitFor({ state: 'visible', timeout: 15000 });
+      } catch (err) {
+        // Cek apakah sudah di plan Premium
+        if (await page.locator(UPGRADE_LOCATORS.alreadyOnPlanAlert).isVisible()) {
+          this.logger.warn(`[AutoUpgrade][${email}] Akun ini sepertinya sudah menggunakan paket Premium.`);
+          return; // Selesai dengan sukses (sudah sesuai target)
+        }
+        throw new Error("Tombol pilihan plan Premium tidak ditemukan atau tidak tersedia.");
+      }
+
+      this.logger.info(`[AutoUpgrade][${email}] Memilih plan Premium...`);
+      await premiumChoice.click();
+      await this.sleep(1500);
+
+      // STEP 3: Klik Lanjutkan
+      this.logger.info(`[AutoUpgrade][${email}] Klik tombol Lanjutkan...`);
+      const continueBtn = page.locator(UPGRADE_LOCATORS.continueButton);
+      await continueBtn.waitFor({ state: 'visible', timeout: 10000 });
+      await continueBtn.click();
+      await this.sleep(2000);
+
+      // STEP 4: Konfirmasi Upgrade (Halaman Final)
+      this.logger.info(`[AutoUpgrade][${email}] Menunggu halaman konfirmasi akhir...`);
+      const confirmBtn = page.locator(UPGRADE_LOCATORS.confirmUpgradeButton);
+      
+      try {
+        await confirmBtn.waitFor({ state: 'visible', timeout: 15000 });
+        this.logger.info(`[AutoUpgrade][${email}] Klik Konfirmasi Perubahan Paket...`);
+        await confirmBtn.click();
+        await this.sleep(3000);
+      } catch (err) {
+        this.logger.warn(`[AutoUpgrade][${email}] Tombol konfirmasi akhir tidak muncul. Mengecek apakah sudah berhasil...`);
+      }
+
+      // STEP 5: Verifikasi Sukses
+      if (await page.locator(UPGRADE_LOCATORS.successMessage).isVisible() || page.url().includes('membership')) {
+        this.logger.info(`[AutoUpgrade][${email}] Upgrade paket Premium BERHASIL!`);
+        
+        // Update database: set variant_name ke Premium
+        try {
+          await updateNetflixPlan(this.apiBaseUrl, this.authCredentials, accountId, 'Premium');
+          this.logger.info(`[AutoUpgrade][${email}] Database updated to Premium.`);
+        } catch (dbErr) {
+          this.logger.warn(`[AutoUpgrade][${email}] Gagal update plan di DB: ${dbErr instanceof Error ? dbErr.message : String(dbErr)}`);
+        }
+      } else {
+        this.logger.warn(`[AutoUpgrade][${email}] Status sukses tidak terdeteksi jelas, namun proses telah selesai.`);
+      }
+
+    } catch (error) {
+      this.logger.error(
+        `[AutoUpgrade] Gagal upgrade akun ${email}: ${error instanceof Error ? error.message : String(error)}`,
+        { instanceId: this.instanceId },
+      );
+      throw error;
+    } finally {
+      await this.cleanupTask(page, contextName);
+    }
+  }
+
+  /**
+   * Fallback Login: Meminta link reset password untuk mendapatkan sesi (tanpa ganti sandi)
+   */
+  private async handleFallbackLoginViaReset(page: any, task: Task, email: string): Promise<boolean> {
+    this.logger.info(`[FallbackLogin][${email}] Menjalankan alur permintaan link reset...`);
+    
+    const eventName = `${sanitizeEmail(email)}:NETFLIX_REQ_RESET_PASSWORD`;
+    this.eventBus.emit('socket:subscribe', eventName);
+
+    try {
+        let emailRequested = false;
+        for (let attempt = 1; attempt <= 2; attempt++) {
+            await page.goto(REQUEST_RESET_URL);
+            await this.sleep(1000);
+
+            await getEmailRadio(page).click();
+            await getEmailInput(page).fill(email);
+            await getSendEmailButton(page).click();
+            
+            this.logger.info(`[FallbackLogin][${email}] Attempt ${attempt}: Menunggu respon Netflix...`);
+
+            const errorCallout = getResetErrorCallout(page).first();
+            try {
+                await errorCallout.waitFor({ state: 'visible', timeout: 8000 });
+                this.logger.warn(`[FallbackLogin][${email}] Netflix menolak permintaan reset: "${await errorCallout.innerText()}"`);
+                if (attempt === 1) {
+                  this.logger.info(`[FallbackLogin][${email}] Membersihkan cookies dan mencoba lagi...`);
+                  await page.goto("https://www.netflix.com/clearcookies");
+                  await this.sleep(2000);
+                  continue;
+                }
+            } catch (e) {
+                // Tidak ada error, berarti email terkirim
+                emailRequested = true;
+                break;
+            }
+        }
+
+        if (!emailRequested) return false;
+
+        this.logger.info(`[FallbackLogin][${email}] Email reset terkirim, menunggu link dari GAS (60s timeout)...`);
+
+        // Tunggu event dari socket (via GAS)
+        const eventData = await this.waitForTaskEvent<ResetPasswordEventData>(
+          task.id,
+          eventName,
+        );
+
+        const resetLink = eventData.data;
+        this.logger.info(`[FallbackLogin][${email}] Link reset diterima! Menavigasi untuk mendapatkan sesi...`);
+
+        await page.goto(resetLink);
+        
+        // Tunggu sampai mendarat di halaman ganti password (ini berarti sudah login)
+        await getNewPasswordInput(page).waitFor({ state: "visible", timeout: 20000 });
+        this.logger.info(`[FallbackLogin][${email}] Sesi login berhasil didapatkan melalui link reset.`);
+        
+        return true;
+    } catch (err) {
+        this.logger.error(`[FallbackLogin][${email}] Gagal: ${err instanceof Error ? err.message : String(err)}`);
+        return false;
+    } finally {
+        this.eventBus.emit('socket:unsubscribe', eventName);
     }
   }
 

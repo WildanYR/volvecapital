@@ -32,3 +32,11 @@ export interface NetflixAutoReloadPayload {
   billing: string;
   variant_name: string;
 }
+
+export interface NetflixAutoUpgradePayload {
+  accountId: string;
+  email: string;
+  password: string;
+  subscription_expiry: string;
+  variant_name: string;
+}

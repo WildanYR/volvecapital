@@ -75,3 +75,26 @@ export async function notifyTopupPending(
     console.error(`[notifyTopupPending] Failed: ${data.message}`);
   }
 }
+
+export async function updateNetflixPlan(
+  apiBaseUrl: string,
+  credentials: AuthCredentials,
+  accountId: string,
+  variantName: string,
+): Promise<void> {
+  const headers = authHeaders(credentials);
+  const url = `${apiBaseUrl}/account/${accountId}`;
+
+  const res = await fetch(url, {
+    method: 'PATCH',
+    headers,
+    body: JSON.stringify({
+      variant_name: variantName,
+    }),
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({ message: 'unknown error' })) as unknown as { message: string };
+    throw new Error(data.message);
+  }
+}

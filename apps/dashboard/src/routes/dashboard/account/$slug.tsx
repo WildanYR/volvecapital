@@ -48,6 +48,7 @@ import {
   Timer,
   TimerOff,
   Trash2,
+  TrendingUp,
   UserPlus,
   Wallet,
   Warehouse,
@@ -789,6 +790,16 @@ function RouteComponent() {
     },
   })
 
+  const triggerUpgradeMutation = useMutation({
+    mutationFn: (accountId: string) => accountService.triggerUpgrade(accountId),
+    onSuccess: () => {
+      toast.success('Tugas Auto Upgrade Premium ditambahkan ke antrian. Bot segera memproses...')
+    },
+    onError: (error) => {
+      toast.error(`Gagal memicu upgrade: ${error.message}`)
+    },
+  })
+
 
   const handleTriggerReset = (account: Account) => {
     showAlertDialog({
@@ -818,6 +829,22 @@ function RouteComponent() {
       confirmText: 'Mulai Auto Reload',
       isConfirming: triggerReloadMutation.isPending,
       onConfirm: () => triggerReloadMutation.mutate(account.id),
+    })
+  }
+
+  const handleTriggerUpgrade = (account: Account) => {
+    showAlertDialog({
+      title: 'Upgrade ke Premium?',
+      description: (
+        <>
+          Apakah Anda yakin ingin memicu upgrade paket ke **Premium** sekarang untuk akun 
+          <span className="font-bold"> {account.email.email}</span>? 
+          Bot akan segera memproses upgrade ini.
+        </>
+      ),
+      confirmText: 'Upgrade Sekarang',
+      isConfirming: triggerUpgradeMutation.isPending,
+      onConfirm: () => triggerUpgradeMutation.mutate(account.id),
     })
   }
 
@@ -1093,6 +1120,10 @@ function RouteComponent() {
                         <RotateCw className="mr-2 h-4 w-4" />
                         Bulk Reload
                       </DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => handleBulkActionClick('auto_upgrade')}>
+                        <TrendingUp className="mr-2 h-4 w-4 text-purple-600" />
+                        Bulk Upgrade Premium
+                      </DropdownMenuItem>
                       <DropdownMenuItem onSelect={() => handleBulkActionClick('clear')}>
                         <BrushCleaning className="mr-2 h-4 w-4" />
                         Bulk Clear
@@ -1258,6 +1289,16 @@ function RouteComponent() {
                                 </span>
                                 {' '}
                                 Auto Reload
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onSelect={() => handleTriggerUpgrade(account)}
+                                className="text-purple-500 focus:text-purple-600 font-bold"
+                              >
+                                <span>
+                                  <TrendingUp className={triggerUpgradeMutation.isPending ? 'animate-spin' : ''} />
+                                </span>
+                                {' '}
+                                Upgrade Premium
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
