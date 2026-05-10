@@ -33,7 +33,7 @@ import { useAuth } from '@/dashboard/context-providers/auth.provider'
 import { API_URL } from '@/dashboard/constants/api-url.cont'
 import { ProductServiceGenerator } from '@/dashboard/services/product.service'
 import { VoucherServiceGenerator } from '@/dashboard/services/voucher.service'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/dashboard/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/dashboard/components/ui/dialog'
 import { Separator } from '@/dashboard/components/ui/separator'
 import { SettingServiceGenerator } from '@/dashboard/services/setting.service'
 import { PromoServiceGenerator } from '@/dashboard/services/promo.service'
@@ -84,6 +84,8 @@ function RouteComponent() {
     is_active: true,
     product_variant_id: ''
   })
+  const [promoToDelete, setPromoToDelete] = useState<string | null>(null)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
 
   // Debounce search
   useEffect(() => {
@@ -504,7 +506,7 @@ function RouteComponent() {
                   <label className="text-[10px] font-bold uppercase">Target Produk (Opsional)</label>
                   <Select 
                     value={promoFormData.product_variant_id || "GLOBAL"}
-                    onValueChange={(val: string) => setPromoFormData({ ...promoFormData, product_variant_id: val === "GLOBAL" ? "" : val })}
+                    onValueChange={(val: string) => setPromoFormData({ ...promoFormData, product_variant_id: val === "GLOBAL" ? null : val })}
                   >
                     <SelectTrigger className="h-8 text-xs">
                       <SelectValue placeholder="Pilih Produk..." />
@@ -571,9 +573,8 @@ function RouteComponent() {
                         variant="ghost" 
                         className="size-7 opacity-0 group-hover:opacity-100 transition-opacity text-red-500 hover:text-red-600 hover:bg-red-50"
                         onClick={() => {
-                          if (confirm('Hapus kode promo ini?')) {
-                            deletePromoMutation.mutate(promo.id)
-                          }
+                          setPromoToDelete(promo.id)
+                          setIsDeleteDialogOpen(true)
                         }}
                       >
                         <Trash2 className="size-3.5" />
@@ -587,6 +588,44 @@ function RouteComponent() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <DialogContent className="sm:max-w-[400px]">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-red-500">
+                <Trash2 className="size-5" />
+                Konfirmasi Hapus
+              </DialogTitle>
+              <DialogDescription>
+                Apakah Anda yakin ingin menghapus kode promo ini? Tindakan ini tidak dapat dibatalkan.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex justify-end gap-3">
+              <Button variant="ghost" size="sm" onClick={() => setIsDeleteDialogOpen(false)}>
+                Batal
+              </Button>
+              <Button 
+                variant="destructive" 
+                size="sm" 
+                disabled={deletePromoMutation.isPending}
+                onClick={() => {
+                  if (promoToDelete) {
+                    deletePromoMutation.mutate(promoToDelete, {
+                      onSuccess: () => {
+                        setIsDeleteDialogOpen(false)
+                        setPromoToDelete(null)
+                      }
+                    })
+                  }
+                }}
+              >
+                {deletePromoMutation.isPending ? <Loader2 className="size-3 animate-spin mr-2" /> : <Trash2 className="size-3 mr-2" />}
+                Hapus Promo
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
         </div>
 
         {/* History Section */}

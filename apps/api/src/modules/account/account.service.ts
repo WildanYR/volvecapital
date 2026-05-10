@@ -82,7 +82,38 @@ export class AccountService {
         whereOptions.email_id = filter.email_id;
       }
       if (filter?.status) {
-        whereOptions.status = filter.status;
+        if (filter.status === 'freeze') {
+          whereOptions.freeze_until = { [Op.ne]: null };
+        }
+        else if (filter.status === 'disable') {
+          whereOptions.status = 'disable';
+          whereOptions.freeze_until = null;
+        }
+        else if (filter.status === 'active') {
+          whereOptions.freeze_until = null;
+          whereOptions.status = { [Op.ne]: 'disable' };
+          whereOptions.id = {
+            [Op.in]: this.accountRepository.sequelize!.literal(`(
+              SELECT DISTINCT account_id 
+              FROM account_user 
+              WHERE status = 'active'
+            )`),
+          };
+        }
+        else if (filter.status === 'ready') {
+          whereOptions.status = { [Op.in]: ['ready', 'active'] };
+          whereOptions.freeze_until = null;
+          whereOptions.id = {
+            [Op.notIn]: this.accountRepository.sequelize!.literal(`(
+              SELECT DISTINCT account_id 
+              FROM account_user 
+              WHERE status = 'active'
+            )`),
+          };
+        }
+        else {
+          whereOptions.status = filter.status;
+        }
       }
       if (filter?.billing) {
         whereOptions.billing = { [Op.iLike]: `%${filter.billing}%` };

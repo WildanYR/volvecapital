@@ -5,8 +5,9 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Op } from 'sequelize';
-import { PROMO_CODE_REPOSITORY } from 'src/constants/database.const';
+import { PROMO_CODE_REPOSITORY, VOUCHER_REPOSITORY } from 'src/constants/database.const';
 import { PromoCode } from 'src/database/models/promo-code.model';
+import { Voucher } from 'src/database/models/voucher.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
 import { PaginationProvider } from '../utility/pagination.provider';
 import { BaseGetAllUrlQuery } from '../utility/types/base-get-all-url-query.type';
@@ -19,6 +20,8 @@ export class PromoService {
     private readonly paginationProvider: PaginationProvider,
     @Inject(PROMO_CODE_REPOSITORY)
     private readonly promoCodeRepository: typeof PromoCode,
+    @Inject(VOUCHER_REPOSITORY)
+    private readonly voucherRepository: typeof Voucher,
   ) {}
 
   async findAll(tenantId: string, pagination?: BaseGetAllUrlQuery) {
@@ -30,6 +33,7 @@ export class PromoService {
         = this.paginationProvider.generatePaginationQuery(pagination);
 
       const promoCodes = await this.promoCodeRepository.findAndCountAll({
+        where: { is_active: true },
         order,
         limit,
         offset,
@@ -82,6 +86,7 @@ export class PromoService {
         {
           ...dto,
           code: dto.code.toUpperCase(),
+          product_variant_id: dto.product_variant_id || null,
         },
         { transaction },
       );
@@ -109,6 +114,7 @@ export class PromoService {
         {
           ...dto,
           code: dto.code.toUpperCase(),
+          product_variant_id: dto.product_variant_id || null,
         },
         { transaction },
       );
@@ -131,8 +137,23 @@ export class PromoService {
         transaction,
       });
       if (!promoCode) throw new NotFoundException('Promo code not found');
-      await promoCode.destroy({ transaction });
+      
+      // Check if the promo code is used in any voucher
+      const isUsed = await this.voucherRepository.findOne({
+        where: { promo_code_id: id },
+        transaction,
+      });
+
+      if (isUsed) {
+        // If used, just deactivate it
+        await promoCode.update({ is_active: false }, { transaction });
+      } else {
+        // If not used, we can safely hard delete
+        await promoCode.destroy({ transaction });
+      }
+      
       await transaction.commit();
+      return { success: true };
     }
     catch (error) {
       await transaction.rollback();

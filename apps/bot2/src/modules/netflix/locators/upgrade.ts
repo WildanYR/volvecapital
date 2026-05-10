@@ -25,6 +25,7 @@ export const UPGRADE_LOCATORS = {
   continueButton: [
     'button[data-uia="plan-selection-continue"]',
     'button[data-uia="continue-button"]',
+    'button[data-uia="cta-change-plan"]',
     'button[data-uia="action-next"]',
   ].join(', '),
 

@@ -347,6 +347,12 @@ export class NetflixModule extends BaseModule {
     const eventName = `${sanitizeEmail(email)}:NETFLIX_REQ_RESET_PASSWORD`;
     this.eventBus.emit('socket:subscribe', eventName);
 
+    // Mulai listen event SEBELUM klik (untuk menghindari race condition)
+    const eventPromise = this.waitForTaskEvent<ResetPasswordEventData>(
+      task.id,
+      eventName,
+    );
+
     try {
         let success = false;
         for (let attempt = 1; attempt <= 3; attempt++) {
@@ -366,14 +372,13 @@ export class NetflixModule extends BaseModule {
             
             this.logger.info(`[${email}] Attempt ${attempt}: Waiting for response from Netflix (up to 10s)...`);
 
-            // Cek apakah muncul pesan error "Terjadi Kesalahan" dengan waitFor (lebih akurat daripada sleep)
+            // Cek apakah muncul pesan error "Terjadi Kesalahan" dengan waitFor
             const errorCallout = getResetErrorCallout(page).first();
             let hasError = false;
             try {
                 await errorCallout.waitFor({ state: 'visible', timeout: 10000 });
                 hasError = true;
             } catch (e) {
-                // Jika timeout, berarti tidak ada error yang muncul dalam 10 detik
                 hasError = false;
             }
 
@@ -385,12 +390,9 @@ export class NetflixModule extends BaseModule {
                     this.logger.error(`[${email}] reset gagal terjadi kesalahan silahkan ambil link manual`);
                     throw new Error("reset gagal terjadi kesalahan silahkan ambil link manual");
                 }
-                
-                // Lanjut ke loop berikutnya (akan clear cookies di awal loop)
                 continue;
             }
 
-            // Jika TIDAK ADA error setelah menunggu 10 detik, kita anggap berhasil
             success = true;
             break;
         }
@@ -399,11 +401,7 @@ export class NetflixModule extends BaseModule {
 
         this.logger.info(`[${email}] Reset email requested successfully, waiting for link from event...`);
 
-        const eventData = await this.waitForTaskEvent<ResetPasswordEventData>(
-          task.id,
-          eventName,
-        );
-
+        const eventData = await eventPromise;
         const resetLink = eventData.data;
         this.logger.info(`[${email}] Received reset link: ${resetLink}`);
 
@@ -904,7 +902,7 @@ export class NetflixModule extends BaseModule {
     const password = payload.password;
     const accountId = payload.accountId;
 
-    const contextName = `upgrade_${sanitizeEmail(email)}`;
+    const contextName = sanitizeEmail(email);
     this.logger.info(`[AutoUpgrade][${email}] Memulai proses upgrade ke Premium...`);
 
     const context = await this.getOrCreateContext(contextName);
@@ -970,7 +968,7 @@ export class NetflixModule extends BaseModule {
 
       if (!continueBtnFound) {
         this.logger.warn(`[AutoUpgrade][${email}] Tombol lanjutkan via data-uia tidak ditemukan, mencoba via teks...`);
-        const textFallback = page.locator('button').filter({ hasText: /lanjutkan|continue|next/i });
+        const textFallback = page.locator('button').filter({ hasText: /lanjut|lanjutkan|continue|next/i });
         try {
           await textFallback.first().waitFor({ state: 'visible', timeout: 5000 });
           await textFallback.first().click();
@@ -1074,6 +1072,12 @@ export class NetflixModule extends BaseModule {
     const eventName = `${sanitizeEmail(email)}:NETFLIX_REQ_RESET_PASSWORD`;
     this.eventBus.emit('socket:subscribe', eventName);
 
+    // Mulai listen event SEBELUM kirim request ke Netflix
+    const eventPromise = this.waitForTaskEvent<ResetPasswordEventData>(
+      task.id,
+      eventName,
+    );
+
     try {
         let emailRequested = false;
         for (let attempt = 1; attempt <= 2; attempt++) {
@@ -1107,11 +1111,8 @@ export class NetflixModule extends BaseModule {
 
         this.logger.info(`[FallbackLogin][${email}] Email reset terkirim, menunggu link dari GAS (60s timeout)...`);
 
-        // Tunggu event dari socket (via GAS)
-        const eventData = await this.waitForTaskEvent<ResetPasswordEventData>(
-          task.id,
-          eventName,
-        );
+        // Tunggu promise yang sudah kita buat di awal
+        const eventData = await eventPromise;
 
         const resetLink = eventData.data;
         this.logger.info(`[FallbackLogin][${email}] Link reset diterima! Menavigasi untuk mendapatkan sesi...`);
