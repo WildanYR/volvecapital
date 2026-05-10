@@ -152,6 +152,12 @@ export class Connector {
       this.handleGetStatus(payload);
     });
 
+    // Handle TV PIN input from dashboard
+    this.socket.on("tv-pin-input", (payload: { taskId: string; pin: string }) => {
+      this.logger.info(`Received TV PIN for task ${payload.taskId}`);
+      this.eventBus.emit(`tv-pin-input:${payload.taskId}`, payload.pin);
+    });
+
     // Subscribe ke EventBus untuk task completion events
     this.subscribeToTaskEvents();
 
@@ -162,8 +168,32 @@ export class Connector {
     this.eventBus.on('socket:unsubscribe', (eventName: string) => {
       this.unsubscribeToEvent(eventName);
     });
+    this.eventBus.on('socket:bot-awaiting-tv-pin', (data: { taskId: string; accountId: string }) => {
+      this.emitBotAwaitingTvPin(data.taskId, data.accountId);
+    });
+    this.eventBus.on('socket:bot-tv-pin-error', (data: { taskId: string; message: string }) => {
+      this.emitBotTvPinError(data.taskId, data.message);
+    });
 
     this.logger.debug("Command handlers registered");
+  }
+
+  /**
+   * Emit bot-awaiting-tv-pin event to the server
+   */
+  emitBotAwaitingTvPin(taskId: string, accountId: string): void {
+    if (!this.socket || !this.isConnected) return;
+    this.socket.emit("bot-awaiting-tv-pin", { taskId, accountId });
+    this.logger.info(`Emitted bot-awaiting-tv-pin for task ${taskId}`);
+  }
+
+  /**
+   * Emit bot-tv-pin-error event to the server
+   */
+  emitBotTvPinError(taskId: string, message: string): void {
+    if (!this.socket || !this.isConnected) return;
+    this.socket.emit("bot-tv-pin-error", { taskId, message });
+    this.logger.info(`Emitted bot-tv-pin-error for task ${taskId}`);
   }
 
   /**

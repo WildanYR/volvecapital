@@ -299,6 +299,45 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect, 
     });
   }
 
+  @SubscribeMessage('bot-awaiting-tv-pin')
+  handleBotAwaitingTvPin(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { taskId: string; accountId: string }
+  ) {
+    const conn = this.connections.get(client.id);
+    if (!conn || conn.type !== 'BOT')
+      return;
+
+    // Forward to all dashboard clients of the same tenant
+    for (const c of this.connections.values()) {
+      if (c.tenant_id === conn.tenant_id && c.type === 'DASHBOARD') {
+        c.socket.emit('event', {
+          eventName: 'awaiting-tv-pin',
+          payload: {
+            taskId: data.taskId,
+            accountId: data.accountId,
+            botSocketId: client.id,
+          },
+        });
+      }
+    }
+  }
+
+  @SubscribeMessage('dashboard-send-tv-pin')
+  handleDashboardSendTvPin(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { taskId: string; pin: string; botSocketId: string }
+  ) {
+    const conn = this.connections.get(client.id);
+    if (!conn || conn.type !== 'DASHBOARD')
+      return;
+
+    const botConn = this.connections.get(data.botSocketId);
+    if (botConn && botConn.type === 'BOT') {
+      botConn.socket.emit('tv-pin-input', { taskId: data.taskId, pin: data.pin });
+    }
+  }
+
   subscribeClientToEvent(clientId: string, eventName: string) {
     let event = this.events.get(eventName);
     if (!event) {

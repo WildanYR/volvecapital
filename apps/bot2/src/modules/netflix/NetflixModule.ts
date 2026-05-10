@@ -13,6 +13,7 @@ import {
   MEMBERSHIP_URL,
   CANCEL_PLAN_URL,
   CHANGE_PLAN_URL,
+  TV_LOGIN_URL,
   PLAN_MOBILE_ID,
   PLAN_STANDARD_ID,
   PLAN_PREMIUM_ID,
@@ -73,6 +74,9 @@ import {
 
 // Locators — Upgrade
 import { UPGRADE_LOCATORS } from "./locators/upgrade.js";
+
+// Locators — Login TV
+import { TV_LOGIN_LOCATORS } from "./locators/login-tv.js";
 
 import { updateNetflixAccountStatus, updateNetflixReloadStatus, updateNetflixPlan, notifyTopupPending } from "./api.js";
 
@@ -1169,6 +1173,173 @@ export class NetflixModule extends BaseModule {
     await page.goto(MEMBERSHIP_URL);
     await getRestartMembershipButton(page).waitFor({ state: 'visible', timeout: 20000 });
     this.logger.info(`[AutoReload][${email}] Tombol Restart Membership sudah muncul!`);
+  }
+
+  async loginTvFlow(task: Task): Promise<void> {
+    const payload = task.payload as any;
+    const email = payload.email;
+    const password = payload.password;
+    const accountId = payload.accountId;
+
+    const contextName = `${sanitizeEmail(email)}`;
+    this.logger.info(`[LoginTV][${email}] Starting Login TV flow...`);
+
+    const context = await this.getOrCreateContext(contextName);
+    const page = await context.newPage();
+
+    try {
+      // 1. Buka netflix.com/tv2
+      await page.goto(TV_LOGIN_URL);
+      await this.sleep(2000);
+
+      // 2. Cek apakah sudah login
+      let loginState = await this.detectLoginState(page);
+      if (loginState === 'not_logged_in') {
+        this.logger.info(`[LoginTV][${email}] Not logged in, attempting session recovery via loginhelp...`);
+        
+        // Cek apakah bisa manual login dulu
+        const loginSuccess = await this.attemptManualLogin(page, email, password);
+        if (!loginSuccess) {
+          // Fallback ke email reset link flow (TAPI TANPA RESET PASSWORD)
+          await this.recoverSessionViaEmail(page, task, email);
+        }
+        
+        // Balik ke tv2 setelah dapat session
+        await page.goto(TV_LOGIN_URL);
+      }
+
+      // 3. Tunggu input PIN muncul
+      this.logger.info(`[LoginTV][${email}] Waiting for PIN input fields...`);
+      
+      // Emit lebih awal agar popup di dashboard muncul realtime
+      this.eventBus.emit('socket:bot-awaiting-tv-pin', { taskId: task.id, accountId });
+
+      const pinInputs = page.locator(TV_LOGIN_LOCATORS.PIN_INPUTS);
+      await pinInputs.first().waitFor({ state: 'visible', timeout: 30000 });
+
+      let isVerified = false;
+      let attempt = 0;
+
+      while (!isVerified && attempt < 5) {
+        attempt++;
+        
+        // Pada attempt > 1, kita tetap emit agar dashboard tau bot sudah siap lagi
+        if (attempt > 1) {
+          this.eventBus.emit('socket:bot-awaiting-tv-pin', { taskId: task.id, accountId });
+        }
+
+        // 5. Tunggu PIN dari dashboard (timeout 5 menit)
+        this.logger.info(`[LoginTV][${email}] Bot awaiting PIN (Attempt ${attempt})...`);
+        const pin = await this.waitForTaskEvent<string>(task.id, `tv-pin-input:${task.id}`);
+        this.logger.info(`[LoginTV][${email}] Received PIN: ${pin}`);
+
+        // 6. Masukkan PIN satu per satu
+        for (let i = 0; i < pin.length; i++) {
+          const digit = pin[i];
+          const input = page.locator(`input[data-uia="pin-number-${i}"]`);
+          await input.fill(digit);
+          await this.sleep(200);
+        }
+
+        // 7. Klik Continue jika tidak otomatis
+        const continueBtn = page.locator(TV_LOGIN_LOCATORS.SUBMIT_BUTTON);
+        if (await continueBtn.isVisible() && await continueBtn.isEnabled()) {
+          await continueBtn.click();
+        }
+
+        // 8. Tunggu sukses ATAU Error
+        this.logger.info(`[LoginTV][${email}] PIN entered, waiting for verification...`);
+        
+        try {
+          await Promise.race([
+            page.waitForURL(url => url.toString().includes('/success'), { timeout: 15000 }),
+            (async () => {
+              const errorLocator = page.locator(TV_LOGIN_LOCATORS.ERROR_MESSAGE);
+              await errorLocator.waitFor({ state: 'visible', timeout: 15000 });
+              const errorMsg = await errorLocator.innerText();
+              throw new Error(errorMsg);
+            })()
+          ]);
+          isVerified = true;
+        } catch (err) {
+          const errorMsg = err instanceof Error ? err.message : String(err);
+          if (errorMsg.includes('Timeout')) {
+             // Cek lagi apakah ada error message
+             const errorLocator = page.locator(TV_LOGIN_LOCATORS.ERROR_MESSAGE);
+             if (await errorLocator.isVisible()) {
+               const finalError = await errorLocator.innerText();
+               this.logger.warn(`[LoginTV][${email}] PIN Error: ${finalError}`);
+               this.eventBus.emit('socket:bot-tv-pin-error', { taskId: task.id, message: finalError });
+               // Bersihkan input untuk percobaan berikutnya
+               await page.keyboard.press('Control+A');
+               await page.keyboard.press('Backspace');
+               continue;
+             }
+             // Jika murni timeout tanpa error visible, mungkin lempar error beneran
+             throw err;
+          } else {
+             this.logger.warn(`[LoginTV][${email}] PIN Error: ${errorMsg}`);
+             this.eventBus.emit('socket:bot-tv-pin-error', { taskId: task.id, message: errorMsg });
+             // Bersihkan input untuk percobaan berikutnya (klik input pertama dulu)
+             await pinInputs.first().click();
+             for(let k=0; k<8; k++) { await page.keyboard.press('Backspace'); }
+             continue;
+          }
+        }
+      }
+
+      if (!isVerified) {
+        throw new Error('Too many failed PIN attempts');
+      }
+      
+      this.logger.info(`[LoginTV][${email}] Successfully verified! Clicking Go to Netflix...`);
+      const goToNetflixBtn = page.locator(TV_LOGIN_LOCATORS.GO_TO_NETFLIX_BUTTON);
+      await goToNetflixBtn.waitFor({ state: 'visible', timeout: 10000 });
+      await goToNetflixBtn.click();
+      
+      this.logger.info(`[LoginTV][${email}] Flow completed successfully.`);
+
+    } catch (error) {
+      this.logger.error(`[LoginTV][${email}] Error: ${error instanceof Error ? error.message : String(error)}`);
+      throw error;
+    } finally {
+      await this.cleanupTask(page, contextName);
+    }
+  }
+
+  /**
+   * Session recovery via email link WITHOUT resetting password
+   */
+  private async recoverSessionViaEmail(page: any, task: Task, email: string): Promise<void> {
+    this.logger.info(`[SessionRecovery][${email}] Requesting reset link for session recovery...`);
+    
+    const eventName = `${sanitizeEmail(email)}:NETFLIX_REQ_RESET_PASSWORD`;
+    this.eventBus.emit('socket:subscribe', eventName);
+
+    try {
+      await page.goto(REQUEST_RESET_URL);
+      await getEmailRadio(page).click();
+      await getEmailInput(page).fill(email);
+      await getSendEmailButton(page).click();
+      
+      this.logger.info(`[SessionRecovery][${email}] Waiting for reset link event...`);
+      const eventData = await this.waitForTaskEvent<ResetPasswordEventData>(task.id, eventName);
+      const resetLink = eventData.data;
+
+      this.logger.info(`[SessionRecovery][${email}] Received link, navigating to recover session...`);
+      await page.goto(resetLink);
+      
+      // Tunggu sampai redirect ke browse atau account (tanda sudah login)
+      // Biasanya mengklik link reset otomatis meloginkan user ke session tersebut
+      await this.sleep(5000);
+      const loginState = await this.detectLoginState(page);
+      if (loginState !== 'logged_in') {
+        this.logger.warn(`[SessionRecovery][${email}] Clicked link but state is still not_logged_in. Checking if we are on password reset page...`);
+        // Jika kita berada di halaman reset password, kita sudah punya session login sebenarnya di cookies
+      }
+    } finally {
+      this.eventBus.emit('socket:unsubscribe', eventName);
+    }
   }
 
   /**

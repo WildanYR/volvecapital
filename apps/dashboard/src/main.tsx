@@ -3,6 +3,7 @@ import { StrictMode } from 'react'
 import ReactDOM from 'react-dom/client'
 
 import { AuthProvider, useAuth } from './context-providers/auth.provider.tsx'
+import { SocketProvider } from './context-providers/socket.provider.tsx'
 
 import {
   queryClient,
@@ -43,7 +44,9 @@ if (rootElement && !rootElement.innerHTML) {
     <StrictMode>
       <QueryClientProvider>
         <AuthProvider>
-          <App />
+          <SocketProvider>
+            <App />
+          </SocketProvider>
         </AuthProvider>
       </QueryClientProvider>
     </StrictMode>,

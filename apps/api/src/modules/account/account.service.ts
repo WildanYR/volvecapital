@@ -16,6 +16,7 @@ import {
   NETFLIX_RESET_PASSWORD,
   NETFLIX_AUTO_RELOAD,
   NETFLIX_AUTO_UPGRADE,
+  NETFLIX_LOGIN_TV,
   UNFREEZE_ACCOUNT,
   SUBS_END_NOTIFY,
 } from 'src/constants/task.const';
@@ -1021,6 +1022,50 @@ export class AccountService {
     }
   }
 
+  async triggerLoginTv(tenantId: string, accountId: string) {
+    const transaction = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema(tenantId, transaction);
+
+      const account = await this.accountRepository.findOne({
+        where: { id: accountId },
+        include: [
+          { model: Email, as: 'email' },
+          { model: ProductVariant, as: 'product_variant' },
+        ],
+        transaction,
+      });
+
+      if (!account) {
+        throw new NotFoundException('Account not found');
+      }
+
+      const payload = {
+        accountId: account.id,
+        email: account.email.email,
+        password: account.account_password,
+        variant_name: account.product_variant.name,
+      };
+
+      const task: UpsertTaskQueueDto = {
+        execute_at: new Date(),
+        subject_id: account.id,
+        context: NETFLIX_LOGIN_TV,
+        payload: JSON.stringify(payload),
+        status: 'QUEUED',
+        tenant_id: tenantId,
+      };
+
+      await this.taskQueueService.upsert([task]);
+      await transaction.commit();
+
+      return { message: 'Login TV task triggered successfully' };
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
+
   registerPendingTopup(
     tenantId: string,
     accountId: string,
@@ -1095,7 +1140,7 @@ export class AccountService {
   async bulkAction(
     tenantId: string,
     ids: string[],
-    action: 'pin' | 'unpin' | 'freeze' | 'unfreeze' | 'delete' | 'clear' | 'reset_now' | 'auto_reload' | 'auto_upgrade' | 'enable' | 'disable'
+    action: 'pin' | 'unpin' | 'freeze' | 'unfreeze' | 'delete' | 'clear' | 'reset_now' | 'auto_reload' | 'auto_upgrade' | 'login_tv' | 'enable' | 'disable'
   ) {
     const transaction = await this.postgresProvider.transaction();
     try {
@@ -1166,6 +1211,7 @@ export class AccountService {
         case 'reset_now':
         case 'auto_reload':
         case 'auto_upgrade':
+        case 'login_tv':
           // Trigger bot tasks for all selected IDs
           const tasks: UpsertTaskQueueDto[] = [];
           const accounts = await this.accountRepository.findAll({
@@ -1200,6 +1246,13 @@ export class AccountService {
                 password: account.account_password,
                 billing: account.billing,
                 variant_name: account.product_variant?.name || '',
+              };
+            } else if (action === 'login_tv') {
+              taskType = NETFLIX_LOGIN_TV;
+              payload = {
+                accountId: account.id,
+                email: account.email?.email || account.email_id,
+                password: account.account_password,
               };
             } else {
               taskType = NETFLIX_AUTO_UPGRADE;

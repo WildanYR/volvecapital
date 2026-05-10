@@ -156,6 +156,11 @@ export class AccountController {
     return this.accountService.triggerUpgrade(request.tenant_id!, id);
   }
 
+  @Post(':id/login-tv')
+  loginTv(@Param('id') id: string, @Request() request: AppRequest) {
+    return this.accountService.triggerLoginTv(request.tenant_id!, id);
+  }
+
   @Post(':id/request-topup')
   requestTopup(
     @Param('id') id: string,

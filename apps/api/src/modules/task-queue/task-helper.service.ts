@@ -112,4 +112,23 @@ export class TaskHelperService {
       this.logger.error(error.message, error.stack, 'TaskProcessorNetflixAutoUpgrade');
     }
   }
+
+  async netflixLoginTv(taskId: string, tenantId: string, payload: any) {
+    try {
+      const clientId = await this.socketGateway.dispatchTask(taskId, tenantId, {
+        module: 'netflix',
+        type: 'loginTvFlow',
+        payload,
+      });
+
+      if (clientId) {
+        // Subscribe bot to the email reset link event (since it uses loginhelp flow)
+        const eventName = `${this.emailParser.sanitizeEmail(payload.email)}:${NETFLIX_REQ_RESET_PASSWORD}`;
+        this.socketGateway.subscribeClientToEvent(clientId, eventName);
+      }
+    }
+    catch (error) {
+      this.logger.error(error.message, error.stack, 'TaskProcessorNetflixLoginTv');
+    }
+  }
 }

@@ -8,6 +8,7 @@ export const LOGIN_PATH = '/login';
 export const MEMBERSHIP_URL = 'https://www.netflix.com/account/membership';
 export const CANCEL_PLAN_URL = 'https://www.netflix.com/cancelplan';
 export const CHANGE_PLAN_URL = 'https://www.netflix.com/changeplan';
+export const TV_LOGIN_URL = 'https://www.netflix.com/tv2';
 
 // Netflix Plan IDs — dikonfirmasi langsung dari inspeksi DOM halaman netflix.com/changeplan
 // Format elemen: <label data-uia="plan-selection+option+{ID}" for="select-{ID}">

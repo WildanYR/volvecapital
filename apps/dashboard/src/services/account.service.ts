@@ -656,6 +656,22 @@ export function AccountServiceGenerator(apiUrl: string, accessToken: string, ten
         throw new Error(errorData.message || 'Failed to trigger upgrade')
       }
     },
+    triggerLoginTv: async (accountId: string): Promise<void> => {
+      const response = await generateApiFetch(
+        apiUrl,
+        accessToken,
+        tenantId,
+        `/account/${accountId}/login-tv`,
+        undefined,
+        {
+          method: 'POST',
+        },
+      )
+      if (!response.ok) {
+        const errorData = await parseApiResponse(response)
+        throw new Error(errorData.message || 'Failed to trigger Login TV')
+      }
+    },
     confirmTopup: async (accountId: string): Promise<void> => {
       const response = await fetch(`${apiUrl}/public/reload/confirm-topup`, {
         method: 'POST',

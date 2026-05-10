@@ -1,6 +1,6 @@
 import type { Socket } from 'socket.io';
 
-export type SocketConnectionType = 'BOT' | 'WEB';
+export type SocketConnectionType = 'BOT' | 'WEB' | 'DASHBOARD';
 
 export interface SocketConnection {
   socket: Socket;

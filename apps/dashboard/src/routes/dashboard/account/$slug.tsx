@@ -37,6 +37,7 @@ import {
   ListChecks,
   LockKeyholeOpen,
   Package,
+  Monitor,
   Pin,
   PinOff,
   Plus,
@@ -54,7 +55,7 @@ import {
   Warehouse,
   X,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { useDebouncedCallback } from 'use-debounce'
 import { Checkbox } from '@/dashboard/components/ui/checkbox'
@@ -70,6 +71,8 @@ import { EmailSelect } from '@/dashboard/components/inputs/select/email.select'
 import { ProductVariantSelect } from '@/dashboard/components/inputs/select/product-variant.select'
 import { NoData } from '@/dashboard/components/no-data'
 import { Pagination } from '@/dashboard/components/pagination'
+import { useSocket } from '@/dashboard/context-providers/socket.provider'
+import { TvPinModal } from '@/dashboard/components/tv-pin-modal'
 import { Button } from '@/dashboard/components/ui/button'
 import {
   Card,
@@ -106,18 +109,15 @@ import {
 } from '@/dashboard/components/ui/select'
 import { Skeleton } from '@/dashboard/components/ui/skeleton'
 import { AccountStatusSelect } from '@/dashboard/constants/account-status-select'
-import { API_URL } from '@/dashboard/constants/api-url.cont'
-import { useGlobalAlertDialog } from '@/dashboard/context-providers/alert-dialog.provider'
-import { useAuth } from '@/dashboard/context-providers/auth.provider'
 import { copyAccountTemplate } from '@/dashboard/lib/copy-template'
 import { convertMetadataObjectToString } from '@/dashboard/lib/metadata-converter'
 import { formatRupiah } from '@/dashboard/lib/currency.util'
 import { formatDateIdStandard } from '@/dashboard/lib/time-converter.util'
-import {
-  AccountServiceGenerator,
-  GetAccountsParamsSchema,
-} from '@/dashboard/services/account.service'
+import { AccountServiceGenerator, GetAccountsParamsSchema } from '@/dashboard/services/account.service'
 import { ProductServiceGenerator } from '@/dashboard/services/product.service'
+import { API_URL } from '@/dashboard/constants/api-url.cont'
+import { useGlobalAlertDialog } from '@/dashboard/context-providers/alert-dialog.provider'
+import { useAuth } from '@/dashboard/context-providers/auth.provider'
 
 export const Route = createFileRoute('/dashboard/account/$slug')({
   component: RouteComponent,
@@ -178,6 +178,15 @@ function RouteComponent() {
   const [bulkActionType, setBulkActionType] = useState<string>('')
 
   const [selectedAccountState, setSelectedAccount] = useState<Account>()
+  const [selectedAccountProfile, setSelectedAccountProfile]
+    = useState<AccountProfile>()
+  const [selectedEmail, setSelectedEmail] = useState<Email>()
+  const [selectedProductVariant, setSelectedProductVariant]
+    = useState<ProductVariant>()
+
+  const [accountUserInitialData, setAccountUserInitialData]
+    = useState<AccountUserFormInitialData>()
+
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   
   const bulkActionMutation = useMutation({
@@ -187,20 +196,53 @@ function RouteComponent() {
       queryClient.invalidateQueries({ queryKey: ['account'] })
       queryClient.invalidateQueries({ queryKey: ['countAccount'] })
       toast.success(`Operasi ${variables.action} massal berhasil.`)
-      setSelectedIds([]) // Reset seleksi setelah sukses
+      setSelectedIds([])
     },
     onError: (error) => {
       toast.error(`Gagal melakukan operasi massal: ${error.message}`)
     },
   })
-  const [selectedAccountProfile, setSelectedAccountProfile]
-    = useState<AccountProfile>()
-  const [selectedEmail, setSelectedEmail] = useState<Email>()
-  const [selectedProductVariant, setSelectedProductVariant]
-    = useState<ProductVariant>()
 
-  const [accountUserInitialData, setAccountUserInitialData]
-    = useState<AccountUserFormInitialData>()
+  const { socket } = useSocket()
+  const [tvPinModalOpen, setTvPinModalOpen] = useState(false)
+  const [tvPinError, setTvPinError] = useState<string | null>(null)
+  const [currentTvTask, setCurrentTvTask] = useState<{ taskId: string; botSocketId: string; accountId: string } | null>(null)
+
+  useEffect(() => {
+    if (!socket) return
+
+    const handleSocketEvent = (data: { eventName: string, payload: any }) => {
+      if (data.eventName === 'awaiting-tv-pin') {
+        const { taskId, accountId, botSocketId } = data.payload
+        setCurrentTvTask({ taskId, botSocketId, accountId })
+        setTvPinError(null)
+        setTvPinModalOpen(true)
+      }
+      else if (data.eventName === 'bot-tv-pin-error') {
+        const { taskId, message } = data.payload
+        if (currentTvTask?.taskId === taskId || !currentTvTask) {
+           setTvPinError(message)
+           toast.error(`PIN Netflix Salah: ${message}`)
+        }
+      }
+    }
+
+    socket.on('event', handleSocketEvent)
+    return () => {
+      socket.off('event', handleSocketEvent)
+    }
+  }, [socket, currentTvTask])
+
+  const handleSendTvPin = (pin: string) => {
+    if (!socket || !currentTvTask) return
+    socket.emit('dashboard-send-tv-pin', {
+      taskId: currentTvTask.taskId,
+      botSocketId: currentTvTask.botSocketId,
+      pin,
+    })
+    setTvPinError(null) // Reset error when sending new PIN
+    toast.info('PIN terkirim ke bot. Menunggu verifikasi...')
+  }
 
   const { data: accounts, isLoading: isFetchAccountLoading } = useQuery({
     queryKey: ['account', { ...searchParam, product_slug: slug }],
@@ -800,6 +842,16 @@ function RouteComponent() {
     },
   })
 
+  const triggerLoginTvMutation = useMutation({
+    mutationFn: (accountId: string) => accountService.triggerLoginTv(accountId),
+    onSuccess: () => {
+      toast.success('Tugas Login TV ditambahkan ke antrian. Silahkan tunggu PIN muncul di dashboard...')
+    },
+    onError: (error) => {
+      toast.error(`Gagal memicu Login TV: ${error.message}`)
+    },
+  })
+
 
   const handleTriggerReset = (account: Account) => {
     showAlertDialog({
@@ -1124,6 +1176,10 @@ function RouteComponent() {
                         <TrendingUp className="mr-2 h-4 w-4 text-purple-600" />
                         Bulk Upgrade Premium
                       </DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => handleBulkActionClick('login_tv')}>
+                        <Monitor className="mr-2 h-4 w-4 text-blue-600" />
+                        Bulk Login TV
+                      </DropdownMenuItem>
                       <DropdownMenuItem onSelect={() => handleBulkActionClick('clear')}>
                         <BrushCleaning className="mr-2 h-4 w-4" />
                         Bulk Clear
@@ -1299,6 +1355,16 @@ function RouteComponent() {
                                 </span>
                                 {' '}
                                 Upgrade Premium
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onSelect={() => triggerLoginTvMutation.mutate(account.id)}
+                                className="text-blue-600 focus:text-blue-700 font-bold"
+                              >
+                                <span>
+                                  <Monitor className={triggerLoginTvMutation.isPending ? 'animate-spin' : ''} />
+                                </span>
+                                {' '}
+                                Login TV
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -1548,6 +1614,13 @@ function RouteComponent() {
           />
         </DialogContent>
       </Dialog>
+      <TvPinModal 
+        isOpen={tvPinModalOpen}
+        onClose={() => setTvPinModalOpen(false)}
+        email={accounts?.items.find(a => a.id === currentTvTask?.accountId)?.email.email}
+        onSendPin={handleSendTvPin}
+        isSending={false}
+      />
       {/* Create Account User Dialog */}
       <Dialog
         open={dialogAccountUserOpen}
@@ -1860,6 +1933,14 @@ function RouteComponent() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <TvPinModal
+        isOpen={tvPinModalOpen}
+        onClose={() => setTvPinModalOpen(false)}
+        onSendPin={handleSendTvPin}
+        isSending={false} // Diatur oleh socket flow
+        errorMessage={tvPinError}
+        email={accounts?.items?.find(a => a.id === currentTvTask?.accountId)?.email?.email}
+      />
     </>
   )
 }

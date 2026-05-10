@@ -506,7 +506,7 @@ function RouteComponent() {
                   <label className="text-[10px] font-bold uppercase">Target Produk (Opsional)</label>
                   <Select 
                     value={promoFormData.product_variant_id || "GLOBAL"}
-                    onValueChange={(val: string) => setPromoFormData({ ...promoFormData, product_variant_id: val === "GLOBAL" ? null : val })}
+                    onValueChange={(val: string) => setPromoFormData({ ...promoFormData, product_variant_id: val === "GLOBAL" ? "" : val })}
                   >
                     <SelectTrigger className="h-8 text-xs">
                       <SelectValue placeholder="Pilih Produk..." />

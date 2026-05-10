@@ -10,6 +10,7 @@ import {
   NETFLIX_RESET_PASSWORD,
   NETFLIX_AUTO_RELOAD,
   NETFLIX_AUTO_UPGRADE,
+  NETFLIX_LOGIN_TV,
   SUBS_END_NOTIFY,
   UNFREEZE_ACCOUNT,
 } from 'src/constants/task.const';
@@ -298,6 +299,9 @@ export class TaskWorkerService {
         }
         else if (tm.taskData.context === NETFLIX_AUTO_UPGRADE) {
           await this.taskHelperService.netflixAutoUpgrade(tm.taskData.id, tm.taskData.tenant_id, tm.taskData.payload as NetflixAutoUpgradePayload);
+        }
+        else if (tm.taskData.context === NETFLIX_LOGIN_TV) {
+          await this.taskHelperService.netflixLoginTv(tm.taskData.id, tm.taskData.tenant_id, tm.taskData.payload as any);
         }
         else if (tm.taskData.context === UNFREEZE_ACCOUNT) {
           await this.taskHelperService.unfreezeAccount(tm.taskData.tenant_id, tm.taskData.payload as AccountUnfreezePayload);
