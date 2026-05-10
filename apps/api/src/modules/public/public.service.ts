@@ -1098,13 +1098,13 @@ export class PublicService {
       
       // 3. Update access count (Optional but good for stats)
       
-      // 2. Pindah ke schema MASTER untuk ambil daftar subjek
+      // 2. Pindah ke schema MASTER untuk ambil daftar subjek yang diizinkan
       await this.postgresProvider.setSchema('master', transaction);
       const publicSubjects = await this.emailSubjectRepository.findAll({
         where: { is_public: true },
         transaction,
       });
-      const allowedContexts = publicSubjects.map(s => s.context);
+      const allowedSubjectTexts = publicSubjects.map(s => s.subject);
 
       // 2. Sekarang baru pindah ke schema TENANT untuk mengambil pesan email-nya
       await this.postgresProvider.setSchema(tenantId, transaction);
@@ -1114,7 +1114,7 @@ export class PublicService {
       const messages = await this.emailMessageRepository.findAll({
         where: {
           recipient_email: { [Op.iLike]: accountEmail },
-          parsed_context: { [Op.in]: allowedContexts },
+          subject: { [Op.in]: allowedSubjectTexts },
         },
         order: [['email_date', 'DESC']],
         limit: 20,
