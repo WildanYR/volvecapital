@@ -26,6 +26,7 @@ import {
 import {
   checkProductNames,
   generateAccountTransaction,
+  generateVoucherTransaction,
   copyAccountTemplate,
 } from "./api.js";
 
@@ -339,38 +340,68 @@ export class ShopeeOrderModule extends BaseModule {
           items: productList.map((p) => ({ product_variant_id: p.id })),
         };
 
-        const generatedAccounts = await generateAccountTransaction(
-          this.apiBaseUrl,
-          this.authCredentials,
-          orderId,
-          transactionPayload,
-        );
-
         // Build messages to send
         let messagesToSend: string[] = [];
 
-        for (const acc of generatedAccounts) {
-          if ((acc as FailedAccountUser).availability_status) {
-            const status =
-              (acc as FailedAccountUser).availability_status === "COOLDOWN"
-                ? "COOLDOWN"
-                : "AKUN TIDAK TERSEDIA";
-            this.logger.warn(
-              `${orderId}: gagal generate akun untuk item ${(acc as FailedAccountUser).product_name}. status: ${status}`,
+        if (this.moduleConfig.delivery_mode === "voucher") {
+          // JALUR VOUCHER
+          const buyerWhatsapp = await this.extractBuyerWhatsapp(page);
+
+          // Loop products to generate vouchers (usually 1 per item)
+          for (const p of productList) {
+            const voucher = await generateVoucherTransaction(
+              this.apiBaseUrl,
+              this.authCredentials,
+              {
+                product_variant_id: p.id,
+                buyer_name: username,
+                buyer_whatsapp: buyerWhatsapp,
+                buyer_email: "-", // Placeholder agar tidak error NotNull di database
+                platform: "Shopee",
+                price: totalPrice,
+              },
             );
-          } else {
-            const template = copyAccountTemplate(
-              (acc as AccountUser).profile,
-              (acc as AccountUser).account,
-            );
-            if (template) {
-              messagesToSend.push(template);
+
+            if (voucher && voucher.id) {
+              const voucherMsg = this.formatVoucherMessage(
+                voucher,
+                `${p.name} ${p.variant || ""}`,
+              );
+              messagesToSend.push(voucherMsg);
+            }
+          }
+        } else {
+          // JALUR AKUN (DEFAULT)
+          const generatedAccounts = await generateAccountTransaction(
+            this.apiBaseUrl,
+            this.authCredentials,
+            orderId,
+            transactionPayload,
+          );
+
+          for (const acc of generatedAccounts) {
+            if ((acc as FailedAccountUser).availability_status) {
+              const status =
+                (acc as FailedAccountUser).availability_status === "COOLDOWN"
+                  ? "COOLDOWN"
+                  : "AKUN TIDAK TERSEDIA";
+              this.logger.warn(
+                `${orderId}: gagal generate akun untuk item ${(acc as FailedAccountUser).product_name}. status: ${status}`,
+              );
+            } else {
+              const template = copyAccountTemplate(
+                (acc as AccountUser).profile,
+                (acc as AccountUser).account,
+              );
+              if (template) messagesToSend.push(template);
             }
           }
         }
 
         if (!messagesToSend.length) {
-          throw new NoAccountError("Tidak ada akun yang bisa dikirimkan");
+          throw new NoAccountError(
+            "Tidak ada akun atau voucher yang bisa dikirimkan",
+          );
         }
 
         // Add before/after messages
@@ -419,7 +450,7 @@ export class ShopeeOrderModule extends BaseModule {
 
         if (!nonRetryError && attempt < MAX_RETRY_ATTEMPT) {
           this.logger.warn(
-            `${orderId}: Mengulangi proses pesanan (${attempt + 1}/${MAX_RETRY_ATTEMPT}): ${(error as Error).message}`,
+            `${orderId}: Mengulangi proses pesanan (${attempt}/${MAX_RETRY_ATTEMPT}): ${(error as Error).message}`,
           );
           const waitTime = this.jitter(400 * Math.pow(2, attempt - 1));
           await this.sleep(waitTime);
@@ -788,6 +819,47 @@ export class ShopeeOrderModule extends BaseModule {
     } catch {
       await page.reload();
     }
+  }
+
+  private async extractBuyerWhatsapp(page: Page): Promise<string> {
+    try {
+      const contactLocator = page.locator(".buyer-contact-information div").first();
+      if (await contactLocator.isVisible({ timeout: 3000 })) {
+        const text = await contactLocator.innerText();
+        const parts = text.split(",");
+        if (parts.length > 1) {
+          return parts[1].trim().replace(/\s+/g, "");
+        }
+      }
+    } catch (e) {
+      this.logger.warn(`Gagal mengambil nomor WA pembeli: ${(e as Error).message}`);
+    }
+    return "";
+  }
+
+  private formatVoucherMessage(voucher: any, productName: string): string {
+    const expiryDate = new Date(voucher.expired_at).toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+    
+    // Gunakan subdomain dari name di config utama
+    const tenantSubdomain = this.config.name.toLowerCase().replace(/\s+/g, "-");
+    const redeemUrl = `${tenantSubdomain}.digitalpremium.id/redeem?code=${voucher.id}`;
+
+    return `Terima kasih telah melakukan pembelian di toko kami. Berikut adalah detail voucher Anda:
+
+Produk : ${productName}
+Kode Voucher : ${voucher.id}
+Batas Klaim : ${expiryDate}
+Link redeem : ${redeemUrl}
+
+Cara Redeem Voucher:
+1. Klik link redeem di atas.
+2. Kode voucher akan terisi otomatis.
+3. Klik "Cek Sekarang", lalu klik "Aktivasi Voucher".
+4. Jika berhasil, detail akun akan muncul seketika.`;
   }
 
   // Database helpers

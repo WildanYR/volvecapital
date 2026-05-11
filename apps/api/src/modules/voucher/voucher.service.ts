@@ -70,8 +70,8 @@ export class VoucherService {
         {
           id: orderId,
           customer: dto.buyer_name,
-          platform: 'dashboard',
-          total_price: Number(variant.price || 0),
+          platform: dto.platform || 'dashboard',
+          total_price: dto.price ? Number(dto.price) : Number(variant.price || 0),
         },
         { transaction },
       );

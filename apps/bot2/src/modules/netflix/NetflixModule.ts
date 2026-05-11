@@ -463,11 +463,11 @@ export class NetflixModule extends BaseModule {
 
     await getSubmitButton(page).click();
 
-    // Check for generic error "Terjadi kesalahan" that requires MFA
     const genericError = getGenericErrorAlert(page);
     try {
-        await genericError.waitFor({ state: 'visible', timeout: 5000 });
-        this.logger.warn(`[${email}] Terdeteksi error "Terjadi kesalahan". Melakukan verifikasi MFA...`);
+        await genericError.waitFor({ state: 'visible', timeout: 8000 });
+        const errorText = await genericError.innerText();
+        this.logger.warn(`[${email}] Terdeteksi error: "${errorText}". Melakukan verifikasi MFA...`);
         
         // 1. Redirect to manageaccountaccess
         await page.goto("https://www.netflix.com/manageaccountaccess");
@@ -545,6 +545,14 @@ export class NetflixModule extends BaseModule {
 
       const currentUrl = page.url();
       this.logger.info(`[${email}] Current page after submit: ${currentUrl}`);
+
+      // Jika masih di halaman password dan ada pesan error, berarti gagal
+      if (currentUrl.includes('/password')) {
+        const errorMsg = await getGenericErrorAlert(page).isVisible() ? await getGenericErrorAlert(page).innerText() : "";
+        if (errorMsg) {
+            throw new Error(`Gagal ganti password, masih tertahan di halaman /password dengan error: ${errorMsg}`);
+        }
+      }
 
       // 1. Handle prompt "Add Recovery Phone" atau "No Thanks"
       const noThanksBtn = page.locator('button:has-text("Tidak, Terima Kasih"), a:has-text("Tidak, Terima Kasih"), button:has-text("No Thanks"), button:has-text("Not Now")');

@@ -111,6 +111,23 @@ function RouteComponent() {
     queryFn: () => voucherService.list({ page, limit, search: debouncedSearch, status: statusFilter }),
   })
 
+  const getLinkRedeem = (voucherCode: string) => {
+    const hostname = window.location.hostname
+    let rootDomain = hostname
+    if (hostname.includes('digitalpremium.id')) {
+      rootDomain = 'digitalpremium.id'
+    } else if (hostname.includes('dashboard.')) {
+      rootDomain = hostname.replace(/.*dashboard\./, '')
+    }
+    
+    const protocol = window.location.protocol
+    const baseUrl = rootDomain === 'localhost' 
+      ? `${auth.tenant!.id}.localhost:3001` 
+      : `${auth.tenant!.id}.${rootDomain}`
+    
+    return `${protocol}//${baseUrl}/redeem?code=${voucherCode}`
+  }
+
   const { data: settings } = useQuery({
     queryKey: ['settings'],
     queryFn: () => settingService.getSettings(),
@@ -197,24 +214,7 @@ function RouteComponent() {
       const voucherCode = voucher.id
       const expiryDate = formatDate(voucher.expired_at)
       
-      // Determine base URL for link redeem
-      const hostname = window.location.hostname
-      
-      // Root domain logic
-      let rootDomain = hostname
-      if (hostname.includes('digitalpremium.id')) {
-        rootDomain = 'digitalpremium.id'
-      } else if (hostname.includes('dashboard.')) {
-        rootDomain = hostname.replace(/.*dashboard\./, '')
-      }
-      
-      // If rootDomain is still a single word (like localhost), keep it
-      // Otherwise, prepend tenant ID
-      const baseUrl = rootDomain === 'localhost' 
-        ? `${auth.tenant!.id}.localhost:3001` // for local dev testing
-        : `${auth.tenant!.id}.${rootDomain}`
-
-      const linkRedeem = `${baseUrl}/redeem?code=${voucherCode}`
+      const linkRedeem = getLinkRedeem(voucherCode)
 
       text = copyTemplate
         .replace(/\$\$product/g, productName)
@@ -855,8 +855,7 @@ function RouteComponent() {
                             Salin Template Lengkap
                           </Button>
                           <Button className="flex-1 gap-2 bg-primary/10 text-primary hover:bg-primary/20 border-primary/20" variant="ghost" onClick={() => {
-                            const landingUrl = window.location.origin.replace('dashboard.', '').replace(':3000', ':3001')
-                            handleCopy(`${landingUrl}/redeem?code=${v.id}`, 'Link redeem')
+                            handleCopy(getLinkRedeem(v.id), 'Link redeem')
                           }}>
                             <Zap className="size-4" />
                             Salin Link Redeem

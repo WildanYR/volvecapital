@@ -42,3 +42,10 @@ message_fallback = "MESSAGE TO SEND IF THE APP ERROR AND SUPPORT EMOJI 👍"
 [[modules]]
 module = "netflix"
 name = "netflix"
+
+# THIS IS EXAMPLE TO USE DUOKE MODULE, JUST RUN 1 DUOKE MODULE EACH BOT INSTANCE.
+[[modules]]
+module = "duoke"
+name = "duoke"
+loop_interval = 30000
+reply_lines = "Ready kak Silahkan Order || langsung CO aja proses cepat"

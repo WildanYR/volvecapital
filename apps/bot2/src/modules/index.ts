@@ -41,3 +41,7 @@ registerModuleFactory('shopee-order', createShopeeOrderModule);
 import { createNetflixModule } from './netflix/index.js';
 registerModuleFactory('netflix', createNetflixModule);
 
+// DuokeModule
+import { createDuokeModule } from './duoke/index.js';
+registerModuleFactory('duoke', createDuokeModule);
+

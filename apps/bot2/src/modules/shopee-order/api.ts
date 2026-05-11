@@ -90,6 +90,40 @@ export async function generateAccountTransaction(
 }
 
 /**
+ * Generate voucher transaction - request a new voucher for buyer
+ */
+export interface GenerateVoucherPayload {
+  product_variant_id: string;
+  buyer_name: string;
+  buyer_whatsapp: string;
+  buyer_email: string;
+  platform?: string;
+  price?: number;
+}
+
+export async function generateVoucherTransaction(
+  apiBaseUrl: string,
+  credentials: AuthCredentials,
+  payload: GenerateVoucherPayload
+): Promise<any> {
+  const headers = authHeaders(credentials);
+  const url = `${apiBaseUrl}/voucher/generate`;
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    const data = (await res.json()) as { message: string };
+    throw new FetchFailedError(`❌ generate voucher error: ${data.message}`);
+  }
+
+  return await res.json();
+}
+
+/**
  * Convert metadata string to object array
  */
 function convertStringToMetadataObject(
