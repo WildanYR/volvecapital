@@ -619,9 +619,18 @@ export class NetflixModule extends BaseModule {
    * Logika V3: Hitung status enable/disable berdasarkan expiry & jam 15:00 WIB
    */
   private calculateAccountState(subscriptionExpiry: string): { status: string; reason: string } {
+    if (!subscriptionExpiry || subscriptionExpiry === '') {
+        return { status: 'ready', reason: 'No expiry date provided' };
+    }
+
     const now = new Date(); 
     const expiry = new Date(subscriptionExpiry);
     
+    // Check for invalid date
+    if (isNaN(expiry.getTime())) {
+        return { status: 'ready', reason: 'Invalid expiry date format' };
+    }
+
     // 1. Jika sudah lewat tanggal
     if (now > expiry) {
         return { status: 'disable', reason: 'Sudah lewat tanggal (Kadaluarsa)' };

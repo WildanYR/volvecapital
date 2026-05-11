@@ -550,38 +550,38 @@ export class AccountService {
   }
 
   async registerNetflixResetTask(tenantId: string, account: Account) {
-    if (!account.dataValues.batch_end_date) return;
+    if (!account.batch_end_date) return;
 
     await this.taskQueueService.upsert([{
       context: NETFLIX_RESET_PASSWORD,
-      execute_at: account.dataValues.batch_end_date,
+      execute_at: account.batch_end_date,
       subject_id: account.id,
       tenant_id: tenantId,
       status: 'QUEUED',
       payload: JSON.stringify({
         id: account.id,
         accountId: account.id,
-        email: account.email.email,
+        email: account.email?.email || '',
         password: account.account_password,
         newPassword: '', // Bot will generate its own password
-        subscription_expiry: account.dataValues.subscription_expiry?.toISOString?.() || '',
-        variant_name: account.product_variant?.dataValues?.name ?? '',
+        subscription_expiry: account.subscription_expiry?.toISOString() || '',
+        variant_name: account.product_variant?.name || '',
       } as NetflixResetPasswordPayload),
     }]);
   }
 
   async registerDefaultSubsNotifyTask(tenantId: string, account: Account) {
-    if (!account.dataValues.subscription_expiry) return;
+    if (!account.subscription_expiry) return;
 
-    const dday = new Date(account.dataValues.subscription_expiry);
+    const dday = new Date(account.subscription_expiry);
     dday.setHours(7, 0, 0, 0);
 
-    const minDDay = new Date(account.dataValues.subscription_expiry);
+    const minDDay = new Date(account.subscription_expiry);
     minDDay.setHours(7, 0, 0, 0);
     minDDay.setDate(minDDay.getDate() - 1); // Default notify 1 day before
 
     const dDayFormatted = this.dateConverterProvider.formatDateIdStandard(
-      account.dataValues.subscription_expiry,
+      account.subscription_expiry,
       { hideTime: true },
     );
 
@@ -906,11 +906,11 @@ export class AccountService {
       const payload: NetflixResetPasswordPayload = {
         id: Date.now().toString(),
         accountId: account.id,
-        email: account.email.email,
+        email: account.email?.email || '',
         password: account.account_password,
         newPassword: '', // Biarkan Bot yang generate
-        subscription_expiry: account.subscription_expiry.toISOString(),
-        variant_name: account.product_variant.name,
+        subscription_expiry: account.subscription_expiry?.toISOString() || '',
+        variant_name: account.product_variant?.name || '',
       };
 
       const task: UpsertTaskQueueDto = {
