@@ -37,9 +37,9 @@ export class VoucherService {
     private readonly tenantRepository: typeof Tenant,
   ) {}
 
-  private generateVoucherCode(): string {
+  private generateVoucherCode(prefix: string = 'MNL-'): string {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let code = 'MNL-';
+    let code = prefix;
     for (let i = 0; i < 8; i++) {
       code += chars.charAt(Math.floor(Math.random() * chars.length));
     }
@@ -59,7 +59,7 @@ export class VoucherService {
       });
       if (!variant) throw new NotFoundException('Varian produk tidak ditemukan');
 
-      const voucherCode = this.generateVoucherCode();
+      const voucherCode = this.generateVoucherCode(dto.prefix || 'MNL-');
       const expiryHours = variant.voucher_expiry_hours ?? this.configService.get<number>('voucher.expiryHours') ?? 168; // fallback to config or 7 days
       const expiredAt = new Date(Date.now() + expiryHours * 60 * 60 * 1000);
 

@@ -359,6 +359,7 @@ export class ShopeeOrderModule extends BaseModule {
                 buyer_email: "-", // Placeholder agar tidak error NotNull di database
                 platform: "Shopee",
                 price: totalPrice,
+                prefix: "SHP-",
               },
             );
 
@@ -844,8 +845,8 @@ export class ShopeeOrderModule extends BaseModule {
       year: "numeric",
     });
     
-    // Gunakan subdomain dari name di config utama
-    const tenantSubdomain = this.config.name.toLowerCase().replace(/\s+/g, "-");
+    // Gunakan tenantId dari authCredentials agar seragam untuk semua toko
+    const tenantSubdomain = this.authCredentials.tenantId;
     const redeemUrl = `${tenantSubdomain}.digitalpremium.id/redeem?code=${voucher.id}`;
 
     return `Terima kasih telah melakukan pembelian di toko kami. Berikut adalah detail voucher Anda:

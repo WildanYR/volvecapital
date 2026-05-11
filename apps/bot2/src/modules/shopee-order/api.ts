@@ -99,6 +99,7 @@ export interface GenerateVoucherPayload {
   buyer_email: string;
   platform?: string;
   price?: number;
+  prefix?: string;
 }
 
 export async function generateVoucherTransaction(
