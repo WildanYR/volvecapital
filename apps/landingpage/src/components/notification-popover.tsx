@@ -156,8 +156,11 @@ export function NotificationPopover({ isOpen, onClose, onReopenCheckout }: Notif
                                 </div>
                                 <button
                                   onClick={() => {
-                                    window.location.href = `/redeem?code=${notif.data.voucherCode}`;
-                                    onClose();
+                                    const voucherCode = notif.data?.voucherCode;
+                                    if (voucherCode) {
+                                      window.location.href = `/redeem?code=${voucherCode}`;
+                                      onClose();
+                                    }
                                   }}
                                   className="w-full py-2 px-4 bg-emerald-500 text-white text-[10px] font-black rounded-lg flex items-center justify-center gap-2 hover:bg-emerald-600 transition-all active:scale-95 shadow-sm shadow-emerald-200"
                                 >
