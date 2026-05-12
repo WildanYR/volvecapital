@@ -68,7 +68,12 @@ function SuccessContent() {
           const voucher = res.data.voucher
           setVoucherData(voucher)
           
-          // Add success notification
+          // 1. Bersihkan dulu notifikasi pending yang berkaitan
+          if (orderId) {
+            removePendingByOrderId(orderId);
+          }
+
+          // 2. Tambahkan notifikasi sukses
           addNotification({
             type: 'success',
             title: 'Pembayaran Berhasil!',
@@ -80,11 +85,6 @@ function SuccessContent() {
               price: voucher.price
             }
           });
-
-          // Remove pending notification if orderId exists
-          if (orderId) {
-            removePendingByOrderId(orderId);
-          }
         })
         .catch(err => console.error('Gagal mengambil data voucher:', err))
     }

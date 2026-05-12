@@ -27,22 +27,45 @@ const STORAGE_KEY = 'lp_notifications';
 export function useNotification() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
-  // Load from localStorage on mount
+  // Load from localStorage on mount and sync across tabs/components
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      try {
-        setNotifications(JSON.parse(saved));
-      } catch (e) {
-        console.error('Failed to parse notifications', e);
+    const loadNotifications = () => {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try {
+          setNotifications(JSON.parse(saved));
+        } catch (e) {
+          console.error('Failed to parse notifications', e);
+        }
       }
-    }
+    };
+
+    loadNotifications();
+
+    // Listen for changes from other components/tabs
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === STORAGE_KEY) {
+        loadNotifications();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Custom event for same-page synchronization
+    window.addEventListener('lp_notifications_updated', loadNotifications);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('lp_notifications_updated', loadNotifications);
+    };
   }, []);
 
   // Save to localStorage whenever notifications change
   const saveNotifications = (updated: Notification[]) => {
     setNotifications(updated);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    // Trigger custom event for same-page components
+    window.dispatchEvent(new Event('lp_notifications_updated'));
   };
 
   const addNotification = (notif: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => {
