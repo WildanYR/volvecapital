@@ -144,13 +144,25 @@ export function NotificationPopover({ isOpen, onClose, onReopenCheckout }: Notif
                         {notif.data && (
                           <div className="mt-3 pt-3 border-t border-slate-50 space-y-2">
                             {notif.type === 'success' && notif.data.voucherCode && (
-                              <div className="flex items-center justify-between bg-emerald-50/50 p-2 rounded-lg border border-emerald-100">
-                                <code className="text-xs font-black text-emerald-700">{notif.data.voucherCode}</code>
-                                <button 
-                                  onClick={() => handleCopyVoucher(notif.data?.voucherCode || '')}
-                                  className="p-1 hover:bg-emerald-100 rounded transition-colors text-emerald-600"
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-between bg-emerald-50/50 p-2 rounded-lg border border-emerald-100">
+                                  <code className="text-xs font-black text-emerald-700">{notif.data.voucherCode}</code>
+                                  <button 
+                                    onClick={() => handleCopyVoucher(notif.data?.voucherCode || '')}
+                                    className="p-1 hover:bg-emerald-100 rounded transition-colors text-emerald-600"
+                                  >
+                                    <Copy className="size-3" />
+                                  </button>
+                                </div>
+                                <button
+                                  onClick={() => {
+                                    window.location.href = `/redeem?code=${notif.data.voucherCode}`;
+                                    onClose();
+                                  }}
+                                  className="w-full py-2 px-4 bg-emerald-500 text-white text-[10px] font-black rounded-lg flex items-center justify-center gap-2 hover:bg-emerald-600 transition-all active:scale-95 shadow-sm shadow-emerald-200"
                                 >
-                                  <Copy className="size-3" />
+                                  CLAIM SEKARANG
+                                  <Zap className="size-3 fill-current" />
                                 </button>
                               </div>
                             )}

@@ -73,14 +73,16 @@ function SuccessContent() {
             removePendingByOrderId(orderId);
           }
 
+          const productName = voucher.product_variant_name || voucher.variant?.name || voucher.product?.name || 'Produk';
+          
           // 2. Tambahkan notifikasi sukses
           addNotification({
             type: 'success',
             title: 'Pembayaran Berhasil!',
-            message: `Voucher untuk ${voucher.product_variant_name} siap digunakan.`,
+            message: `Voucher untuk ${productName} siap digunakan.`,
             data: {
               orderId: orderId || undefined,
-              productName: voucher.product_variant_name,
+              productName: productName,
               voucherCode: code,
               price: voucher.price
             }
