@@ -1,0 +1,104 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+
+export type NotificationType = 'pending' | 'success' | 'info';
+
+export interface Notification {
+  id: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  timestamp: number;
+  isRead: boolean;
+  data?: {
+    orderId?: string;
+    productName?: string;
+    price?: number;
+    voucherCode?: string;
+    paymentUrl?: string;
+    // Add any other relevant data
+    [key: string]: any;
+  };
+}
+
+const STORAGE_KEY = 'lp_notifications';
+
+export function useNotification() {
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        setNotifications(JSON.parse(saved));
+      } catch (e) {
+        console.error('Failed to parse notifications', e);
+      }
+    }
+  }, []);
+
+  // Save to localStorage whenever notifications change
+  const saveNotifications = (updated: Notification[]) => {
+    setNotifications(updated);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  };
+
+  const addNotification = (notif: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => {
+    const newNotif: Notification = {
+      ...notif,
+      id: Math.random().toString(36).substring(2, 9),
+      timestamp: Date.now(),
+      isRead: false,
+    };
+    
+    // Check for duplicates (e.g., same orderId pending)
+    if (notif.data?.orderId) {
+      const exists = notifications.find(n => n.data?.orderId === notif.data?.orderId && n.type === notif.type);
+      if (exists) return; // Don't add duplicate
+    }
+
+    const updated = [newNotif, ...notifications];
+    saveNotifications(updated);
+  };
+
+  const removeNotification = (id: string) => {
+    const updated = notifications.filter(n => n.id !== id);
+    saveNotifications(updated);
+  };
+
+  const removePendingByOrderId = (orderId: string) => {
+    const updated = notifications.filter(n => !(n.type === 'pending' && n.data?.orderId === orderId));
+    saveNotifications(updated);
+  };
+
+  const markAsRead = (id: string) => {
+    const updated = notifications.map(n => 
+      n.id === id ? { ...n, isRead: true } : n
+    );
+    saveNotifications(updated);
+  };
+
+  const markAllAsRead = () => {
+    const updated = notifications.map(n => ({ ...n, isRead: true }));
+    saveNotifications(updated);
+  };
+
+  const clearNotifications = () => {
+    saveNotifications([]);
+  };
+
+  const unreadCount = notifications.filter(n => !n.isRead).length;
+
+  return {
+    notifications,
+    addNotification,
+    removeNotification,
+    removePendingByOrderId,
+    markAsRead,
+    markAllAsRead,
+    clearNotifications,
+    unreadCount,
+  };
+}

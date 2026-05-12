@@ -4,7 +4,7 @@ Berdasarkan permintaan Anda, berikut adalah rencana teknis untuk mengatasi kenda
 
 ## 1. Penyesuaian Logika Expired Voucher (Public Service)
 
-### Masalah
+### Masalah 
 Saat ini, voucher memiliki `expired_at` (misal 3 hari) yang berfungsi sebagai batas waktu klaim. Namun, setelah diklaim (`USED`), jika `expired_at` tersebut sudah lewat, user mungkin mengalami kendala dalam mengakses detail akun (tergantung pengecekan di sistem).
 
 ### Solusi
@@ -48,3 +48,9 @@ Sebelum saya mulai melakukan pengodingan, ada beberapa hal yang ingin saya pasti
 4.  **Durasi Produk**: Saya berasumsi `variant.duration` disimpan dalam satuan milidetik (ms) di database. Mohon konfirmasi jika satuannya berbeda (misal hari).
 
 Mohon berikan masukan Anda mengenai poin-poin di atas. Setelah Anda memberikan klarifikasi, saya akan segera mengeksekusi implementasinya.
+
+jawaban : 
+1. iya benar itu batas untuk user redeem voucher nya (aku sudah setting 3 hari di dashboard)
+2. iya lebih bagus jika tombol redeem nya langsung mengisi kode vouchernya secara otomatis di halaman redeem
+3. nama toko nya ambil dari setting SITE_NAME saja
+4. tolong ditelusuri aja di database saya ya, nanti sesuaikan aja

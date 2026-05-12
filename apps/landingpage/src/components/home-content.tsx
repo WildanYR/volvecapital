@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import dynamic from 'next/dynamic'
 import { Navbar } from '@/components/navbar'
 import { Hero } from '@/components/hero'
@@ -14,6 +14,9 @@ import type {
   LandingNavbarConfig, 
   LandingFooterConfig 
 } from '@volvecapital/shared/types'
+import { useEffect } from 'react'
+import { toast } from 'sonner'
+import { modalTrigger } from '@/lib/events'
 
 // Dynamic imports for below-the-fold components
 const SocialProof = dynamic(() => import('@/components/social-proof').then(mod => mod.SocialProof), { ssr: true })
@@ -32,9 +35,11 @@ interface HomeContentProps {
 }
 
 export function HomeContent({ initialProducts, settings }: HomeContentProps) {
+
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [checkoutInitialData, setCheckoutInitialData] = useState<any>(null)
 
   // Memoize settings parsing
   const parsedConfigs = useMemo(() => {
@@ -59,15 +64,41 @@ export function HomeContent({ initialProducts, settings }: HomeContentProps) {
     }
   }, [settings])
 
-  const handleSelectVariant = (variant: ProductVariant, product: Product) => {
+  const handleSelectVariant = (variant: ProductVariant, product: Product, initialData?: any) => {
     setSelectedProduct(product)
     setSelectedVariant(variant)
+    setCheckoutInitialData(initialData || null)
     setIsModalOpen(true)
   }
 
+  // Handle notification action
+  const handleReopen = useCallback((data: any) => {
+    if (!data) return;
+
+    // 1. Coba cari berdasarkan ID (Paling Akurat)
+    let product = initialProducts.find(p => String(p.id) === String(data.productId));
+    let variant = product?.variants.find(v => String(v.id) === String(data.variantId));
+
+    // 2. Fallback: Cari berdasarkan Nama (Untuk notifikasi lama)
+    if (!product || !variant) {
+      product = initialProducts.find(p => p.name.toLowerCase() === data.productName?.toLowerCase());
+      variant = product?.variants.find(v => v.name.toLowerCase() === data.variantName?.toLowerCase());
+    }
+
+    if (product && variant) {
+      handleSelectVariant(variant, product, data);
+    } else {
+      toast.error('Produk tidak ditemukan di daftar', {
+        position: 'top-center',
+        className: 'font-bold uppercase text-[10px] tracking-widest'
+      });
+    }
+  }, [initialProducts]);
+
+
   return (
     <main className="w-full bg-white">
-      <Navbar config={parsedConfigs.navbar} />
+      <Navbar config={parsedConfigs.navbar} onReopenCheckout={handleReopen} />
       <Hero config={parsedConfigs.hero} />
       
       <div className="flex flex-col gap-0">
@@ -85,9 +116,13 @@ export function HomeContent({ initialProducts, settings }: HomeContentProps) {
       {isModalOpen && (
         <CheckoutModal 
           isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
+          onClose={() => {
+            setIsModalOpen(false)
+            setCheckoutInitialData(null)
+          }}
           product={selectedProduct}
           variant={selectedVariant}
+          initialData={checkoutInitialData}
         />
       )}
     </main>

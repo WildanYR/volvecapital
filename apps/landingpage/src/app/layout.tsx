@@ -40,6 +40,7 @@ export default async function RootLayout({
     }
   }
 
+
   return (
     <html lang="id" className={`${plusJakartaSans.variable} h-full antialiased`}>
       <head>

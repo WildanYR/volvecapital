@@ -59,12 +59,12 @@ export class DuokeModule extends BaseModule {
                 await this.sleep(5000);
             }
 
-            // Auto Refresh setiap 12 putaran (Sekitar 2 menit jika loop 10 detik)
+            // Auto Refresh setiap 300 putaran (Sekitar 10 menit jika loop 2 detik)
             this.loopCount++;
-            if (this.loopCount >= 12) {
+            if (this.loopCount >= 300) {
                 this.logger.info('Refreshing Duoke page to keep connection fresh...');
                 await this.loopPage.reload();
-                await this.sleep(8000); // Tunggu loading setelah reload
+                await this.sleep(8000); // Tunggu loading setelah reload lebih lama sedikit agar stabil
                 this.loopCount = 0;
             }
 
@@ -142,14 +142,14 @@ export class DuokeModule extends BaseModule {
                 }
 
                 // Double check spesifik ke badge sup
-                const badge = item.locator('sup.el-badge__content.el-badge__content--undefined.is-fixed').first();
+                const badge = item.locator('sup.el-badge__content.is-fixed:visible').first();
                 if (!await badge.isVisible()) continue;
-
-                this.logger.info(`Processing unread message from: ${username}`);
-
-                // Klik LANGSUNG pada nama pembeli
-                await item.locator('div.buyer_name').first().click({ force: true });
-                await this.sleep(3000);
+ 
+                 this.logger.info(`Processing unread message from: ${username}`);
+ 
+                 // Klik LANGSUNG pada nama pembeli
+                 await item.locator('div.buyer_name').first().click({ force: true });
+                 // Removed 3s sleep to be more responsive
 
                 const textarea = locators.getChatTextarea(this.loopPage);
                 try {
@@ -167,7 +167,7 @@ export class DuokeModule extends BaseModule {
                     for (const line of replyLines) {
                         await textarea.fill(line);
                         await this.loopPage.keyboard.press('Enter');
-                        await this.sleep(1000);
+                        await this.sleep(500); // Reduced from 1000ms
                     }
 
                     try {
@@ -178,7 +178,7 @@ export class DuokeModule extends BaseModule {
                         this.logger.error(`Failed to save history for ${username}: ${dbError instanceof Error ? dbError.message : String(dbError)}`);
                     }
                     
-                    await this.sleep(3000);
+                    // Removed 3s sleep to be more responsive
                 }
 
             } catch (error) {

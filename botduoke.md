@@ -16,3 +16,25 @@ belum baca <sup class="el-badge__content el-badge__content--undefined is-fixed" 
 bantu aku membuat modul bot baru dong, saat ini kan ada module shopee dan netflix aja, nah aku mau buat module satu lagi untuk duoke, yang mana ini fungsi nya untuk auto balas pesan 
 
 jadi flow nya begini :
+
+bot buka https://web.duoke.com/?lang=en#/dk/main/chat
+cek apakah sudah login atau belum jika sudah login maka jalankan logic flow nya
+jika belum login maka aku mau loginin manual dulu aja beri log (silahkan login manual terlebih dahulu)
+
+jika sudah login dan membuka https://web.duoke.com/?lang=en#/dk/main/chat
+maka bot akan mencari element yang ada text nya "belum baca" atau class <sup class="el-badge__content el-badge__content--undefined is-fixed" style="">1</sup>
+
+jika ada maka klik elemen tersebut (dia punya class nama nya buyer_name <div data-v-6b3481d5="" class="buyer_name">gigihkurniawangk6</div>
+lalu tulis pesan di <textarea autocomplete="off" valuekey="value" popperclass="inst_msgs_popper_new" placeholder="Press / to trigger quick reply" maxlength="600" autofocus="autofocus" fetchsuggestions="function () { [native code] }" debounce="0" placement="top-start" popperappendtobody="true" highlightfirstitem="true" class="el-textarea__inner" role="textbox" aria-autocomplete="list" aria-controls="id" aria-activedescendant="el-autocomplete-194-item--1" style="min-height: 37px;"></textarea>
+
+jawab dengan "Ready kak Silahkan Order" tekan enter untuk send
+
+nah aku juga mau tulisan "Ready kak Silahkan Order" bisa aku customize di .env 
+# Balasan global (bisa multi baris pakai "||")
+REPLY_LINES=Ready kak silahkan order || langsung CO aja proses cepat
+
+jika sudah balas maka catat username itu dan jika user itu chat lagi di hari yang sama maka bot tidak akan membalas lagi biar ga spam, bot akan membalas lagi jika sudah lewat jam 00:00 
+
+aku mau looping terus menerus bot nya untuk mencari pesan yang belum dibaca, 
+tapi aku juga mau buat juga sistem nya jadi bot hanya bisa membalas user yang sama maksimal 1 kali dalam sehari, jadi misal ada user yang chat tanggal 11 mei jam 22.00 maka dia baru bisa dibalas lagi di tanggal 12 mei jam 00:00, 
+

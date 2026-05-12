@@ -42,3 +42,8 @@ Dokumen ini merinci perubahan kode yang akan dilakukan untuk fitur Auto Upgrade.
 ## ❓ Pertanyaan Terbuka:
 - **Delay Email**: Kadang email OTP Netflix butuh waktu 10-30 detik. Berapa lama bot harus menunggu sebelum dianggap *timeout*? (Saran: 60 detik).
 - **Log Gagal**: Jika saldo/kartu di akun Netflix tidak cukup untuk upgrade, bot akan mendapatkan error "Payment Method Failed". Apakah status ini perlu ditampilkan spesifik di dashboard?
+
+jawaban : 
+1. tunggu 2 menit ya soalnya GAS biasanya 1 menit lebih
+2. tampilkan aja status nya gagal / sukses di dashboard
+

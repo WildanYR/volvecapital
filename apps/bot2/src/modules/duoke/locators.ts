@@ -12,14 +12,14 @@ export const getPolicyCheckbox = (page: Page) => page.locator('.policy_checkbox 
 export const getLoginButton = (page: Page) => page.locator('button:has-text("Login")');
 
 // Chat Page
-export const getUnreadBadge = (page: Page) => page.locator('sup.el-badge__content.el-badge__content--undefined.is-fixed');
+export const getUnreadBadge = (page: Page) => page.locator('sup.el-badge__content:visible');
 export const getBuyerName = (container: Locator) => container.locator('div.buyer_name');
 export const getChatTextarea = (page: Page) => page.locator('textarea[placeholder*="quick reply"]');
 
 // Helper to find valid chat items (has VISIBLE specific badge AND buyer name)
 export const getChatItem = (page: Page) => 
     page.locator('div, li').filter({ 
-        has: page.locator('sup.el-badge__content.el-badge__content--undefined.is-fixed:visible') 
+        has: page.locator('sup.el-badge__content.is-fixed:visible') 
     }).filter({ 
         has: page.locator('div.buyer_name') 
     });

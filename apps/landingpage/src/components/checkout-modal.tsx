@@ -7,6 +7,8 @@ import { Product, ProductVariant } from '@/hooks/use-products'
 import { api } from '@/lib/api'
 import { toast } from 'sonner'
 import { formatCurrency } from '@/lib/format'
+import { useNotification } from '@/hooks/use-notification'
+import { REOPEN_CHECKOUT_EVENT } from '@/lib/events'
 
 declare global {
   interface Window {
@@ -19,29 +21,46 @@ interface CheckoutModalProps {
   onClose: () => void
   product: Product | null
   variant: ProductVariant | null
+  initialData?: any
 }
 
-export function CheckoutModal({ isOpen, onClose, product, variant }: CheckoutModalProps) {
+export function CheckoutModal({ isOpen, onClose, product, variant, initialData }: CheckoutModalProps) {
   const [step, setStep] = useState(1)
   const [formData, setFormData] = useState({ name: '', email: '', whatsapp: '' })
   const [isLoading, setIsLoading] = useState(false)
   const [isShaking, setIsShaking] = useState(false)
-  const [paymentUrl, setPaymentUrl] = useState<string | null>(null)
-  const [promoCode, setPromoCode] = useState('')
+  const [paymentUrl, setPaymentUrl] = useState<string | null>(initialData?.paymentUrl || null)
+  const [promoCode, setPromoCode] = useState(initialData?.promoCode || '')
   const [promoData, setPromoData] = useState<{ id: string, discount_amount: number } | null>(null)
   const [isPromoLoading, setIsPromoLoading] = useState(false)
   const [promoError, setPromoError] = useState('')
   const [showCloseConfirm, setShowCloseConfirm] = useState(false)
+  const { addNotification } = useNotification()
   
-  // Reset state when variant changes or modal opens to prevent promo "leaking"
+  // Handle initial data population
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && initialData) {
+      if (initialData.formData) {
+        setFormData(initialData.formData);
+      }
+      if (initialData.paymentUrl) {
+        setPaymentUrl(initialData.paymentUrl);
+        // If we have paymentUrl, we might want to skip to step 2
+        setStep(2);
+      }
+    }
+  }, [isOpen, initialData])
+
+  // Reset state when variant changes or modal opens
+  useEffect(() => {
+    if (isOpen && !initialData) {
       setPromoCode('')
       setPromoData(null)
       setPromoError('')
       setStep(1)
     }
-  }, [variant?.id, isOpen])
+  }, [variant?.id, isOpen, initialData])
+
 
   const shakeAnimation = {
     x: [0, -10, 10, -10, 10, 0],
@@ -108,6 +127,17 @@ export function CheckoutModal({ isOpen, onClose, product, variant }: CheckoutMod
   const handleFinalCheckout = async () => {
     if (!product || !variant) return
 
+    // If we already have a payment URL (from notification), just use it
+    if (paymentUrl) {
+      setIsLoading(true); // Show loading while redirecting
+      if (window.loadJokulCheckout) {
+        window.loadJokulCheckout(paymentUrl)
+      } else {
+        window.location.href = paymentUrl
+      }
+      return;
+    }
+
     setIsLoading(true)
     
     const finalVariantId = variant.id;
@@ -127,6 +157,24 @@ export function CheckoutModal({ isOpen, onClose, product, variant }: CheckoutMod
       })
 
       if (data.payment_url) {
+        // Add pending notification before redirecting
+        addNotification({
+          type: 'pending',
+          title: 'Pembayaran Tertunda',
+          message: `Segera selesaikan pembayaran untuk ${product.name} (${variant.name})`,
+          data: {
+            orderId: data.order_id, 
+            productId: product.id,
+            variantId: variant.id,
+            productName: product.name,
+            variantName: variant.name,
+            price: (variant.price || 0) - (promoData?.discount_amount || 0),
+            paymentUrl: data.payment_url,
+            formData: formData,
+            promoCode: finalPromoCode
+          }
+        });
+
         if (window.loadJokulCheckout) {
           window.loadJokulCheckout(data.payment_url)
         } else {
@@ -373,7 +421,7 @@ export function CheckoutModal({ isOpen, onClose, product, variant }: CheckoutMod
                         disabled={isLoading}
                         className="w-full py-5 bg-[#0f172a] hover:bg-slate-800 text-white font-black rounded-2xl flex items-center justify-center gap-3 shadow-xl transition-all active:scale-95 disabled:opacity-50"
                       >
-                        {isLoading ? <Loader2 className="size-5 animate-spin" /> : 'Lanjutkan ke Pembayaran'}
+                        {isLoading ? <Loader2 className="size-5 animate-spin" /> : (paymentUrl ? 'Bayar via DOKU Sekarang' : 'Lanjutkan ke Pembayaran')}
                       </button>
                       <button 
                         onClick={() => setStep(1)}

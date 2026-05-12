@@ -2,15 +2,22 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Menu, X, ShoppingBag, Home, Package, Key, Crown, BookOpen, FileText } from 'lucide-react'
+import { Menu, X, ShoppingBag, Home, Package, Key, Crown, BookOpen, FileText, Bell } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTenant } from '@/hooks/use-tenant'
 import { api } from '@/lib/api'
 import type { LandingNavbarConfig } from '@volvecapital/shared/types'
+import { useNotification } from '@/hooks/use-notification'
+import { NotificationPopover } from './notification-popover'
+import dynamic from 'next/dynamic'
+import { Product, ProductVariant } from '@/hooks/use-products'
+
+const CheckoutModal = dynamic(() => import('@/components/checkout-modal').then(mod => mod.CheckoutModal), { ssr: false })
 
 interface NavbarProps {
   config?: LandingNavbarConfig | null
+  onReopenCheckout?: (data: any) => void
 }
 
 export function Navbar({ config: initialConfig }: NavbarProps) {
@@ -20,6 +27,33 @@ export function Navbar({ config: initialConfig }: NavbarProps) {
   const [heroBg, setHeroBg] = useState<string | null>(null)
   const pathname = usePathname()
   const { tenantId } = useTenant()
+  const [isNotifOpen, setIsNotifOpen] = useState(false)
+  const { unreadCount } = useNotification()
+
+  // Modal State inside Navbar for Notifications
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null)
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false)
+  const [checkoutData, setCheckoutData] = useState<any>(null)
+
+  const handleReopenFromNotif = (data: any) => {
+    // We need to construct a minimal product/variant object if they are missing
+    const mockProduct = { 
+      id: data.productId || 'unknown', 
+      name: data.productName || 'Product' 
+    } as Product;
+    
+    const mockVariant = { 
+      id: data.variantId || 'unknown', 
+      name: data.variantName || 'Variant',
+      price: data.price || 0
+    } as ProductVariant;
+
+    setSelectedProduct(mockProduct);
+    setSelectedVariant(mockVariant);
+    setCheckoutData(data);
+    setIsCheckoutOpen(true);
+  }
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50)
@@ -106,6 +140,7 @@ export function Navbar({ config: initialConfig }: NavbarProps) {
   const activeLinkClass = isTransparent ? 'text-white' : 'text-[#f97316]'
 
   return (
+    <>
     <nav 
       className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 ${
         scrolled 
@@ -139,24 +174,72 @@ export function Navbar({ config: initialConfig }: NavbarProps) {
               </Link>
             ))}
           </div>
-          <Link 
-            href="/product"
-            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-br from-[#f97316] to-[#ef4444] text-white rounded-2xl font-black text-xs tracking-widest shadow-xl shadow-orange-500/20 hover:scale-105 active:scale-95 transition-all"
-          >
-            <ShoppingBag className="size-4" />
-            MULAI BELI
-          </Link>
+          
+          <div className="flex items-center gap-4">
+            {/* Notification Bell */}
+            <div className="relative">
+              <button 
+                onClick={() => setIsNotifOpen(!isNotifOpen)}
+                className={`size-11 flex items-center justify-center rounded-xl transition-all relative ${
+                  isTransparent ? 'text-white bg-white/10 hover:bg-white/20' : 'text-[#0f172a] bg-slate-50 hover:bg-slate-100'
+                }`}
+              >
+                <Bell className="size-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 size-5 bg-[#ef4444] text-white text-[10px] font-black flex items-center justify-center rounded-full border-2 border-white animate-bounce">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+              
+              <NotificationPopover 
+                isOpen={isNotifOpen} 
+                onClose={() => setIsNotifOpen(false)}
+                onReopenCheckout={handleReopenFromNotif}
+              />
+            </div>
+
+            <Link 
+              href="/product"
+              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-br from-[#f97316] to-[#ef4444] text-white rounded-2xl font-black text-xs tracking-widest shadow-xl shadow-orange-500/20 hover:scale-105 active:scale-95 transition-all"
+            >
+              <ShoppingBag className="size-4" />
+              MULAI BELI
+            </Link>
+          </div>
         </div>
 
         {/* Mobile Toggle */}
-        <button 
-          className={`lg:hidden size-11 flex items-center justify-center rounded-xl transition-colors ${
-            isTransparent ? 'text-white bg-white/10 hover:bg-white/20' : 'text-[#0f172a] bg-slate-50 hover:bg-slate-100'
-          }`}
-          onClick={() => setIsOpen(!isOpen)}
-        >
-          {isOpen ? <X className="size-6" /> : <Menu className="size-6" />}
-        </button>
+        <div className="flex items-center gap-3 lg:hidden">
+          <div className="relative">
+            <button 
+              onClick={() => setIsNotifOpen(!isNotifOpen)}
+              className={`size-11 flex items-center justify-center rounded-xl transition-all relative ${
+                isTransparent ? 'text-white bg-white/10 hover:bg-white/20' : 'text-[#0f172a] bg-slate-50 hover:bg-slate-100'
+              }`}
+            >
+              <Bell className="size-5" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 size-5 bg-[#ef4444] text-white text-[10px] font-black flex items-center justify-center rounded-full border-2 border-white">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+            <NotificationPopover 
+              isOpen={isNotifOpen} 
+              onClose={() => setIsNotifOpen(false)}
+              onReopenCheckout={handleReopenFromNotif}
+            />
+          </div>
+          <button 
+            className={`size-11 flex items-center justify-center rounded-xl transition-colors ${
+              isTransparent ? 'text-white bg-white/10 hover:bg-white/20' : 'text-[#0f172a] bg-slate-50 hover:bg-slate-100'
+            }`}
+            onClick={() => setIsOpen(!isOpen)}
+          >
+            {isOpen ? <X className="size-6" /> : <Menu className="size-6" />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile/Tablet Menu */}
@@ -195,5 +278,19 @@ export function Navbar({ config: initialConfig }: NavbarProps) {
         )}
       </AnimatePresence>
     </nav>
+
+    {isCheckoutOpen && (
+      <CheckoutModal 
+        isOpen={isCheckoutOpen}
+        onClose={() => {
+          setIsCheckoutOpen(false)
+          setCheckoutData(null)
+        }}
+        product={selectedProduct}
+        variant={selectedVariant}
+        initialData={checkoutData}
+      />
+    )}
+    </>
   )
 }

@@ -10,6 +10,7 @@ import { Navbar } from '@/components/navbar'
 import { Footer } from '@/components/footer'
 import { api } from '@/lib/api'
 import { AlertCircle } from 'lucide-react'
+import { useNotification } from '@/hooks/use-notification'
 
 function SuccessContent() {
   const searchParams = useSearchParams()
@@ -18,6 +19,7 @@ function SuccessContent() {
   const [voucherData, setVoucherData] = useState<any>(null)
   const [isChecking, setIsChecking] = useState(false)
   const [isClaiming, setIsClaiming] = useState(false)
+  const { addNotification, removePendingByOrderId } = useNotification()
 
   // Polling for payment status if only orderId is present
   useEffect(() => {
@@ -62,10 +64,31 @@ function SuccessContent() {
   useEffect(() => {
     if (code) {
       api.get(`/public/voucher/${code}`)
-        .then(res => setVoucherData(res.data.voucher))
+        .then(res => {
+          const voucher = res.data.voucher
+          setVoucherData(voucher)
+          
+          // Add success notification
+          addNotification({
+            type: 'success',
+            title: 'Pembayaran Berhasil!',
+            message: `Voucher untuk ${voucher.product_variant_name} siap digunakan.`,
+            data: {
+              orderId: orderId || undefined,
+              productName: voucher.product_variant_name,
+              voucherCode: code,
+              price: voucher.price
+            }
+          });
+
+          // Remove pending notification if orderId exists
+          if (orderId) {
+            removePendingByOrderId(orderId);
+          }
+        })
         .catch(err => console.error('Gagal mengambil data voucher:', err))
     }
-  }, [code])
+  }, [code, orderId])
 
   const copyCode = () => {
     if (code) {
