@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, X, CreditCard, CheckCircle, Clock, Copy, ArrowRight, Trash2 } from 'lucide-react';
+import { Bell, X, CreditCard, CheckCircle, Clock, Copy, ArrowRight, Trash2, Zap } from 'lucide-react';
 import { useNotification, Notification } from '@/hooks/use-notification';
 import { toast } from 'sonner';
 
