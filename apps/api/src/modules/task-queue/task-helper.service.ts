@@ -1,8 +1,9 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { ACCOUNT_REPOSITORY } from 'src/constants/database.const';
+import { ACCOUNT_REPOSITORY, PRODUCT_VARIANT_REPOSITORY } from 'src/constants/database.const';
 import { NETFLIX_REQ_RESET_PASSWORD } from 'src/constants/email-subject.const';
 import { Account } from 'src/database/models/account.model';
 import { Email } from 'src/database/models/email.model';
+import { ProductVariant } from 'src/database/models/product-variant.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
 import { AppLoggerService } from '../logger/logger.service';
 import { SyslogService } from '../logger/syslog.service';
@@ -18,7 +19,8 @@ export class TaskHelperService {
     private readonly sysLogService: SyslogService,
     private readonly socketGateway: SocketGateway,
     private readonly postgresProvider: PostgresProvider,
-    @Inject(ACCOUNT_REPOSITORY) private readonly accountRepository: typeof Account
+    @Inject(ACCOUNT_REPOSITORY) private readonly accountRepository: typeof Account,
+    @Inject(PRODUCT_VARIANT_REPOSITORY) private readonly productVariantRepository: typeof ProductVariant,
   ) {}
 
   async unfreezeAccount(tenantId: string, payload: AccountUnfreezePayload) {
@@ -48,24 +50,47 @@ export class TaskHelperService {
     const transaction = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema(tenantId, transaction);
+
+      // Fetch akun terkini untuk mendapatkan password & variant_name yang up-to-date
+      // (payload di task queue mungkin stale jika varian berubah setelah task didaftarkan)
       const account = await this.accountRepository.findOne({
-        include: [{
-          model: Email,
-          as: 'email',
-          where: { email: payload.email },
-          required: true,
-        }],
+        include: [
+          {
+            model: Email,
+            as: 'email',
+            where: { email: payload.email },
+            required: true,
+          },
+          {
+            model: ProductVariant,
+            as: 'product_variant',
+          },
+        ],
         transaction,
       });
+
       if (!account) {
         throw new NotFoundException(`Account with email: ${payload.email} not found`);
       }
       await transaction.commit();
 
+      // Enrich payload dengan data terkini dari DB
+      const enrichedPayload: NetflixResetPasswordPayload = {
+        ...payload,
+        password: account.account_password,
+        variant_name: account.product_variant?.name || payload.variant_name,
+        subscription_expiry: account.subscription_expiry?.toISOString() || payload.subscription_expiry,
+      };
+
+      this.logger.log(
+        `[NetflixReset] Dispatch task ${taskId} | email: ${payload.email} | variant: ${enrichedPayload.variant_name} | was: ${payload.variant_name}`,
+        'TaskHelperService',
+      );
+
       const clientId = await this.socketGateway.dispatchTask(taskId, tenantId, {
         module: 'netflix',
         type: 'resetPassword',
-        payload,
+        payload: enrichedPayload,
       });
 
       if (clientId) {

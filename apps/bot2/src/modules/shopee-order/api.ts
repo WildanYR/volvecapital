@@ -8,6 +8,43 @@ import type { AuthCredentials } from '../../core/auth.js';
 import { authHeaders } from '../../core/auth.js';
 
 /**
+ * Default fallback template jika VOUCHER_COPY_TEMPLATE belum dikonfigurasi di dashboard
+ */
+export const DEFAULT_VOUCHER_COPY_TEMPLATE = `Terima kasih telah melakukan pembelian di toko kami. Berikut adalah detail voucher Anda:
+
+Produk       : $$product
+Kode Voucher : $$voucher
+Batas Klaim  : $$batasklaim
+Link redeem  : $$linkredeem
+
+KALO LINK GABISA DI KLIK COPY AJA TERUS PASTE KE WEB
+
+Cara Redeem Voucher:
+1. Klik link redeem di atas.
+2. Kode voucher akan terisi otomatis.
+3. Klik "Cek Sekarang", lalu klik "Aktivasi Voucher".
+4. Jika berhasil, detail akun akan muncul seketika.`;
+
+/**
+ * Fetch VOUCHER_COPY_TEMPLATE dari settings API dashboard
+ * Mengembalikan template string atau null jika tidak ditemukan
+ */
+export async function fetchVoucherCopyTemplate(
+  apiBaseUrl: string,
+  credentials: AuthCredentials,
+): Promise<string | null> {
+  try {
+    const headers = authHeaders(credentials);
+    const res = await fetch(`${apiBaseUrl}/setting`, { headers });
+    if (!res.ok) return null;
+    const data = (await res.json()) as Record<string, string>;
+    return data['VOUCHER_COPY_TEMPLATE'] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Check product names against platform products
  */
 export async function checkProductNames(

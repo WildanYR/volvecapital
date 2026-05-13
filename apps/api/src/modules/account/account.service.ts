@@ -485,7 +485,8 @@ export class AccountService {
       if (
         account
         && (accountUpdateData.batch_end_date
-          || accountUpdateData.subscription_expiry)
+          || accountUpdateData.subscription_expiry
+          || accountUpdateData.product_variant_id) // Re-register jika varian berubah agar variant_name di payload selalu terkini
       ) {
         await this.registerAutomaticTasks(
           tenantId,

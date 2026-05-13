@@ -28,6 +28,8 @@ import {
   generateAccountTransaction,
   generateVoucherTransaction,
   copyAccountTemplate,
+  fetchVoucherCopyTemplate,
+  DEFAULT_VOUCHER_COPY_TEMPLATE,
 } from "./api.js";
 
 // Locators
@@ -83,6 +85,7 @@ const MAX_RETRY_ATTEMPT = 3;
 export class ShopeeOrderModule extends BaseModule {
   private moduleConfig: ShopeeOrderConfig;
   private loopPage: Page | null = null;
+  private voucherCopyTemplate: string = DEFAULT_VOUCHER_COPY_TEMPLATE;
 
   constructor(
     deps: ModuleDependencies,
@@ -112,6 +115,17 @@ export class ShopeeOrderModule extends BaseModule {
 
   async init(): Promise<void> {
     this.setRunning(true);
+    // Ambil VOUCHER_COPY_TEMPLATE dari dashboard settings saat pertama kali init
+    const fetchedTemplate = await fetchVoucherCopyTemplate(
+      this.apiBaseUrl,
+      this.authCredentials,
+    );
+    if (fetchedTemplate) {
+      this.voucherCopyTemplate = fetchedTemplate;
+      this.logger.info("Voucher copy template berhasil dimuat dari dashboard settings");
+    } else {
+      this.logger.info("VOUCHER_COPY_TEMPLATE tidak ditemukan di settings, menggunakan template default");
+    }
     this.logger.info("ShopeeOrderModule initialized");
   }
 
@@ -194,6 +208,16 @@ export class ShopeeOrderModule extends BaseModule {
         for (const id of orderIds) {
           this.addNewOrder(id);
         }
+      }
+
+      // Refresh voucher copy template secara berkala dari dashboard settings
+      const latestTemplate = await fetchVoucherCopyTemplate(
+        this.apiBaseUrl,
+        this.authCredentials,
+      );
+      if (latestTemplate && latestTemplate !== this.voucherCopyTemplate) {
+        this.voucherCopyTemplate = latestTemplate;
+        this.logger.info("Voucher copy template diperbarui dari dashboard settings");
       }
 
       // Claim queued orders before enqueueing so the same orderId is only scheduled once.
@@ -844,23 +868,18 @@ export class ShopeeOrderModule extends BaseModule {
       month: "long",
       year: "numeric",
     });
-    
+
     // Gunakan tenantId dari authCredentials agar seragam untuk semua toko
     const tenantSubdomain = this.authCredentials.tenantId;
     const redeemUrl = `${tenantSubdomain}.digitalpremium.id/redeem?code=${voucher.id}`;
 
-    return `Terima kasih telah melakukan pembelian di toko kami. Berikut adalah detail voucher Anda:
-
-Produk : ${productName}
-Kode Voucher : ${voucher.id}
-Batas Klaim : ${expiryDate}
-Link redeem : ${redeemUrl}
-
-Cara Redeem Voucher:
-1. Klik link redeem di atas.
-2. Kode voucher akan terisi otomatis.
-3. Klik "Cek Sekarang", lalu klik "Aktivasi Voucher".
-4. Jika berhasil, detail akun akan muncul seketika.`;
+    // Gunakan template dari dashboard settings (VOUCHER_COPY_TEMPLATE)
+    // Placeholder: $$product, $$voucher, $$batasklaim, $$linkredeem
+    return this.voucherCopyTemplate
+      .replace(/\$\$product/g, productName)
+      .replace(/\$\$voucher/g, voucher.id)
+      .replace(/\$\$batasklaim/g, expiryDate)
+      .replace(/\$\$linkredeem/g, redeemUrl);
   }
 
   // Database helpers
