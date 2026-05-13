@@ -267,10 +267,15 @@ export class AccountUserService {
               ) THEN 1
               ELSE 2
             END ASC,
-            -- 2. Prioritas Expiry (Smart Expiry) - H-1, H-2 didahulukan
-            cs.subscription_expiry ASC,
-            -- 3. FIFO Anti-Spam (Siapa yang lebih lama stand-by/ready)
+            -- 2. Smart Expiry Priority - H-1, H-2 didahulukan
+            CASE
+              WHEN cs.subscription_expiry <= n.current_time + INTERVAL '2 days' THEN 1
+              ELSE 2
+            END ASC,
+            -- 3. FIFO Anti-Spam (Siapa yang lebih lama stand-by/ready/enabled)
             cs.account_updated_at ASC,
+            -- 4. Expiry Secondary (Tie-breaker)
+            cs.subscription_expiry ASC,
             -- 4. Jika semua sama, prioritaskan profile yang sudah mulai terisi (opsional, tetap dipertahankan)
             CASE
               WHEN cs.current_user_count > 0 THEN 0
