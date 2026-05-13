@@ -483,9 +483,26 @@ export class NetflixModule extends BaseModule {
         this.logger.info(`[${email}] Menunggu OTP dari email...`);
         
         try {
-            const eventData = await this.waitForTaskEvent<any>(task.id, otpEventName);
-            const otpCode = eventData.data;
-            this.logger.info(`[${email}] Mendapatkan OTP: ${otpCode}. Memasukkan kode...`);
+            this.logger.info(`[${email}] Menunggu OTP dari email (Filter: Verification Code)...`);
+            
+            let otpCode = '';
+            // Kita tunggu sampai mendapatkan subject yang benar (Whitelist)
+            while (!otpCode) {
+                const eventData = await this.waitForTaskEvent<any>(task.id, otpEventName);
+                const subject = (eventData.subject || "").toLowerCase();
+                
+                this.logger.info(`[${email}] Menerima email untuk OTP dengan subject: "${eventData.subject}"`);
+
+                if (subject.includes("your verification code") || subject.includes("kode verifikasimu")) {
+                    otpCode = eventData.data;
+                    this.logger.info(`[${email}] OTP VALID ditemukan: ${otpCode}. Memasukkan kode...`);
+                } else if (subject.includes("kode masukmu") || subject.includes("login code")) {
+                    this.logger.warn(`[${email}] Subject "${eventData.subject}" diabaikan (Email Login Link). Menunggu email OTP Verifikasi yang benar...`);
+                    // Loop berlanjut, waitForTaskEvent akan menunggu event socket berikutnya
+                } else {
+                    this.logger.warn(`[${email}] Subject "${eventData.subject}" tidak sesuai kriteria. Menunggu email OTP...`);
+                }
+            }
             
             // 4. Input OTP
             const otpInput = getOtpInput(page);
@@ -664,7 +681,7 @@ export class NetflixModule extends BaseModule {
    * Menghasilkan password acak (lowercase + angka) sepanjang N karakter
    */
   private generateRandomPassword(length: number): string {
-    const letters = 'abcdefghijklmnopqrstuvwxyz';
+    const letters = 'abcdefghjkmnpqrstuvwxyz';
     const numbers = '0123456789';
     let result = '';
     
