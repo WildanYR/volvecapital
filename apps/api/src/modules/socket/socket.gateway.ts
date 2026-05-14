@@ -323,6 +323,44 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect, 
     }
   }
 
+  @SubscribeMessage('bot-tv-pin-error')
+  handleBotTvPinError(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { taskId: string; message: string }
+  ) {
+    const conn = this.connections.get(client.id);
+    if (!conn || conn.type !== 'BOT')
+      return;
+
+    for (const c of this.connections.values()) {
+      if (c.tenant_id === conn.tenant_id && c.type === 'DASHBOARD') {
+        c.socket.emit('event', {
+          eventName: 'bot-tv-pin-error',
+          payload: { taskId: data.taskId, message: data.message },
+        });
+      }
+    }
+  }
+
+  @SubscribeMessage('bot-tv-login-success')
+  handleBotTvLoginSuccess(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { taskId: string; accountId: string }
+  ) {
+    const conn = this.connections.get(client.id);
+    if (!conn || conn.type !== 'BOT')
+      return;
+
+    for (const c of this.connections.values()) {
+      if (c.tenant_id === conn.tenant_id && c.type === 'DASHBOARD') {
+        c.socket.emit('event', {
+          eventName: 'bot-tv-login-success',
+          payload: { taskId: data.taskId, accountId: data.accountId },
+        });
+      }
+    }
+  }
+
   @SubscribeMessage('dashboard-send-tv-pin')
   handleDashboardSendTvPin(
     @ConnectedSocket() client: Socket,

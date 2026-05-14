@@ -19,9 +19,10 @@ interface TvPinModalProps {
   isSending: boolean
   email?: string
   errorMessage?: string | null
+  isBotReady?: boolean
 }
 
-export function TvPinModal({ isOpen, onClose, onSendPin, isSending, email, errorMessage }: TvPinModalProps) {
+export function TvPinModal({ isOpen, onClose, onSendPin, isSending, email, errorMessage, isBotReady = true }: TvPinModalProps) {
   const [pin, setPin] = useState('')
   const [shouldShake, setShouldShake] = useState(false)
 
@@ -78,33 +79,43 @@ export function TvPinModal({ isOpen, onClose, onSendPin, isSending, email, error
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4 py-2">
-          <div className="grid gap-2">
-            <Label htmlFor="pin" className="sr-only">8 Digit PIN</Label>
-            <Input
-              id="pin"
-              placeholder="00000000"
-              value={pin}
-              onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 8))}
-              className={`text-center text-2xl tracking-[0.5em] font-mono h-14 ${errorMessage ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
-              autoFocus
-              autoComplete="off"
-            />
-            <p className="text-[10px] text-muted-foreground text-center">
-              Pastikan PIN sudah benar sebelum mengirim.
-            </p>
-          </div>
-          <DialogFooter>
-            <Button
-              type="submit"
-              disabled={pin.length !== 8 || isSending}
-              className="w-full bg-red-600 hover:bg-red-700 text-white gap-2 h-11"
-            >
-              {isSending ? <Loader2 className="animate-spin size-4" /> : <Send className="size-4" />}
-              Kirim PIN
-            </Button>
-          </DialogFooter>
-        </form>
+        {!isBotReady ? (
+           <div className="flex flex-col items-center justify-center py-10 gap-4">
+             <Loader2 className="size-12 animate-spin text-red-600" />
+             <div className="text-center space-y-1">
+               <p className="font-bold text-lg">Bot Sedang Menyiapkan...</p>
+               <p className="text-sm text-muted-foreground">Bot sedang membuka halaman Netflix TV.<br/>Mohon tunggu sebentar.</p>
+             </div>
+           </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4 py-2">
+            <div className="grid gap-2">
+              <Label htmlFor="pin" className="sr-only">8 Digit PIN</Label>
+              <Input
+                id="pin"
+                placeholder="00000000"
+                value={pin}
+                onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 8))}
+                className={`text-center text-2xl tracking-[0.5em] font-mono h-14 ${errorMessage ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                autoFocus
+                autoComplete="off"
+              />
+              <p className="text-[10px] text-muted-foreground text-center">
+                Pastikan PIN sudah benar sebelum mengirim.
+              </p>
+            </div>
+            <DialogFooter>
+              <Button
+                type="submit"
+                disabled={pin.length !== 8 || isSending}
+                className="w-full bg-red-600 hover:bg-red-700 text-white gap-2 h-11"
+              >
+                {isSending ? <Loader2 className="animate-spin size-4" /> : <Send className="size-4" />}
+                Kirim PIN
+              </Button>
+            </DialogFooter>
+          </form>
+        )}
       </DialogContent>
     </Dialog>
   )

@@ -1049,7 +1049,7 @@ export class AccountService {
       };
 
       const task: UpsertTaskQueueDto = {
-        execute_at: new Date(),
+        execute_at: new Date(Date.now() - 60000), // Prioritas tinggi (1 menit yang lalu)
         subject_id: account.id,
         context: NETFLIX_LOGIN_TV,
         payload: JSON.stringify(payload),
@@ -1267,7 +1267,7 @@ export class AccountService {
             }
 
             tasks.push({
-              execute_at: new Date(),
+              execute_at: action === 'login_tv' ? new Date(Date.now() - 60000) : new Date(),
               subject_id: account.id,
               context: taskType,
               payload: JSON.stringify(payload),

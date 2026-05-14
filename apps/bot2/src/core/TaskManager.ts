@@ -669,4 +669,11 @@ export class TaskManager {
             registeredModules: Array.from(this.modules.keys()),
         };
     }
+
+    /**
+     * Get running task by id
+     */
+    getRunningTask(taskId: string): Task | undefined {
+        return this.runningTasks.get(taskId);
+    }
 }

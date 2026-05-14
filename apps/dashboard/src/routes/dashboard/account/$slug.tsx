@@ -228,8 +228,24 @@ function RouteComponent() {
     }
 
     socket.on('event', handleSocketEvent)
+    
+    // New listener for success
+    const handleSuccessEvent = (data: { eventName: string, payload: any }) => {
+      if (data.eventName === 'bot-tv-login-success') {
+        const { accountId } = data.payload
+        setTvPinModalOpen(false)
+        setCurrentTvTask(null)
+        toast.success(`Login TV Berhasil untuk akun: ${accountId}`, {
+           duration: 10000,
+           description: 'Bot telah memfinalisasi sesi Netflix TV.'
+        })
+      }
+    }
+    socket.on('event', handleSuccessEvent)
+
     return () => {
       socket.off('event', handleSocketEvent)
+      socket.off('event', handleSuccessEvent)
     }
   }, [socket, currentTvTask])
 
@@ -843,11 +859,18 @@ function RouteComponent() {
   })
 
   const triggerLoginTvMutation = useMutation({
-    mutationFn: (accountId: string) => accountService.triggerLoginTv(accountId),
+    mutationFn: (account: Account) => accountService.triggerLoginTv(account.id),
+    onMutate: (account) => {
+      setSelectedAccount(account)
+      setTvPinError(null)
+      setCurrentTvTask(null) // Reset task info, will be filled by socket
+      setTvPinModalOpen(true)
+    },
     onSuccess: () => {
-      toast.success('Tugas Login TV ditambahkan ke antrian. Silahkan tunggu PIN muncul di dashboard...')
+      toast.info('Tugas Login TV dikirim. Menunggu Bot menyiapkan halaman PIN...')
     },
     onError: (error) => {
+      setTvPinModalOpen(false)
       toast.error(`Gagal memicu Login TV: ${error.message}`)
     },
   })
@@ -1357,7 +1380,7 @@ function RouteComponent() {
                                 Upgrade Premium
                               </DropdownMenuItem>
                               <DropdownMenuItem
-                                onSelect={() => triggerLoginTvMutation.mutate(account.id)}
+                                onSelect={() => triggerLoginTvMutation.mutate(account)}
                                 className="text-blue-600 focus:text-blue-700 font-bold"
                               >
                                 <span>
@@ -1491,6 +1514,16 @@ function RouteComponent() {
                           {' '}
                           {`( ${account.profile.length || 0} )`}
                         </Button>
+                        
+                        <TvPinModal
+                          isOpen={tvPinModalOpen && selectedAccount?.id === account.id}
+                          onClose={() => setTvPinModalOpen(false)}
+                          onSendPin={handleSendTvPin}
+                          isSending={false} // logic ganti pin di handleSendTvPin
+                          email={selectedAccount?.email.email}
+                          errorMessage={tvPinError}
+                          isBotReady={!!currentTvTask}
+                        />
                       </CardContent>
                     </Card>
                   ))
