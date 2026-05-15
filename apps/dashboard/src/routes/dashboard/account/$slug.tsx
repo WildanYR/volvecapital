@@ -1096,7 +1096,7 @@ function RouteComponent() {
                       <p className="text-muted-foreground inline-flex items-center gap-1">
                         <Warehouse className="size-4" />
                         {' '}
-                        Akun Disable/ Freeze
+                        Akun Disable/ Freeze/ Banned
                       </p>
                       <p className="font-semibold text-2xl">
                         {countAccounts?.accounts_disabled_or_frozen}

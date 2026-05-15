@@ -760,7 +760,7 @@ export class AccountService {
                 COALESCE(uc.active_count, 0) as current_usage,
                 
                 -- Logic Akun Valid
-                (CASE WHEN a.status != 'disable' AND a.freeze_until IS NULL THEN 1 ELSE 0 END) as is_account_valid,
+                (CASE WHEN a.status NOT IN ('disable', 'banned') AND a.freeze_until IS NULL THEN 1 ELSE 0 END) as is_account_valid,
 
                 -- Logic Slot Kosong
                 (CASE WHEN COALESCE(uc.active_count, 0) < ap.max_user THEN 1 ELSE 0 END) as has_slot
