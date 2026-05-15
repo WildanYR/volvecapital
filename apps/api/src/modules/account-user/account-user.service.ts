@@ -235,11 +235,11 @@ export class AccountUserService {
               LEFT JOIN ${accountUserTable} AS au
                 ON ap.id = au.account_profile_id
                 AND au.status = 'active'
-            WHERE
-              a.product_variant_id = ?
-              AND ap.allow_generate = true
-              AND a.status != 'disable'
-              AND a.freeze_until IS NULL
+              WHERE
+                a.product_variant_id = ?
+                AND ap.allow_generate = true
+                AND a.status NOT IN ('disable', 'banned')
+                AND a.freeze_until IS NULL
             GROUP BY
               ap.id, pv.cooldown, ap.max_user, ap.account_id, a.subscription_expiry, a.updated_at
           )
