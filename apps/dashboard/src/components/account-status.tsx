@@ -43,6 +43,11 @@ export function AccountStatus({
       return { color: 'bg-red-500', text: 'Disable' }
     }
 
+    // Status Banned
+    if (account.status === 'banned') {
+      return { color: 'bg-[#ff00ff]', text: 'Banned' }
+    }
+
     // Prioritaskan pengecekan user count untuk status Aktif/Penuh
     if (userCount > 0) {
       if (userCount >= maxUser) {

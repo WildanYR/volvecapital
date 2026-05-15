@@ -90,9 +90,13 @@ export class AccountService {
           whereOptions.status = 'disable';
           whereOptions.freeze_until = null;
         }
+        else if (filter.status === 'banned') {
+          whereOptions.status = 'banned';
+          whereOptions.freeze_until = null;
+        }
         else if (filter.status === 'active') {
           whereOptions.freeze_until = null;
-          whereOptions.status = { [Op.ne]: 'disable' };
+          whereOptions.status = { [Op.notIn]: ['disable', 'banned'] };
           whereOptions.id = {
             [Op.in]: this.accountRepository.sequelize!.literal(`(
               SELECT DISTINCT account_id 
@@ -434,7 +438,7 @@ export class AccountService {
       accountUpdateData = {
         ...updateAccountDto,
       };
-      if (updateAccountDto.status && updateAccountDto.status !== 'active') {
+       if (updateAccountDto.status && updateAccountDto.status !== 'active' && updateAccountDto.status !== 'ready') {
         await this.accountUserRepository.update(
           { status: 'expired' },
           { where: { account_id: accountId, status: 'active' }, transaction },
@@ -486,12 +490,18 @@ export class AccountService {
         account
         && (accountUpdateData.batch_end_date
           || accountUpdateData.subscription_expiry
-          || accountUpdateData.product_variant_id) // Re-register jika varian berubah agar variant_name di payload selalu terkini
+          || accountUpdateData.product_variant_id
+          || (updateAccountDto.status === 'ready' || updateAccountDto.status === 'active'))
       ) {
         await this.registerAutomaticTasks(
           tenantId,
           account,
         );
+      }
+
+      // Handle task removal if disabled/frozen/banned
+      if (updateAccountDto.status === 'disable' || updateAccountDto.status === 'banned' || (updateAccountDto.status && updateAccountDto.status !== 'active' && updateAccountDto.status !== 'ready')) {
+        await this.taskQueueService.removeByAccount(tenantId, accountId, [NETFLIX_RESET_PASSWORD, SUBS_END_NOTIFY]);
       }
 
       return account;
@@ -703,11 +713,11 @@ export class AccountService {
         cteFilterSql += ` AND a.product_variant_id IN ${subquery}`;
       }
 
-      // 2. Query Akun Disable/Freeze (Output 4)
+      // 2. Query Akun Disable/Freeze/Banned (Output 4)
       const disabledResult = (await this.postgresProvider.rawQuery(
         `SELECT COUNT(*) as count 
      FROM account 
-     WHERE (status = 'disable' OR freeze_until IS NOT NULL)
+     WHERE (status = 'disable' OR status = 'banned' OR freeze_until IS NOT NULL)
      ${accountFilterSql}`,
         {
           type: QueryTypes.SELECT,
@@ -904,6 +914,10 @@ export class AccountService {
         throw new NotFoundException('Account not found');
       }
 
+      if (account.status === 'banned') {
+        throw new BadRequestException('Cannot trigger task for banned account');
+      }
+
       const payload: NetflixResetPasswordPayload = {
         id: Date.now().toString(),
         accountId: account.id,
@@ -951,6 +965,10 @@ export class AccountService {
         throw new NotFoundException('Account not found');
       }
 
+      if (account.status === 'banned') {
+        throw new BadRequestException('Cannot trigger task for banned account');
+      }
+
       const payload: NetflixAutoReloadPayload = {
         accountId: account.id,
         email: account.email.email,
@@ -996,6 +1014,10 @@ export class AccountService {
         throw new NotFoundException('Account not found');
       }
 
+      if (account.status === 'banned') {
+        throw new BadRequestException('Cannot trigger task for banned account');
+      }
+
       const payload = {
         accountId: account.id,
         email: account.email.email,
@@ -1039,6 +1061,10 @@ export class AccountService {
 
       if (!account) {
         throw new NotFoundException('Account not found');
+      }
+
+      if (account.status === 'banned') {
+        throw new BadRequestException('Cannot trigger task for banned account');
       }
 
       const payload = {
@@ -1141,7 +1167,7 @@ export class AccountService {
   async bulkAction(
     tenantId: string,
     ids: string[],
-    action: 'pin' | 'unpin' | 'freeze' | 'unfreeze' | 'delete' | 'clear' | 'reset_now' | 'auto_reload' | 'auto_upgrade' | 'login_tv' | 'enable' | 'disable'
+    action: 'pin' | 'unpin' | 'freeze' | 'unfreeze' | 'delete' | 'clear' | 'reset_now' | 'auto_reload' | 'auto_upgrade' | 'login_tv' | 'enable' | 'disable' | 'banned'
   ) {
     const transaction = await this.postgresProvider.transaction();
     try {
@@ -1157,6 +1183,12 @@ export class AccountService {
         case 'disable':
           await this.accountRepository.update(
             { status: 'disable' },
+            { where: { id: { [Op.in]: ids } }, transaction }
+          );
+          break;
+        case 'banned':
+          await this.accountRepository.update(
+            { status: 'banned' },
             { where: { id: { [Op.in]: ids } }, transaction }
           );
           break;
@@ -1216,7 +1248,10 @@ export class AccountService {
           // Trigger bot tasks for all selected IDs
           const tasks: UpsertTaskQueueDto[] = [];
           const accounts = await this.accountRepository.findAll({
-            where: { id: { [Op.in]: ids } },
+            where: { 
+              id: { [Op.in]: ids },
+              status: { [Op.ne]: 'banned' }
+            },
             include: [
               { model: Email, as: 'email' },
               { model: ProductVariant, as: 'product_variant' }
@@ -1282,6 +1317,30 @@ export class AccountService {
       }
 
       await transaction.commit();
+
+      // Post-bulk action cleanup/registration
+      if (action === 'disable' || action === 'freeze' || action === 'banned') {
+        for (const id of ids) {
+          await this.taskQueueService.removeByAccount(tenantId, id, [NETFLIX_RESET_PASSWORD, SUBS_END_NOTIFY]);
+        }
+      } else if (action === 'enable' || action === 'unfreeze') {
+        const accounts = await this.accountRepository.findAll({
+          where: { id: { [Op.in]: ids } },
+          include: [
+            { model: Email, as: 'email' },
+            {
+              model: ProductVariant,
+              as: 'product_variant',
+              include: [{ model: Product, as: 'product' }],
+            }
+          ],
+          transaction: null // transaction already committed
+        });
+        for (const account of accounts) {
+          await this.registerAutomaticTasks(tenantId, account);
+        }
+      }
+
       return { message: `Bulk ${action} completed for ${ids.length} accounts` };
     } catch (error) {
       await transaction.rollback();

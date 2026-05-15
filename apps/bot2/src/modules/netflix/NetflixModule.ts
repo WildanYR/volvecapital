@@ -1276,14 +1276,29 @@ export class NetflixModule extends BaseModule {
       await page.locator(TV_LOGIN_LOCATORS.SUBMIT_BUTTON).click();
       this.logger.info(`[LoginTV][${email}] PIN disubmit, menunggu verifikasi...`);
 
-      // 7. Tunggu hasil (Redirect ke success atau Error)
+      // 7. Tunggu hasil (Redirect ke success atau Error atau Re-login)
       try {
         await Promise.race([
           page.waitForURL(url => url.toString().includes('/tv/out/success'), { timeout: 30000 }),
           page.waitForSelector(TV_LOGIN_LOCATORS.ERROR_MESSAGE, { timeout: 30000 }),
+          page.waitForURL(url => url.toString().includes(LOGIN_PATH), { timeout: 30000 }),
         ]);
       } catch (e) {
         this.logger.warn(`[LoginTV][${email}] Timeout menunggu verifikasi PIN. Memeriksa URL saat ini...`);
+      }
+
+      // 8. Cek apakah disuruh login ulang setelah isi PIN
+      if (page.url().includes(LOGIN_PATH)) {
+        this.logger.info(`[LoginTV][${email}] Diminta login ulang setelah isi PIN, mencoba login manual...`);
+        const loginOk = await this.attemptManualLogin(page, email, password);
+        if (!loginOk) {
+          this.logger.warn(`[LoginTV][${email}] Login manual gagal, mencoba alur recovery session...`);
+          await this.handleSessionRecovery(page, task, email);
+        }
+        // Setelah login, balik ke tv2 dan ulangi isi PIN
+        await page.goto(TV_LOGIN_URL);
+        await this.sleep(3000);
+        return this.loginTvFlow(task); // Rekursif untuk mencoba lagi setelah login
       }
 
       if (page.url().includes('/tv/out/success')) {

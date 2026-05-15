@@ -54,6 +54,7 @@ import {
   Wallet,
   Warehouse,
   X,
+  Ban,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
@@ -1170,6 +1171,10 @@ function RouteComponent() {
                       <DropdownMenuItem onSelect={() => handleBulkActionClick('disable')}>
                         <X className="mr-2 h-4 w-4 text-red-600" />
                         Bulk Disable
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => handleBulkActionClick('banned')}>
+                        <Ban className="mr-2 h-4 w-4 text-[#ff00ff]" />
+                        Bulk Banned
                       </DropdownMenuItem>
                       <DropdownMenuItem onSelect={() => handleBulkActionClick('pin')}>
                         <Pin className="mr-2 h-4 w-4" />

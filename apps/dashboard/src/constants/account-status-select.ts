@@ -3,4 +3,5 @@ export const AccountStatusSelect = [
   { title: 'Disable', value: 'disable' },
   { title: 'Active', value: 'active' },
   { title: 'Freeze', value: 'freeze' },
+  { title: 'Banned', value: 'banned' },
 ]

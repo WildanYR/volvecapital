@@ -28,7 +28,7 @@ export const getUsePasswordInsteadItem = (page: Page): Locator =>
  * Halaman Password & Sign In
  */
 export const getPasswordInput = (page: Page): Locator => 
-    page.locator('[data-uia="password-input"]');
+    page.locator('[data-uia="password-input"], [data-uia="field-password"]');
 
 export const getSignInButton = (page: Page): Locator => 
     page.locator('[data-uia="sign-in-button"]');

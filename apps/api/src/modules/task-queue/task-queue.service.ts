@@ -180,8 +180,10 @@ export class TaskQueueService {
         transaction,
       });
 
-      if (!taskQueue.length)
-        throw new NotFoundException(`taskQueue tidak ditemukan`);
+      if (!taskQueue.length) {
+        await transaction.commit();
+        return;
+      }
 
       const taskQueueIds = taskQueue.map(t => t.id);
       await this.taskQueueRepository.destroy({
