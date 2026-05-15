@@ -192,11 +192,16 @@ export class AccountUserService {
       if (account_profile_id) {
         const accountProfile = await this.accountProfileRepository.findOne({
           where: { id: account_profile_id },
+          include: [{ model: Account, as: 'account' }],
           transaction,
         });
 
         if (!accountProfile) {
           throw new NotFoundException('Account Profile not found');
+        }
+
+        if (accountProfile.account.status === 'disable' || accountProfile.account.status === 'banned') {
+          throw new UnprocessableEntityException('Akun sedang dinonaktifkan/banned');
         }
 
         const userCount = await this.accountUserRepository.count({

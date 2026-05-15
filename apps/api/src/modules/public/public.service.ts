@@ -714,7 +714,7 @@ export class PublicService {
       const accounts = await this.accountRepository.findAll({
         where: {
           product_variant_id: voucher.product_variant_id,
-          status: { [Op.ne]: 'disable' },
+          status: { [Op.notIn]: ['disable', 'banned'] },
           subscription_expiry: { [Op.gt]: new Date() },
           freeze_until: null,
         },
@@ -842,7 +842,7 @@ export class PublicService {
           const accounts = await this.accountRepository.findAll({
             where: {
               product_variant_id: v.id,
-              status: { [Op.ne]: 'disable' },
+              status: { [Op.notIn]: ['disable', 'banned'] },
               subscription_expiry: { [Op.gt]: new Date() },
               freeze_until: null,
             },
