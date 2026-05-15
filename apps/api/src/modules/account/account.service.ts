@@ -438,10 +438,15 @@ export class AccountService {
       accountUpdateData = {
         ...updateAccountDto,
       };
-       if (updateAccountDto.status && updateAccountDto.status !== 'active' && updateAccountDto.status !== 'ready') {
-        await this.accountUserRepository.update(
-          { status: 'expired' },
-          { where: { account_id: accountId, status: 'active' }, transaction },
+       if (updateAccountDto.status && updateAccountDto.status !== 'active') {
+        // Raw SQL for robustness
+        await this.postgresProvider.rawQuery(
+          'UPDATE account_user SET status = \'expired\' WHERE account_id = :accountId AND status = \'active\'',
+          {
+            replacements: { accountId },
+            transaction,
+            type: QueryTypes.UPDATE,
+          },
         );
         accountUpdateData.batch_start_date = null;
         accountUpdateData.batch_end_date = null;
@@ -1179,17 +1184,41 @@ export class AccountService {
             { status: 'ready', freeze_until: null },
             { where: { id: { [Op.in]: ids } }, transaction }
           );
+          await this.postgresProvider.rawQuery(
+            'UPDATE account_user SET status = \'expired\' WHERE account_id IN (:ids) AND status = \'active\'',
+            {
+              replacements: { ids },
+              transaction,
+              type: QueryTypes.UPDATE,
+            },
+          );
           break;
         case 'disable':
           await this.accountRepository.update(
             { status: 'disable' },
             { where: { id: { [Op.in]: ids } }, transaction }
           );
+          await this.postgresProvider.rawQuery(
+            'UPDATE account_user SET status = \'expired\' WHERE account_id IN (:ids) AND status = \'active\'',
+            {
+              replacements: { ids },
+              transaction,
+              type: QueryTypes.UPDATE,
+            },
+          );
           break;
         case 'banned':
           await this.accountRepository.update(
             { status: 'banned' },
             { where: { id: { [Op.in]: ids } }, transaction }
+          );
+          await this.postgresProvider.rawQuery(
+            'UPDATE account_user SET status = \'expired\' WHERE account_id IN (:ids) AND status = \'active\'',
+            {
+              replacements: { ids },
+              transaction,
+              type: QueryTypes.UPDATE,
+            },
           );
           break;
         case 'pin':
@@ -1210,6 +1239,14 @@ export class AccountService {
           await this.accountRepository.update(
             { status: 'freeze', freeze_until: freezeUntil },
             { where: { id: { [Op.in]: ids } }, transaction }
+          );
+          await this.postgresProvider.rawQuery(
+            'UPDATE account_user SET status = \'expired\' WHERE account_id IN (:ids) AND status = \'active\'',
+            {
+              replacements: { ids },
+              transaction,
+              type: QueryTypes.UPDATE,
+            },
           );
           break;
         case 'unfreeze':

@@ -17,7 +17,7 @@ export function AccountStatus({
     const { maxUser, userCount } = account.profile.reduce(
       (acc, profile) => {
         acc.maxUser += profile.max_user
-        acc.userCount += profile.user?.length || 0
+        acc.userCount += profile.user?.filter(u => u.status === 'active').length || 0
         return acc
       },
       { maxUser: 0, userCount: 0 },

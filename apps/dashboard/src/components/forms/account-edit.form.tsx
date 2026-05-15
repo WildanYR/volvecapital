@@ -29,13 +29,18 @@ export function AccountEditForm({
   submitButtonText?: string
   productSlug?: string
 }) {
+  const userCount = initialData?.profile?.reduce(
+    (acc, p) => acc + (p.user?.filter(u => u.status === 'active').length || 0),
+    0
+  ) || 0
+
   const form = useAppForm({
     validators: { onSubmit: AccountEditFormSchema },
     defaultValues: {
       email_id: initialData?.email_id || '',
       account_password: initialData?.account_password || '',
       subscription_expiry: initialData?.subscription_expiry || undefined,
-      status: initialData?.status || '',
+      status: (userCount > 0 && (initialData?.status === 'ready' || initialData?.status === 'active')) ? 'active' : (initialData?.status || ''),
       billing: initialData?.billing || '',
       label: initialData?.label || '',
       product_variant_id: initialData?.product_variant_id || '',
