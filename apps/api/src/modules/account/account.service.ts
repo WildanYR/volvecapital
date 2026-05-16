@@ -228,40 +228,82 @@ export class AccountService {
 
       const accounts = await this.accountRepository.findAll({
         where,
-        include,
+        include: [
+          ...include,
+          {
+            model: AccountProfile,
+            as: 'profile',
+            include: [{ 
+              model: AccountUser, 
+              as: 'user',
+              where: { status: 'active' },
+              required: false 
+            }],
+          }
+        ],
         transaction,
       });
 
       const stats = {
-        ready: 0,
-        active: 0,
-        disable: 0,
-        banned: 0,
-        freeze: 0,
+        accounts_with_slots: 0,
+        profiles_available: 0,
+        accounts_full: 0,
+        accounts_disabled_or_frozen: 0,
+        profiles_locked_but_has_slot: 0,
+        accounts_expiring_today: 0,
       };
 
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
       for (const acc of accounts) {
-        if (acc.freeze_until) {
-          stats.freeze++;
+        // Check disabled/frozen/banned
+        if (acc.status === 'disable' || acc.status === 'banned' || acc.freeze_until) {
+          stats.accounts_disabled_or_frozen++;
+          continue;
         }
-        else if (acc.status === 'disable') {
-          stats.disable++;
-        }
-        else if (acc.status === 'banned') {
-          stats.banned++;
-        }
-        else {
-          // Check if has active users
-          const activeUser = await this.accountUserRepository.findOne({
-            where: { account_id: acc.id, status: 'active' },
-            transaction,
-          });
-          if (activeUser) {
-            stats.active++;
+
+        // Check expiring today
+        if (acc.subscription_expiry) {
+          const expDate = new Date(acc.subscription_expiry);
+          if (expDate >= today && expDate < tomorrow) {
+            stats.accounts_expiring_today++;
           }
-          else {
-            stats.ready++;
+        }
+
+        let accountHasSlot = false;
+        let accountIsFull = true;
+
+        if (acc.profile && acc.profile.length > 0) {
+          for (const prof of acc.profile) {
+            const activeCount = prof.user?.length || 0;
+            const available = Math.max(0, prof.max_user - activeCount);
+
+            if (prof.allow_generate) {
+              if (available > 0) {
+                accountHasSlot = true;
+                stats.profiles_available += available;
+              }
+              if (available > 0) {
+                accountIsFull = false;
+              }
+            } else {
+              if (available > 0) {
+                stats.profiles_locked_but_has_slot++;
+              }
+            }
           }
+        } else {
+          // If no profiles, consider it full or not ready for generate
+          accountIsFull = true;
+        }
+
+        if (accountHasSlot) {
+          stats.accounts_with_slots++;
+        } else if (accountIsFull) {
+          stats.accounts_full++;
         }
       }
 
