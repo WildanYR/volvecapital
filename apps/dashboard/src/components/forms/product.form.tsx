@@ -41,6 +41,7 @@ function getInitialData(data?: Product): ProductFormSubmitData {
           tutorial_id: '__none__',
           low_stock_threshold: '5',
           strike_price: '',
+          reminder_before_hours: '',
           custom_fields: [],
         },
       ],
@@ -61,6 +62,7 @@ function getInitialData(data?: Product): ProductFormSubmitData {
       voucher_expiry_hours: v.voucher_expiry_hours?.toString() ?? '',
       low_stock_threshold: v.low_stock_threshold?.toString() ?? '5',
       strike_price: v.strike_price?.toString() ?? '',
+      reminder_before_hours: v.reminder_before_hours?.toString() ?? '',
       description: v.description ?? '',
       tutorial_id: v.tutorial_id ?? '__none__',
       show_email: v.redeem_display_config?.show_email ?? true,
@@ -127,6 +129,7 @@ export function ProductForm({
           show_buyer_portal: v.show_buyer_portal,
           low_stock_threshold: v.low_stock_threshold ? Number.parseInt(v.low_stock_threshold) : 5,
           strike_price: v.strike_price ? Number.parseInt(v.strike_price) : undefined,
+          reminder_before_hours: v.reminder_before_hours ? Number.parseInt(v.reminder_before_hours) : undefined,
           custom_fields: v.custom_fields,
         }
       })
@@ -284,6 +287,7 @@ export function ProductForm({
                       tutorial_id: '__none__',
                       low_stock_threshold: '5',
                       strike_price: '',
+                      reminder_before_hours: '',
                       custom_fields: [],
                     })}
                   className="w-full cursor-pointer"

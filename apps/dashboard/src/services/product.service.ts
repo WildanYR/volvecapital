@@ -49,6 +49,7 @@ export interface ProductVariant {
   redeem_display_config?: any
   low_stock_threshold?: number
   strike_price?: number
+  reminder_before_hours?: number
 }
 
 export interface Product {
@@ -81,6 +82,7 @@ export interface CreateProductVariantPayload {
   tutorial_id?: string
   low_stock_threshold?: number
   strike_price?: number
+  reminder_before_hours?: number
 }
 
 export interface CreateProductPayload {
@@ -102,6 +104,7 @@ export interface UpdateProductVariantPayload {
   tutorial_id?: string
   low_stock_threshold?: number
   strike_price?: number
+  reminder_before_hours?: number
 }
 
 export interface UpdateProductPayload {
