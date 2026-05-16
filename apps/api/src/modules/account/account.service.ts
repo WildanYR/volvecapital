@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Op, Order, QueryTypes, WhereOptions } from 'sequelize';
+import { Op, Order, QueryTypes, WhereOptions, Sequelize } from 'sequelize';
 import {
   ACCOUNT_REPOSITORY,
   ACCOUNT_PROFILE_REPOSITORY,
@@ -81,9 +81,49 @@ export class AccountService {
         = this.paginationProvider.generatePaginationQuery(pagination);
 
       const whereOptions: WhereOptions = {};
+      const variantInclude: any = {
+        model: ProductVariant,
+        as: 'product_variant',
+        include: [{ 
+          model: Product, 
+          as: 'product',
+          required: false,
+          where: undefined as any
+        }],
+        required: false,
+        where: undefined as any
+      };
+
       if (filter?.email_id) {
         whereOptions.email_id = filter.email_id;
       }
+      if (filter?.product_variant_id) {
+        whereOptions.product_variant_id = filter.product_variant_id;
+      }
+      
+      if (filter?.product_id) {
+        variantInclude.where = { product_id: filter.product_id };
+        variantInclude.required = true;
+      }
+      
+      if (filter?.product_slug) {
+        variantInclude.include[0].where = { slug: filter.product_slug };
+        variantInclude.include[0].required = true;
+        variantInclude.required = true;
+      }
+
+      if (filter?.billing) {
+        whereOptions.billing = { [Op.iLike]: `%${filter.billing}%` };
+      }
+
+      if (filter?.email) {
+        whereOptions['$email.email$'] = { [Op.iLike]: `%${filter.email}%` };
+      }
+
+      if (filter?.user) {
+        whereOptions['$profile.user.name$'] = { [Op.iLike]: `%${filter.user}%` };
+      }
+
       if (filter?.status) {
         if (filter.status === 'freeze') {
           whereOptions.freeze_until = { [Op.ne]: null };
@@ -100,24 +140,18 @@ export class AccountService {
           whereOptions.freeze_until = null;
           whereOptions.status = { [Op.notIn]: ['disable', 'banned'] };
           whereOptions.id = {
-            [Op.in]: [
-              this.postgresProvider.rawQuery(
-                `SELECT account_id FROM account_user WHERE status = 'active'`,
-                { type: QueryTypes.SELECT, transaction },
-              ),
-            ],
+            [Op.in]: Sequelize.literal(
+              '(SELECT account_id FROM account_user WHERE status = \'active\')',
+            ),
           };
         }
         else if (filter.status === 'ready') {
           whereOptions.freeze_until = null;
           whereOptions.status = { [Op.notIn]: ['disable', 'banned'] };
           whereOptions.id = {
-            [Op.notIn]: [
-              this.postgresProvider.rawQuery(
-                `SELECT account_id FROM account_user WHERE status = 'active'`,
-                { type: QueryTypes.SELECT, transaction },
-              ),
-            ],
+            [Op.notIn]: Sequelize.literal(
+              '(SELECT account_id FROM account_user WHERE status = \'active\')',
+            ),
           };
         }
       }
@@ -125,18 +159,16 @@ export class AccountService {
       const accounts = await this.accountRepository.findAndCountAll({
         where: whereOptions,
         order: [
+          ['pinned', 'DESC'],
           ...order,
           [{ model: AccountProfile, as: 'profile' }, 'name', 'ASC'],
         ],
         limit,
         offset,
+        distinct: true,
         include: [
           { model: Email, as: 'email' },
-          {
-            model: ProductVariant,
-            as: 'product_variant',
-            include: [{ model: Product, as: 'product' }],
-          },
+          variantInclude,
           {
             model: AccountProfile,
             as: 'profile',
