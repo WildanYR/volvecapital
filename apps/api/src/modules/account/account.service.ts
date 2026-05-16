@@ -160,6 +160,7 @@ export class AccountService {
         where: whereOptions,
         order: [
           ['pinned', 'DESC'],
+          ['updated_at', 'DESC'],
           ...order,
           [{ model: AccountProfile, as: 'profile' }, 'name', 'ASC'],
         ],
@@ -172,7 +173,12 @@ export class AccountService {
           {
             model: AccountProfile,
             as: 'profile',
-            include: [{ model: AccountUser, as: 'user' }],
+            include: [{ 
+              model: AccountUser, 
+              as: 'user',
+              where: { status: 'active' },
+              required: false 
+            }],
           },
         ],
         transaction,
@@ -208,7 +214,12 @@ export class AccountService {
           {
             model: AccountProfile,
             as: 'profile',
-            include: [{ model: AccountUser, as: 'user' }],
+            include: [{ 
+              model: AccountUser, 
+              as: 'user',
+              where: { status: 'active' },
+              required: false 
+            }],
           },
         ],
         transaction,
@@ -447,9 +458,9 @@ export class AccountService {
        if (updateAccountDto.status && updateAccountDto.status !== 'active') {
         // Raw SQL for robustness
         await this.postgresProvider.rawQuery(
-          'UPDATE account_user SET status = \'expired\' WHERE account_id = :accountId AND status = \'active\'',
+          'UPDATE account_user SET status = \'expired\', expired_at = :now WHERE account_id = :accountId AND status = \'active\'',
           {
-            replacements: { accountId },
+            replacements: { accountId, now: new Date() },
             transaction,
             type: QueryTypes.UPDATE,
           },
@@ -1105,9 +1116,9 @@ export class AccountService {
             { where: { id: { [Op.in]: ids } }, transaction }
           );
           await this.postgresProvider.rawQuery(
-            'UPDATE account_user SET status = \'expired\' WHERE account_id IN (:ids) AND status = \'active\'',
+            'UPDATE account_user SET status = \'expired\', expired_at = :now WHERE account_id IN (:ids) AND status = \'active\'',
             {
-              replacements: { ids },
+              replacements: { ids, now: new Date() },
               transaction,
               type: QueryTypes.UPDATE,
             },
@@ -1119,9 +1130,9 @@ export class AccountService {
             { where: { id: { [Op.in]: ids } }, transaction }
           );
           await this.postgresProvider.rawQuery(
-            'UPDATE account_user SET status = \'expired\' WHERE account_id IN (:ids) AND status = \'active\'',
+            'UPDATE account_user SET status = \'expired\', expired_at = :now WHERE account_id IN (:ids) AND status = \'active\'',
             {
-              replacements: { ids },
+              replacements: { ids, now: new Date() },
               transaction,
               type: QueryTypes.UPDATE,
             },
@@ -1133,9 +1144,9 @@ export class AccountService {
             { where: { id: { [Op.in]: ids } }, transaction }
           );
           await this.postgresProvider.rawQuery(
-            'UPDATE account_user SET status = \'expired\' WHERE account_id IN (:ids) AND status = \'active\'',
+            'UPDATE account_user SET status = \'expired\', expired_at = :now WHERE account_id IN (:ids) AND status = \'active\'',
             {
-              replacements: { ids },
+              replacements: { ids, now: new Date() },
               transaction,
               type: QueryTypes.UPDATE,
             },
@@ -1182,11 +1193,15 @@ export class AccountService {
           });
           break;
         case 'clear':
-          // 1. Hapus semua user yang terhubung ke akun-akun ini
-          await this.accountUserRepository.destroy({
-            where: { account_id: { [Op.in]: ids } },
-            transaction
-          });
+          // 1. Expire semua user yang terhubung ke akun-akun ini
+          await this.postgresProvider.rawQuery(
+            'UPDATE account_user SET status = \'expired\', expired_at = :now WHERE account_id IN (:ids) AND status = \'active\'',
+            {
+              replacements: { ids, now: new Date() },
+              transaction,
+              type: QueryTypes.UPDATE,
+            },
+          );
           // 2. Kosongkan metadata di profil akun
           await this.accountProfileRepository.update(
             { metadata: JSON.stringify([]) },
