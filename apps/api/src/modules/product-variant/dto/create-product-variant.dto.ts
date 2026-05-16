@@ -51,4 +51,8 @@ export class CreateProductVariantDto {
 
   @IsOptional()
   redeem_display_config?: any;
+
+  @IsOptional()
+  @IsNumber()
+  reminder_before_hours?: number;
 }

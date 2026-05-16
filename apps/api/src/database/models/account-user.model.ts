@@ -30,6 +30,7 @@ export interface AccountUserAttributes {
   created_at: Date;
   updated_at: Date;
   expired_at?: Date;
+  is_reminder_sent?: boolean;
 }
 
 interface AccountUserCreationAttributes
@@ -81,4 +82,7 @@ export class AccountUser extends Model<
 
   @HasOne(() => TransactionItem)
   declare transaction_item?: TransactionItem;
+
+  @Column({ type: DataType.BOOLEAN, defaultValue: false })
+  declare is_reminder_sent: boolean;
 }

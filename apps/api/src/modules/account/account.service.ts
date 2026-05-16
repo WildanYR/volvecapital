@@ -116,13 +116,8 @@ export class AccountService {
         whereOptions.billing = { [Op.iLike]: `%${filter.billing}%` };
       }
 
-      if (filter?.email) {
-        whereOptions['$email.email$'] = { [Op.iLike]: `%${filter.email}%` };
-      }
+      // Email and User search will be handled within the include blocks to ensure correct joining
 
-      if (filter?.user) {
-        whereOptions['$profile.user.name$'] = { [Op.iLike]: `%${filter.user}%` };
-      }
 
       if (filter?.status) {
         if (filter.status === 'freeze') {
@@ -156,28 +151,51 @@ export class AccountService {
         }
       }
 
+      // Process order: handle nested models if necessary (e.g. email.email)
+      const finalOrder: any[] = [['pinned', 'DESC']];
+      
+      if (order && order.length > 0) {
+        for (const o of order) {
+          const [col, dir] = o as [string, string];
+          if (col.includes('.')) {
+            const parts = col.split('.');
+            if (parts[0] === 'email') {
+              finalOrder.push([{ model: Email, as: 'email' }, parts[1], dir]);
+            }
+            // Add other nested sorts here if needed
+          } else {
+            finalOrder.push([col, dir]);
+          }
+        }
+      }
+
+      // Add default secondary sorts
+      finalOrder.push(['updated_at', 'DESC']);
+      finalOrder.push([{ model: AccountProfile, as: 'profile' }, 'name', 'ASC']);
+
       const accounts = await this.accountRepository.findAndCountAll({
         where: whereOptions,
-        order: [
-          ['pinned', 'DESC'],
-          ['updated_at', 'DESC'],
-          ...order,
-          [{ model: AccountProfile, as: 'profile' }, 'name', 'ASC'],
-        ],
+        order: finalOrder,
         limit,
         offset,
         distinct: true,
         include: [
-          { model: Email, as: 'email' },
+          { 
+            model: Email, 
+            as: 'email',
+            where: filter?.email ? { email: { [Op.iLike]: `%${filter.email}%` } } : undefined,
+            required: !!filter?.email 
+          },
           variantInclude,
           {
             model: AccountProfile,
             as: 'profile',
+            required: !!filter?.user,
             include: [{ 
               model: AccountUser, 
               as: 'user',
-              where: { status: 'active' },
-              required: false 
+              where: filter?.user ? { name: { [Op.iLike]: `%${filter.user}%` } } : { status: 'active' },
+              required: !!filter?.user
             }],
           },
         ],

@@ -40,6 +40,7 @@ export interface ProductVariantAttributes {
   tutorial?: TutorialAttributes;
   low_stock_threshold?: number;
   strike_price?: number;
+  reminder_before_hours?: number;
 }
 
 interface ProductVariantCreationAttributes
@@ -122,4 +123,7 @@ export class ProductVariant extends Model<
   
   @Column(DataType.INTEGER)
   declare strike_price?: number;
+
+  @Column(DataType.INTEGER)
+  declare reminder_before_hours?: number;
 }

@@ -4,6 +4,7 @@ import { EmailParser } from './email-parser.provider';
 import { PaginationProvider } from './pagination.provider';
 import { SnowflakeIdProvider } from './snowflake-id.provider';
 import { TokenProvider } from './token.provider';
+import { MailService } from './mail.service';
 
 @Module({
   providers: [
@@ -12,6 +13,7 @@ import { TokenProvider } from './token.provider';
     TokenProvider,
     DateConverterProvider,
     EmailParser,
+    MailService,
   ],
   exports: [
     PaginationProvider,
@@ -19,6 +21,7 @@ import { TokenProvider } from './token.provider';
     TokenProvider,
     DateConverterProvider,
     EmailParser,
+    MailService,
   ],
 })
 export class UtilityModule {}

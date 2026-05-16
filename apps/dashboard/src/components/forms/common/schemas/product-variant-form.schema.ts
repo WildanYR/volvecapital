@@ -26,4 +26,5 @@ export const ProductVariantFormSchema = z.object({
   })).default([]),
   tutorial_id: z.string().optional().default('__none__'),
   strike_price: z.string().optional().default('').refine(v => !v || (!Number.isNaN(Number(v)) && Number(v) >= 0), 'Harus berupa angka positif'),
+  reminder_before_hours: z.string().default('').refine(v => !v || (!Number.isNaN(Number(v)) && Number(v) >= 0), 'Harus berupa angka positif'),
 })

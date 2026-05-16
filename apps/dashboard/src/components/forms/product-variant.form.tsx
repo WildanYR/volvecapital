@@ -55,6 +55,7 @@ export function ProductVariantForm({
       tutorial_id: initialData?.tutorial_id ?? '',
       low_stock_threshold: initialData?.low_stock_threshold?.toString() ?? '5',
       strike_price: initialData?.strike_price?.toString() ?? '',
+      reminder_before_hours: initialData?.reminder_before_hours?.toString() ?? '',
     },
     onSubmit: ({ value }) => {
       const duration = convertTimeUnit(
@@ -94,6 +95,7 @@ export function ProductVariantForm({
         tutorial_id: (value.tutorial_id && value.tutorial_id !== '__none__') ? value.tutorial_id : undefined,
         low_stock_threshold: value.low_stock_threshold?.trim() ? Number.parseInt(value.low_stock_threshold) : 5,
         strike_price: value.strike_price?.trim() ? Number.parseInt(value.strike_price) : undefined,
+        reminder_before_hours: value.reminder_before_hours?.trim() ? Number.parseInt(value.reminder_before_hours) : undefined,
       } as any
       
       onSubmit(payload)
@@ -167,6 +169,16 @@ export function ProductVariantForm({
                 label="Batas Peringatan Stok Habis"
                 type="number"
                 placeholder="contoh: 3 (notifikasi muncul jika stok <= angka ini)"
+              />
+            )}
+          />
+          <form.AppField
+            name="reminder_before_hours"
+            children={field => (
+              <field.TextField
+                label="Email Reminder (Jam Sebelum Expired)"
+                type="number"
+                placeholder="contoh: 1 untuk harian, 24 untuk bulanan (kosongkan jika tidak perlu)"
               />
             )}
           />
