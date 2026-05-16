@@ -254,6 +254,88 @@ function RouteComponent() {
     performCopy()
   }
 
+  const handleFollowUpWA = (voucher: any) => {
+    if (!voucher || !voucher.buyer_whatsapp) {
+      toast.error('Nomor WhatsApp tidak ditemukan')
+      return
+    }
+
+    // 1. Format Phone Number (Clean non-digits and change leading 0 to 62)
+    let phone = voucher.buyer_whatsapp.replace(/\D/g, '')
+    if (phone.startsWith('0')) {
+      phone = '62' + phone.substring(1)
+    }
+
+    // 2. Get Product Name
+    let productName = `${voucher.product_variant?.product?.name || ''} - ${voucher.product_variant?.name || ''}`.trim()
+    
+    // Fallback if empty
+    if ((!productName || productName === '-') && productsData) {
+      const variantId = voucher.product_variant_id || formData.product_variant_id
+      for (const p of productsData.items) {
+        const v = p.variants.find((v: any) => v.id === variantId)
+        if (v) {
+          productName = `${p.name} - ${v.name}`
+          break
+        }
+      }
+    }
+    
+    // 3. Get Other Data
+    const voucherCode = voucher.id
+    const expiryDate = formatDate(voucher.expired_at)
+    const linkRedeem = getLinkRedeem(voucherCode)
+
+    // 3. Parse Template (Use copyTemplate from state)
+    const message = copyTemplate
+      .replace(/\$\$product/g, productName)
+      .replace(/\$\$voucher/g, voucherCode)
+      .replace(/\$\$batasklaim/g, expiryDate)
+      .replace(/\$\$linkredeem/g, linkRedeem)
+
+    // 4. Encode & Open WhatsApp
+    const encodedMessage = encodeURIComponent(message)
+    const waUrl = `https://wa.me/${phone}?text=${encodedMessage}`
+    
+    window.open(waUrl, '_blank')
+  }
+
+  const handleFollowUpPendingWA = (voucher: any) => {
+    if (!voucher || !voucher.buyer_whatsapp) {
+      toast.error('Nomor WhatsApp tidak ditemukan')
+      return
+    }
+
+    // 1. Format Phone
+    let phone = voucher.buyer_whatsapp.replace(/\D/g, '')
+    if (phone.startsWith('0')) {
+      phone = '62' + phone.substring(1)
+    }
+
+    // 2. Get Product Name
+    let productName = `${voucher.product_variant?.product?.name || ''} - ${voucher.product_variant?.name || ''}`.trim()
+    
+    // Fallback if empty
+    if ((!productName || productName === '-') && productsData) {
+      const variantId = voucher.product_variant_id || formData.product_variant_id
+      for (const p of productsData.items) {
+        const v = p.variants.find((v: any) => v.id === variantId)
+        if (v) {
+          productName = `${p.name} - ${v.name}`
+          break
+        }
+      }
+    }
+
+    const voucherCode = voucher.id
+
+    const message = `Halo Kak\n\nPesanan Kakak untuk ${productName} masih belum berhasil diproses karena pembayaran belum diselesaikan.\n\nSegera selesaikan pembayaran ya kak, agar voucher ${voucherCode} bisa diaktifkan\n\nTerima kasih.`
+    const encodedMessage = encodeURIComponent(message)
+    const waUrl = `https://wa.me/${phone}?text=${encodedMessage}`
+    
+    window.open(waUrl, '_blank')
+  }
+
   const formatDate = (date: string | null | undefined) => {
     if (!date) return '-'
     return new Date(date).toLocaleString('id-ID', {
@@ -709,6 +791,9 @@ function RouteComponent() {
                           <Ticket className="size-5 text-primary" />
                           Detail Voucher: {v.id}
                         </DialogTitle>
+                        <DialogDescription className="sr-only">
+                          Informasi lengkap mengenai voucher {v.id}
+                        </DialogDescription>
                       </DialogHeader>
                       
                       <div className="space-y-6 pt-4">
@@ -786,13 +871,37 @@ function RouteComponent() {
                                 <p className="text-sm font-bold">{v.buyer_email}</p>
                               </div>
                             </div>
-                            <div className="flex items-center gap-3">
-                              <div className="p-2 rounded-lg bg-background border border-border">
-                                <Phone className="size-4 text-primary" />
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="p-2 rounded-lg bg-background border border-border">
+                                  <Phone className="size-4 text-primary" />
+                                </div>
+                                <div>
+                                  <p className="text-[10px] text-muted-foreground font-bold uppercase">WhatsApp</p>
+                                  <p className="text-sm font-bold">{v.buyer_whatsapp}</p>
+                                </div>
                               </div>
-                              <div>
-                                <p className="text-[10px] text-muted-foreground font-bold uppercase">WhatsApp</p>
-                                <p className="text-sm font-bold">{v.buyer_whatsapp}</p>
+                              <div className="flex gap-2">
+                                {v.status === 'PENDING' && (
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline" 
+                                    className="h-8 gap-2 text-[10px] border-yellow-500/50 text-yellow-600 hover:bg-yellow-50 hover:text-yellow-700 font-bold"
+                                    onClick={() => handleFollowUpPendingWA(v)}
+                                  >
+                                    <Phone className="size-3" />
+                                    FU Pending
+                                  </Button>
+                                )}
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  className="h-8 gap-2 text-[10px] border-green-500/50 text-green-600 hover:bg-green-50 hover:text-green-700 font-bold"
+                                  onClick={() => handleFollowUpWA(v)}
+                                >
+                                  <Phone className="size-3" />
+                                  Follow Up
+                                </Button>
                               </div>
                             </div>
                           </div>
