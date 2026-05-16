@@ -43,6 +43,7 @@ import { UpdateAccountDto } from './dto/update-account.dto';
 import { IAccountGetFilter } from './filter/account-get.filter';
 import { NetflixResetPasswordMetadata } from './types/netflix-reset-password-metadata.type';
 import { SubsEndNotifyMetadata } from './types/subs-end-notify-metadata.type';
+import { AppLoggerService } from '../logger/logger.service';
 
 @Injectable()
 export class AccountService {
@@ -64,6 +65,7 @@ export class AccountService {
     private readonly accountCapitalRepository: typeof AccountCapital,
     @Inject(PRODUCT_VARIANT_REPOSITORY)
     private readonly productVariantRepository: typeof ProductVariant,
+    private readonly logger: AppLoggerService,
   ) {}
 
   async findAll(
@@ -98,173 +100,56 @@ export class AccountService {
           whereOptions.freeze_until = null;
           whereOptions.status = { [Op.notIn]: ['disable', 'banned'] };
           whereOptions.id = {
-            [Op.in]: this.accountRepository.sequelize!.literal(`(
-              SELECT DISTINCT account_id 
-              FROM account_user 
-              WHERE status = 'active'
-            )`),
+            [Op.in]: [
+              this.postgresProvider.rawQuery(
+                `SELECT account_id FROM account_user WHERE status = 'active'`,
+                { type: QueryTypes.SELECT, transaction },
+              ),
+            ],
           };
         }
         else if (filter.status === 'ready') {
-          whereOptions.status = { [Op.in]: ['ready', 'active'] };
           whereOptions.freeze_until = null;
+          whereOptions.status = { [Op.notIn]: ['disable', 'banned'] };
           whereOptions.id = {
-            [Op.notIn]: this.accountRepository.sequelize!.literal(`(
-              SELECT DISTINCT account_id 
-              FROM account_user 
-              WHERE status = 'active'
-            )`),
+            [Op.notIn]: [
+              this.postgresProvider.rawQuery(
+                `SELECT account_id FROM account_user WHERE status = 'active'`,
+                { type: QueryTypes.SELECT, transaction },
+              ),
+            ],
           };
         }
-        else {
-          whereOptions.status = filter.status;
-        }
-      }
-      if (filter?.billing) {
-        whereOptions.billing = { [Op.iLike]: `%${filter.billing}%` };
       }
 
-      const orderOptions: Order = order?.length
-        ? order.map((o) => {
-            if (o[0] === 'id') {
-              return ['updated_at', 'DESC'];
-            }
-            if (typeof o[0] === 'string' && o[0].includes('.')) {
-              const [table, attribute] = o[0].split('.');
-              if (table === 'email') {
-                return [{ model: Email, as: 'email' }, attribute, o[1]];
-              }
-            }
-            return o;
-          })
-        : [];
-
-      const includeOptions = [
-        {
-          model: Email,
-          as: 'email',
-          where: filter?.email
-            ? { email: { [Op.iLike]: `%${filter.email}%` } }
-            : undefined,
-        },
-        {
-          model: ProductVariant,
-          as: 'product_variant',
-          where: {
-            ...(filter?.product_variant_id && { id: filter.product_variant_id }),
-            ...(filter?.product_id && { product_id: filter.product_id }),
-          },
-          include: [
-            {
-              model: Product,
-              as: 'product',
-              where: {
-                ...(filter?.product_slug && { slug: filter.product_slug }),
-              },
-              required: !!filter?.product_slug,
-            },
-          ],
-          required: !!filter?.product_variant_id || !!filter?.product_id || !!filter?.product_slug,
-        },
-        {
-          model: AccountProfile,
-          as: 'profile',
-          required: !!filter?.user,
-          include: [
-            {
-              model: AccountUser,
-              as: 'user',
-              where: {
-                status: 'active',
-                ...(filter?.user && {
-                  name: { [Op.iLike]: `%${filter.user}%` },
-                }),
-              },
-              required: !!filter?.user,
-            },
-          ],
-        },
-      ];
-
-      const accounts = await this.accountRepository.findAll({
+      const accounts = await this.accountRepository.findAndCountAll({
         where: whereOptions,
         order: [
-          ['pinned', 'DESC'],
-          ...orderOptions,
+          ...order,
           [{ model: AccountProfile, as: 'profile' }, 'name', 'ASC'],
         ],
         limit,
         offset,
-        include: includeOptions,
+        include: [
+          { model: Email, as: 'email' },
+          {
+            model: ProductVariant,
+            as: 'product_variant',
+            include: [{ model: Product, as: 'product' }],
+          },
+          {
+            model: AccountProfile,
+            as: 'profile',
+            include: [{ model: AccountUser, as: 'user' }],
+          },
+        ],
         transaction,
-      });
-      const accountCount = await this.accountRepository.count({
-        where: whereOptions,
-        include: includeOptions,
-        distinct: true,
-        transaction,
-      });
-
-      const accountIds = accounts.map(a => a.id);
-      let revenues: any[] = [];
-      if (accountIds.length > 0) {
-        revenues = await this.postgresProvider.rawQuery(`
-          SELECT 
-            au.account_id,
-            COALESCE(SUM(t.total_price), 0)::INT as total_revenue
-          FROM account_user au
-          JOIN transaction_item ti ON ti.account_user_id = au.id
-          JOIN transaction t ON t.id = ti.transaction_id
-          WHERE au.account_id IN (:accountIds)
-          GROUP BY au.account_id
-        `, {
-          replacements: { accountIds },
-          type: QueryTypes.SELECT,
-          transaction,
-        });
-      }
-
-      // Fetch Capital Summaries
-      let capitals: any[] = [];
-      if (accountIds.length > 0) {
-        capitals = await this.postgresProvider.rawQuery(`
-          SELECT 
-            account_id,
-            COALESCE(SUM(amount), 0)::INT as total_capital
-          FROM account_capital
-          WHERE account_id IN (:accountIds)
-          GROUP BY account_id
-        `, {
-          replacements: { accountIds },
-          type: QueryTypes.SELECT,
-          transaction,
-        });
-      }
-
-      const accountsWithStats = accounts.map((account) => {
-        const revenueData = revenues.find(r => r.account_id === account.id);
-        const capitalData = capitals.find(c => c.account_id === account.id);
-        
-        const totalRevenue = revenueData ? revenueData.total_revenue : 0;
-        const totalCapital = account.capital_price + (capitalData ? capitalData.total_capital : 0);
-        
-        const profit = totalRevenue - totalCapital;
-        const roi = totalCapital > 0 ? (profit / totalCapital) * 100 : 0;
-
-        return {
-          ...account.get({ plain: true }),
-          total_revenue: totalRevenue,
-          total_capital: totalCapital,
-          profit,
-          roi: Number(roi.toFixed(2)),
-        };
       });
 
       await transaction.commit();
-
       return this.paginationProvider.generatePaginationResponse(
-        accountsWithStats,
-        accountCount,
+        accounts.rows,
+        accounts.count,
         pagination,
       );
     }
@@ -293,7 +178,6 @@ export class AccountService {
             as: 'profile',
             include: [{ model: AccountUser, as: 'user' }],
           },
-
         ],
         transaction,
       });
@@ -304,44 +188,85 @@ export class AccountService {
         );
       }
 
-      const [revenueResult]: any = await this.postgresProvider.rawQuery(`
-        SELECT 
-          COALESCE(SUM(t.total_price), 0)::INT as total_revenue
-        FROM account_user au
-        JOIN transaction_item ti ON ti.account_user_id = au.id
-        JOIN transaction t ON t.id = ti.transaction_id
-        WHERE au.account_id = :accountId
-      `, {
-        replacements: { accountId },
-        type: QueryTypes.SELECT,
+      await transaction.commit();
+      return account;
+    }
+    catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
+
+  async countStatusAccount(
+    tenantId: string,
+    filter: { product_variant_id?: string; product_id?: string; product_slug?: string },
+  ) {
+    const transaction = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema(tenantId, transaction);
+
+      const where: any = {};
+      if (filter.product_variant_id) {
+        where.product_variant_id = filter.product_variant_id;
+      }
+
+      const include: any[] = [];
+      if (filter.product_id || filter.product_slug) {
+        const variantWhere: any = {};
+        if (filter.product_id) variantWhere.product_id = filter.product_id;
+        
+        const productInclude: any = { model: Product, as: 'product' };
+        if (filter.product_slug) productInclude.where = { slug: filter.product_slug };
+
+        include.push({
+          model: ProductVariant,
+          as: 'product_variant',
+          where: variantWhere,
+          include: [productInclude],
+        });
+      }
+
+      const accounts = await this.accountRepository.findAll({
+        where,
+        include,
         transaction,
       });
 
-      const [capitalResult]: any = await this.postgresProvider.rawQuery(`
-        SELECT 
-          COALESCE(SUM(amount), 0)::INT as total_capital
-        FROM account_capital
-        WHERE account_id = :accountId
-      `, {
-        replacements: { accountId },
-        type: QueryTypes.SELECT,
-        transaction,
-      });
+      const stats = {
+        ready: 0,
+        active: 0,
+        disable: 0,
+        banned: 0,
+        freeze: 0,
+      };
 
-      const totalRevenue = revenueResult ? (revenueResult as any).total_revenue : 0;
-      const totalCapital = account.capital_price + (capitalResult ? (capitalResult as any).total_capital : 0);
-      const profit = totalRevenue - totalCapital;
-      const roi = totalCapital > 0 ? (profit / totalCapital) * 100 : 0;
+      for (const acc of accounts) {
+        if (acc.freeze_until) {
+          stats.freeze++;
+        }
+        else if (acc.status === 'disable') {
+          stats.disable++;
+        }
+        else if (acc.status === 'banned') {
+          stats.banned++;
+        }
+        else {
+          // Check if has active users
+          const activeUser = await this.accountUserRepository.findOne({
+            where: { account_id: acc.id, status: 'active' },
+            transaction,
+          });
+          if (activeUser) {
+            stats.active++;
+          }
+          else {
+            stats.ready++;
+          }
+        }
+      }
 
       await transaction.commit();
-
-      return {
-        ...account.get({ plain: true }),
-        total_revenue: totalRevenue,
-        total_capital: totalCapital,
-        profit,
-        roi: Number(roi.toFixed(2)),
-      };
+      return stats;
     }
     catch (error) {
       await transaction.rollback();
@@ -371,6 +296,12 @@ export class AccountService {
         );
       }
 
+      if (accountData.status === 'freeze') {
+        const freezeUntil = new Date();
+        freezeUntil.setDate(freezeUntil.getDate() + 7);
+        (accountData as any).freeze_until = freezeUntil;
+      }
+
       const newAccount = await this.accountRepository.create(accountData, {
         transaction,
       });
@@ -382,6 +313,8 @@ export class AccountService {
       await this.accountProfileRepository.bulkCreate(profileData, {
         transaction,
       });
+
+      await transaction.commit();
 
       account = await this.accountRepository.findOne({
         where: { id: newAccount.id },
@@ -398,13 +331,12 @@ export class AccountService {
             include: [{ model: AccountUser, as: 'user' }],
           },
         ],
-        transaction,
       });
-
-      await transaction.commit();
       
       if (account) {
-        await this.registerAutomaticTasks(tenantId, account);
+        this.registerAutomaticTasks(tenantId, account).catch(err => {
+          this.logger.error(`Failed to register automatic tasks for account ${account?.id}: ${err.message}`);
+        });
       }
       return account;
     }
@@ -452,6 +384,17 @@ export class AccountService {
         accountUpdateData.batch_end_date = null;
       }
 
+      if (updateAccountDto.status === 'freeze') {
+        if (!account.freeze_until) {
+          const freezeUntil = new Date();
+          freezeUntil.setDate(freezeUntil.getDate() + 7);
+          (accountUpdateData as any).freeze_until = freezeUntil;
+        }
+      }
+      else if (updateAccountDto.status && updateAccountDto.status !== 'freeze') {
+        (accountUpdateData as any).freeze_until = null;
+      }
+
       if (updateAccountDto.switch_to_harian) {
         const currentAccount = await this.accountRepository.findOne({
           where: { id: accountId },
@@ -476,6 +419,9 @@ export class AccountService {
 
       await account.update(accountUpdateData, { transaction });
 
+      await transaction.commit();
+
+      // Refetch account with includes OUTSIDE transaction for task registration and response
       account = await this.accountRepository.findOne({
         where: { id: accountId },
         include: [
@@ -486,10 +432,7 @@ export class AccountService {
             include: [{ model: Product, as: 'product' }],
           },
         ],
-        transaction,
       });
-
-      await transaction.commit();
 
       if (
         account
@@ -498,15 +441,23 @@ export class AccountService {
           || accountUpdateData.product_variant_id
           || (updateAccountDto.status === 'ready' || updateAccountDto.status === 'active'))
       ) {
-        await this.registerAutomaticTasks(
+        this.registerAutomaticTasks(
           tenantId,
           account,
-        );
+        ).catch(err => {
+          this.logger.error(`Failed to register automatic tasks for account ${accountId}: ${err.message}`);
+        });
       }
 
-      // Handle task removal if disabled/frozen/banned
-      if (updateAccountDto.status === 'disable' || updateAccountDto.status === 'banned' || (updateAccountDto.status && updateAccountDto.status !== 'active' && updateAccountDto.status !== 'ready')) {
-        await this.taskQueueService.removeByAccount(tenantId, accountId, [NETFLIX_RESET_PASSWORD, SUBS_END_NOTIFY]);
+      // Handle task removal if disabled/frozen/banned or ready (cleared) in background
+      if (updateAccountDto.status && updateAccountDto.status !== 'active') {
+        const contexts = [NETFLIX_RESET_PASSWORD, SUBS_END_NOTIFY];
+        if (updateAccountDto.status !== 'freeze') {
+          contexts.push(UNFREEZE_ACCOUNT);
+        }
+        this.taskQueueService.removeByAccount(tenantId, accountId, contexts).catch(err => {
+          this.logger.error(`Failed to remove tasks for account ${accountId}: ${err.message}`);
+        });
       }
 
       return account;
@@ -534,19 +485,142 @@ export class AccountService {
       }
 
       await account.destroy({ transaction });
-
       await transaction.commit();
+
+      // Cleanup tasks in background
+      this.taskQueueService.removeByAccount(tenantId, accountId, [NETFLIX_RESET_PASSWORD, SUBS_END_NOTIFY, UNFREEZE_ACCOUNT]).catch(err => {
+        this.logger.error(`Failed to cleanup tasks for deleted account ${accountId}: ${err.message}`);
+      });
+
     }
     catch (error) {
       await transaction.rollback();
       throw error;
     }
+  }
 
-    await this.taskQueueService.removeByAccount(
-      tenantId,
-      accountId,
-      [NETFLIX_RESET_PASSWORD, SUBS_END_NOTIFY],
-    );
+  async freezeAccount(tenantId: string, accountId: string, freezeAccountDto: FreezeAccountDto) {
+    const transaction = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema(tenantId, transaction);
+
+      const account = await this.accountRepository.findOne({
+        where: { id: accountId },
+        transaction,
+      });
+
+      if (!account) {
+        throw new NotFoundException(
+          `account dengan id: ${accountId} tidak ditemukan`,
+        );
+      }
+
+      // Calculate freeze_until from duration (days)
+      const freezeUntil = new Date();
+      freezeUntil.setDate(freezeUntil.getDate() + (freezeAccountDto.duration || 7));
+
+      // 1. Expire users
+      await this.postgresProvider.rawQuery(
+        'UPDATE account_user SET status = \'expired\' WHERE account_id = :accountId AND status = \'active\'',
+        {
+          replacements: { accountId },
+          transaction,
+          type: QueryTypes.UPDATE,
+        },
+      );
+
+      // 2. Set freeze until & status
+      await account.update(
+        {
+          status: 'freeze',
+          freeze_until: freezeUntil,
+          batch_start_date: null,
+          batch_end_date: null,
+        },
+        { transaction },
+      );
+
+      await transaction.commit();
+
+      // Register unfreeze task in background
+      const payload: any = { accountId };
+      this.taskQueueService.upsert([{
+        execute_at: freezeUntil,
+        subject_id: accountId,
+        context: UNFREEZE_ACCOUNT,
+        payload: JSON.stringify(payload),
+        status: 'QUEUED',
+        tenant_id: tenantId,
+      }]).catch(err => {
+        this.logger.error(`Failed to register unfreeze task for account ${accountId}: ${err.message}`);
+      });
+
+      // Cleanup existing automation tasks
+      this.taskQueueService.removeByAccount(tenantId, accountId, [NETFLIX_RESET_PASSWORD, SUBS_END_NOTIFY]).catch(err => {
+        this.logger.error(`Failed to cleanup automation tasks for frozen account ${accountId}: ${err.message}`);
+      });
+
+      return account;
+    }
+    catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
+
+  async clearFreezeAccount(tenantId: string, accountId: string) {
+    const transaction = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema(tenantId, transaction);
+
+      const account = await this.accountRepository.findOne({
+        where: { id: accountId },
+        transaction,
+      });
+
+      if (!account) {
+        throw new NotFoundException(
+          `account dengan id: ${accountId} tidak ditemukan`,
+        );
+      }
+
+      await account.update(
+        { status: 'ready', freeze_until: null, batch_start_date: null, batch_end_date: null },
+        { transaction },
+      );
+
+      await transaction.commit();
+
+      // Refetch for task registration
+      const updatedAccount = await this.accountRepository.findOne({
+        where: { id: accountId },
+        include: [
+          { model: Email, as: 'email' },
+          {
+            model: ProductVariant,
+            as: 'product_variant',
+            include: [{ model: Product, as: 'product' }],
+          },
+        ],
+      });
+
+      if (updatedAccount) {
+        this.registerAutomaticTasks(tenantId, updatedAccount).catch(err => {
+          this.logger.error(`Failed to register automatic tasks for unfrozen account ${accountId}: ${err.message}`);
+        });
+      }
+
+      // Cleanup unfreeze task
+      this.taskQueueService.removeByAccount(tenantId, accountId, [UNFREEZE_ACCOUNT]).catch(err => {
+        this.logger.error(`Failed to remove unfreeze task for account ${accountId}: ${err.message}`);
+      });
+
+      return updatedAccount;
+    }
+    catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
   }
 
   async registerAutomaticTasks(
@@ -629,278 +703,6 @@ export class AccountService {
     ]);
   }
 
-  async freezeAccount(
-    tenantId: string,
-    accountId: string,
-    freezeAccountDto: FreezeAccountDto,
-  ) {
-    const transaction = await this.postgresProvider.transaction();
-    try {
-      await this.postgresProvider.setSchema(tenantId, transaction);
-      const account = await this.accountRepository.findOne({
-        where: { id: accountId },
-        transaction,
-      });
-      if (!account) {
-        throw new NotFoundException('account not found');
-      }
-      const dateMs = Date.now() + freezeAccountDto.duration;
-      const freezeUntil = new Date(dateMs);
-      await account.update({ freeze_until: freezeUntil }, { transaction });
-      await this.taskQueueService.upsert([
-        {
-          context: UNFREEZE_ACCOUNT,
-          execute_at: freezeUntil,
-          subject_id: account.id,
-          tenant_id: tenantId,
-          status: 'QUEUED',
-          payload: JSON.stringify({ accountId: account.id }),
-        },
-      ]);
-      await transaction.commit();
-      return account;
-    }
-    catch (error) {
-      await transaction.rollback();
-      throw error;
-    }
-  }
-
-  async clearFreezeAccount(tenantId: string, accountId: string) {
-    const transaction = await this.postgresProvider.transaction();
-    try {
-      await this.postgresProvider.setSchema(tenantId, transaction);
-      const account = await this.accountRepository.findOne({
-        where: { id: accountId },
-        transaction,
-      });
-      if (!account) {
-        throw new NotFoundException('account not found');
-      }
-      await account.update({ freeze_until: null }, { transaction });
-      await this.taskQueueService.removeByAccount(tenantId, accountId, [
-        UNFREEZE_ACCOUNT,
-      ]);
-      await transaction.commit();
-    }
-    catch (error) {
-      await transaction.rollback();
-      throw error;
-    }
-  }
-
-  async countStatusAccount(tenantId: string, filter?: { product_variant_id?: string, product_id?: string, product_slug?: string }) {
-    const transaction = await this.postgresProvider.transaction();
-    try {
-      await this.postgresProvider.setSchema(tenantId, transaction);
-
-      // 1. Setup Dynamic Filter
-      const replacements: any = {};
-      let accountFilterSql = '';
-      let cteFilterSql = '';
-
-      if (filter?.product_variant_id) {
-        replacements.variantId = filter.product_variant_id;
-        accountFilterSql += ' AND product_variant_id = :variantId';
-        cteFilterSql += ' AND a.product_variant_id = :variantId';
-      }
-
-      if (filter?.product_id) {
-        replacements.productId = filter.product_id;
-        accountFilterSql += ' AND product_variant_id IN (SELECT id FROM product_variant WHERE product_id = :productId)';
-        cteFilterSql += ' AND a.product_variant_id IN (SELECT id FROM product_variant WHERE product_id = :productId)';
-      }
-
-      if (filter?.product_slug) {
-        replacements.productSlug = filter.product_slug;
-        const subquery = '(SELECT id FROM product_variant WHERE product_id = (SELECT id FROM product WHERE slug = :productSlug))';
-        accountFilterSql += ` AND product_variant_id IN ${subquery}`;
-        cteFilterSql += ` AND a.product_variant_id IN ${subquery}`;
-      }
-
-      // 2. Query Akun Disable/Freeze/Banned (Output 4)
-      const disabledResult = (await this.postgresProvider.rawQuery(
-        `SELECT COUNT(*) as count 
-     FROM account 
-     WHERE (status = 'disable' OR status = 'banned' OR freeze_until IS NOT NULL)
-     ${accountFilterSql}`,
-        {
-          type: QueryTypes.SELECT,
-          replacements,
-          plain: true,
-          transaction,
-        },
-      )) as unknown as { count: string };
-
-      const expiringResult = (await this.postgresProvider.rawQuery(
-        `SELECT COUNT(*) as count 
-     FROM account 
-     WHERE (batch_end_date AT TIME ZONE 'Asia/Jakarta')::date = (NOW() AT TIME ZONE 'Asia/Jakarta')::date
-     ${accountFilterSql}`,
-        {
-          type: QueryTypes.SELECT,
-          replacements,
-          plain: true,
-          transaction,
-        },
-      )) as unknown as { count: string };
-
-      // 3. Query Utama (Output 1, 2, 3, 5)
-      const slotStats = (await this.postgresProvider.rawQuery(
-        `
-        WITH 
-        user_counts AS (
-            SELECT account_profile_id, COUNT(*) as active_count
-            FROM account_user
-            WHERE status = 'active'
-            GROUP BY account_profile_id
-        ),
-        
-        profile_calc AS (
-            SELECT 
-                ap.id AS profile_id,
-                ap.account_id,
-                ap.allow_generate,
-                ap.max_user,
-                COALESCE(uc.active_count, 0) as current_usage,
-                
-                -- Logic Akun Valid
-                (CASE WHEN a.status NOT IN ('disable', 'banned') AND a.freeze_until IS NULL THEN 1 ELSE 0 END) as is_account_valid,
-
-                -- Logic Slot Kosong
-                (CASE WHEN COALESCE(uc.active_count, 0) < ap.max_user THEN 1 ELSE 0 END) as has_slot
-            FROM account_profile ap
-            JOIN account a ON a.id = ap.account_id
-            LEFT JOIN user_counts uc ON uc.account_profile_id = ap.id
-            WHERE 1=1 ${cteFilterSql} -- Inject filter variant disini (efisien: filter sebelum grouping)
-        ),
-
-        account_agg AS (
-            SELECT 
-                account_id,
-                COUNT(CASE WHEN allow_generate = true AND has_slot = 1 THEN 1 END) as available_gen_profiles,
-                COUNT(CASE WHEN allow_generate = true THEN 1 END) as total_gen_profiles
-            FROM profile_calc
-            WHERE is_account_valid = 1 
-            GROUP BY account_id
-        )
-
-        SELECT 
-            -- Output 3
-            (SELECT COUNT(*) FROM profile_calc 
-            WHERE is_account_valid = 1 AND allow_generate = true AND has_slot = 1
-            )::int as profiles_available,
-
-            -- Output 5
-            (SELECT COUNT(*) FROM profile_calc 
-            WHERE is_account_valid = 1 AND allow_generate = false AND has_slot = 1
-            )::int as profiles_locked,
-
-            -- Output 1
-            COUNT(CASE WHEN available_gen_profiles > 0 THEN 1 END)::int as accounts_providing_slots,
-
-            -- Output 2
-            COUNT(CASE WHEN total_gen_profiles > 0 AND available_gen_profiles = 0 THEN 1 END)::int as accounts_full
-
-        FROM account_agg;
-        `,
-        {
-          type: QueryTypes.SELECT,
-          plain: true,
-          replacements,
-          transaction,
-        },
-      )) as unknown as {
-        accounts_providing_slots: number;
-        accounts_full: number;
-        profiles_available: number;
-        profiles_locked: number;
-      };
-
-      await transaction.commit();
-      return {
-        accounts_with_slots: slotStats?.accounts_providing_slots || 0,
-        accounts_full: slotStats?.accounts_full || 0,
-        profiles_available: slotStats?.profiles_available || 0,
-        accounts_disabled_or_frozen: Number.parseInt(disabledResult?.count || '0', 10),
-        profiles_locked_but_has_slot: slotStats?.profiles_locked || 0,
-        accounts_expiring_today: Number.parseInt(expiringResult?.count || '0', 10),
-      };
-    }
-    catch (error) {
-      await transaction.rollback();
-      throw error;
-    }
-  }
-
-  async addCapital(tenantId: string, accountId: string, data: { amount: number; note?: string }) {
-    const transaction = await this.postgresProvider.transaction();
-    try {
-      await this.postgresProvider.setSchema(tenantId, transaction);
-
-      const account = await this.accountRepository.findByPk(accountId, { transaction });
-      if (!account) {
-        throw new NotFoundException(`Account dengan id: ${accountId} tidak ditemukan`);
-      }
-
-      const capital = await this.accountCapitalRepository.create(
-        {
-          account_id: accountId,
-          amount: data.amount,
-          note: data.note,
-        } as any,
-        { transaction },
-      );
-
-      await transaction.commit();
-      return capital;
-    } catch (error) {
-      await transaction.rollback();
-      throw error;
-    }
-  }
-
-  async getFinancialDetails(tenantId: string, accountId: string) {
-    const transaction = await this.postgresProvider.transaction();
-    try {
-      await this.postgresProvider.setSchema(tenantId, transaction);
-
-      // 1. Fetch Capitals
-      const capitals = await this.accountCapitalRepository.findAll({
-        where: { account_id: accountId },
-        order: [['created_at', 'DESC']],
-        transaction,
-      });
-
-      // 2. Fetch Revenue Details
-      const revenues = await this.postgresProvider.rawQuery(`
-        SELECT 
-          t.id as transaction_id,
-          t.total_price as amount,
-          t.created_at as date,
-          au.name as user_name
-        FROM account_user au
-        JOIN transaction_item ti ON ti.account_user_id = au.id
-        JOIN transaction t ON t.id = ti.transaction_id
-        WHERE au.account_id = :accountId
-        ORDER BY t.created_at DESC
-      `, {
-        replacements: { accountId },
-        type: QueryTypes.SELECT,
-        transaction,
-      });
-
-      await transaction.commit();
-      return {
-        capitals,
-        revenues,
-      };
-    } catch (error) {
-      await transaction.rollback();
-      throw error;
-    }
-  }
-
   async triggerReset(tenantId: string, accountId: string) {
     const transaction = await this.postgresProvider.transaction();
     try {
@@ -924,13 +726,13 @@ export class AccountService {
       }
 
       const payload: NetflixResetPasswordPayload = {
-        id: Date.now().toString(),
+        id: account.id,
         accountId: account.id,
-        email: account.email?.email || '',
+        email: account.email.email,
         password: account.account_password,
-        newPassword: '', // Biarkan Bot yang generate
-        subscription_expiry: account.subscription_expiry?.toISOString() || '',
-        variant_name: account.product_variant?.name || '',
+        newPassword: '',
+        subscription_expiry: account.subscription_expiry.toISOString(),
+        variant_name: account.product_variant.name,
       };
 
       const task: UpsertTaskQueueDto = {
@@ -945,7 +747,7 @@ export class AccountService {
       await this.taskQueueService.upsert([task]);
       await transaction.commit();
 
-      return { message: 'Reset task triggered successfully' };
+      return { message: 'Reset password task triggered successfully' };
     } catch (error) {
       await transaction.rollback();
       throw error;
@@ -978,7 +780,7 @@ export class AccountService {
         accountId: account.id,
         email: account.email.email,
         password: account.account_password,
-        billing: account.billing ?? '',
+        billing: account.billing || '',
         variant_name: account.product_variant.name,
       };
 
@@ -1023,7 +825,7 @@ export class AccountService {
         throw new BadRequestException('Cannot trigger task for banned account');
       }
 
-      const payload = {
+      const payload: any = {
         accountId: account.id,
         email: account.email.email,
         password: account.account_password,
@@ -1098,6 +900,70 @@ export class AccountService {
     }
   }
 
+  async getFinancialDetails(tenantId: string, accountId: string) {
+    const transaction = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema(tenantId, transaction);
+
+      const account = await this.accountRepository.findOne({
+        where: { id: accountId },
+        include: [
+          { model: AccountCapital, as: 'capitals' },
+        ],
+        transaction,
+      });
+
+      if (!account) {
+        throw new NotFoundException(`Account with ID ${accountId} not found`);
+      }
+
+      // Calculate totals
+      const totalCapital = account.dataValues.capitals?.reduce((acc, cap) => acc + Number(cap.amount), 0) || 0;
+      
+      // Get revenue from account_user
+      const revenueData = await this.postgresProvider.rawQuery(
+        `SELECT SUM(price) as total_revenue FROM account_user WHERE account_id = :accountId`,
+        {
+          replacements: { accountId },
+          type: QueryTypes.SELECT,
+          transaction,
+        }
+      );
+      const totalRevenue = Number((revenueData[0] as any).total_revenue) || 0;
+
+      await transaction.commit();
+      return {
+        total_capital: totalCapital,
+        total_revenue: totalRevenue,
+        profit: totalRevenue - totalCapital,
+        capital_history: account.dataValues.capitals || [],
+      };
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
+
+  async addCapital(tenantId: string, accountId: string, dto: any) {
+    const transaction = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema(tenantId, transaction);
+
+      const capital = await this.accountCapitalRepository.create({
+        account_id: accountId,
+        amount: dto.amount,
+        note: dto.description || 'Manual Add',
+        created_at: new Date(),
+      }, { transaction });
+
+      await transaction.commit();
+      return capital;
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
+
   registerPendingTopup(
     tenantId: string,
     accountId: string,
@@ -1130,37 +996,16 @@ export class AccountService {
       if (!tenantId) {
         return [];
       }
-
-      if (!this.pendingTopupStore) {
-        this.pendingTopupStore = new Map();
-        return [];
-      }
-
-      const results: { accountId: string; email: string; billing: string; taskId: string }[] = [];
-      const now = new Date();
-      const entries = Array.from(this.pendingTopupStore.entries());
-
-      for (const [key, val] of entries) {
-        if (val.tenantId !== tenantId) continue;
-
-        const age = now.getTime() - val.createdAt.getTime();
-        if (age > 15 * 60 * 1000) {
-          this.pendingTopupStore.delete(key);
-          continue;
+      const results: any[] = [];
+      for (const [key, val] of this.pendingTopupStore.entries()) {
+        if (key.startsWith(`${tenantId}:`)) {
+          results.push(val);
         }
-
-        results.push({
-          accountId: val.accountId,
-          email: val.email,
-          billing: val.billing,
-          taskId: val.taskId,
-        });
       }
-
       return results;
-    } catch (error) {
-      console.error('[AccountService] Error in getPendingTopups:', error);
-      return []; // Return empty instead of crashing
+    }
+    catch (error) {
+      return [];
     }
   }
 
@@ -1172,16 +1017,17 @@ export class AccountService {
   async bulkAction(
     tenantId: string,
     ids: string[],
-    action: 'pin' | 'unpin' | 'freeze' | 'unfreeze' | 'delete' | 'clear' | 'reset_now' | 'auto_reload' | 'auto_upgrade' | 'login_tv' | 'enable' | 'disable' | 'banned'
+    action: string,
   ) {
     const transaction = await this.postgresProvider.transaction();
+    let isCommitted = false;
     try {
       await this.postgresProvider.setSchema(tenantId, transaction);
 
       switch (action) {
         case 'enable':
           await this.accountRepository.update(
-            { status: 'ready', freeze_until: null },
+            { status: 'ready', freeze_until: null, batch_start_date: null, batch_end_date: null },
             { where: { id: { [Op.in]: ids } }, transaction }
           );
           await this.postgresProvider.rawQuery(
@@ -1195,7 +1041,7 @@ export class AccountService {
           break;
         case 'disable':
           await this.accountRepository.update(
-            { status: 'disable' },
+            { status: 'disable', batch_start_date: null, batch_end_date: null },
             { where: { id: { [Op.in]: ids } }, transaction }
           );
           await this.postgresProvider.rawQuery(
@@ -1209,7 +1055,7 @@ export class AccountService {
           break;
         case 'banned':
           await this.accountRepository.update(
-            { status: 'banned' },
+            { status: 'banned', batch_start_date: null, batch_end_date: null },
             { where: { id: { [Op.in]: ids } }, transaction }
           );
           await this.postgresProvider.rawQuery(
@@ -1237,7 +1083,7 @@ export class AccountService {
           const freezeUntil = new Date();
           freezeUntil.setDate(freezeUntil.getDate() + 7); // Default 7 hari
           await this.accountRepository.update(
-            { status: 'freeze', freeze_until: freezeUntil },
+            { status: 'freeze', freeze_until: freezeUntil, batch_start_date: null, batch_end_date: null },
             { where: { id: { [Op.in]: ids } }, transaction }
           );
           await this.postgresProvider.rawQuery(
@@ -1251,7 +1097,7 @@ export class AccountService {
           break;
         case 'unfreeze':
           await this.accountRepository.update(
-            { status: 'ready', freeze_until: null },
+            { status: 'ready', freeze_until: null, batch_start_date: null, batch_end_date: null },
             { where: { id: { [Op.in]: ids } }, transaction }
           );
           break;
@@ -1272,9 +1118,9 @@ export class AccountService {
             { metadata: JSON.stringify([]) },
             { where: { account_id: { [Op.in]: ids } }, transaction }
           );
-          // 3. Kembalikan status akun menjadi 'ready'
+          // 3. Kembalikan status akun menjadi 'ready' dan hapus tanggal batch
           await this.accountRepository.update(
-            { status: 'ready' },
+            { status: 'ready', batch_start_date: null, batch_end_date: null },
             { where: { id: { [Op.in]: ids } }, transaction }
           );
           break;
@@ -1354,36 +1200,59 @@ export class AccountService {
       }
 
       await transaction.commit();
+      isCommitted = true;
 
-      // Post-bulk action cleanup/registration
-      if (action === 'disable' || action === 'freeze' || action === 'banned') {
-        for (const id of ids) {
-          await this.taskQueueService.removeByAccount(tenantId, id, [NETFLIX_RESET_PASSWORD, SUBS_END_NOTIFY]);
+      try {
+        // Post-bulk action cleanup/registration
+        if (['disable', 'freeze', 'banned', 'delete', 'clear', 'enable', 'unfreeze'].includes(action)) {
+          const contexts = [NETFLIX_RESET_PASSWORD, SUBS_END_NOTIFY];
+          if (['enable', 'unfreeze', 'clear'].includes(action)) {
+            contexts.push(UNFREEZE_ACCOUNT);
+          }
+          // Batched remove for all IDs at once
+          await this.taskQueueService.removeByAccount(tenantId, ids, contexts);
         }
-      } else if (action === 'enable' || action === 'unfreeze') {
-        const accounts = await this.accountRepository.findAll({
-          where: { id: { [Op.in]: ids } },
-          include: [
-            { model: Email, as: 'email' },
-            {
-              model: ProductVariant,
-              as: 'product_variant',
-              include: [{ model: Product, as: 'product' }],
-            }
-          ],
-          transaction: null // transaction already committed
-        });
-        for (const account of accounts) {
-          await this.registerAutomaticTasks(tenantId, account);
+
+        if (action === 'enable' || action === 'unfreeze') {
+          const accounts = await this.accountRepository.findAll({
+            where: { id: { [Op.in]: ids } },
+            include: [
+              { model: Email, as: 'email' },
+              {
+                model: ProductVariant,
+                as: 'product_variant',
+                include: [{ model: Product, as: 'product' }],
+              }
+            ],
+          });
+          for (const account of accounts) {
+            this.registerAutomaticTasks(tenantId, account).catch(err => {
+              this.logger.error(`Failed to register automatic tasks for account ${account.id} in bulk action: ${err.message}`);
+            });
+          }
+        }
+      }
+      catch (postActionError) {
+        this.logger.error(`Error in post-bulk-action cleanup: ${postActionError.message}`, postActionError.stack);
+      }
+
+      // Handle direct bot triggers
+      if (['reset_now', 'auto_reload', 'auto_upgrade', 'login_tv'].includes(action)) {
+        for (const id of ids) {
+          if (action === 'reset_now') await this.triggerReset(tenantId, id);
+          if (action === 'auto_reload') await this.triggerReload(tenantId, id);
+          if (action === 'auto_upgrade') await this.triggerUpgrade(tenantId, id);
+          if (action === 'login_tv') await this.triggerLoginTv(tenantId, id);
         }
       }
 
       return { message: `Bulk ${action} completed for ${ids.length} accounts` };
-    } catch (error) {
-      await transaction.rollback();
+    }
+    catch (error) {
+      if (transaction && !isCommitted) {
+        await transaction.rollback();
+      }
       throw error;
     }
   }
 }
-
-

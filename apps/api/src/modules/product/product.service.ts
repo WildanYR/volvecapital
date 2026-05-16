@@ -80,7 +80,6 @@ export class ProductService {
   }
 
   async findOne(tenantId: string, productId: string) {
-    console.log('DEBUG: findOne called with', { tenantId, productId });
     const transaction = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema(tenantId, transaction);
@@ -89,8 +88,6 @@ export class ProductService {
         ? { [Op.or]: [{ id: productId }, { slug: productId }] }
         : { slug: productId };
 
-      console.log('DEBUG: where options', where);
-
       const product = await this.productRepository.findOne({
         where,
         include: [{ model: ProductVariant, as: 'variants' }],
@@ -98,7 +95,6 @@ export class ProductService {
       });
 
       if (!product) {
-        console.log('DEBUG: product not found');
         throw new NotFoundException(
           `product dengan id atau slug: ${productId} tidak ditemukan`,
         );
@@ -108,7 +104,6 @@ export class ProductService {
       return product;
     }
     catch (error) {
-      console.error('DEBUG: error in findOne', error);
       await transaction.rollback();
       throw error;
     }

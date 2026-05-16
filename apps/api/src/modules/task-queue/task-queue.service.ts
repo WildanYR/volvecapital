@@ -164,7 +164,7 @@ export class TaskQueueService {
 
   async removeByAccount(
     tenantId: string,
-    accountId: string,
+    accountId: string | string[],
     contexts: string[],
   ) {
     const transaction = await this.postgresProvider.transaction();

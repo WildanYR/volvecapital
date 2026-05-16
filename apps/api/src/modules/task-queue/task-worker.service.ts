@@ -134,7 +134,7 @@ export class TaskWorkerService {
     }
   }
 
-  @Cron(CronExpression.EVERY_5_SECONDS)
+  @Cron('* * * * * *')
   async dispatchReadyTasks() {
     const now = Date.now();
 
@@ -166,14 +166,16 @@ export class TaskWorkerService {
         ZSET_KEY,
         STREAM_KEY,
         now,
-        10,
-        100
+        50,
+        500
       ) as string[];
 
       await this.postgresProvider.setSchema('master', transaction);
 
       const taskIds = members.map(m => m.replace(`${TASK_REFERENCE_KEY}:`, ''));
-      await this.taskQueueRepository.update({ status: 'DISPATCHED' }, { where: { id: taskIds }, transaction });
+      if (taskIds.length > 0) {
+        await this.taskQueueRepository.update({ status: 'DISPATCHED' }, { where: { id: taskIds }, transaction });
+      }
 
       await transaction.commit();
     }

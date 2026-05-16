@@ -1,3 +1,4 @@
+import { Optional } from 'sequelize';
 import {
   AllowNull,
   AutoIncrement,
@@ -20,8 +21,11 @@ export interface AccountCapitalAttributes {
   updated_at: Date;
 }
 
+export interface AccountCapitalCreationAttributes
+  extends Optional<AccountCapitalAttributes, 'id' | 'created_at' | 'updated_at'> {}
+
 @Table({ tableName: 'account_capital' })
-export class AccountCapital extends Model<AccountCapitalAttributes> {
+export class AccountCapital extends Model<AccountCapitalAttributes, AccountCapitalCreationAttributes> {
   @PrimaryKey
   @AutoIncrement
   @Column(DataType.BIGINT)
