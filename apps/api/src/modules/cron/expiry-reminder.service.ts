@@ -50,31 +50,6 @@ export class ExpiryReminderService {
     try {
       await this.postgresProvider.setSchema(tenantId, transaction);
 
-      // 1. Get users about to expire who haven't been notified
-      // Criteria:
-      // - status = 'active'
-      // - is_reminder_sent = false
-      // - product_variant has reminder_before_hours set
-      // - expired_at <= NOW + reminder_before_hours
-      // - Transaction platform = 'landing'
-      
-      const usersToNotify = await this.accountUserRepository.findAll({
-        where: {
-          status: 'active',
-          is_reminder_sent: false,
-          expired_at: { [Op.gt]: new Date() }, // Haven't expired yet
-        },
-        include: [
-          {
-            model: ProductVariant,
-            as: 'profile', // Wait, the relation in AccountUser is 'profile' but we need product variant
-            // Let's check AccountUser relations
-          },
-        ],
-        transaction,
-      });
-      
-      // Wait, let's refine the query using raw SQL for complex joins and conditions
       const sqlQuery = `
         SELECT 
           au.id as "userId",
@@ -84,37 +59,37 @@ export class ExpiryReminderService {
           pv.name as "variantName",
           pv.reminder_before_hours as "reminderHours",
           p.id as "productId",
-          p.name as "productName",
           p.slug as "productSlug",
+          p.name as "productName",
           v.buyer_email as "buyerEmail"
-        FROM account_user au
-        JOIN account a ON au.account_id = a.id
-        JOIN product_variant pv ON a.product_variant_id = pv.id
-        JOIN product p ON pv.product_id = p.id
-        JOIN transaction_item ti ON au.id = ti.account_user_id
-        JOIN voucher v ON ti.id = v.transaction_item_id
-        JOIN transaction t ON ti.transaction_id = t.id
-        WHERE au.status = 'active'
+        FROM "${tenantId}"."account_user" au
+        JOIN "${tenantId}"."account" a ON au.account_id = a.id
+        JOIN "${tenantId}"."product_variant" pv ON a.product_variant_id = pv.id
+        JOIN "${tenantId}"."product" p ON pv.product_id = p.id
+        JOIN "${tenantId}"."transaction_item" ti ON au.id = ti.account_user_id
+        JOIN "${tenantId}"."voucher" v ON ti.id = v.transaction_item_id
+        JOIN "${tenantId}"."transaction" t ON ti.transaction_id = t.id
+        WHERE LOWER(au.status) = 'active'
           AND au.is_reminder_sent = false
           AND pv.reminder_before_hours IS NOT NULL
-          AND t.platform = 'landing'
-          AND au.expired_at <= (NOW() + (pv.reminder_before_hours || ' hours')::INTERVAL)
+          AND LOWER(t.platform) = 'landing'
+          AND au.expired_at <= (NOW() + (pv.reminder_before_hours * interval '1 hour'))
           AND au.expired_at > NOW()
       `;
 
-      // Actually, I should use the correct relations.
-      // AccountUser belongs to Account. Account belongs to ProductVariant.
-      
       const results = await this.postgresProvider.rawQuery(sqlQuery, {
         transaction,
         type: QueryTypes.SELECT,
       }) as any[];
 
+      if (results.length > 0) {
+        this.logger.log(`Tenant ${tenantName}: Found ${results.length} reminders to send.`);
+      }
+
       for (const row of results) {
-        // Send email
-        await this.sendReminderEmail(tenantId, tenantName, row);
+        this.logger.log(`Sending reminder to ${row.buyerEmail} for ${row.productName}`);
+        await this.sendReminderEmail(tenantId, tenantName, row, transaction);
         
-        // Mark as sent
         await this.accountUserRepository.update(
           { is_reminder_sent: true },
           { where: { id: row.userId }, transaction }
@@ -128,11 +103,11 @@ export class ExpiryReminderService {
     }
   }
 
-  private async sendReminderEmail(tenantId: string, tenantName: string, data: any) {
+  private async sendReminderEmail(tenantId: string, tenantName: string, data: any, transaction: any) {
     const { buyerEmail, buyerName, productName, variantName, expiredAt, productSlug, productId, variantId } = data;
 
     // Get recommendations: other variants of the same product with LONGER duration
-    const currentVariant = await this.productVariantRepository.findByPk(variantId);
+    const currentVariant = await this.productVariantRepository.findByPk(variantId, { transaction });
     if (!currentVariant) return;
 
     const recommendations = await this.productVariantRepository.findAll({
@@ -143,6 +118,7 @@ export class ExpiryReminderService {
       },
       order: [['duration', 'ASC']],
       limit: 2,
+      transaction,
     });
 
     const expiryDateStr = new Date(expiredAt).toLocaleString('id-ID', {
