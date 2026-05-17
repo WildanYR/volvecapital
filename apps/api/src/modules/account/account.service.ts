@@ -202,9 +202,68 @@ export class AccountService {
         transaction,
       });
 
+      const accountIds = accounts.rows.map((a) => a.id);
+      
+      const financialStats: Record<string, { total_capital: number; total_revenue: number }> = {};
+      
+      if (accountIds.length > 0) {
+        const capitals = await this.postgresProvider.rawQuery(
+          `SELECT account_id, COALESCE(SUM(amount), 0) as total_capital 
+           FROM account_capital 
+           WHERE account_id IN (:accountIds)
+           GROUP BY account_id`,
+          {
+            replacements: { accountIds },
+            type: QueryTypes.SELECT,
+            transaction,
+          }
+        );
+        
+        const revenues = await this.postgresProvider.rawQuery(
+          `SELECT au.account_id, COALESCE(SUM(t.total_price), 0) as total_revenue
+           FROM account_user au
+           JOIN transaction_item ti ON ti.account_user_id = au.id
+           JOIN transaction t ON t.id = ti.transaction_id
+           WHERE au.account_id IN (:accountIds)
+           GROUP BY au.account_id`,
+          {
+            replacements: { accountIds },
+            type: QueryTypes.SELECT,
+            transaction,
+          }
+        );
+        
+        for (const id of accountIds) {
+          financialStats[id] = { total_capital: 0, total_revenue: 0 };
+        }
+        for (const cap of capitals as any[]) {
+          financialStats[cap.account_id].total_capital = Number(cap.total_capital);
+        }
+        for (const rev of revenues as any[]) {
+          financialStats[rev.account_id].total_revenue = Number(rev.total_revenue);
+        }
+      }
+
+      const rowsWithStats = accounts.rows.map((acc) => {
+        const stats = financialStats[acc.id] || { total_capital: 0, total_revenue: 0 };
+        const total_capital = Number(acc.capital_price || 0) + stats.total_capital;
+        const total_revenue = stats.total_revenue;
+        const profit = total_revenue - total_capital;
+        const roi = total_capital > 0 ? Math.round((profit / total_capital) * 100) : 0;
+        
+        const plainAcc = acc.get({ plain: true });
+        return {
+          ...plainAcc,
+          total_capital,
+          total_revenue,
+          profit,
+          roi
+        };
+      });
+
       await transaction.commit();
       return this.paginationProvider.generatePaginationResponse(
-        accounts.rows,
+        rowsWithStats,
         accounts.count,
         pagination,
       );
@@ -1023,9 +1082,13 @@ export class AccountService {
       // Calculate totals
       const totalCapital = account.dataValues.capitals?.reduce((acc, cap) => acc + Number(cap.amount), 0) || 0;
       
-      // Get revenue from account_user
+      // Get revenue from account_user by joining transaction
       const revenueData = await this.postgresProvider.rawQuery(
-        `SELECT SUM(price) as total_revenue FROM account_user WHERE account_id = :accountId`,
+        `SELECT COALESCE(SUM(t.total_price), 0) as total_revenue
+         FROM account_user au
+         JOIN transaction_item ti ON ti.account_user_id = au.id
+         JOIN transaction t ON t.id = ti.transaction_id
+         WHERE au.account_id = :accountId`,
         {
           replacements: { accountId },
           type: QueryTypes.SELECT,
@@ -1034,12 +1097,28 @@ export class AccountService {
       );
       const totalRevenue = Number((revenueData[0] as any).total_revenue) || 0;
 
+      // Get revenue history
+      const revenueHistory = await this.postgresProvider.rawQuery(
+        `SELECT t.id as transaction_id, t.total_price as amount, t.created_at as date, au.name as user_name
+         FROM account_user au
+         JOIN transaction_item ti ON ti.account_user_id = au.id
+         JOIN transaction t ON t.id = ti.transaction_id
+         WHERE au.account_id = :accountId
+         ORDER BY t.created_at DESC`,
+        {
+          replacements: { accountId },
+          type: QueryTypes.SELECT,
+          transaction,
+        }
+      );
+
       await transaction.commit();
       return {
         total_capital: totalCapital,
         total_revenue: totalRevenue,
         profit: totalRevenue - totalCapital,
-        capital_history: account.dataValues.capitals || [],
+        capitals: account.dataValues.capitals || [],
+        revenues: revenueHistory || [],
       };
     } catch (error) {
       await transaction.rollback();
