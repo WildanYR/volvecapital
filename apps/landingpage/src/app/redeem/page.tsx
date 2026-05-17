@@ -11,6 +11,7 @@ import { Footer } from '@/components/footer'
 import { EmailPortal } from '@/components/email-portal'
 import Link from 'next/link'
 import { useTenant } from '@/hooks/use-tenant'
+import { useNotification } from '@/hooks/use-notification'
 import { useSearchParams } from 'next/navigation'
 
 export default function RedeemPage() {
@@ -20,6 +21,7 @@ export default function RedeemPage() {
   const [copied, setCopied] = useState(false)
   const [accessToken, setAccessToken] = useState<string | null>(null)
   const { tenantId } = useTenant()
+  const { markVoucherAsClaimed } = useNotification()
   const searchParams = useSearchParams()
   const urlCode = searchParams.get('code')
 
@@ -34,6 +36,7 @@ export default function RedeemPage() {
       setResult(data)
       if (data?.voucher?.status === 'USED' && data?.voucher?.access_token) {
         setAccessToken(data.voucher.access_token)
+        markVoucherAsClaimed(code)
       } else {
         setAccessToken(null)
       }
@@ -58,6 +61,7 @@ export default function RedeemPage() {
     setIsLoading(true)
     try {
       await api.post('/public/voucher/redeem', { voucher_code: code })
+      markVoucherAsClaimed(code)
       toast.success('Voucher berhasil diredeem!')
       // Refresh data after success to ensure we have the full, parsed account object
       await handleSearch()
