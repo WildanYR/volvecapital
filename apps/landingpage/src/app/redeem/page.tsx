@@ -134,12 +134,12 @@ export default function RedeemPage() {
                       <span className="text-sm font-bold text-slate-400 uppercase tracking-widest">{result?.voucher?.product_variant?.name || 'Varian'}</span>
                       <span className={`px-4 py-1.5 rounded-full text-[10px] font-black tracking-[0.2em] uppercase ${
                         result.voucher.status === 'USED' 
-                        ? 'bg-destructive/10 text-red-500 border border-red-100' 
+                        ? 'bg-destructive/10 text-destructive border border-destructive/20' 
                         : result.voucher.status === 'PENDING'
-                        ? 'bg-yellow-50 text-yellow-600 border border-yellow-100'
+                        ? 'bg-amber-500/10 text-amber-600 border border-amber-500/20'
                         : result.voucher.status === 'EXPIRED'
                         ? 'bg-muted/50 text-muted-foreground border border-border'
-                        : 'bg-accent/20 text-accent-foreground border border-emerald-100'
+                        : 'bg-primary/10 text-primary border border-primary/20'
                       }`}>
                         {result.voucher.status === 'USED' 
                           ? 'Sudah Digunakan' 
