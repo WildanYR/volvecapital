@@ -142,7 +142,7 @@ function SuccessContent() {
             Pesanan Anda telah kami terima. Gunakan kode voucher di bawah ini untuk mengaktifkan layanan premium Anda sekarang juga.
           </p>
 
-          <div className="bg-slate-50 border border-slate-100 rounded-[32px] p-10 mb-12 relative group shadow-inner">
+          <div className="bg-slate-50 border border-slate-100 rounded-[32px] p-10 mb-6 relative group shadow-inner">
             <p className="text-[10px] uppercase tracking-[0.3em] text-slate-400 font-black mb-4">Kode Voucher Eksklusif Anda</p>
             <div className="flex flex-col md:flex-row items-center justify-center gap-6">
               <span className="text-4xl md:text-6xl font-black text-[#0f172a] tracking-tight">
@@ -156,6 +156,21 @@ function SuccessContent() {
               </button>
             </div>
           </div>
+          
+          {/* Primary: Claim directly from this page */}
+          {code && voucherData?.status === 'UNUSED' && (
+            <button
+              onClick={handleClaim}
+              disabled={isClaiming}
+              className="w-full bg-gradient-to-br from-[#f97316] to-[#ef4444] text-white font-black py-5 rounded-2xl flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-95 transition-all uppercase tracking-widest text-sm shadow-[0_10px_30px_rgba(249,115,22,0.3)] disabled:opacity-60 disabled:scale-100 mb-12"
+            >
+              {isClaiming ? (
+                <><Loader2 className="size-5 animate-spin" /> Memproses Klaim...</>
+              ) : (
+                <><Zap className="size-5" /> Claim Sekarang</>
+              )}
+            </button>
+          )}
 
           {voucherData?.expired_at && (
             <motion.div 
@@ -176,20 +191,6 @@ function SuccessContent() {
           )}
 
           <div className="flex flex-col gap-4">
-            {/* Primary: Claim directly from this page */}
-            {code && voucherData?.status === 'UNUSED' && (
-              <button
-                onClick={handleClaim}
-                disabled={isClaiming}
-                className="w-full bg-gradient-to-br from-[#f97316] to-[#ef4444] text-white font-black py-5 rounded-2xl flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-95 transition-all uppercase tracking-widest text-sm shadow-[0_10px_30px_rgba(249,115,22,0.3)] disabled:opacity-60 disabled:scale-100"
-              >
-                {isClaiming ? (
-                  <><Loader2 className="size-5 animate-spin" /> Memproses Klaim...</>
-                ) : (
-                  <><Zap className="size-5" /> Claim Sekarang</>
-                )}
-              </button>
-            )}
             {/* Secondary: Go to redeem page manually */}
             <Link
               href={code ? `/redeem?code=${code}` : '/redeem'}
