@@ -273,7 +273,7 @@ export function Navbar({ config: initialConfig }: NavbarProps) {
               ))}
               <Link 
                 href="/product"
-                onClick={() => setIsMobileMenuOpen(false)}
+                onClick={() => setIsOpen(false)}
                 className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-primary text-primary-foreground rounded-2xl font-black text-xs tracking-widest shadow-xl shadow-primary/20 active:scale-95 transition-all"
               >
                 <ShoppingBag className="size-5" />
