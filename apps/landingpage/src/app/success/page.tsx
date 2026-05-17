@@ -19,7 +19,7 @@ function SuccessContent() {
   const [voucherData, setVoucherData] = useState<any>(null)
   const [isChecking, setIsChecking] = useState(false)
   const [isClaiming, setIsClaiming] = useState(false)
-  const { addNotification, removePendingByOrderId } = useNotification()
+  const { addNotification, removePendingByOrderId, markVoucherAsClaimed } = useNotification()
 
   // Polling for payment status if only orderId is present
   useEffect(() => {
@@ -73,7 +73,7 @@ function SuccessContent() {
             removePendingByOrderId(orderId);
           }
 
-          const productName = voucher.product_variant_name || voucher.variant?.name || voucher.product?.name || 'Produk';
+          const productName = voucher.product_variant ? `${voucher.product_variant.product?.name || 'Produk'} - ${voucher.product_variant.name}` : 'Produk';
           
           // 2. Tambahkan notifikasi sukses
           addNotification({
@@ -104,6 +104,7 @@ function SuccessContent() {
     setIsClaiming(true)
     try {
       await api.post('/public/voucher/redeem', { voucher_code: code })
+      markVoucherAsClaimed(code)
       toast.success('Voucher berhasil diklaim! Mengalihkan ke halaman akun...')
       // Refresh voucher data to get access_token, then redirect
       const res = await api.get(`/public/voucher/${code}`)

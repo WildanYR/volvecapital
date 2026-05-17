@@ -17,6 +17,7 @@ export interface Notification {
     price?: number;
     voucherCode?: string;
     paymentUrl?: string;
+    isClaimed?: boolean;
     // Add any other relevant data
     [key: string]: any;
   };
@@ -112,6 +113,15 @@ export function useNotification() {
     saveNotifications([]);
   };
 
+  const markVoucherAsClaimed = (voucherCode: string) => {
+    const updated = notifications.map(n => 
+      (n.type === 'success' && n.data?.voucherCode === voucherCode)
+        ? { ...n, data: { ...n.data, isClaimed: true } }
+        : n
+    );
+    saveNotifications(updated);
+  };
+
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
   return {
@@ -122,6 +132,7 @@ export function useNotification() {
     markAsRead,
     markAllAsRead,
     clearNotifications,
+    markVoucherAsClaimed,
     unreadCount,
   };
 }

@@ -162,10 +162,14 @@ export function NotificationPopover({ isOpen, onClose, onReopenCheckout }: Notif
                                       onClose();
                                     }
                                   }}
-                                  className="w-full py-2 px-4 bg-emerald-500 text-white text-[10px] font-black rounded-lg flex items-center justify-center gap-2 hover:bg-emerald-600 transition-all active:scale-95 shadow-sm shadow-emerald-200"
+                                  className={`w-full py-2 px-4 text-white text-[10px] font-black rounded-lg flex items-center justify-center gap-2 transition-all active:scale-95 shadow-sm ${
+                                    notif.data?.isClaimed 
+                                      ? 'bg-slate-800 hover:bg-slate-900 shadow-slate-200' 
+                                      : 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-200'
+                                  }`}
                                 >
-                                  CLAIM SEKARANG
-                                  <Zap className="size-3 fill-current" />
+                                  {notif.data?.isClaimed ? 'LIHAT DETAIL AKUN' : 'CLAIM SEKARANG'}
+                                  {notif.data?.isClaimed ? <ArrowRight className="size-3" /> : <Zap className="size-3 fill-current" />}
                                 </button>
                               </div>
                             )}
