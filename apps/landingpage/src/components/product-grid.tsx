@@ -15,6 +15,21 @@ interface ProductGridProps {
 export function ProductGrid({ products }: ProductGridProps) {
   const popularProducts = products.slice(0, 3)
 
+  // Dynamically find the product with most account_users generated (all channels)
+  const bestProduct = popularProducts.length > 0
+    ? popularProducts.reduce((best, p) =>
+        (p.total_sales ?? 0) >= (best.total_sales ?? 0) ? p : best,
+        popularProducts[0]
+      )
+    : null
+
+  // Always put the best-seller in the CENTER (index 1) for visual prominence
+  const orderedProducts = (() => {
+    if (!bestProduct || popularProducts.length < 3) return popularProducts
+    const others = popularProducts.filter(p => p.id !== bestProduct.id)
+    return [others[0], bestProduct, others[1]]
+  })()
+
   const ref = useScrollReveal()
 
   return (
@@ -37,8 +52,8 @@ export function ProductGrid({ products }: ProductGridProps) {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {popularProducts.map((product, idx) => {
-            const isFeatured = idx === 1
+          {orderedProducts.map((product) => {
+            const isFeatured = product.id === bestProduct?.id
             return (
               <div
                 key={product.id}
@@ -51,7 +66,7 @@ export function ProductGrid({ products }: ProductGridProps) {
               >
                 {isFeatured && (
                   <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-primary text-primary-foreground text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest shadow-lg">
-                    Best Value
+                    Terlaris
                   </div>
                 )}
 

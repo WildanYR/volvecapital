@@ -40,10 +40,33 @@ export default async function RootLayout({
     }
   }
 
+  // Fetch theme CSS server-side to eliminate Flash of Unstyled Content (FOUC)
+  let serverThemeCss: string | null = null;
+  if (tenantId) {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+      const res = await fetch(`${apiUrl}/public/settings`, {
+        headers: { 'x-tenant-id': tenantId },
+        next: { revalidate: 60 }, // cache for 60s
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.LANDING_THEME_CSS) {
+          serverThemeCss = data.LANDING_THEME_CSS;
+        }
+      }
+    } catch {
+      // silently fail — ThemeInjector client component will handle it
+    }
+  }
 
   return (
     <html lang="id" className={`${plusJakartaSans.variable} h-full antialiased`} suppressHydrationWarning>
       <head>
+        {/* Inject tenant theme server-side to prevent FOUC */}
+        {serverThemeCss && (
+          <style dangerouslySetInnerHTML={{ __html: serverThemeCss }} />
+        )}
       </head>
       <body className="min-h-full flex flex-col font-sans">
         <Providers tenantId={tenantId} hostname={host}>

@@ -17,6 +17,7 @@ export interface Product {
   name: string
   slug: string
   variants: ProductVariant[]
+  total_sales?: number
 }
 
 export function useProducts(tenantId: string | null) {

@@ -269,13 +269,37 @@ export class PublicService {
     const transaction = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema(tenantId, transaction);
+
       const products = await this.productRepository.findAll({
         include: [{ model: ProductVariant, as: 'variants' }],
         order: [['created_at', 'ASC']],
         transaction,
       });
+
+      // Sum items_sold from product_sales_statistics — same data as dashboard,
+      // covers all channels (landingpage, Shopee, manual, etc.)
+      const [salesRows] = await this.postgresProvider.rawQuery(
+        `SELECT pv.product_id, SUM(pss.items_sold) AS total_sales
+         FROM product_sales_statistics pss
+         JOIN product_variant pv ON pv.id = pss.product_variant_id
+         GROUP BY pv.product_id`,
+        { transaction },
+      );
+
+      // Build a lookup map: product_id -> total_sales
+      const salesMap = new Map<string, number>();
+      (salesRows as any[]).forEach((row) => {
+        salesMap.set(String(row.product_id), Number(row.total_sales));
+      });
+
+      // Merge total_sales into each product plain object
+      const result = products.map((p) => ({
+        ...(p.toJSON() as any),
+        total_sales: salesMap.get(String(p.id)) ?? 0,
+      }));
+
       await transaction.commit();
-      return products;
+      return result;
     }
     catch (error) {
       await transaction.rollback();
