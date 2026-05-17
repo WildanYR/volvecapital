@@ -106,25 +106,41 @@ export function Navbar({ config: initialConfig }: NavbarProps) {
     }
 
     if (logoIcon.startsWith('<svg')) {
+      const encodedSvg = `data:image/svg+xml;utf8,${encodeURIComponent(logoIcon)}`;
       return (
-        <div 
-          className="h-11 w-auto flex items-center justify-center transition-all duration-500"
-          style={{
-            filter: !isTransparent ? 'invert(58%) sepia(91%) saturate(2643%) hue-rotate(345deg) brightness(102%) contrast(97%)' : 'none'
-          }}
-          dangerouslySetInnerHTML={{ __html: logoIcon }}
-        />
+        <div className={`relative h-11 w-auto flex items-center transition-all duration-500 ${!isTransparent ? 'text-primary' : 'text-white'}`}>
+          {/* Mask overlay that takes the exact color of text-primary or text-white */}
+          <div 
+            className="absolute inset-0 bg-current transition-colors duration-500"
+            style={{
+              maskImage: `url('${encodedSvg}')`,
+              WebkitMaskImage: `url('${encodedSvg}')`,
+              maskSize: 'contain',
+              maskRepeat: 'no-repeat',
+              maskPosition: 'left center',
+              WebkitMaskSize: 'contain',
+              WebkitMaskRepeat: 'no-repeat',
+              WebkitMaskPosition: 'left center',
+            }}
+          />
+          {/* Invisible original SVG just to stretch the container to the perfect intrinsic width */}
+          <div 
+            className="h-full w-auto opacity-0 [&>svg]:h-full [&>svg]:w-auto pointer-events-none"
+            dangerouslySetInnerHTML={{ __html: logoIcon }}
+          />
+        </div>
       )
     }
 
     return (
-      <div className="h-11 w-auto flex items-center justify-center transition-all duration-500">
+      <div className={`h-11 w-auto flex items-center justify-center transition-colors duration-500 overflow-hidden ${!isTransparent ? 'text-primary' : 'text-white'}`}>
         <img 
           src={logoIcon} 
           alt={brandName} 
           className="h-full w-auto object-contain transition-all duration-500"
           style={{
-            filter: !isTransparent ? 'invert(58%) sepia(91%) saturate(2643%) hue-rotate(345deg) brightness(102%) contrast(97%)' : 'none'
+            transform: 'translateX(-9999px)',
+            filter: 'drop-shadow(9999px 0 0 currentColor)'
           }}
         />
       </div>
