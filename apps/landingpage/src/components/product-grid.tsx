@@ -18,7 +18,7 @@ export function ProductGrid({ products }: ProductGridProps) {
   const ref = useScrollReveal()
 
   return (
-    <section id="products" className="py-32 px-6 w-full flex justify-center bg-muted/50/50">
+    <section id="products" className="py-32 px-6 w-full flex justify-center bg-muted/50">
       <div ref={ref} className="w-full max-w-7xl">
         <div className="text-center mb-24">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-background border border-border mb-6 shadow-sm reveal-hidden">

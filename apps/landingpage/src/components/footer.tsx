@@ -58,23 +58,47 @@ export function Footer({ config: initialConfig }: FooterProps) {
     }
 
     if (logoIcon.startsWith('<svg')) {
+      const encodedSvg = `data:image/svg+xml;utf8,${encodeURIComponent(logoIcon)}`;
       return (
-        <div 
-          className="h-11 w-auto flex items-center justify-center transition-transform duration-300"
-          dangerouslySetInnerHTML={{ __html: logoIcon }}
-        />
+        <div className="relative h-11 w-auto flex items-center transition-all duration-500 text-primary">
+          <div 
+            className="absolute inset-0 bg-current transition-colors duration-500"
+            style={{
+              maskImage: `url('${encodedSvg}')`,
+              WebkitMaskImage: `url('${encodedSvg}')`,
+              maskSize: 'contain',
+              maskRepeat: 'no-repeat',
+              maskPosition: 'left center',
+              WebkitMaskSize: 'contain',
+              WebkitMaskRepeat: 'no-repeat',
+              WebkitMaskPosition: 'left center',
+            }}
+          />
+          <div 
+            className="h-full w-auto opacity-0 [&>svg]:h-full [&>svg]:w-auto pointer-events-none"
+            dangerouslySetInnerHTML={{ __html: logoIcon }}
+          />
+        </div>
       )
     }
 
     return (
-      <div className="h-11 w-auto flex items-center justify-center transition-transform duration-300">
-        <img src={logoIcon} alt={brandName} className="h-full w-auto object-contain" />
+      <div className="h-11 w-auto flex items-center justify-center transition-colors duration-500 overflow-hidden text-primary">
+        <img 
+          src={logoIcon} 
+          alt={brandName} 
+          className="h-full w-auto object-contain transition-all duration-500"
+          style={{
+            transform: 'translateX(-9999px)',
+            filter: 'drop-shadow(9999px 0 0 currentColor)'
+          }}
+        />
       </div>
     )
   }
 
   return (
-    <footer className="py-24 px-6 w-full flex justify-center bg-background border-t border-border">
+    <footer className="py-24 px-6 w-full flex justify-center bg-muted/50 border-t border-border">
       <div className="w-full max-w-7xl relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 md:gap-12 lg:gap-16 mb-20">
           <div className="md:col-span-2 lg:col-span-2 space-y-8">

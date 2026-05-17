@@ -19,7 +19,7 @@ export function Testimonials({ items }: TestimonialsProps) {
   const ref = useScrollReveal()
 
   return (
-    <section className="py-32 px-6 w-full flex justify-center bg-muted/50/50">
+    <section className="py-32 px-6 w-full flex justify-center bg-muted/50">
       <div ref={ref} className="w-full max-w-7xl">
         <div className="text-center mb-24">
           <h2 className="text-4xl md:text-5xl font-black text-foreground mb-6 reveal-hidden">
