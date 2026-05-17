@@ -113,7 +113,7 @@ export default function RedeemPage() {
             </div>
             <button 
               disabled={isLoading}
-              className="px-10 py-5 bg-primary text-primary-foreground font-black rounded-2xl hover:bg-gradient-to-br hover:from-primary hover:to-primary/80 transition-all flex items-center justify-center gap-3 disabled:opacity-50 shrink-0 text-sm uppercase tracking-widest shadow-xl"
+              className="px-10 py-5 bg-primary text-primary-foreground font-black rounded-2xl hover:bg-primary/90 hover:scale-[1.02] active:scale-95 transition-all duration-300 flex items-center justify-center gap-3 disabled:opacity-50 shrink-0 text-sm uppercase tracking-widest shadow-xl shadow-primary/20"
             >
               {isLoading ? <Loader2 className="size-5 animate-spin" /> : 'Cek Sekarang'}
             </button>
