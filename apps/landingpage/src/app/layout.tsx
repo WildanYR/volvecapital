@@ -42,7 +42,7 @@ export default async function RootLayout({
 
 
   return (
-    <html lang="id" className={`${plusJakartaSans.variable} h-full antialiased`}>
+    <html lang="id" className={`${plusJakartaSans.variable} h-full antialiased`} suppressHydrationWarning>
       <head>
       </head>
       <body className="min-h-full flex flex-col font-sans">

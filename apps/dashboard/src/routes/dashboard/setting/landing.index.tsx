@@ -89,6 +89,7 @@ function LandingSettingPage() {
     socialLinks: [],
     docLinks: [],
   })
+  const [themeCss, setThemeCss] = useState('')
 
   useEffect(() => {
     if (settings) {
@@ -133,6 +134,7 @@ function LandingSettingPage() {
       if (settings.LANDING_FAQ) setFaqs(JSON.parse(settings.LANDING_FAQ))
       if (settings.LANDING_NAVBAR) setNavbar(JSON.parse(settings.LANDING_NAVBAR))
       if (settings.LANDING_FOOTER) setFooter(JSON.parse(settings.LANDING_FOOTER))
+      if (settings.LANDING_THEME_CSS) setThemeCss(settings.LANDING_THEME_CSS)
     }
   }, [settings])
 
@@ -155,6 +157,7 @@ function LandingSettingPage() {
       LANDING_FAQ: JSON.stringify(faqs),
       LANDING_NAVBAR: JSON.stringify(navbar),
       LANDING_FOOTER: JSON.stringify(footer),
+      LANDING_THEME_CSS: themeCss,
     }
     updateMutation.mutate(payload)
   }
@@ -185,18 +188,20 @@ function LandingSettingPage() {
         </Button>
       </div>
 
-      <Tabs defaultValue="hero" className="w-full">
-        <TabsList className="grid grid-cols-2 md:grid-cols-6 w-full h-auto gap-2 bg-transparent p-0">
-          <TabsTrigger value="hero" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground border border-input h-10">Hero</TabsTrigger>
-          <TabsTrigger value="social-proof" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground border border-input h-10">Social Proof</TabsTrigger>
-          <TabsTrigger value="features" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground border border-input h-10">Fitur</TabsTrigger>
-          <TabsTrigger value="testimonials" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground border border-input h-10">Testimoni</TabsTrigger>
-          <TabsTrigger value="faq" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground border border-input h-10">FAQ</TabsTrigger>
-          <TabsTrigger value="navfoot" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground border border-input h-10">Nav & Footer</TabsTrigger>
+      <Tabs defaultValue="hero" className="flex flex-col md:flex-row gap-8 w-full" orientation="vertical">
+        <TabsList className="flex flex-col w-full md:w-56 shrink-0 gap-2 bg-transparent p-0 h-auto md:sticky md:top-24 md:self-start">
+          <TabsTrigger value="hero" className="w-full justify-start data-[state=active]:bg-primary data-[state=active]:text-primary-foreground border border-input h-10 px-4">Hero</TabsTrigger>
+          <TabsTrigger value="social-proof" className="w-full justify-start data-[state=active]:bg-primary data-[state=active]:text-primary-foreground border border-input h-10 px-4">Social Proof</TabsTrigger>
+          <TabsTrigger value="features" className="w-full justify-start data-[state=active]:bg-primary data-[state=active]:text-primary-foreground border border-input h-10 px-4">Fitur</TabsTrigger>
+          <TabsTrigger value="testimonials" className="w-full justify-start data-[state=active]:bg-primary data-[state=active]:text-primary-foreground border border-input h-10 px-4">Testimoni</TabsTrigger>
+          <TabsTrigger value="faq" className="w-full justify-start data-[state=active]:bg-primary data-[state=active]:text-primary-foreground border border-input h-10 px-4">FAQ</TabsTrigger>
+          <TabsTrigger value="navfoot" className="w-full justify-start data-[state=active]:bg-primary data-[state=active]:text-primary-foreground border border-input h-10 px-4">Nav & Footer</TabsTrigger>
+          <TabsTrigger value="theme" className="w-full justify-start data-[state=active]:bg-primary data-[state=active]:text-primary-foreground border border-input h-10 px-4">Theme</TabsTrigger>
         </TabsList>
 
-        {/* HERO SECTION */}
-        <TabsContent value="hero" className="mt-6">
+        <div className="flex-1 w-full min-w-0">
+          {/* HERO SECTION */}
+          <TabsContent value="hero" className="m-0 focus-visible:outline-none focus-visible:ring-0">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -253,7 +258,7 @@ function LandingSettingPage() {
         </TabsContent>
 
         {/* SOCIAL PROOF SECTION */}
-        <TabsContent value="social-proof" className="mt-6">
+        <TabsContent value="social-proof" className="m-0 focus-visible:outline-none focus-visible:ring-0">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -322,7 +327,7 @@ function LandingSettingPage() {
         </TabsContent>
 
         {/* FEATURES SECTION */}
-        <TabsContent value="features" className="mt-6">
+        <TabsContent value="features" className="m-0 focus-visible:outline-none focus-visible:ring-0">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <div className="flex-1">
@@ -392,7 +397,7 @@ function LandingSettingPage() {
         </TabsContent>
 
         {/* TESTIMONIALS SECTION */}
-        <TabsContent value="testimonials" className="mt-6">
+        <TabsContent value="testimonials" className="m-0 focus-visible:outline-none focus-visible:ring-0">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
@@ -453,7 +458,7 @@ function LandingSettingPage() {
         </TabsContent>
 
         {/* FAQ SECTION */}
-        <TabsContent value="faq" className="mt-6">
+        <TabsContent value="faq" className="m-0 focus-visible:outline-none focus-visible:ring-0">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
@@ -496,7 +501,7 @@ function LandingSettingPage() {
         </TabsContent>
 
         {/* NAVBAR & FOOTER SECTION */}
-        <TabsContent value="navfoot" className="mt-6">
+        <TabsContent value="navfoot" className="m-0 focus-visible:outline-none focus-visible:ring-0">
           <div className="grid grid-cols-1 gap-6">
             <Card>
               <CardHeader>
@@ -551,6 +556,33 @@ function LandingSettingPage() {
             </Card>
           </div>
         </TabsContent>
+
+        {/* THEME SECTION */}
+        <TabsContent value="theme" className="m-0 focus-visible:outline-none focus-visible:ring-0">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <LayoutTemplate className="size-5 text-primary" />
+                Theme Configuration
+              </CardTitle>
+              <CardDescription>
+                Kustomisasi warna dasar landing page Anda menggunakan format shadcn (CSS Variables). Paste kode dari shadcn.com di sini.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <Label>Shadcn CSS Code</Label>
+                <Textarea 
+                  className="font-mono text-xs min-h-[400px]"
+                  placeholder=":root {&#10;  --background: oklch(1 0 0);&#10;  ...&#10;}"
+                  value={themeCss}
+                  onChange={e => setThemeCss(e.target.value)}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        </div>
       </Tabs>
     </div>
   )

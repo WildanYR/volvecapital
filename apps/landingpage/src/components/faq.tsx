@@ -21,7 +21,7 @@ function FaqItem({ question, answer, isOpen, onToggle }: {
   return (
     <div
       className={`rounded-[32px] border transition-all duration-300 overflow-hidden ${
-        isOpen ? 'border-orange-200 bg-orange-50/30' : 'border-slate-100 bg-white'
+        isOpen ? 'border-primary/30 bg-primary/10/30' : 'border-border bg-background'
       }`}
     >
       <button
@@ -29,12 +29,12 @@ function FaqItem({ question, answer, isOpen, onToggle }: {
         className="w-full px-8 py-6 flex items-center justify-between text-left group"
       >
         <span className={`text-lg font-black transition-colors ${
-          isOpen ? 'text-[#f97316]' : 'text-[#0f172a] group-hover:text-[#f97316]'
+          isOpen ? 'text-primary' : 'text-foreground group-hover:text-primary'
         }`}>
           {question}
         </span>
         <div className={`p-2 rounded-xl transition-all flex-shrink-0 ${
-          isOpen ? 'bg-[#f97316] text-white' : 'bg-slate-50 text-[#0f172a]'
+          isOpen ? 'bg-primary text-white' : 'bg-muted/50 text-foreground'
         }`}>
           {isOpen ? <Minus className="size-5" /> : <Plus className="size-5" />}
         </div>
@@ -50,7 +50,7 @@ function FaqItem({ question, answer, isOpen, onToggle }: {
           overflow: 'hidden',
         }}
       >
-        <div className="px-8 pb-8 text-slate-600 font-medium leading-relaxed">
+        <div className="px-8 pb-8 text-muted-foreground font-medium leading-relaxed">
           {answer}
         </div>
       </div>
@@ -82,17 +82,17 @@ export function Faq({ config }: FaqProps) {
   const ref = useScrollReveal()
 
   return (
-    <section className="py-32 px-6 w-full flex justify-center bg-white">
+    <section className="py-32 px-6 w-full flex justify-center bg-background">
       <div ref={ref} className="w-full max-w-4xl">
         <div className="text-center mb-20">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-orange-50 border border-orange-100 mb-6 shadow-sm reveal-hidden">
-            <HelpCircle className="size-4 text-[#f97316]" />
-            <span className="text-[10px] font-black tracking-widest uppercase text-[#f97316]">Pusat Bantuan</span>
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 mb-6 shadow-sm reveal-hidden">
+            <HelpCircle className="size-4 text-primary" />
+            <span className="text-[10px] font-black tracking-widest uppercase text-primary">Pusat Bantuan</span>
           </div>
-          <h2 className="text-4xl md:text-5xl font-black text-[#0f172a] mb-6 reveal-hidden delay-100">
+          <h2 className="text-4xl md:text-5xl font-black text-foreground mb-6 reveal-hidden delay-100">
             {sectionTitle}
           </h2>
-          <p className="text-slate-500 text-lg font-medium reveal-hidden delay-200">Temukan jawaban untuk pertanyaan yang paling sering diajukan pelanggan kami.</p>
+          <p className="text-muted-foreground text-lg font-medium reveal-hidden delay-200">Temukan jawaban untuk pertanyaan yang paling sering diajukan pelanggan kami.</p>
         </div>
 
         <div className="space-y-4">

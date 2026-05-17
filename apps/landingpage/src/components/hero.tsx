@@ -26,7 +26,7 @@ export function Hero({ config }: HeroProps) {
   const rest = words.join(' ')
 
   return (
-    <section className={`relative min-h-screen flex flex-col items-center justify-center pt-20 overflow-hidden z-10 w-full ${config?.backgroundImageUrl ? 'bg-slate-900' : 'bg-white'}`}>
+    <section className={`relative min-h-screen flex flex-col items-center justify-center pt-20 overflow-hidden z-10 w-full ${config?.backgroundImageUrl ? 'bg-background' : 'bg-background'}`}>
       {/* Background Image & Gradient Overlay */}
       {config?.backgroundImageUrl && (
         <div className="absolute inset-0 z-0" style={{ transform: 'translateZ(0)' }}>
@@ -49,25 +49,25 @@ export function Hero({ config }: HeroProps) {
         <div className="max-w-4xl mx-auto text-center">
           {/* Badge */}
           <div
-            className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full border ${config?.backgroundImageUrl ? 'bg-white/10 border-white/20' : 'bg-orange-50 border-orange-100'} mb-8 reveal-hidden ${mounted ? 'reveal-visible' : ''}`}
+            className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full border ${config?.backgroundImageUrl ? 'bg-background/10 border-white/20' : 'bg-primary/10 border-primary/20'} mb-8 reveal-hidden ${mounted ? 'reveal-visible' : ''}`}
           >
-            <Zap className={`size-4 ${config?.backgroundImageUrl ? 'text-white' : 'text-[#f97316]'}`} />
-            <span className={`text-[10px] md:text-xs font-bold tracking-wider uppercase ${config?.backgroundImageUrl ? 'text-white' : 'text-[#f97316]'}`}>{badge}</span>
+            <Zap className={`size-4 ${config?.backgroundImageUrl ? 'text-white' : 'text-primary'}`} />
+            <span className={`text-[10px] md:text-xs font-bold tracking-wider uppercase ${config?.backgroundImageUrl ? 'text-white' : 'text-primary'}`}>{badge}</span>
           </div>
 
           {/* Headline */}
           <h1
-            className={`text-5xl md:text-[88px] font-black mb-8 leading-[1] tracking-tight ${config?.backgroundImageUrl ? 'text-white' : 'text-[#0f172a]'} reveal-hidden delay-100 ${mounted ? 'reveal-visible' : ''}`}
+            className={`text-5xl md:text-[88px] font-black mb-8 leading-[1] tracking-tight ${config?.backgroundImageUrl ? 'text-white' : 'text-foreground'} reveal-hidden delay-100 ${mounted ? 'reveal-visible' : ''}`}
           >
             <span>{rest}</span>{' '}
-            <span className="bg-clip-text text-transparent bg-gradient-to-br from-[#f97316] to-[#ef4444]">
+            <span className="bg-clip-text text-transparent bg-gradient-to-br from-primary to-primary/80">
               {lastWord}
             </span>
           </h1>
 
           {/* Subheadline */}
           <p
-            className={`${config?.backgroundImageUrl ? 'text-slate-200' : 'text-slate-600'} text-lg md:text-xl max-w-2xl mx-auto mb-12 leading-relaxed font-medium reveal-hidden delay-200 ${mounted ? 'reveal-visible' : ''}`}
+            className={`${config?.backgroundImageUrl ? 'text-slate-200' : 'text-muted-foreground'} text-lg md:text-xl max-w-2xl mx-auto mb-12 leading-relaxed font-medium reveal-hidden delay-200 ${mounted ? 'reveal-visible' : ''}`}
           >
             {subtitle}
           </p>
@@ -78,14 +78,14 @@ export function Hero({ config }: HeroProps) {
           >
             <Link
               href="/product"
-              className={`px-10 py-5 ${config?.backgroundImageUrl ? 'bg-[#f97316] hover:bg-orange-600' : 'bg-[#0f172a] hover:bg-slate-800'} text-white font-bold rounded-2xl flex items-center gap-3 w-full sm:w-auto justify-center text-lg shadow-xl hover:scale-110 active:scale-95 transition-all`}
+              className={`px-10 py-5 ${config?.backgroundImageUrl ? 'bg-primary hover:bg-primary/90' : 'bg-primary hover:bg-primary/90'} text-primary-foreground font-bold rounded-2xl flex items-center gap-3 w-full sm:w-auto justify-center text-lg shadow-xl hover:scale-110 active:scale-95 transition-all`}
             >
               {button1Text}
               <ArrowRight className="size-5" />
             </Link>
             <Link
               href="/redeem"
-              className={`px-10 py-5 ${config?.backgroundImageUrl ? 'bg-white/10 border-white/20 text-white hover:bg-white/20' : 'bg-white text-[#0f172a] border-slate-200 hover:bg-slate-50'} font-bold rounded-2xl border hover:scale-110 active:scale-95 transition-all w-full sm:w-auto justify-center flex items-center text-lg shadow-sm`}
+              className={`px-10 py-5 ${config?.backgroundImageUrl ? 'bg-background/10 border-white/20 text-white hover:bg-background/20' : 'bg-background text-foreground border-border hover:bg-muted/50'} font-bold rounded-2xl border hover:scale-110 active:scale-95 transition-all w-full sm:w-auto justify-center flex items-center text-lg shadow-sm`}
             >
               {button2Text}
             </Link>

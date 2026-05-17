@@ -10,6 +10,7 @@ import { api } from '@/lib/api'
 import type { LandingNavbarConfig } from '@volvecapital/shared/types'
 import { useNotification } from '@/hooks/use-notification'
 import { NotificationPopover } from './notification-popover'
+import { ThemeToggle } from './theme-toggle'
 import dynamic from 'next/dynamic'
 import { Product, ProductVariant } from '@/hooks/use-products'
 
@@ -98,7 +99,7 @@ export function Navbar({ config: initialConfig }: NavbarProps) {
   const renderLogoIcon = () => {
     if (!logoIcon) {
       return (
-        <div className="h-10 w-10 bg-gradient-to-br from-[#f97316] to-[#ef4444] rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/20 transition-transform">
+        <div className="h-10 w-10 bg-gradient-to-br from-primary to-primary/80 rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 transition-transform">
           <Crown className="size-6 text-white" />
         </div>
       )
@@ -135,26 +136,26 @@ export function Navbar({ config: initialConfig }: NavbarProps) {
   const isHomePage = pathname === '/'
   const isTransparent = !scrolled && isHomePage && heroBg
   
-  const textColorClass = isTransparent ? 'text-white' : 'text-[#0f172a]'
-  const linkColorClass = isTransparent ? 'text-white hover:text-[#f97316]' : 'text-slate-600 hover:text-[#f97316]'
-  const activeLinkClass = isTransparent ? 'text-white' : 'text-[#f97316]'
+  const textColorClass = isTransparent ? 'text-white' : 'text-foreground'
+  const linkColorClass = isTransparent ? 'text-white hover:text-primary' : 'text-muted-foreground hover:text-primary'
+  const activeLinkClass = isTransparent ? 'text-white' : 'text-primary'
 
   return (
     <>
     <nav 
       className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 ${
         scrolled 
-        ? 'bg-white border-b border-slate-100 shadow-lg py-3' 
+        ? 'bg-background border-b border-border shadow-lg py-3' 
         : isTransparent
           ? 'bg-transparent py-6 border-b border-transparent'
-          : 'bg-white border-b border-slate-50 py-5'
+          : 'bg-background border-b border-border/50 py-5'
       }`}
     >
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3 group">
           {renderLogoIcon()}
-          <span className={`text-xl font-black tracking-tighter ${textColorClass} group-hover:text-[#f97316] transition-colors uppercase`}>
+          <span className={`text-xl font-black tracking-tighter ${textColorClass} group-hover:text-primary transition-colors uppercase`}>
             {brandName}
           </span>
         </Link>
@@ -176,17 +177,20 @@ export function Navbar({ config: initialConfig }: NavbarProps) {
           </div>
           
           <div className="flex items-center gap-4">
+            {/* Theme Toggle */}
+            <ThemeToggle />
+
             {/* Notification Bell */}
             <div className="relative">
               <button 
                 onClick={() => setIsNotifOpen(!isNotifOpen)}
                 className={`size-11 flex items-center justify-center rounded-xl transition-all relative ${
-                  isTransparent ? 'text-white bg-white/10 hover:bg-white/20' : 'text-[#0f172a] bg-slate-50 hover:bg-slate-100'
+                  isTransparent ? 'text-white bg-background/10 hover:bg-background/20' : 'text-foreground bg-muted/50 hover:bg-muted'
                 }`}
               >
                 <Bell className="size-5" />
                 {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 size-5 bg-[#ef4444] text-white text-[10px] font-black flex items-center justify-center rounded-full border-2 border-white animate-bounce">
+                  <span className="absolute -top-1 -right-1 size-5 bg-primary text-primary-foreground text-[10px] font-black flex items-center justify-center rounded-full border-2 border-background">
                     {unreadCount}
                   </span>
                 )}
@@ -201,7 +205,7 @@ export function Navbar({ config: initialConfig }: NavbarProps) {
 
             <Link 
               href="/product"
-              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-br from-[#f97316] to-[#ef4444] text-white rounded-2xl font-black text-xs tracking-widest shadow-xl shadow-orange-500/20 hover:scale-105 active:scale-95 transition-all"
+              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-br from-primary to-primary/80 text-primary-foreground rounded-2xl font-black text-xs tracking-widest shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
             >
               <ShoppingBag className="size-4" />
               MULAI BELI
@@ -211,16 +215,18 @@ export function Navbar({ config: initialConfig }: NavbarProps) {
 
         {/* Mobile Toggle */}
         <div className="flex items-center gap-3 lg:hidden">
+          <ThemeToggle />
+          
           <div className="relative">
             <button 
               onClick={() => setIsNotifOpen(!isNotifOpen)}
               className={`size-11 flex items-center justify-center rounded-xl transition-all relative ${
-                isTransparent ? 'text-white bg-white/10 hover:bg-white/20' : 'text-[#0f172a] bg-slate-50 hover:bg-slate-100'
+                isTransparent ? 'text-white bg-background/10 hover:bg-background/20' : 'text-foreground bg-muted/50 hover:bg-muted'
               }`}
             >
               <Bell className="size-5" />
               {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 size-5 bg-[#ef4444] text-white text-[10px] font-black flex items-center justify-center rounded-full border-2 border-white">
+                <span className="absolute -top-1 -right-1 size-5 bg-primary text-primary-foreground text-[10px] font-black flex items-center justify-center rounded-full border-2 border-background">
                   {unreadCount}
                 </span>
               )}
@@ -233,7 +239,7 @@ export function Navbar({ config: initialConfig }: NavbarProps) {
           </div>
           <button 
             className={`size-11 flex items-center justify-center rounded-xl transition-colors ${
-              isTransparent ? 'text-white bg-white/10 hover:bg-white/20' : 'text-[#0f172a] bg-slate-50 hover:bg-slate-100'
+              isTransparent ? 'text-white bg-background/10 hover:bg-background/20' : 'text-foreground bg-muted/50 hover:bg-muted'
             }`}
             onClick={() => setIsOpen(!isOpen)}
           >
@@ -249,7 +255,7 @@ export function Navbar({ config: initialConfig }: NavbarProps) {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="lg:hidden bg-white border-t border-slate-50 overflow-hidden shadow-2xl"
+            className="lg:hidden bg-background border-t border-border/50 overflow-hidden shadow-2xl"
           >
             <div className="p-8 space-y-5">
               {navLinks.map((link) => (
@@ -257,18 +263,18 @@ export function Navbar({ config: initialConfig }: NavbarProps) {
                   key={link.name}
                   href={link.href}
                   onClick={() => setIsOpen(false)}
-                  className="flex items-center gap-4 p-5 rounded-3xl bg-slate-50 text-[#0f172a] font-black text-sm hover:bg-orange-50 hover:text-[#f97316] transition-all"
+                  className="flex items-center gap-4 p-5 rounded-3xl bg-muted/50 text-foreground font-black text-sm hover:bg-primary/10 hover:text-primary transition-all"
                 >
-                  <div className="size-10 bg-white rounded-2xl flex items-center justify-center shadow-sm">
-                    <link.icon className="size-5 text-[#f97316]" />
+                  <div className="size-10 bg-background rounded-2xl flex items-center justify-center shadow-sm">
+                    <link.icon className="size-5 text-primary" />
                   </div>
                   {link.name}
                 </Link>
               ))}
-              <Link
+              <Link 
                 href="/product"
-                onClick={() => setIsOpen(false)}
-                className="flex items-center justify-center gap-3 w-full p-6 bg-[#0f172a] text-white rounded-[28px] font-black text-sm shadow-xl"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-primary text-primary-foreground rounded-2xl font-black text-xs tracking-widest shadow-xl shadow-primary/20 active:scale-95 transition-all"
               >
                 <ShoppingBag className="size-5" />
                 MULAI BELI

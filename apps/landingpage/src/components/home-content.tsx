@@ -97,7 +97,7 @@ export function HomeContent({ initialProducts, settings }: HomeContentProps) {
 
 
   return (
-    <main className="w-full bg-white">
+    <main className="w-full bg-background">
       <Navbar config={parsedConfigs.navbar} onReopenCheckout={handleReopen} />
       <Hero config={parsedConfigs.hero} />
       

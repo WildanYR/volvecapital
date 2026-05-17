@@ -26,7 +26,7 @@ export function SocialProof({ config }: SocialProofProps) {
   const ref = useScrollReveal()
 
   return (
-    <section className="py-16 bg-white relative z-10 border-b border-slate-50">
+    <section className="py-16 bg-background relative z-10 border-b border-border/50">
       <div className="max-w-7xl mx-auto px-6">
         <div ref={ref} className="flex flex-wrap items-center justify-center gap-10 md:gap-24">
           {displayItems.map((item: any, i: number) => (
@@ -34,25 +34,25 @@ export function SocialProof({ config }: SocialProofProps) {
               key={item.id || i}
               className={`flex items-center gap-5 group reveal-hidden delay-${(i + 1) * 100}`}
             >
-              <div className="size-14 md:size-16 rounded-2xl bg-orange-50 flex items-center justify-center group-hover:scale-110 group-hover:bg-orange-100 transition-all duration-300 shadow-sm border border-orange-100/50">
+              <div className="size-14 md:size-16 rounded-2xl bg-primary/10 flex items-center justify-center group-hover:scale-110 group-hover:bg-primary/20 transition-all duration-300 shadow-sm border border-primary/20/50">
                 {item.iconEmbed ? (
                   <div
-                    className="size-8 text-[#f97316] flex items-center justify-center"
+                    className="size-8 text-primary flex items-center justify-center"
                     dangerouslySetInnerHTML={{ __html: item.iconEmbed }}
                   />
                 ) : (
                   item.icon ? (
-                    <item.icon className={`size-8 text-[#f97316] ${item.fill ? 'fill-[#f97316]' : ''}`} />
+                    <item.icon className={`size-8 text-primary ${item.fill ? 'fill-primary' : ''}`} />
                   ) : (
-                    <ShieldCheck className="size-8 text-[#f97316]" />
+                    <ShieldCheck className="size-8 text-primary" />
                   )
                 )}
               </div>
               <div className="text-left">
-                <div className="text-2xl md:text-3xl font-black text-[#0f172a] tracking-tighter leading-none">
+                <div className="text-2xl md:text-3xl font-black text-foreground tracking-tighter leading-none">
                   {item.number || item.value}
                 </div>
-                <div className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none mt-2">
+                <div className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] leading-none mt-2">
                   {item.label}
                 </div>
               </div>

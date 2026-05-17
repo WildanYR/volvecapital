@@ -91,8 +91,8 @@ export function EmailPortal({ token }: EmailPortalProps) {
 
   if (isLoading) {
     return (
-      <div className="w-full p-12 bg-slate-50 border border-slate-100 rounded-[32px] flex flex-col items-center justify-center gap-4">
-        <RefreshCw className="size-8 text-[#f97316] animate-spin" />
+      <div className="w-full p-12 bg-muted/50 border border-border rounded-[32px] flex flex-col items-center justify-center gap-4">
+        <RefreshCw className="size-8 text-primary animate-spin" />
         <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Menghubungkan ke Portal...</p>
       </div>
     )
@@ -100,7 +100,7 @@ export function EmailPortal({ token }: EmailPortalProps) {
 
   if (isError) {
     return (
-      <div className="w-full p-12 bg-red-50 border border-red-100 rounded-[32px] flex flex-col items-center text-center gap-4">
+      <div className="w-full p-12 bg-destructive/10 border border-red-100 rounded-[32px] flex flex-col items-center text-center gap-4">
         <div className="p-4 bg-red-100 rounded-full">
           <ShieldAlert className="size-8 text-red-500" />
         </div>
@@ -110,7 +110,7 @@ export function EmailPortal({ token }: EmailPortalProps) {
         </div>
         <button 
           onClick={() => refetch()}
-          className="px-6 py-2 bg-red-500 text-white font-bold rounded-xl text-xs uppercase tracking-widest hover:bg-red-600 transition-all"
+          className="px-6 py-2 bg-destructive/100 text-white font-bold rounded-xl text-xs uppercase tracking-widest hover:bg-red-600 transition-all"
         >
           Coba Lagi
         </button>
@@ -129,35 +129,35 @@ export function EmailPortal({ token }: EmailPortalProps) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-orange-50 rounded-lg">
-            <Mail className="size-5 text-[#f97316]" />
+          <div className="p-2 bg-primary/10 rounded-lg">
+            <Mail className="size-5 text-primary" />
           </div>
-          <h3 className="text-xl font-black text-[#0f172a] tracking-tight">Email OTP Inbox</h3>
+          <h3 className="text-xl font-black text-foreground tracking-tight">Email OTP Inbox</h3>
         </div>
         <div className="flex items-center gap-4">
           <div className="hidden md:flex flex-col items-end">
             <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Sisa Kuota</p>
-            <p className="text-xs font-black text-[#0f172a]">{data?.limit?.remaining ?? '...'} / {data?.limit?.total ?? 10}</p>
+            <p className="text-xs font-black text-foreground">{data?.limit?.remaining ?? '...'} / {data?.limit?.total ?? 10}</p>
           </div>
-          <div className="flex items-center gap-2 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full border border-emerald-100">
-            <div className="size-1.5 bg-emerald-500 rounded-full animate-pulse" />
+          <div className="flex items-center gap-2 px-3 py-1 bg-primary/10 text-primary rounded-full border border-primary/20">
+            <div className="size-1.5 bg-primary rounded-full animate-pulse" />
             <span className="text-[10px] font-black uppercase tracking-widest">Real-time</span>
           </div>
         </div>
       </div>
 
       {/* Info Warning */}
-      <div className="bg-[#0f172a] border border-slate-800 rounded-2xl p-5 flex items-start gap-4">
-        <div className="bg-white/10 p-2 rounded-lg shrink-0">
-          <AlertCircle className="size-5 text-orange-400" />
+      <div className="bg-destructive/10 border border-destructive/20 rounded-2xl p-5 flex items-start gap-4">
+        <div className="bg-background p-2 rounded-lg shrink-0">
+          <AlertCircle className="size-5 text-destructive" />
         </div>
         <div className="space-y-1">
-          <p className="text-[10px] font-black text-orange-400 uppercase tracking-widest">Peringatan Penting</p>
-          <p className="text-xs text-slate-300 font-medium leading-relaxed">
+          <p className="text-[10px] font-black text-destructive uppercase tracking-widest">Peringatan Penting</p>
+          <p className="text-xs text-muted-foreground font-medium leading-relaxed">
             Setelah request kode/link dari aplikasi, tunggu <strong>1 menit</strong>. Pesan akan muncul otomatis di bawah.
           </p>
-          <p className="text-[10px] text-slate-500 font-bold flex items-center gap-1.5 pt-1">
-            <RefreshCw className={`size-3 ${countdown < 5 ? 'animate-spin text-[#f97316]' : ''}`} />
+          <p className="text-[10px] text-muted-foreground font-bold flex items-center gap-1.5 pt-1">
+            <RefreshCw className={`size-3 ${countdown < 5 ? 'animate-spin text-destructive' : ''}`} />
             Update dalam {countdown} detik...
           </p>
         </div>
@@ -166,12 +166,12 @@ export function EmailPortal({ token }: EmailPortalProps) {
       {/* Messages List */}
       <div className="space-y-4">
         {messages.length === 0 ? (
-          <div className="p-16 border-2 border-dashed border-slate-100 rounded-[32px] flex flex-col items-center text-center gap-4 bg-slate-50/30">
-            <div className="p-4 bg-white rounded-full shadow-sm">
+          <div className="p-16 border-2 border-dashed border-border rounded-[32px] flex flex-col items-center text-center gap-4 bg-muted/30">
+            <div className="p-4 bg-background rounded-full shadow-sm">
               <Inbox className="size-8 text-slate-200" />
             </div>
             <div className="max-w-xs">
-              <p className="text-sm font-black text-[#0f172a] mb-1">Belum Ada Pesan</p>
+              <p className="text-sm font-black text-foreground mb-1">Belum Ada Pesan</p>
               <p className="text-xs text-slate-400 font-medium leading-relaxed">Pesan OTP atau link reset akan otomatis muncul di sini setelah Anda request dari aplikasi/TV.</p>
             </div>
           </div>
@@ -183,12 +183,12 @@ export function EmailPortal({ token }: EmailPortalProps) {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.1 }}
-                className="bg-white border border-slate-100 rounded-2xl p-5 hover:border-[#f97316] transition-all group relative overflow-hidden shadow-sm"
+                className="bg-background border border-border rounded-2xl p-5 hover:border-primary transition-all group relative overflow-hidden shadow-sm"
               >
                 <div className="flex flex-col md:flex-row justify-between items-start gap-4">
                   <div className="space-y-2 flex-grow">
                     <div className="flex items-center gap-2">
-                      <span className="px-2 py-0.5 bg-orange-50 text-[#f97316] text-[8px] font-black uppercase tracking-widest rounded-md border border-orange-100">
+                      <span className="px-2 py-0.5 bg-primary/10 text-primary text-[8px] font-black uppercase tracking-widest rounded-md border border-primary/20">
                         {msg.parsed_context.replace('NETFLIX_', '').replace(/_/g, ' ')}
                       </span>
                       <span className="text-[10px] text-slate-400 font-bold flex items-center gap-1">
@@ -196,7 +196,7 @@ export function EmailPortal({ token }: EmailPortalProps) {
                         {formatDateTime(msg.email_date)}
                       </span>
                     </div>
-                    <h4 className="text-base font-black text-[#0f172a]">{msg.subject}</h4>
+                    <h4 className="text-base font-black text-foreground">{msg.subject}</h4>
                   </div>
                   
                   {msg.parsed_data.startsWith('http') && (
@@ -204,23 +204,23 @@ export function EmailPortal({ token }: EmailPortalProps) {
                       href={msg.parsed_data}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="px-4 py-2 bg-slate-50 hover:bg-[#0f172a] hover:text-white text-[#0f172a] text-[10px] font-black uppercase tracking-widest rounded-lg border border-slate-100 transition-all flex items-center gap-2 shrink-0"
+                      className="px-4 py-2 bg-muted/50 hover:bg-primary hover:text-white text-foreground text-[10px] font-black uppercase tracking-widest rounded-lg border border-border transition-all flex items-center gap-2 shrink-0"
                     >
                       Buka Link <ExternalLink className="size-3" />
                     </a>
                   )}
                 </div>
 
-                <div className="mt-4 p-4 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between gap-4">
+                <div className="mt-4 p-4 bg-muted/50 rounded-xl border border-border flex items-center justify-between gap-4">
                   <div className="overflow-hidden">
                     <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Kode / Data</p>
-                    <p className="text-xl font-mono font-black text-[#f97316] truncate leading-none">
+                    <p className="text-xl font-mono font-black text-primary truncate leading-none">
                       {msg.parsed_data}
                     </p>
                   </div>
                   <button 
                     onClick={() => copyToClipboard(msg.parsed_data)}
-                    className="p-2 hover:bg-orange-50 text-slate-400 hover:text-[#f97316] transition-all rounded-lg"
+                    className="p-2 hover:bg-primary/10 text-slate-400 hover:text-primary transition-all rounded-lg"
                   >
                     <Copy className="size-5" />
                   </button>

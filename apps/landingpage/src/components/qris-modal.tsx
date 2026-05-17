@@ -71,21 +71,21 @@ export function QrisModal({ isOpen, onClose, qrString, orderId, amount, productN
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            className="relative bg-[#121212] w-full max-w-md rounded-[48px] p-8 md:p-10 border border-white/10 shadow-[0_0_100px_rgba(255,184,0,0.1)] overflow-hidden"
+            className="relative bg-background w-full max-w-md rounded-[48px] p-8 md:p-10 border border-border shadow-2xl shadow-primary/10 overflow-hidden"
           >
             {status === 'PAID' ? (
               <div className="flex flex-col items-center justify-center py-12 text-center space-y-6">
                 <div className="size-24 bg-green-500/20 rounded-full flex items-center justify-center">
                   <CheckCircle2 className="size-12 text-green-500" />
                 </div>
-                <h2 className="text-3xl font-black text-white">Pembayaran Berhasil!</h2>
-                <p className="text-gray-400 font-bold">Mengalihkan Anda ke halaman sukses...</p>
-                <Loader2 className="size-6 animate-spin text-[#FFB800]" />
+                <h2 className="text-3xl font-black text-foreground">Pembayaran Berhasil!</h2>
+                <p className="text-muted-foreground font-bold">Mengalihkan Anda ke halaman sukses...</p>
+                <Loader2 className="size-6 animate-spin text-primary" />
               </div>
             ) : (
               <>
                 <div className="flex items-center justify-between mb-8">
-                  <div className="flex items-center gap-3 text-[#FFB800]">
+                  <div className="flex items-center gap-3 text-primary">
                     <ShieldCheck className="size-6" />
                     <span className="text-[10px] font-black uppercase tracking-[0.3em]">Pembayaran QRIS</span>
                   </div>
@@ -95,11 +95,11 @@ export function QrisModal({ isOpen, onClose, qrString, orderId, amount, productN
                 </div>
 
                 <div className="text-center mb-8">
-                  <h2 className="text-2xl font-black text-white mb-2">{productName}</h2>
-                  <p className="text-3xl font-black text-[#FFB800]">{formatCurrency(amount)}</p>
+                  <h2 className="text-2xl font-black text-foreground mb-2">{productName}</h2>
+                  <p className="text-3xl font-black text-primary">{formatCurrency(amount)}</p>
                 </div>
 
-                <div className="bg-white p-6 rounded-3xl mb-8 flex flex-col items-center shadow-[0_0_50px_rgba(255,255,255,0.1)]">
+                <div className="bg-muted/50 p-6 rounded-3xl mb-8 flex flex-col items-center border border-border">
                   <QRCodeSVG 
                     value={qrString} 
                     size={240}
@@ -113,12 +113,12 @@ export function QrisModal({ isOpen, onClose, qrString, orderId, amount, productN
                 </div>
 
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between bg-white/[0.03] p-4 rounded-2xl border border-white/5">
-                    <div className="flex items-center gap-2 text-gray-400">
+                  <div className="flex items-center justify-between bg-muted/50 p-4 rounded-2xl border border-border">
+                    <div className="flex items-center gap-2 text-muted-foreground">
                       <RefreshCw className={`size-4 ${timeLeft === 0 ? '' : 'animate-spin-slow'}`} />
                       <span className="text-xs font-bold">Berakhir dalam</span>
                     </div>
-                    <span className={`text-sm font-black ${timeLeft < 300 ? 'text-red-500' : 'text-white'}`}>
+                    <span className={`text-sm font-black ${timeLeft < 300 ? 'text-destructive' : 'text-foreground'}`}>
                       {formatTime(timeLeft)}
                     </span>
                   </div>
@@ -126,7 +126,7 @@ export function QrisModal({ isOpen, onClose, qrString, orderId, amount, productN
                   <button
                     onClick={checkStatus}
                     disabled={isChecking || timeLeft === 0}
-                    className="w-full bg-white text-black font-black py-4 rounded-2xl flex items-center justify-center gap-3 hover:scale-105 active:scale-[0.98] transition-all disabled:opacity-50 text-sm uppercase tracking-widest"
+                    className="w-full bg-primary text-primary-foreground font-black py-4 rounded-2xl flex items-center justify-center gap-3 hover:scale-105 active:scale-[0.98] transition-all disabled:opacity-50 text-sm uppercase tracking-widest"
                   >
                     {isChecking ? (
                       <Loader2 className="size-5 animate-spin" />

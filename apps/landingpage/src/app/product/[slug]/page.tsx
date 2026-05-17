@@ -65,8 +65,8 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
 
   if (productsLoading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-6 bg-white">
-        <Loader2 className="size-12 text-[#f97316] animate-spin" />
+      <div className="min-h-screen flex flex-col items-center justify-center gap-6 bg-background">
+        <Loader2 className="size-12 text-primary animate-spin" />
         <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">Memuat Detail Produk...</p>
       </div>
     )
@@ -74,21 +74,21 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
 
   if (!product) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-6 text-center bg-white">
-        <h1 className="text-4xl font-black text-[#0f172a] uppercase tracking-tighter">Produk Tidak Ditemukan</h1>
-        <p className="text-slate-500 max-w-md font-medium leading-relaxed">Maaf, layanan yang Anda cari tidak tersedia atau telah dihapus.</p>
-        <Link href="/product" className="mt-6 px-8 py-4 bg-[#0f172a] text-white font-black rounded-2xl uppercase text-xs tracking-widest">Kembali ke Katalog</Link>
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-6 text-center bg-background">
+        <h1 className="text-4xl font-black text-foreground uppercase tracking-tighter">Produk Tidak Ditemukan</h1>
+        <p className="text-muted-foreground max-w-md font-medium leading-relaxed">Maaf, layanan yang Anda cari tidak tersedia atau telah dihapus.</p>
+        <Link href="/product" className="mt-6 px-8 py-4 bg-primary text-primary-foreground font-black rounded-2xl uppercase text-xs tracking-widest">Kembali ke Katalog</Link>
       </div>
     )
   }
 
   return (
-    <main className="min-h-screen flex flex-col bg-white">
+    <main className="min-h-screen flex flex-col bg-background">
       <Navbar />
 
       <div className="container mx-auto max-w-7xl px-6 pt-40 pb-32">
         {/* Back Button */}
-        <Link href="/product" className="inline-flex items-center gap-2 text-slate-400 hover:text-[#f97316] font-bold text-sm mb-12 transition-colors group">
+        <Link href="/product" className="inline-flex items-center gap-2 text-slate-400 hover:text-primary font-bold text-sm mb-12 transition-colors group">
           <ArrowLeft className="size-4 group-hover:-translate-x-1 transition-transform" />
           Kembali ke Katalog
         </Link>
@@ -100,15 +100,15 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-50 border border-orange-100 mb-6"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-6"
               >
-                <Sparkles className="size-3 text-[#f97316]" />
-                <span className="text-[10px] font-black tracking-[0.2em] text-[#f97316] uppercase">Layanan Terverifikasi</span>
+                <Sparkles className="size-3 text-primary" />
+                <span className="text-[10px] font-black tracking-[0.2em] text-primary uppercase">Layanan Terverifikasi</span>
               </motion.div>
               <motion.h1 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="text-6xl md:text-8xl font-black text-[#0f172a] mb-8 tracking-tighter leading-[0.9]"
+                className="text-6xl md:text-8xl font-black text-foreground mb-8 tracking-tighter leading-[0.9]"
               >
                 {product.name}
               </motion.h1>
@@ -116,7 +116,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="text-slate-500 text-lg leading-relaxed max-w-xl font-medium"
+                className="text-muted-foreground text-lg leading-relaxed max-w-xl font-medium"
               >
                 {selectedVariant?.description ? (
                   selectedVariant.description.split('\n').map((line, i) => (
@@ -135,7 +135,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
               animate={isVariantShaking ? shakeAnimation : {}}
               className="space-y-6"
             >
-              <h3 className="text-[#0f172a] font-black uppercase tracking-widest text-xs">Pilih Varian Paket</h3>
+              <h3 className="text-foreground font-black uppercase tracking-widest text-xs">Pilih Varian Paket</h3>
               <div className="grid grid-cols-1 gap-4">
                 {product.variants.map((variant, idx) => (
                   <motion.button
@@ -146,12 +146,12 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
                     onClick={() => setSelectedVariant(variant)}
                     className={`p-6 md:p-8 rounded-2xl border transition-all duration-500 text-left flex justify-between items-center group relative overflow-hidden ${
                       selectedVariant?.id === variant.id 
-                      ? 'bg-white border-[#f97316] shadow-[0_20px_40px_rgba(249,115,22,0.15)] ring-1 ring-[#f97316]' 
-                      : 'bg-slate-50 border-slate-100 hover:border-slate-200'
+                      ? 'bg-background border-primary shadow-xl shadow-primary/20 ring-1 ring-primary' 
+                      : 'bg-muted/50 border-border hover:border-border'
                     }`}
                   >
                     <div className="relative z-10">
-                      <span className={`font-black text-2xl block transition-colors mb-1 ${selectedVariant?.id === variant.id ? 'text-[#f97316]' : 'text-[#0f172a]'}`}>
+                      <span className={`font-black text-2xl block transition-colors mb-1 ${selectedVariant?.id === variant.id ? 'text-primary' : 'text-foreground'}`}>
                         {variant.name}
                       </span>
                       <span className="text-xs text-slate-400 font-bold uppercase tracking-widest">
@@ -164,7 +164,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
                           {formatCurrency(variant.strike_price)}
                         </span>
                       )}
-                      <span className={`font-black text-2xl md:text-3xl block transition-colors ${selectedVariant?.id === variant.id ? 'text-[#0f172a]' : 'text-[#0f172a]'}`}>
+                      <span className={`font-black text-2xl md:text-3xl block transition-colors ${selectedVariant?.id === variant.id ? 'text-foreground' : 'text-foreground'}`}>
                         {formatCurrency(variant.price)}
                       </span>
                     </div>
@@ -180,17 +180,17 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="hidden lg:block bg-slate-900 rounded-[48px] p-12 text-white relative overflow-hidden"
+              className="hidden lg:block bg-background border border-border shadow-sm rounded-[48px] p-12 text-foreground relative overflow-hidden"
             >
-              <div className="absolute top-0 right-0 w-64 h-64 bg-orange-500/10 blur-[100px] -translate-y-1/2 translate-x-1/2" />
+              <div className="absolute top-0 right-0 w-64 h-64 bg-primary/100/10 blur-[100px] -translate-y-1/2 translate-x-1/2" />
               
               <div className="relative z-10">
                 <h2 className="text-3xl md:text-4xl font-black mb-6 uppercase tracking-tighter leading-tight">Siap Untuk Berlangganan?</h2>
-                <p className="text-slate-400 font-medium mb-10 leading-relaxed">Pilih varian paket yang Anda inginkan dan nikmati layanan premium secara instan tanpa ribet.</p>
+                <p className="text-muted-foreground font-medium mb-10 leading-relaxed">Pilih varian paket yang Anda inginkan dan nikmati layanan premium secara instan tanpa ribet.</p>
                 
                 <button 
                   onClick={handleContinueCheckout}
-                  className="w-full py-6 bg-gradient-to-r from-[#f97316] to-[#ef4444] text-white font-black rounded-[24px] hover:scale-[1.02] active:scale-95 transition-all shadow-2xl shadow-orange-500/20 flex items-center justify-center gap-3 uppercase tracking-widest text-sm"
+                  className="w-full py-6 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-black rounded-[24px] hover:scale-[1.02] active:scale-95 transition-all shadow-2xl shadow-primary/20 flex items-center justify-center gap-3 uppercase tracking-widest text-sm"
                 >
                   Lanjutkan ke Pembayaran
                   <ArrowRight className="size-5" />
@@ -198,45 +198,55 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
                 
                 <div className="mt-8 flex items-center justify-center gap-6">
                   <div className="flex -space-x-3">
-                    {[1,2,3,4].map(i => (
-                      <div key={i} className="size-8 rounded-full border-2 border-slate-900 bg-slate-800" />
+                    {['AD', 'RN', 'B', 'MK'].map((initial, i) => (
+                      <div 
+                        key={i} 
+                        className={`size-8 rounded-full border-2 border-background flex items-center justify-center text-white text-[9px] font-black shadow-sm ${
+                          i === 0 ? 'bg-gradient-to-br from-blue-500 to-indigo-600' :
+                          i === 1 ? 'bg-gradient-to-br from-emerald-400 to-teal-600' :
+                          i === 2 ? 'bg-gradient-to-br from-rose-400 to-red-600' :
+                          'bg-gradient-to-br from-amber-400 to-orange-600'
+                        }`}
+                      >
+                        {initial}
+                      </div>
                     ))}
                   </div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">
-                    <span className="text-white">1000+</span> Pengguna Aktif
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                    <span className="text-foreground font-black">1000+</span> Pengguna Aktif
                   </p>
                 </div>
               </div>
             </motion.div>
 
             {/* Trust Badges Individual Cards */}
-            <div className="p-8 border border-slate-100 rounded-2xl flex gap-6 items-center group hover:border-emerald-100 transition-colors h-full">
-              <div className="bg-emerald-50 p-4 rounded-2xl group-hover:bg-emerald-100 transition-colors shrink-0">
-                <ShieldCheck className="size-6 text-emerald-500" />
+            <div className="p-8 border border-border rounded-2xl flex gap-6 items-center group hover:border-primary/20 transition-colors h-full">
+              <div className="bg-primary/10 p-4 rounded-2xl group-hover:bg-primary/20 transition-colors shrink-0">
+                <ShieldCheck className="size-6 text-primary" />
               </div>
               <div>
-                <h4 className="font-black text-[#0f172a] uppercase tracking-wider text-xs mb-1">Legal 100%</h4>
+                <h4 className="font-black text-foreground uppercase tracking-wider text-xs mb-1">Legal 100%</h4>
                 <p className="text-xs text-slate-400 font-medium leading-relaxed">Semua akun kami berasal dari sumber resmi dan bergaransi penuh.</p>
               </div>
             </div>
 
-            <div className="p-8 border border-slate-100 rounded-2xl flex gap-6 items-center group hover:border-orange-100 transition-colors h-full">
-              <div className="bg-orange-50 p-4 rounded-2xl group-hover:bg-orange-100 transition-colors shrink-0">
-                <Zap className="size-6 text-[#f97316]" />
+            <div className="p-8 border border-border rounded-2xl flex gap-6 items-center group hover:border-primary/20 transition-colors h-full">
+              <div className="bg-primary/10 p-4 rounded-2xl group-hover:bg-primary/20 transition-colors shrink-0">
+                <Zap className="size-6 text-primary" />
               </div>
               <div>
-                <h4 className="font-black text-[#0f172a] uppercase tracking-wider text-xs mb-1">Instan Aktif</h4>
+                <h4 className="font-black text-foreground uppercase tracking-wider text-xs mb-1">Instan Aktif</h4>
                 <p className="text-xs text-slate-400 font-medium leading-relaxed">Voucher dikirim otomatis sesaat setelah pembayaran Anda terverifikasi.</p>
               </div>
             </div>
 
             {/* Support Info */}
-            <div className="p-8 border border-slate-100 rounded-2xl flex gap-6 items-center group hover:border-orange-100 transition-colors h-full">
-              <div className="bg-orange-50 p-4 rounded-2xl group-hover:bg-orange-100 transition-colors shrink-0">
-                <MessageSquare className="size-6 text-[#f97316]" />
+            <div className="p-8 border border-border rounded-2xl flex gap-6 items-center group hover:border-primary/20 transition-colors h-full">
+              <div className="bg-primary/10 p-4 rounded-2xl group-hover:bg-primary/20 transition-colors shrink-0">
+                <MessageSquare className="size-6 text-primary" />
               </div>
               <div>
-                <h4 className="font-black text-[#0f172a] uppercase tracking-wider text-xs mb-1">Butuh Bantuan?</h4>
+                <h4 className="font-black text-foreground uppercase tracking-wider text-xs mb-1">Butuh Bantuan?</h4>
                 <p className="text-xs text-slate-400 font-medium leading-relaxed">Tim support kami siap membantu Anda 24/7 via WhatsApp.</p>
               </div>
             </div>
@@ -245,10 +255,10 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
       </div>
 
       {/* Mobile Fixed CTA - Moved outside for absolute viewport positioning */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 px-6 py-4 bg-white border-t border-slate-100 z-[100] shadow-[0_-20px_40px_rgba(0,0,0,0.05)]">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 px-6 py-4 bg-background border-t border-border z-[100] shadow-[0_-20px_40px_rgba(0,0,0,0.05)]">
         <button 
           onClick={handleContinueCheckout}
-          className="w-full py-5 bg-gradient-to-r from-[#f97316] to-[#ef4444] text-white font-black rounded-2xl active:scale-95 transition-all shadow-xl shadow-orange-500/20 flex items-center justify-center gap-3 uppercase tracking-widest text-sm"
+          className="w-full py-5 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-black rounded-2xl active:scale-95 transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-3 uppercase tracking-widest text-sm"
         >
           Lanjutkan Pembayaran
           <ArrowRight className="size-5" />

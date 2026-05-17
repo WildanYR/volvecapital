@@ -79,7 +79,7 @@ export default function RedeemPage() {
   }
 
   return (
-    <main className="min-h-screen flex flex-col pt-40 pb-0 bg-white">
+    <main className="min-h-screen flex flex-col pt-40 pb-0 bg-background">
       <Navbar />
       
       <div className="flex-grow container mx-auto max-w-4xl px-6 mb-32">
@@ -87,18 +87,18 @@ export default function RedeemPage() {
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-orange-50 border border-orange-100 mb-6"
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 mb-6"
           >
-            <Key className="size-4 text-[#f97316]" />
-            <span className="text-[10px] font-black tracking-[0.3em] text-[#f97316] uppercase">Aktivasi Voucher</span>
+            <Key className="size-4 text-primary" />
+            <span className="text-[10px] font-black tracking-[0.3em] text-primary uppercase">Aktivasi Voucher</span>
           </motion.div>
-          <h1 className="text-4xl md:text-7xl font-black mb-6 text-[#0f172a] tracking-tight">Tukar <span className="bg-clip-text text-transparent bg-gradient-to-br from-[#f97316] to-[#ef4444]">Kode Voucher.</span></h1>
-          <p className="text-slate-500 text-lg font-medium max-w-2xl mx-auto leading-relaxed">Masukkan kode voucher unik Anda untuk mendapatkan detail layanan seketika.</p>
+          <h1 className="text-4xl md:text-7xl font-black mb-6 text-foreground tracking-tight">Tukar <span className="bg-clip-text text-transparent bg-gradient-to-br from-primary to-primary/80">Kode Voucher.</span></h1>
+          <p className="text-muted-foreground text-lg font-medium max-w-2xl mx-auto leading-relaxed">Masukkan kode voucher unik Anda untuk mendapatkan detail layanan seketika.</p>
         </div>
 
-        <div className="bg-white rounded-[48px] p-8 md:p-14 border border-slate-100 shadow-2xl relative overflow-hidden">
+        <div className="bg-background rounded-[48px] p-8 md:p-14 border border-border shadow-2xl relative overflow-hidden">
           {/* Subtle Accent */}
-          <div className="absolute top-0 right-0 w-32 h-32 bg-orange-50/50 blur-[60px] rounded-full -translate-y-1/2 translate-x-1/2" />
+          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10/50 blur-[60px] rounded-full -translate-y-1/2 translate-x-1/2" />
 
           <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-4 mb-12 relative z-10">
             <div className="relative flex-grow">
@@ -106,14 +106,14 @@ export default function RedeemPage() {
               <input 
                 type="text"
                 placeholder="VC-XXXXXXXX"
-                className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-16 pr-6 py-5 text-xl font-black focus:outline-none focus:border-[#f97316] transition-all text-[#0f172a] placeholder:text-slate-300 uppercase"
+                className="w-full bg-muted/50 border border-border rounded-2xl pl-16 pr-6 py-5 text-xl font-black focus:outline-none focus:border-primary transition-all text-foreground placeholder:text-slate-300 uppercase"
                 value={code}
                 onChange={e => setCode(e.target.value.toUpperCase())}
               />
             </div>
             <button 
               disabled={isLoading}
-              className="px-10 py-5 bg-[#0f172a] text-white font-black rounded-2xl hover:bg-gradient-to-br hover:from-[#f97316] hover:to-[#ef4444] transition-all flex items-center justify-center gap-3 disabled:opacity-50 shrink-0 text-sm uppercase tracking-widest shadow-xl"
+              className="px-10 py-5 bg-primary text-primary-foreground font-black rounded-2xl hover:bg-gradient-to-br hover:from-primary hover:to-primary/80 transition-all flex items-center justify-center gap-3 disabled:opacity-50 shrink-0 text-sm uppercase tracking-widest shadow-xl"
             >
               {isLoading ? <Loader2 className="size-5 animate-spin" /> : 'Cek Sekarang'}
             </button>
@@ -125,21 +125,21 @@ export default function RedeemPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 10 }}
-                className="space-y-10 pt-12 border-t border-slate-100 relative z-10"
+                className="space-y-10 pt-12 border-t border-border relative z-10"
               >
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                   <div>
-                    <h4 className="text-3xl md:text-4xl font-black text-[#0f172a] tracking-tight">{result?.voucher?.product_variant?.product?.name || 'Produk'}</h4>
+                    <h4 className="text-3xl md:text-4xl font-black text-foreground tracking-tight">{result?.voucher?.product_variant?.product?.name || 'Produk'}</h4>
                     <div className="flex items-center gap-3 mt-3">
                       <span className="text-sm font-bold text-slate-400 uppercase tracking-widest">{result?.voucher?.product_variant?.name || 'Varian'}</span>
                       <span className={`px-4 py-1.5 rounded-full text-[10px] font-black tracking-[0.2em] uppercase ${
                         result.voucher.status === 'USED' 
-                        ? 'bg-red-50 text-red-500 border border-red-100' 
+                        ? 'bg-destructive/10 text-red-500 border border-red-100' 
                         : result.voucher.status === 'PENDING'
                         ? 'bg-yellow-50 text-yellow-600 border border-yellow-100'
                         : result.voucher.status === 'EXPIRED'
-                        ? 'bg-slate-50 text-slate-500 border border-slate-100'
-                        : 'bg-emerald-50 text-emerald-600 border border-emerald-100'
+                        ? 'bg-muted/50 text-muted-foreground border border-border'
+                        : 'bg-accent/20 text-accent-foreground border border-emerald-100'
                       }`}>
                         {result.voucher.status === 'USED' 
                           ? 'Sudah Digunakan' 
@@ -156,7 +156,7 @@ export default function RedeemPage() {
                     <button 
                       onClick={handleRedeem}
                       disabled={isLoading}
-                      className="w-full md:w-auto px-12 py-5 bg-gradient-to-br from-[#f97316] to-[#ef4444] text-white font-black rounded-2xl hover:scale-105 transition-all flex items-center justify-center gap-3 shadow-[0_15px_40px_rgba(249,115,22,0.3)]"
+                      className="w-full md:w-auto px-12 py-5 bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-black rounded-2xl hover:scale-105 transition-all flex items-center justify-center gap-3 shadow-xl shadow-primary/20"
                     >
                       {isLoading ? <Loader2 className="size-5 animate-spin" /> : 'Aktivasi Sekarang'}
                     </button>
@@ -209,9 +209,9 @@ export default function RedeemPage() {
                           {showEmail && (
                             <div className="space-y-3">
                               <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-1">Email / Username</label>
-                              <div className="flex items-center justify-between bg-white p-4 rounded-2xl border border-slate-200 group transition-all hover:border-[#f97316]">
-                                <span className="text-base font-mono text-[#0f172a] font-bold break-all mr-4">{result.account.email}</span>
-                                <button onClick={() => copyToClipboard(result.account.email)} className="text-[#f97316] hover:text-[#ef4444] transition-colors shrink-0 p-1">
+                              <div className="flex items-center justify-between bg-background p-4 rounded-2xl border border-border group transition-all hover:border-primary">
+                                <span className="text-base font-mono text-foreground font-bold break-all mr-4">{result.account.email}</span>
+                                <button onClick={() => copyToClipboard(result.account.email)} className="text-primary hover:text-[#ef4444] transition-colors shrink-0 p-1">
                                   <Copy className="size-5" />
                                 </button>
                               </div>
@@ -220,9 +220,9 @@ export default function RedeemPage() {
                           {showPassword && (
                             <div className="space-y-3">
                               <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-1">Password</label>
-                              <div className="flex items-center justify-between bg-white p-4 rounded-2xl border border-slate-200 group transition-all hover:border-[#f97316]">
-                                <span className="text-base font-mono text-[#0f172a] font-bold break-all mr-4">{result.account.password}</span>
-                                <button onClick={() => copyToClipboard(result.account.password)} className="text-[#f97316] hover:text-[#ef4444] transition-colors shrink-0 p-1">
+                              <div className="flex items-center justify-between bg-background p-4 rounded-2xl border border-border group transition-all hover:border-primary">
+                                <span className="text-base font-mono text-foreground font-bold break-all mr-4">{result.account.password}</span>
+                                <button onClick={() => copyToClipboard(result.account.password)} className="text-primary hover:text-[#ef4444] transition-colors shrink-0 p-1">
                                   <Copy className="size-5" />
                                 </button>
                               </div>
@@ -234,24 +234,24 @@ export default function RedeemPage() {
                       {(showProfile || showExpired) && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           {showProfile && (
-                            <div className="flex items-center gap-4 bg-white px-6 py-4 rounded-2xl border border-slate-200">
-                              <div className="bg-orange-50 p-2.5 rounded-xl">
-                                <Check className="size-5 text-[#f97316]" />
+                            <div className="flex items-center gap-4 bg-background px-6 py-4 rounded-2xl border border-border">
+                              <div className="bg-primary/10 p-2.5 rounded-xl">
+                                <Check className="size-5 text-primary" />
                               </div>
                               <div>
                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Nama Profil</p>
-                                <p className="text-base font-black text-[#0f172a]">{result.account.profile_name || '-'}</p>
+                                <p className="text-base font-black text-foreground">{result.account.profile_name || '-'}</p>
                               </div>
                             </div>
                           )}
                           {showExpired && (
-                            <div className="flex items-center gap-4 bg-white px-6 py-4 rounded-2xl border border-slate-200">
-                              <div className="bg-emerald-50 p-2.5 rounded-xl">
-                                <Check className="size-5 text-emerald-500" />
+                            <div className="flex items-center gap-4 bg-background px-6 py-4 rounded-2xl border border-border">
+                              <div className="bg-primary/10 p-2.5 rounded-xl">
+                                <Check className="size-5 text-primary" />
                               </div>
                               <div>
                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Masa Aktif</p>
-                                <p className="text-base font-black text-[#0f172a]">{new Date(result.account.expired_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                                <p className="text-base font-black text-foreground">{new Date(result.account.expired_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
                               </div>
                             </div>
                           )}
@@ -266,9 +266,9 @@ export default function RedeemPage() {
                           {customFields.map((field, idx) => (
                             <div key={idx} className="space-y-3">
                               <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-1">{field.label}</label>
-                              <div className="flex items-center justify-between bg-white p-4 rounded-2xl border border-slate-200 group transition-all hover:border-[#f97316]">
-                                <span className="text-base font-mono text-[#0f172a] font-bold break-all mr-4">{resolve(field.value)}</span>
-                                <button onClick={() => copyToClipboard(resolve(field.value))} className="text-[#f97316] hover:text-[#ef4444] transition-colors shrink-0 p-1">
+                              <div className="flex items-center justify-between bg-background p-4 rounded-2xl border border-border group transition-all hover:border-primary">
+                                <span className="text-base font-mono text-foreground font-bold break-all mr-4">{resolve(field.value)}</span>
+                                <button onClick={() => copyToClipboard(resolve(field.value))} className="text-primary hover:text-destructive transition-colors shrink-0 p-1">
                                   <Copy className="size-5" />
                                 </button>
                               </div>
@@ -278,9 +278,9 @@ export default function RedeemPage() {
                       )}
 
                       {showInstruction && result.voucher.product_variant?.copy_template && (
-                        <div className="mt-4 p-8 bg-orange-50 rounded-[32px] border border-orange-100 border-l-8 border-l-[#f97316]">
-                          <p className="text-xs font-black text-[#f97316] uppercase tracking-[0.2em] mb-3">Instruksi Penggunaan</p>
-                          <p className="text-base text-slate-600 leading-relaxed font-bold italic">"{resolve(result.voucher.product_variant.copy_template)}"</p>
+                        <div className="mt-4 p-8 bg-primary/10 rounded-[32px] border border-primary/20 border-l-8 border-l-primary">
+                          <p className="text-xs font-black text-primary uppercase tracking-[0.2em] mb-3">Instruksi Penggunaan</p>
+                          <p className="text-base text-muted-foreground leading-relaxed font-bold italic">"{resolve(result.voucher.product_variant.copy_template)}"</p>
                         </div>
                       )}
 
@@ -291,14 +291,14 @@ export default function RedeemPage() {
                       )}
 
                       {result.voucher?.product_variant?.tutorial?.slug && accessToken && (
-                        <div className="mt-4 p-6 bg-slate-900 rounded-[32px] flex flex-col md:flex-row items-center justify-between gap-6">
+                        <div className="mt-4 p-6 bg-muted/30 rounded-[32px] flex flex-col md:flex-row items-center justify-between gap-6">
                           <div>
-                            <p className="text-xs font-black text-orange-400 uppercase tracking-[0.2em] mb-1">📖 Panduan Penggunaan</p>
+                            <p className="text-xs font-black text-destructive uppercase tracking-[0.2em] mb-1">📖 Panduan Penggunaan</p>
                             <p className="text-sm text-slate-400 font-medium">Ikuti langkah-langkah penggunaan agar akun Anda aman dan awet.</p>
                           </div>
                           <Link
                             href={`/tutorial/${result.voucher.product_variant.tutorial.slug}?token=${accessToken}&tenant=${tenantId || 'master'}`}
-                            className="shrink-0 px-8 py-4 bg-white text-[#0f172a] hover:bg-orange-500 hover:text-white font-black rounded-2xl transition-all flex items-center gap-2 text-sm shadow-lg"
+                            className="shrink-0 px-8 py-4 bg-background text-foreground hover:bg-primary/100 hover:text-primary-foreground font-black rounded-2xl transition-all flex items-center gap-2 text-sm shadow-lg"
                           >
                             <BookOpen className="size-4" />
                             Lihat Panduan

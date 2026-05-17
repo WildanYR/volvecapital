@@ -51,7 +51,7 @@ export function Footer({ config: initialConfig }: FooterProps) {
   const renderLogoIcon = () => {
     if (!logoIcon) {
       return (
-        <div className="bg-gradient-to-br from-[#f97316] to-[#ef4444] p-2.5 rounded-2xl shadow-lg transition-transform duration-300">
+        <div className="bg-gradient-to-br from-primary to-primary/80 p-2.5 rounded-2xl shadow-lg transition-transform duration-300">
           <Crown className="size-6 text-white" />
         </div>
       )
@@ -74,58 +74,58 @@ export function Footer({ config: initialConfig }: FooterProps) {
   }
 
   return (
-    <footer className="py-24 px-6 w-full flex justify-center bg-[#0f172a]">
+    <footer className="py-24 px-6 w-full flex justify-center bg-background border-t border-border">
       <div className="w-full max-w-7xl relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 md:gap-12 lg:gap-16 mb-20">
           <div className="md:col-span-2 lg:col-span-2 space-y-8">
             <Link href="/" className="flex items-center gap-3 group">
               {renderLogoIcon()}
-              <span className="text-3xl font-black tracking-tighter text-white uppercase">
+              <span className="text-3xl font-black tracking-tighter text-foreground uppercase">
                 {brandName}
               </span>
             </Link>
-            <p className="text-slate-400 text-lg max-w-md leading-relaxed font-medium">
+            <p className="text-muted-foreground text-lg max-w-md leading-relaxed font-medium">
               {address}
             </p>
             <div className="flex items-center gap-6">
-              <Link href="#" className="size-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-[#f97316] hover:bg-white/10 transition-all">
+              <Link href="#" className="size-12 rounded-2xl bg-muted/50 border border-border flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/30 hover:bg-primary/5 transition-all">
                 <Instagram className="size-6" />
               </Link>
-              <Link href="#" className="size-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-[#f97316] hover:bg-white/10 transition-all">
+              <Link href="#" className="size-12 rounded-2xl bg-muted/50 border border-border flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/30 hover:bg-primary/5 transition-all">
                 <Twitter className="size-6" />
               </Link>
-              <Link href="#" className="size-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-[#f97316] hover:bg-white/10 transition-all">
+              <Link href="#" className="size-12 rounded-2xl bg-muted/50 border border-border flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/30 hover:bg-primary/5 transition-all">
                 <MessageCircle className="size-6" />
               </Link>
             </div>
           </div>
 
           <div>
-            <h4 className="text-white font-black uppercase tracking-[0.2em] text-xs mb-8">Navigasi</h4>
+            <h4 className="text-foreground font-black uppercase tracking-[0.2em] text-xs mb-8">Navigasi</h4>
             <ul className="space-y-5">
-              <li><Link href="/" className="text-slate-400 hover:text-white transition-colors text-base font-bold">Beranda</Link></li>
-              <li><Link href="/product" className="text-slate-400 hover:text-white transition-colors text-base font-bold">Semua Produk</Link></li>
-              <li><Link href="/redeem" className="text-slate-400 hover:text-white transition-colors text-base font-bold">Tukar Voucher</Link></li>
+              <li><Link href="/" className="text-muted-foreground hover:text-primary transition-colors text-base font-bold">Beranda</Link></li>
+              <li><Link href="/product" className="text-muted-foreground hover:text-primary transition-colors text-base font-bold">Semua Produk</Link></li>
+              <li><Link href="/redeem" className="text-muted-foreground hover:text-primary transition-colors text-base font-bold">Tukar Voucher</Link></li>
             </ul>
           </div>
 
           <div>
-            <h4 className="text-white font-black uppercase tracking-[0.2em] text-xs mb-8">Bantuan</h4>
+            <h4 className="text-foreground font-black uppercase tracking-[0.2em] text-xs mb-8">Bantuan</h4>
             <ul className="space-y-5">
-              <li><Link href="/terms" className="text-slate-400 hover:text-white transition-colors text-base font-bold">Syarat & Ketentuan</Link></li>
-              <li><Link href="/privacy" className="text-slate-400 hover:text-white transition-colors text-base font-bold">Kebijakan Privasi</Link></li>
+              <li><Link href="/terms" className="text-muted-foreground hover:text-primary transition-colors text-base font-bold">Syarat & Ketentuan</Link></li>
+              <li><Link href="/privacy" className="text-muted-foreground hover:text-primary transition-colors text-base font-bold">Kebijakan Privasi</Link></li>
             </ul>
           </div>
         </div>
 
         {/* Improved Bottom Bar - Centered on Mobile like Rapatonline */}
-        <div className="pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center text-center md:text-left gap-6">
-          <p className="text-xs text-slate-500 font-bold uppercase tracking-[0.2em] w-full md:w-auto">
+        <div className="pt-10 border-t border-border flex flex-col md:flex-row justify-between items-center text-center md:text-left gap-6">
+          <p className="text-xs text-muted-foreground font-bold uppercase tracking-[0.2em] w-full md:w-auto">
             © 2026 {brandName}. All rights reserved.
           </p>
-          <div className="flex items-center justify-center md:justify-end gap-2 text-[10px] text-slate-600 font-black uppercase tracking-widest w-full md:w-auto">
+          <div className="flex items-center justify-center md:justify-end gap-2 text-[10px] text-muted-foreground font-black uppercase tracking-widest w-full md:w-auto">
             <span>Powered by</span>
-            <span className="text-slate-400">Digital Premium Infrastructure</span>
+            <span className="text-foreground">Digital Premium Infrastructure</span>
           </div>
         </div>
       </div>

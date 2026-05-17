@@ -4,6 +4,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useState } from 'react'
 import { Toaster } from 'sonner'
 import { TenantProvider } from '@/hooks/use-tenant'
+import { ThemeProvider } from 'next-themes'
+import { ThemeInjector } from './theme-injector'
 
 export function Providers({ 
   children,
@@ -24,10 +26,13 @@ export function Providers({
 
   return (
     <TenantProvider tenantId={tenantId} hostname={hostname}>
-      <QueryClientProvider client={queryClient}>
-        {children}
-        <Toaster position="top-center" richColors />
-      </QueryClientProvider>
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+        <QueryClientProvider client={queryClient}>
+          <ThemeInjector />
+          {children}
+          <Toaster position="top-center" richColors />
+        </QueryClientProvider>
+      </ThemeProvider>
     </TenantProvider>
   )
 }
