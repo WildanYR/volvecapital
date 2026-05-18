@@ -113,19 +113,25 @@ function RouteComponent() {
 
   const getLinkRedeem = (voucherCode: string) => {
     const hostname = window.location.hostname
-    let rootDomain = hostname
-    if (hostname.includes('digitalpremium.id')) {
-      rootDomain = 'digitalpremium.id'
-    } else if (hostname.includes('dashboard.')) {
-      rootDomain = hostname.replace(/.*dashboard\./, '')
-    }
-    
     const protocol = window.location.protocol
-    const baseUrl = rootDomain === 'localhost' 
-      ? `${auth.tenant!.id}.localhost:3001` 
-      : `${auth.tenant!.id}.${rootDomain}`
-    
-    return `${protocol}//${baseUrl}/redeem?code=${voucherCode}`
+
+    // Jika diakses dari localhost (development)
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return `${protocol}//${auth.tenant!.id}.localhost:3001/redeem?code=${voucherCode}`
+    }
+
+    // Jika diakses dari platform domain utama (*.digitalpremium.id)
+    if (hostname.includes('digitalpremium.id')) {
+      let rootDomain = 'digitalpremium.id'
+      if (hostname.includes('dashboard.')) {
+        rootDomain = hostname.replace(/.*dashboard\./, '')
+      }
+      return `${protocol}//${auth.tenant!.id}.${rootDomain}/redeem?code=${voucherCode}`
+    }
+
+    // Jika diakses dari domain kustom milik tenant sendiri (misal: rojolapak.com atau shop.rojolapak.com)
+    // Langsung gunakan hostname tersebut sebagai base URL tanpa menempelkan tenantId di depan!
+    return `${protocol}//${hostname}/redeem?code=${voucherCode}`
   }
 
   const { data: settings } = useQuery({

@@ -357,31 +357,9 @@ export class PublicService {
         }
       }
 
-      // Build DOKU callback URL with tenant subdomain
-      let frontendBaseUrl = this.configService.get<string>('FRONTEND_URL') || 'localhost:3001';
-
-      // Ensure protocol exists
-      if (!frontendBaseUrl.startsWith('http')) {
-        frontendBaseUrl = `https://${frontendBaseUrl}`;
-      }
-
-      let callbackUrl = '';
-      try {
-        const url = new URL(frontendBaseUrl);
-        const hostname = url.hostname;
-
-        // Prepend tenantId if not already present
-        if (!hostname.startsWith(`${tenantId}.`)) {
-          url.hostname = `${tenantId}.${hostname}`;
-        }
-
-        callbackUrl = `${url.toString().replace(/\/$/, '')}/success?order_id=${orderId}`;
-      }
-      catch (e) {
-        // Fallback for malformed URLs
-        const cleanBase = frontendBaseUrl.replace('https://', '').replace('http://', '');
-        callbackUrl = `https://${tenantId}.${cleanBase}/success?order_id=${orderId}`;
-      }
+      // Build DOKU callback URL with tenant subdomain or custom domain
+      const tenantBaseUrl = await this.getTenantBaseUrl(tenantId);
+      const callbackUrl = `${tenantBaseUrl}/success?order_id=${orderId}`;
 
       const dokuPayload = {
         order: {
@@ -943,20 +921,8 @@ export class PublicService {
     });
 
     // Build Redeem URL
-    let frontendBaseUrl = this.configService.get<string>('FRONTEND_URL') || 'localhost:3001';
-    if (!frontendBaseUrl.startsWith('http')) frontendBaseUrl = `https://${frontendBaseUrl}`;
-    
-    let redeemUrl = '';
-    try {
-      const url = new URL(frontendBaseUrl);
-      if (!url.hostname.startsWith(`${tenantId}.`)) {
-        url.hostname = `${tenantId}.${url.hostname}`;
-      }
-      redeemUrl = `${url.toString().replace(/\/$/, '')}/redeem?code=${voucherCode}`;
-    } catch (e) {
-      const cleanBase = frontendBaseUrl.replace('https://', '').replace('http://', '');
-      redeemUrl = `https://${tenantId}.${cleanBase}/redeem?code=${voucherCode}`;
-    }
+    const tenantBaseUrl = await this.getTenantBaseUrl(tenantId);
+    const redeemUrl = `${tenantBaseUrl}/redeem?code=${voucherCode}`;
 
     const expiryFormatted = new Date(expiredAt).toLocaleDateString('id-ID', {
       day: 'numeric',
@@ -1237,6 +1203,30 @@ export class PublicService {
     } catch (error) {
       await transaction.rollback();
       throw error;
+    }
+  }
+
+  private async getTenantBaseUrl(tenantId: string): Promise<string> {
+    const tenant = await Tenant.findByPk(tenantId);
+    if (tenant && tenant.custom_domain) {
+      return `https://${tenant.custom_domain.toLowerCase()}`;
+    }
+
+    let frontendBaseUrl = this.configService.get<string>('FRONTEND_URL') || 'localhost:3001';
+    if (!frontendBaseUrl.startsWith('http')) {
+      frontendBaseUrl = `https://${frontendBaseUrl}`;
+    }
+
+    try {
+      const url = new URL(frontendBaseUrl);
+      const hostname = url.hostname;
+      if (!hostname.startsWith(`${tenantId}.`)) {
+        url.hostname = `${tenantId}.${hostname}`;
+      }
+      return url.toString().replace(/\/$/, '');
+    } catch (e) {
+      const cleanBase = frontendBaseUrl.replace('https://', '').replace('http://', '');
+      return `https://${tenantId}.${cleanBase}`;
     }
   }
 }

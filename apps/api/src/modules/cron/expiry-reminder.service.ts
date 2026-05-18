@@ -38,14 +38,18 @@ export class ExpiryReminderService {
 
     for (const tenant of tenants) {
       try {
-        await this.processTenantReminders(tenant.id, tenant.name || 'Digital Premium');
+        await this.processTenantReminders(tenant);
       } catch (error) {
         this.logger.error(`Error processing reminders for tenant ${tenant.id}: ${error.message}`);
       }
     }
   }
 
-  private async processTenantReminders(tenantId: string, tenantName: string) {
+  private async processTenantReminders(tenant: Tenant) {
+    const tenantId = tenant.id;
+    const tenantName = tenant.name || 'Digital Premium';
+    const customDomain = tenant.custom_domain;
+
     const transaction = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema(tenantId, transaction);
@@ -88,7 +92,7 @@ export class ExpiryReminderService {
 
       for (const row of results) {
         this.logger.log(`Sending reminder to ${row.buyerEmail} for ${row.productName}`);
-        await this.sendReminderEmail(tenantId, tenantName, row, transaction);
+        await this.sendReminderEmail(tenantId, tenantName, customDomain, row, transaction);
         
         await this.accountUserRepository.update(
           { is_reminder_sent: true },
@@ -103,7 +107,13 @@ export class ExpiryReminderService {
     }
   }
 
-  private async sendReminderEmail(tenantId: string, tenantName: string, data: any, transaction: any) {
+  private async sendReminderEmail(
+    tenantId: string,
+    tenantName: string,
+    customDomain: string | null,
+    data: any,
+    transaction: any,
+  ) {
     const { buyerEmail, buyerName, productName, variantName, expiredAt, productSlug, productId, variantId } = data;
 
     // Get recommendations: other variants of the same product with LONGER duration
@@ -127,7 +137,11 @@ export class ExpiryReminderService {
       timeZone: 'Asia/Jakarta',
     });
 
-    const purchaseUrl = `https://${tenantId}.digitalpremium.id/product/${productSlug}`;
+    const baseUrl = customDomain
+      ? `https://${customDomain.toLowerCase()}`
+      : `https://${tenantId}.digitalpremium.id`;
+
+    const purchaseUrl = `${baseUrl}/product/${productSlug}`;
 
     let recommendationsHtml = '';
     if (recommendations.length > 0) {
