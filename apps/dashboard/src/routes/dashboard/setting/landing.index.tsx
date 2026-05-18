@@ -254,7 +254,7 @@ function LandingSettingPage() {
                     <Input
                       value={customDomain}
                       onChange={e => setCustomDomain(e.target.value)}
-                      placeholder="Contoh: rojolapak.com atau shop.rojolapak.com"
+                      placeholder="Contoh: digitalpremium.id"
                     />
                     <p className="text-[10px] text-muted-foreground italic">
                       * Biarkan kosong jika ingin menggunakan domain bawaan ({auth.tenant!.id}.digitalpremium.id).
