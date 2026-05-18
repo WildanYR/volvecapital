@@ -68,23 +68,20 @@ export function Navbar({ config: initialConfig }: NavbarProps) {
   useEffect(() => {
     if (initialConfig) {
       setConfig(initialConfig)
-      return
-    }
-    if (settings) {
-      if (settings.LANDING_NAVBAR) {
-        try {
-          setConfig(JSON.parse(settings.LANDING_NAVBAR))
-        } catch (e) {
-          console.error(e)
-        }
+    } else if (settings && settings.LANDING_NAVBAR) {
+      try {
+        setConfig(JSON.parse(settings.LANDING_NAVBAR))
+      } catch (e) {
+        console.error(e)
       }
-      if (settings.LANDING_HERO) {
-        try {
-          const heroConfig = JSON.parse(settings.LANDING_HERO)
-          setHeroBg(heroConfig.backgroundImageUrl || null)
-        } catch (e) {
-          console.error(e)
-        }
+    }
+
+    if (settings && settings.LANDING_HERO) {
+      try {
+        const heroConfig = JSON.parse(settings.LANDING_HERO)
+        setHeroBg(heroConfig.backgroundImageUrl || null)
+      } catch (e) {
+        console.error(e)
       }
     }
   }, [initialConfig, settings])
