@@ -80,31 +80,21 @@ export default async function RootLayout({
   let tenantId: string | null = null;
   const parts = host.split('.');
   
-  // Jika menggunakan subdomain digitalpremium.id (e.g. paytronik.digitalpremium.id)
-  if (host.includes('digitalpremium.id')) {
-    if (parts.length >= 2) {
-      const subdomain = parts[0];
-      if (subdomain !== 'www' && subdomain !== 'localhost' && !subdomain.includes(':')) {
-        tenantId = subdomain;
-      }
+  if (parts.length >= 2) {
+    const subdomain = parts[0];
+    if (subdomain !== 'www' && subdomain !== 'localhost' && !subdomain.includes(':')) {
+      tenantId = subdomain;
     }
-  } else if (!host.includes('localhost') && !host.includes('127.0.0.1')) {
-    // Jika diakses lewat custom domain (e.g. rojolapak.com),
-    // biarkan API yang resolve tenantId-nya berdasarkan header Host!
-    tenantId = null;
   }
 
   // Fetch theme CSS server-side to eliminate Flash of Unstyled Content (FOUC)
   let serverThemeCss: string | null = null;
-  if (tenantId || (!host.includes('localhost') && !host.includes('127.0.0.1'))) {
+  if (tenantId) {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
       const res = await fetch(`${apiUrl}/public/settings`, {
-        headers: { 
-          'x-tenant-id': tenantId || '',
-          'host': host, // Kirim host asli agar API bisa resolve custom domain
-        },
-        next: { revalidate: 60 },
+        headers: { 'x-tenant-id': tenantId },
+        next: { revalidate: 60 }, // cache for 60s
       });
       if (res.ok) {
         const data = await res.json();
@@ -120,9 +110,20 @@ export default async function RootLayout({
   return (
     <html lang="id" className={`${plusJakartaSans.variable} h-full antialiased`} suppressHydrationWarning>
       <head>
-        {/* Inject tenant theme server-side to prevent FOUC */}
+        {/*
+          Blocking script: runs synchronously before first paint.
+          Reads localStorage and applies dark/light class to <html> BEFORE
+          React or next-themes hydrate — this is the only reliable fix for
+          next-themes FOUC in Next.js App Router.
+        */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('theme');if(t==='light'){document.documentElement.classList.remove('dark')}else{document.documentElement.classList.add('dark')}}catch(e){}})();`,
+          }}
+        />
+        {/* Inject tenant theme CSS server-side to prevent color-flash */}
         {serverThemeCss && (
-          <style dangerouslySetInnerHTML={{ __html: serverThemeCss }} />
+          <style id="tenant-theme-css" dangerouslySetInnerHTML={{ __html: serverThemeCss }} />
         )}
       </head>
       <body className="min-h-full flex flex-col font-sans">
