@@ -6,6 +6,7 @@ import { Menu, X, ShoppingBag, Home, Package, Key, Crown, BookOpen, FileText, Be
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTenant } from '@/hooks/use-tenant'
+import { useSettings } from '@/hooks/use-settings'
 import { api } from '@/lib/api'
 import type { LandingNavbarConfig } from '@volvecapital/shared/types'
 import { useNotification } from '@/hooks/use-notification'
@@ -62,26 +63,31 @@ export function Navbar({ config: initialConfig }: NavbarProps) {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
+  const { data: settings } = useSettings(tenantId)
+
   useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const { data } = await api.get('/public/settings')
-        if (data.LANDING_NAVBAR) {
-          setConfig(JSON.parse(data.LANDING_NAVBAR))
+    if (initialConfig) {
+      setConfig(initialConfig)
+      return
+    }
+    if (settings) {
+      if (settings.LANDING_NAVBAR) {
+        try {
+          setConfig(JSON.parse(settings.LANDING_NAVBAR))
+        } catch (e) {
+          console.error(e)
         }
-        if (data.LANDING_HERO) {
-          const heroConfig = JSON.parse(data.LANDING_HERO)
+      }
+      if (settings.LANDING_HERO) {
+        try {
+          const heroConfig = JSON.parse(settings.LANDING_HERO)
           setHeroBg(heroConfig.backgroundImageUrl || null)
+        } catch (e) {
+          console.error(e)
         }
-      } catch (error) {
-        console.error('Failed to fetch navbar settings:', error)
       }
     }
-
-    if (tenantId) {
-      fetchSettings()
-    }
-  }, [tenantId])
+  }, [initialConfig, settings])
 
   const navLinks = [
     { name: 'HOME', href: '/', icon: Home },
@@ -91,7 +97,7 @@ export function Navbar({ config: initialConfig }: NavbarProps) {
     { name: 'REDEEM', href: '/redeem', icon: Key },
   ]
 
-  const brandName = config?.logoText || 'VOLVECAPITAL'
+  const brandName = config?.logoText || (tenantId ? tenantId.toUpperCase() : '')
   const logoIcon = config?.logoIconEmbed
 
 

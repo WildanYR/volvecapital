@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Crown, Instagram, Twitter, MessageCircle } from 'lucide-react'
 import Link from 'next/link'
 import { useTenant } from '@/hooks/use-tenant'
+import { useSettings } from '@/hooks/use-settings'
 import { api } from '@/lib/api'
 import type { LandingFooterConfig, LandingNavbarConfig } from '@volvecapital/shared/types'
 
@@ -12,41 +13,46 @@ interface FooterProps {
 }
 
 export function Footer({ config: initialConfig }: FooterProps) {
-  const [config, setConfig] = useState<LandingFooterConfig | null>(initialConfig || null)
-  const [brandName, setBrandName] = useState('DIGITAL PREMIUM')
-  const [logoIcon, setLogoIcon] = useState<string | null>(null)
   const { tenantId } = useTenant()
+  const { data: settings } = useSettings(tenantId)
+  const [config, setConfig] = useState<LandingFooterConfig | null>(initialConfig || null)
+  const [brandName, setBrandName] = useState(tenantId ? tenantId.toUpperCase() : '')
+  const [logoIcon, setLogoIcon] = useState<string | null>(null)
 
   useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const { data } = await api.get('/public/settings')
-        
-        if (data.LANDING_FOOTER) {
-          setConfig(JSON.parse(data.LANDING_FOOTER))
+    if (initialConfig) {
+      setConfig(initialConfig)
+      // Attempt to extract brand details from initialConfig if present, or just let it fall back
+      return
+    }
+    
+    if (settings) {
+      if (settings.LANDING_FOOTER) {
+        try {
+          setConfig(JSON.parse(settings.LANDING_FOOTER))
+        } catch (e) {
+          console.error(e)
         }
-        
-        if (data.LANDING_NAVBAR) {
-          const navConfig = JSON.parse(data.LANDING_NAVBAR) as LandingNavbarConfig
+      }
+      
+      if (settings.LANDING_NAVBAR) {
+        try {
+          const navConfig = JSON.parse(settings.LANDING_NAVBAR) as LandingNavbarConfig
           if (navConfig.logoText) {
             setBrandName(navConfig.logoText)
           }
           if (navConfig.logoIconEmbed) {
             setLogoIcon(navConfig.logoIconEmbed)
           }
+        } catch (e) {
+          console.error(e)
         }
-      } catch (error) {
-        console.error('Failed to fetch footer settings:', error)
       }
     }
-
-    if (tenantId) {
-      fetchSettings()
-    }
-  }, [tenantId])
+  }, [initialConfig, settings])
 
   const address = config?.address || 'Solusi hiburan premium terbaik dengan sistem otomatisasi voucher 24/7. Cepat, aman, dan terpercaya.'
-  const email = config?.email || 'support@volvecapital.com'
+  const email = config?.email || (tenantId ? `support@${tenantId}.com` : 'support@volvecapital.com')
 
   const renderLogoIcon = () => {
     if (!logoIcon) {
