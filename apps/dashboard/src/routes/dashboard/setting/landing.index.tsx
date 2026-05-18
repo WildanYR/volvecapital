@@ -94,6 +94,7 @@ function LandingSettingPage() {
   const [siteTitle, setSiteTitle] = useState('Digital Premium')
   const [siteDescription, setSiteDescription] = useState('Premium Streaming Voucher System')
   const [siteFavicon, setSiteFavicon] = useState('/favicon.ico')
+  const [customDomain, setCustomDomain] = useState('')
 
   useEffect(() => {
     if (settings) {
@@ -137,6 +138,7 @@ function LandingSettingPage() {
       if (settings.SITE_TITLE) setSiteTitle(settings.SITE_TITLE)
       if (settings.SITE_DESCRIPTION) setSiteDescription(settings.SITE_DESCRIPTION)
       if (settings.SITE_FAVICON) setSiteFavicon(settings.SITE_FAVICON)
+      if (settings.CUSTOM_DOMAIN) setCustomDomain(settings.CUSTOM_DOMAIN)
       if (settings.LANDING_TESTIMONIALS) setTestimonials(JSON.parse(settings.LANDING_TESTIMONIALS))
       if (settings.LANDING_FAQ) setFaqs(JSON.parse(settings.LANDING_FAQ))
       if (settings.LANDING_NAVBAR) setNavbar(JSON.parse(settings.LANDING_NAVBAR))
@@ -158,6 +160,7 @@ function LandingSettingPage() {
 
   const handleSave = () => {
     const payload = {
+      CUSTOM_DOMAIN: customDomain.trim().toLowerCase(),
       SITE_TITLE: siteTitle,
       SITE_DESCRIPTION: siteDescription,
       SITE_FAVICON: siteFavicon,
@@ -238,6 +241,43 @@ function LandingSettingPage() {
                   <Label>Deskripsi SEO (Site Description)</Label>
                   <Textarea value={siteDescription} onChange={e => setSiteDescription(e.target.value)} placeholder="Dapatkan voucher streaming instan 24 jam dengan harga terjangkau." />
                   <p className="text-[10px] text-muted-foreground italic">* Deskripsi yang akan muncul saat link website Anda dibagikan di WhatsApp, Google, atau sosial media.</p>
+                </div>
+
+                {/* Custom Domain Section */}
+                <div className="space-y-4 border-t pt-6">
+                  <h3 className="text-sm font-semibold text-primary flex items-center gap-2">
+                    🌐 Pengaturan Kustom Domain (Opsional)
+                  </h3>
+
+                  <div className="space-y-2">
+                    <Label>Domain Kustom Anda</Label>
+                    <Input
+                      value={customDomain}
+                      onChange={e => setCustomDomain(e.target.value)}
+                      placeholder="Contoh: rojolapak.com atau shop.rojolapak.com"
+                    />
+                    <p className="text-[10px] text-muted-foreground italic">
+                      * Biarkan kosong jika ingin menggunakan domain bawaan ({auth.tenant!.id}.digitalpremium.id).
+                    </p>
+                  </div>
+
+                  {/* Alert Box Panduan DNS */}
+                  <div className="p-4 border border-blue-200 bg-blue-50/50 dark:bg-blue-950/20 dark:border-blue-800 rounded-lg space-y-2 text-xs">
+                    <span className="font-semibold text-blue-800 dark:text-blue-300 flex items-center gap-1">
+                      💡 Panduan Menghubungkan Domain Kustom
+                    </span>
+                    <p className="text-muted-foreground">
+                      Agar domain kustom Anda dapat terhubung ke toko premium Anda, silakan ubah pengaturan DNS di penyedia domain Anda (Niagahoster, Domainesia, GoDaddy, dll):
+                    </p>
+                    <ul className="list-disc list-inside space-y-1 text-muted-foreground pl-2">
+                      <li>
+                        <strong>Rekomendasi (Cloudflare):</strong> Daftarkan domain di Cloudflare gratis, buat record <strong>CNAME</strong> dengan name <code className="bg-muted px-1 rounded">@</code> mengarah ke <code className="bg-muted px-1 rounded">cname.digitalpremium.id</code> dengan <strong>Proxy Status (Awan Oranye) Aktif</strong>.
+                      </li>
+                      <li>
+                        <strong>Alternatif (A-Record):</strong> Tambahkan record <strong>A</strong> dengan name <code className="bg-muted px-1 rounded">@</code> mengarah ke IP Server VPS: <code className="bg-muted px-1 rounded">103.183.74.146</code>.
+                      </li>
+                    </ul>
+                  </div>
                 </div>
               </CardContent>
             </Card>

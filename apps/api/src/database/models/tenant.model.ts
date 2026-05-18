@@ -12,6 +12,7 @@ export interface TenantAttributes {
   id: string;
   name: string | null;
   status: 'active' | 'pending' | 'suspended';
+  custom_domain: string | null;
   created_at: Date;
   updated_at: Date;
 }
@@ -36,5 +37,12 @@ export class Tenant extends Model<TenantAttributes, TenantCreationAttributes> {
     defaultValue: 'pending',
   })
   declare status: 'active' | 'pending' | 'suspended';
+
+  @AllowNull(true)
+  @Column({
+    type: DataType.STRING,
+    unique: true,
+  })
+  declare custom_domain: string | null;
 }
 

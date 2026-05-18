@@ -6,6 +6,7 @@ import {
   Post,
   Headers,
   BadRequestException,
+  Inject,
 } from '@nestjs/common';
 import { PublicRoute } from 'src/guards/public-route.decorator';
 import { CreatePaymentDto } from './dto/create-payment.dto';
@@ -14,6 +15,9 @@ import { RedeemVoucherDto } from './dto/redeem-voucher.dto';
 import { PublicService } from './public.service';
 import { SocketGateway } from '../socket/socket.gateway';
 import { AccountService } from '../account/account.service';
+import { Tenant } from 'src/database/models/tenant.model';
+import { TENANT_REPOSITORY } from 'src/constants/database.const';
+import { PostgresProvider } from 'src/database/postgres.provider';
 
 @Controller('public')
 @PublicRoute()
@@ -22,55 +26,75 @@ export class PublicController {
     private readonly publicService: PublicService,
     private readonly socketGateway: SocketGateway,
     private readonly accountService: AccountService,
+    private readonly postgresProvider: PostgresProvider,
+    @Inject(TENANT_REPOSITORY) private readonly tenantRepository: typeof Tenant,
   ) {}
 
-  private getTenantId(host: string, xTenantId?: string): string {
-    // 1. Priority: x-tenant-id header (sent by frontend)
+  private async getTenantId(host: string, xTenantId?: string): Promise<string> {
+    // 1. Prioritas: header x-tenant-id (dikirim dari dashboard)
     if (xTenantId) return xTenantId;
 
-    // 2. Fallback: Host header subdomain
     if (!host) throw new BadRequestException('Missing host or x-tenant-id header');
-    
-    // Special case for local development
-    if (host.includes('localhost')) {
+
+    // Bersihkan port dari host (e.g. localhost:3000 → localhost)
+    const cleanHost = host.split(':')[0].toLowerCase();
+
+    // Abaikan resolusi DB saat local development
+    if (cleanHost === 'localhost' || cleanHost === '127.0.0.1') {
       return 'master';
     }
 
-    const parts = host.split('.');
+    // 2. Cek DB: apakah host ini terdaftar sebagai custom domain milik tenant tertentu?
+    const transaction = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema('master', transaction);
+      const matchedTenant = await this.tenantRepository.findOne({
+        where: { custom_domain: cleanHost },
+        transaction,
+      });
+      await transaction.commit();
+      if (matchedTenant) return matchedTenant.id;
+    } catch {
+      await transaction.rollback();
+      // lanjutkan ke fallback subdomain jika DB error
+    }
+
+    // 3. Fallback: gunakan subdomain dari digitalpremium.id (e.g. paytronik.digitalpremium.id)
+    const parts = cleanHost.split('.');
     if (parts.length >= 2) {
-      const subdomain = parts[0].split(':')[0];
-      if (subdomain !== 'localhost' && subdomain !== 'www') {
+      const subdomain = parts[0];
+      if (subdomain !== 'www') {
         return subdomain;
       }
     }
 
-    throw new BadRequestException('Tenant ID tidak ditemukan di header');
+    throw new BadRequestException('Tenant ID tidak ditemukan untuk domain/host ini');
   }
 
   @Get('product')
-  getProducts(@Headers() headers: any) {
+  async getProducts(@Headers() headers: any) {
     const host = headers.host || '';
     const xTenantId = headers['x-tenant-id'];
-    const tenantId = this.getTenantId(host, xTenantId);
+    const tenantId = await this.getTenantId(host, xTenantId);
     return this.publicService.getProducts(tenantId);
   }
 
   @Get('settings')
-  getSettings(@Headers() headers: any) {
+  async getSettings(@Headers() headers: any) {
     const host = headers.host || '';
     const xTenantId = headers['x-tenant-id'];
-    const tenantId = this.getTenantId(host, xTenantId);
+    const tenantId = await this.getTenantId(host, xTenantId);
     return this.publicService.getSettings(tenantId);
   }
 
   @Post('payment/create')
-  createPayment(
+  async createPayment(
     @Headers() headers: any,
     @Body() dto: CreatePaymentDto,
   ) {
     const host = headers.host || '';
     const xTenantId = headers['x-tenant-id'];
-    const tenantId = this.getTenantId(host, xTenantId);
+    const tenantId = await this.getTenantId(host, xTenantId);
     return this.publicService.createPayment(tenantId, dto);
   }
 
@@ -96,7 +120,7 @@ export class PublicController {
   }
 
   @Get('payment/status/:order_id')
-  checkPaymentStatus(
+  async checkPaymentStatus(
     @Headers() headers: any,
     @Param('order_id') orderId: string,
   ) {
@@ -110,88 +134,88 @@ export class PublicController {
       // 2. Fallback to headers
       const host = headers.host || '';
       const xTenantId = headers['x-tenant-id'];
-      tenantId = this.getTenantId(host, xTenantId);
+      tenantId = await this.getTenantId(host, xTenantId);
     }
     
     return this.publicService.checkPaymentStatus(tenantId, orderId);
   }
 
   @Get('voucher/stock')
-  getStockStatus(@Headers() headers: any) {
+  async getStockStatus(@Headers() headers: any) {
     const host = headers.host || '';
     const xTenantId = headers['x-tenant-id'];
-    const tenantId = this.getTenantId(host, xTenantId);
+    const tenantId = await this.getTenantId(host, xTenantId);
     return this.publicService.getStockStatus(tenantId);
   }
 
   @Get('voucher/:code')
-  getVoucher(
+  async getVoucher(
     @Headers() headers: any,
     @Param('code') code: string,
   ) {
     const host = headers.host || '';
     const xTenantId = headers['x-tenant-id'];
-    const tenantId = this.getTenantId(host, xTenantId);
+    const tenantId = await this.getTenantId(host, xTenantId);
     return this.publicService.getVoucher(tenantId, code);
   }
 
   @Post('voucher/redeem')
-  redeemVoucher(
+  async redeemVoucher(
     @Headers() headers: any,
     @Body() dto: RedeemVoucherDto,
   ) {
     const host = headers.host || '';
     const xTenantId = headers['x-tenant-id'];
-    const tenantId = this.getTenantId(host, xTenantId);
+    const tenantId = await this.getTenantId(host, xTenantId);
     return this.publicService.redeemVoucher(tenantId, dto);
   }
 
   @Get('email-access/:token')
-  getEmailAccess(
+  async getEmailAccess(
     @Headers() headers: any,
     @Param('token') token: string,
   ) {
     const host = headers.host || '';
     const xTenantId = headers['x-tenant-id'];
-    const tenantId = this.getTenantId(host, xTenantId);
+    const tenantId = await this.getTenantId(host, xTenantId);
     return this.publicService.getEmailAccess(tenantId, token);
   }
 
   @Get('tutorial')
-  getTutorials(@Headers() headers: any) {
+  async getTutorials(@Headers() headers: any) {
     const host = headers.host || '';
     const xTenantId = headers['x-tenant-id'];
-    const tenantId = this.getTenantId(host, xTenantId);
+    const tenantId = await this.getTenantId(host, xTenantId);
     return this.publicService.getTutorials(tenantId);
   }
 
   @Get('tutorial/:slug')
-  getTutorialBySlug(
+  async getTutorialBySlug(
     @Headers() headers: any,
     @Param('slug') slug: string,
   ) {
     const host = headers.host || '';
     const xTenantId = headers['x-tenant-id'];
-    const tenantId = this.getTenantId(host, xTenantId);
+    const tenantId = await this.getTenantId(host, xTenantId);
     return this.publicService.getTutorialBySlug(tenantId, slug);
   }
 
   @Get('article')
-  getArticles(@Headers() headers: any) {
+  async getArticles(@Headers() headers: any) {
     const host = headers.host || '';
     const xTenantId = headers['x-tenant-id'];
-    const tenantId = this.getTenantId(host, xTenantId);
+    const tenantId = await this.getTenantId(host, xTenantId);
     return this.publicService.getArticles(tenantId);
   }
 
   @Get('article/:slug')
-  getArticleBySlug(
+  async getArticleBySlug(
     @Headers() headers: any,
     @Param('slug') slug: string,
   ) {
     const host = headers.host || '';
     const xTenantId = headers['x-tenant-id'];
-    const tenantId = this.getTenantId(host, xTenantId);
+    const tenantId = await this.getTenantId(host, xTenantId);
     return this.publicService.getArticleBySlug(tenantId, slug);
   }
 
@@ -217,7 +241,7 @@ export class PublicController {
   ) {
     const host = headers.host || '';
     const xTenantId = headers['x-tenant-id'];
-    const tenantId = this.getTenantId(host, xTenantId);
+    const tenantId = await this.getTenantId(host, xTenantId);
     if (!accountId) throw new BadRequestException('account_id is required');
 
     // Emit event ke bot yang sedang menunggu konfirmasi top-up
@@ -237,7 +261,7 @@ export class PublicController {
   ) {
     const host = headers.host || '';
     const xTenantId = headers['x-tenant-id'];
-    const tenantId = this.getTenantId(host, xTenantId);
+    const tenantId = await this.getTenantId(host, xTenantId);
     if (!accountId) throw new BadRequestException('account_id is required');
 
     // Emit event pembatalan ke bot

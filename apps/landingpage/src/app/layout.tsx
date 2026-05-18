@@ -80,21 +80,31 @@ export default async function RootLayout({
   let tenantId: string | null = null;
   const parts = host.split('.');
   
-  if (parts.length >= 2) {
-    const subdomain = parts[0];
-    if (subdomain !== 'www' && subdomain !== 'localhost' && !subdomain.includes(':')) {
-      tenantId = subdomain;
+  // Jika menggunakan subdomain digitalpremium.id (e.g. paytronik.digitalpremium.id)
+  if (host.includes('digitalpremium.id')) {
+    if (parts.length >= 2) {
+      const subdomain = parts[0];
+      if (subdomain !== 'www' && subdomain !== 'localhost' && !subdomain.includes(':')) {
+        tenantId = subdomain;
+      }
     }
+  } else if (!host.includes('localhost') && !host.includes('127.0.0.1')) {
+    // Jika diakses lewat custom domain (e.g. rojolapak.com),
+    // biarkan API yang resolve tenantId-nya berdasarkan header Host!
+    tenantId = null;
   }
 
   // Fetch theme CSS server-side to eliminate Flash of Unstyled Content (FOUC)
   let serverThemeCss: string | null = null;
-  if (tenantId) {
+  if (tenantId || (!host.includes('localhost') && !host.includes('127.0.0.1'))) {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
       const res = await fetch(`${apiUrl}/public/settings`, {
-        headers: { 'x-tenant-id': tenantId },
-        next: { revalidate: 60 }, // cache for 60s
+        headers: { 
+          'x-tenant-id': tenantId || '',
+          'host': host, // Kirim host asli agar API bisa resolve custom domain
+        },
+        next: { revalidate: 60 },
       });
       if (res.ok) {
         const data = await res.json();
