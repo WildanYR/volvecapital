@@ -11,16 +11,63 @@ const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Digital Premium — Premium Streaming Voucher System",
-  description: "Dapatkan akses premium untuk Netflix, Spotify, Disney+, dan layanan streaming lainnya dengan harga terjangkau dan proses instan.",
-  keywords: ["streaming voucher", "netflix premium", "spotify premium", "digital premium"],
-  openGraph: {
-    title: "Digital Premium — Premium Streaming Voucher",
-    description: "Sistem voucher streaming otomatis, cepat, dan terpercaya.",
-    type: "website",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const headersList = await headers();
+  const host = headersList.get("host") || "";
+  
+  let tenantId: string | null = null;
+  const parts = host.split('.');
+  
+  if (parts.length >= 2) {
+    const subdomain = parts[0];
+    if (subdomain !== 'www' && subdomain !== 'localhost' && !subdomain.includes(':')) {
+      tenantId = subdomain;
+    }
+  }
+
+  // Default SEO fallback
+  let title = "Digital Premium — Premium Streaming Voucher System";
+  let description = "Dapatkan akses premium untuk Netflix, Spotify, Disney+, dan layanan streaming lainnya dengan harga terjangkau dan proses instan.";
+  let favicon = "/favicon.ico";
+
+  if (tenantId) {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+      const res = await fetch(`${apiUrl}/public/settings`, {
+        headers: { 'x-tenant-id': tenantId },
+        next: { revalidate: 60 }, // Cache for 60 seconds
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.SITE_TITLE) {
+          title = data.SITE_TITLE;
+        }
+        if (data.SITE_DESCRIPTION) {
+          description = data.SITE_DESCRIPTION;
+        }
+        if (data.SITE_FAVICON) {
+          favicon = data.SITE_FAVICON;
+        }
+      }
+    } catch {
+      // Silently fall back to default metadata
+    }
+  }
+
+  return {
+    title,
+    description,
+    keywords: ["streaming voucher", "netflix premium", "spotify premium", "digital premium"],
+    icons: {
+      icon: favicon,
+    },
+    openGraph: {
+      title,
+      description,
+      type: "website",
+    },
+  };
+}
 
 export default async function RootLayout({
   children,

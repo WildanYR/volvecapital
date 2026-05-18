@@ -12,7 +12,8 @@ import {
   Navigation, 
   Type,
   ArrowLeft,
-  ShieldCheck
+  ShieldCheck,
+  Settings
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
@@ -90,6 +91,9 @@ function LandingSettingPage() {
     docLinks: [],
   })
   const [themeCss, setThemeCss] = useState('')
+  const [siteTitle, setSiteTitle] = useState('Digital Premium')
+  const [siteDescription, setSiteDescription] = useState('Premium Streaming Voucher System')
+  const [siteFavicon, setSiteFavicon] = useState('/favicon.ico')
 
   useEffect(() => {
     if (settings) {
@@ -130,6 +134,9 @@ function LandingSettingPage() {
           setFeatures(parsed)
         }
       }
+      if (settings.SITE_TITLE) setSiteTitle(settings.SITE_TITLE)
+      if (settings.SITE_DESCRIPTION) setSiteDescription(settings.SITE_DESCRIPTION)
+      if (settings.SITE_FAVICON) setSiteFavicon(settings.SITE_FAVICON)
       if (settings.LANDING_TESTIMONIALS) setTestimonials(JSON.parse(settings.LANDING_TESTIMONIALS))
       if (settings.LANDING_FAQ) setFaqs(JSON.parse(settings.LANDING_FAQ))
       if (settings.LANDING_NAVBAR) setNavbar(JSON.parse(settings.LANDING_NAVBAR))
@@ -151,6 +158,9 @@ function LandingSettingPage() {
 
   const handleSave = () => {
     const payload = {
+      SITE_TITLE: siteTitle,
+      SITE_DESCRIPTION: siteDescription,
+      SITE_FAVICON: siteFavicon,
       LANDING_HERO: JSON.stringify(hero),
       LANDING_FEATURES: JSON.stringify(features),
       LANDING_TESTIMONIALS: JSON.stringify(testimonials),
@@ -188,8 +198,9 @@ function LandingSettingPage() {
         </Button>
       </div>
 
-      <Tabs defaultValue="hero" className="flex flex-col md:flex-row gap-8 w-full" orientation="vertical">
+      <Tabs defaultValue="general" className="flex flex-col md:flex-row gap-8 w-full" orientation="vertical">
         <TabsList className="flex flex-col w-full md:w-56 shrink-0 gap-2 bg-transparent p-0 h-auto md:sticky md:top-24 md:self-start">
+          <TabsTrigger value="general" className="w-full justify-start data-[state=active]:bg-primary data-[state=active]:text-primary-foreground border border-input h-10 px-4">Umum & SEO</TabsTrigger>
           <TabsTrigger value="hero" className="w-full justify-start data-[state=active]:bg-primary data-[state=active]:text-primary-foreground border border-input h-10 px-4">Hero</TabsTrigger>
           <TabsTrigger value="social-proof" className="w-full justify-start data-[state=active]:bg-primary data-[state=active]:text-primary-foreground border border-input h-10 px-4">Social Proof</TabsTrigger>
           <TabsTrigger value="features" className="w-full justify-start data-[state=active]:bg-primary data-[state=active]:text-primary-foreground border border-input h-10 px-4">Fitur</TabsTrigger>
@@ -200,6 +211,38 @@ function LandingSettingPage() {
         </TabsList>
 
         <div className="flex-1 w-full min-w-0">
+          {/* GENERAL / SEO SECTION */}
+          <TabsContent value="general" className="m-0 focus-visible:outline-none focus-visible:ring-0">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Settings className="size-5 text-primary" />
+                  Pengaturan Umum & SEO
+                </CardTitle>
+                <CardDescription>Sesuaikan judul tab browser, favicon, dan deskripsi SEO situs Anda.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-2">
+                  <Label>Judul Situs (Site Title)</Label>
+                  <Input value={siteTitle} onChange={e => setSiteTitle(e.target.value)} placeholder="Contoh: Paytronik — Premium Store" />
+                  <p className="text-[10px] text-muted-foreground italic">* Teks ini akan muncul di judul tab browser pengunjung Anda.</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Favicon URL (Ikon Tab Browser)</Label>
+                  <Input value={siteFavicon} onChange={e => setSiteFavicon(e.target.value)} placeholder="Contoh: https://example.com/favicon.png" />
+                  <p className="text-[10px] text-muted-foreground italic">* URL gambar ikon kecil yang muncul di sebelah kiri judul tab browser (format PNG/ICO recommended).</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Deskripsi SEO (Site Description)</Label>
+                  <Textarea value={siteDescription} onChange={e => setSiteDescription(e.target.value)} placeholder="Dapatkan voucher streaming instan 24 jam dengan harga terjangkau." />
+                  <p className="text-[10px] text-muted-foreground italic">* Deskripsi yang akan muncul saat link website Anda dibagikan di WhatsApp, Google, atau sosial media.</p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           {/* HERO SECTION */}
           <TabsContent value="hero" className="m-0 focus-visible:outline-none focus-visible:ring-0">
           <Card>
