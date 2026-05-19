@@ -30,14 +30,17 @@ export class PublicController {
     @Inject(TENANT_REPOSITORY) private readonly tenantRepository: typeof Tenant,
   ) {}
 
-  private async getTenantId(host: string, xTenantId?: string): Promise<string> {
+  private async getTenantId(host: string, xTenantId?: string, xForwardedHost?: string): Promise<string> {
     // 1. Prioritas: header x-tenant-id (dikirim dari dashboard)
     if (xTenantId) return xTenantId;
 
-    if (!host) throw new BadRequestException('Missing host or x-tenant-id header');
+    // x-forwarded-host dikirim dari Next.js server-side fetch untuk custom domain
+    // (karena 'host' adalah restricted header di undici/Node.js)
+    const effectiveHost = xForwardedHost || host;
+    if (!effectiveHost) throw new BadRequestException('Missing host or x-tenant-id header');
 
     // Bersihkan port dari host (e.g. localhost:3000 → localhost)
-    const cleanHost = host.split(':')[0].toLowerCase();
+    const cleanHost = effectiveHost.split(':')[0].toLowerCase();
 
     // Abaikan resolusi DB saat local development
     if (cleanHost === 'localhost' || cleanHost === '127.0.0.1') {
@@ -71,11 +74,13 @@ export class PublicController {
     throw new BadRequestException('Tenant ID tidak ditemukan untuk domain/host ini');
   }
 
+
   @Get('product')
   async getProducts(@Headers() headers: any) {
     const host = headers.host || '';
     const xTenantId = headers['x-tenant-id'];
-    const tenantId = await this.getTenantId(host, xTenantId);
+    const xForwardedHost = headers['x-forwarded-host'];
+    const tenantId = await this.getTenantId(host, xTenantId, xForwardedHost);
     return this.publicService.getProducts(tenantId);
   }
 
@@ -83,7 +88,8 @@ export class PublicController {
   async getSettings(@Headers() headers: any) {
     const host = headers.host || '';
     const xTenantId = headers['x-tenant-id'];
-    const tenantId = await this.getTenantId(host, xTenantId);
+    const xForwardedHost = headers['x-forwarded-host'];
+    const tenantId = await this.getTenantId(host, xTenantId, xForwardedHost);
     return this.publicService.getSettings(tenantId);
   }
 
@@ -94,7 +100,8 @@ export class PublicController {
   ) {
     const host = headers.host || '';
     const xTenantId = headers['x-tenant-id'];
-    const tenantId = await this.getTenantId(host, xTenantId);
+    const xForwardedHost = headers['x-forwarded-host'];
+    const tenantId = await this.getTenantId(host, xTenantId, xForwardedHost);
     return this.publicService.createPayment(tenantId, dto);
   }
 
@@ -144,7 +151,8 @@ export class PublicController {
   async getStockStatus(@Headers() headers: any) {
     const host = headers.host || '';
     const xTenantId = headers['x-tenant-id'];
-    const tenantId = await this.getTenantId(host, xTenantId);
+    const xForwardedHost = headers['x-forwarded-host'];
+    const tenantId = await this.getTenantId(host, xTenantId, xForwardedHost);
     return this.publicService.getStockStatus(tenantId);
   }
 
@@ -155,7 +163,8 @@ export class PublicController {
   ) {
     const host = headers.host || '';
     const xTenantId = headers['x-tenant-id'];
-    const tenantId = await this.getTenantId(host, xTenantId);
+    const xForwardedHost = headers['x-forwarded-host'];
+    const tenantId = await this.getTenantId(host, xTenantId, xForwardedHost);
     return this.publicService.getVoucher(tenantId, code);
   }
 
@@ -166,7 +175,8 @@ export class PublicController {
   ) {
     const host = headers.host || '';
     const xTenantId = headers['x-tenant-id'];
-    const tenantId = await this.getTenantId(host, xTenantId);
+    const xForwardedHost = headers['x-forwarded-host'];
+    const tenantId = await this.getTenantId(host, xTenantId, xForwardedHost);
     return this.publicService.redeemVoucher(tenantId, dto);
   }
 
@@ -177,7 +187,8 @@ export class PublicController {
   ) {
     const host = headers.host || '';
     const xTenantId = headers['x-tenant-id'];
-    const tenantId = await this.getTenantId(host, xTenantId);
+    const xForwardedHost = headers['x-forwarded-host'];
+    const tenantId = await this.getTenantId(host, xTenantId, xForwardedHost);
     return this.publicService.getEmailAccess(tenantId, token);
   }
 
@@ -185,7 +196,8 @@ export class PublicController {
   async getTutorials(@Headers() headers: any) {
     const host = headers.host || '';
     const xTenantId = headers['x-tenant-id'];
-    const tenantId = await this.getTenantId(host, xTenantId);
+    const xForwardedHost = headers['x-forwarded-host'];
+    const tenantId = await this.getTenantId(host, xTenantId, xForwardedHost);
     return this.publicService.getTutorials(tenantId);
   }
 
@@ -196,7 +208,8 @@ export class PublicController {
   ) {
     const host = headers.host || '';
     const xTenantId = headers['x-tenant-id'];
-    const tenantId = await this.getTenantId(host, xTenantId);
+    const xForwardedHost = headers['x-forwarded-host'];
+    const tenantId = await this.getTenantId(host, xTenantId, xForwardedHost);
     return this.publicService.getTutorialBySlug(tenantId, slug);
   }
 
@@ -204,7 +217,8 @@ export class PublicController {
   async getArticles(@Headers() headers: any) {
     const host = headers.host || '';
     const xTenantId = headers['x-tenant-id'];
-    const tenantId = await this.getTenantId(host, xTenantId);
+    const xForwardedHost = headers['x-forwarded-host'];
+    const tenantId = await this.getTenantId(host, xTenantId, xForwardedHost);
     return this.publicService.getArticles(tenantId);
   }
 
@@ -215,7 +229,8 @@ export class PublicController {
   ) {
     const host = headers.host || '';
     const xTenantId = headers['x-tenant-id'];
-    const tenantId = await this.getTenantId(host, xTenantId);
+    const xForwardedHost = headers['x-forwarded-host'];
+    const tenantId = await this.getTenantId(host, xTenantId, xForwardedHost);
     return this.publicService.getArticleBySlug(tenantId, slug);
   }
 
@@ -241,7 +256,8 @@ export class PublicController {
   ) {
     const host = headers.host || '';
     const xTenantId = headers['x-tenant-id'];
-    const tenantId = await this.getTenantId(host, xTenantId);
+    const xForwardedHost = headers['x-forwarded-host'];
+    const tenantId = await this.getTenantId(host, xTenantId, xForwardedHost);
     if (!accountId) throw new BadRequestException('account_id is required');
 
     // Emit event ke bot yang sedang menunggu konfirmasi top-up
@@ -261,7 +277,8 @@ export class PublicController {
   ) {
     const host = headers.host || '';
     const xTenantId = headers['x-tenant-id'];
-    const tenantId = await this.getTenantId(host, xTenantId);
+    const xForwardedHost = headers['x-forwarded-host'];
+    const tenantId = await this.getTenantId(host, xTenantId, xForwardedHost);
     if (!accountId) throw new BadRequestException('account_id is required');
 
     // Emit event pembatalan ke bot

@@ -1207,7 +1207,17 @@ export class PublicService {
   }
 
   private async getTenantBaseUrl(tenantId: string): Promise<string> {
-    const tenant = await Tenant.findByPk(tenantId);
+    let tenant: Tenant | null = null;
+    const transaction = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema('master', transaction);
+      tenant = await Tenant.findByPk(tenantId, { transaction });
+      await transaction.commit();
+    } catch (e) {
+      await transaction.rollback();
+      this.logger.error(`Failed to fetch tenant for domain base URL: ${e.message}`);
+    }
+
     if (tenant && tenant.custom_domain) {
       return `https://${tenant.custom_domain.toLowerCase()}`;
     }
