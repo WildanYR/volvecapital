@@ -69,8 +69,9 @@ function SuccessContent() {
           setVoucherData(voucher)
           
           // 1. Bersihkan dulu notifikasi pending yang berkaitan
-          if (orderId) {
-            removePendingByOrderId(orderId);
+          const targetOrderId = orderId || voucher.payment_id;
+          if (targetOrderId) {
+            removePendingByOrderId(targetOrderId);
           }
 
           const productName = voucher.product_variant ? `${voucher.product_variant.product?.name || 'Produk'} - ${voucher.product_variant.name}` : 'Produk';
@@ -81,7 +82,7 @@ function SuccessContent() {
             title: 'Pembayaran Berhasil!',
             message: `Voucher untuk ${productName} siap digunakan.`,
             data: {
-              orderId: orderId || undefined,
+              orderId: targetOrderId || undefined,
               productName: productName,
               voucherCode: code,
               price: voucher.price

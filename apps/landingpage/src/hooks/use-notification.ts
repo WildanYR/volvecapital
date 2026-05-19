@@ -69,7 +69,21 @@ export function useNotification() {
     window.dispatchEvent(new Event('lp_notifications_updated'));
   };
 
+  const getFreshNotifications = (): Notification[] => {
+    if (typeof window === 'undefined') return [];
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error('Failed to parse fresh notifications', e);
+      }
+    }
+    return [];
+  };
+
   const addNotification = (notif: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => {
+    const current = getFreshNotifications();
     const newNotif: Notification = {
       ...notif,
       id: Math.random().toString(36).substring(2, 9),
@@ -79,33 +93,37 @@ export function useNotification() {
     
     // Check for duplicates (e.g., same orderId pending)
     if (notif.data?.orderId) {
-      const exists = notifications.find(n => n.data?.orderId === notif.data?.orderId && n.type === notif.type);
+      const exists = current.find(n => n.data?.orderId === notif.data?.orderId && n.type === notif.type);
       if (exists) return; // Don't add duplicate
     }
 
-    const updated = [newNotif, ...notifications];
+    const updated = [newNotif, ...current];
     saveNotifications(updated);
   };
 
   const removeNotification = (id: string) => {
-    const updated = notifications.filter(n => n.id !== id);
+    const current = getFreshNotifications();
+    const updated = current.filter(n => n.id !== id);
     saveNotifications(updated);
   };
 
   const removePendingByOrderId = (orderId: string) => {
-    const updated = notifications.filter(n => !(n.type === 'pending' && n.data?.orderId === orderId));
+    const current = getFreshNotifications();
+    const updated = current.filter(n => !(n.type === 'pending' && n.data?.orderId === orderId));
     saveNotifications(updated);
   };
 
   const markAsRead = (id: string) => {
-    const updated = notifications.map(n => 
+    const current = getFreshNotifications();
+    const updated = current.map(n => 
       n.id === id ? { ...n, isRead: true } : n
     );
     saveNotifications(updated);
   };
 
   const markAllAsRead = () => {
-    const updated = notifications.map(n => ({ ...n, isRead: true }));
+    const current = getFreshNotifications();
+    const updated = current.map(n => ({ ...n, isRead: true }));
     saveNotifications(updated);
   };
 
@@ -114,7 +132,8 @@ export function useNotification() {
   };
 
   const markVoucherAsClaimed = (voucherCode: string) => {
-    const updated = notifications.map(n => 
+    const current = getFreshNotifications();
+    const updated = current.map(n => 
       (n.type === 'success' && n.data?.voucherCode === voucherCode)
         ? { ...n, data: { ...n.data, isClaimed: true } }
         : n
