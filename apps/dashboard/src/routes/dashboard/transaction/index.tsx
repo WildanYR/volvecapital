@@ -16,6 +16,7 @@ import {
   SlidersHorizontal,
   Trash2,
   LayoutDashboard,
+  Globe,
 } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -396,11 +397,17 @@ function RouteComponent() {
                                         <LayoutDashboard className="size-6" />
                                       </div>
                                     )
-                                  : (
-                                      <div className="p-1 bg-neutral-500/20 text-neutral-500 w-min rounded-md">
-                                        <CircleQuestionMark className="size-6" />
-                                      </div>
-                                    )}
+                                  : transaction.platform.toLowerCase() === 'landing' || transaction.platform.toLowerCase() === 'landingpage'
+                                    ? (
+                                        <div className="p-1 bg-indigo-500/20 text-indigo-500 w-min rounded-md">
+                                          <Globe className="size-6" />
+                                        </div>
+                                      )
+                                    : (
+                                        <div className="p-1 bg-neutral-500/20 text-neutral-500 w-min rounded-md">
+                                          <CircleQuestionMark className="size-6" />
+                                        </div>
+                                      )}
                             <p>{transaction.platform}</p>
                           </div>
                         </TableCell>

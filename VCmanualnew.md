@@ -3,13 +3,13 @@
 Rencana implementasi fitur template salin otomatis pada Voucher Generator agar mempermudah pengiriman instruksi ke pembeli.
 
 ## 📋 Fitur Utama
-1. [x] **Konfigurasi Template**: Field di Dashboard untuk mengatur teks template.
-2. [x] **Dynamic Placeholders**:
+1. **Konfigurasi Template**: Field di Dashboard untuk mengatur teks template.
+2. **Dynamic Placeholders**:
    - `$$product`: Nama Produk & Varian.
    - `$$voucher`: Kode Voucher.
    - `$$batasklaim`: Tanggal Kadaluarsa (Format Indonesia).
    - `$$linkredeem`: Link landing page redeem dengan auto-fill kode.
-3. [x] **Tombol Salin Cepat**: Menambahkan opsi salin lengkap di modal detail voucher dan setelah generate.
+3. **Tombol Salin Cepat**: Menambahkan opsi salin lengkap di modal detail voucher dan setelah generate.
 
 ---
 
@@ -50,7 +50,7 @@ Sebelum saya mulai mengimplementasikan kodenya, mohon konfirmasi beberapa hal be
    Apakah template ini ingin diterapkan secara global (sama untuk semua produk), atau Anda ingin template yang berbeda-beda untuk setiap varian produk? (Saran: Global dulu untuk tahap awal).
 
 2. **Format Link Redeem?**
-   Untuk `$$linkredeem`, saya akan membuatnya otomatis menjadi `https://digitalpremium.id/redeem?code=VC-XXXX`. Apakah link ini sudah benar atau ada link lain?
+   Untuk `$$linkredeem`, saya akan membuatnya otomatis menjadi `namatenant.digitalpremium.id/redeem?code=VC-XXXX`. Apakah link ini sudah benar atau ada link lain?
 
 3. **Tombol Salin Baru?**
    Apakah Anda ingin tombol "Salin" yang sekarang ada tetap hanya menyalin **Kodenya Saja**, lalu kita tambah tombol baru bernama **"Salin Lengkap"**? Atau Anda ingin tombol "Salin" yang sekarang langsung menyalin **Seluruh Template**?
@@ -61,3 +61,9 @@ Sebelum saya mulai mengimplementasikan kodenya, mohon konfirmasi beberapa hal be
    - B. Langsung di halaman **Voucher Generator** (di bawah statistik) agar mudah diubah-ubah sambil generate.
 
 Mohon arahannya agar implementasi sesuai dengan kenyamanan penggunaan Anda.
+
+jawaban :
+1. iya global saja 
+2. namatenant.digitalpremium.id/redeem?code=VC-XXXX` jadi misal tenant ku paytronik jadi `paytronik.digitalpremium.id/redeem?code=VC-XXXX`
+3. "Salin" yang sekarang langsung menyalin **Seluruh Template**
+4. di halaman voucher generator saja didalam card voucher generatornya biar simple

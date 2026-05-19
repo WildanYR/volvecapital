@@ -280,7 +280,7 @@ export default function RedeemPage() {
                       {showInstruction && result.voucher.product_variant?.copy_template && (
                         <div className="mt-4 p-8 bg-primary/10 rounded-[32px] border border-primary/20 border-l-8 border-l-primary">
                           <p className="text-xs font-black text-primary uppercase tracking-[0.2em] mb-3">Instruksi Penggunaan</p>
-                          <p className="text-base text-muted-foreground leading-relaxed font-bold italic whitespace-pre-wrap">"{resolve(result.voucher.product_variant.copy_template)}"</p>
+                          <p className="text-base text-muted-foreground leading-relaxed font-bold italic whitespace-pre-wrap">{resolve(result.voucher.product_variant.copy_template)}</p>
                         </div>
                       )}
 

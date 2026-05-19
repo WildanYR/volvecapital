@@ -106,3 +106,31 @@ Ini adalah struktur data yang akan dikirimkan API kamu ke DOKU (Payouts API):
 3.  **Backend**: Integrasi library DOKU untuk Payout/Disbursement.
 4.  **Frontend (Tenant)**: Buat halaman Wallet sederhana (List histori WD & Tombol Request).
 5.  **Frontend (Admin)**: Buat halaman Approval WD untuk kamu.
+
+---
+
+## 7. Pertanyaan & Klarifikasi Sebelum Implementasi
+
+Silakan jawab pertanyaan di bawah ini untuk memulai proses coding:
+
+### 1. Lingkup Akun DOKU Payout
+* **Pertanyaan:** Apakah kita menggunakan **satu akun DOKU Payout terpusat (milik platform Digital Premium)** untuk melakukan transfer ke semua rekening bank tujuan milik tenant?
+* **Jawaban Anda:** menggunakan satu akun doku payout terpusat
+
+### 2. Penghitungan & Penyimpanan Net Profit, DOKU MDR, & Platform Fee
+* **Pertanyaan A:** Di mana kita menyimpan persentase/nilai nominal untuk **DOKU MDR** dan **Platform Fee**? Apakah dinamis per tenant (di tabel `tenant_setting` per schema) atau flat & global di config backend?
+* **Jawaban A:** Sebaiknya disimpan secara dinamis per tenant di tabel seperti tenant_settings
+* **Pertanyaan B:** Apakah setuju jika kita **menambahkan kolom `mdr_fee`, `platform_fee`, dan `net_profit` secara permanen ke tabel `transaction`** di schema tenant saat transaksi sukses? (Sangat direkomendasikan untuk integritas histori data jika rate fee berubah di masa depan).
+* **Jawaban B:** Ya, sangat disarankan untuk menyimpan nilai tersebut langsung di tabel transaction saat status transaksi berubah menjadi SUCCESS
+
+### 3. Kebijakan Settlement T+N
+* **Pertanyaan:** Bagaimana validasi saldo tersedia yang ingin diterapkan? Apakah hanya transaksi yang usianya sudah **lebih dari N hari** (misal T+2) yang bisa ditarik? Berapa nilai N default yang diinginkan? Dan berapa minimal nominal WD?
+* **Jawaban Anda:** N default adalah 2 hari (minimal WD Rp 50.000)
+
+### 4. Hak Akses Dashboard (Super Admin vs. Tenant Owner)
+* **Pertanyaan:** Bagaimana pemisahan tampilan Approval untuk Super Admin (`role: 'ADMIN'`) di frontend? Apakah setuju jika kita tambahkan sidebar group khusus **"Admin Panel"** di dashboard yang sama jika user yang login memiliki role `ADMIN`?
+* **Jawaban Anda:** admin panel akan dibuat berbeda (nanti saya mau buat di subdomain lain misal : admin.digitalpremium.id)
+
+### 5. Webhook DOKU Payout
+* **Pertanyaan:** Apakah Anda memiliki dokumentasi spesifikasi payload webhook DOKU Payout yang ingin digunakan, atau kita akan melakukan validasi tanda tangan (*Signature Verification*) HMAC-SHA256 menggunakan `secretKey` yang sudah dikonfigurasi di `DokuConfig`?
+* **Jawaban Anda:** Kita setuju membuat endpoint publik /public/webhook/doku/payout tanpa VcAuthGuard, tetapi tetap diamankan menggunakan Signature Verification HMAC-SHA256 dengan secretKey dari DokuConfig. Untuk payload, kita bisa mengikuti dokumentasi resmi DOKU Payout jika sudah tersedia, namun struktur handler dibuat fleksibel agar bisa disesuaikan dengan payload final dari DOKU.
