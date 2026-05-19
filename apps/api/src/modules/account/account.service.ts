@@ -476,8 +476,6 @@ export class AccountService {
         transaction,
       });
 
-      await transaction.commit();
-
       account = await this.accountRepository.findOne({
         where: { id: newAccount.id },
         include: [
@@ -493,7 +491,10 @@ export class AccountService {
             include: [{ model: AccountUser, as: 'user' }],
           },
         ],
+        transaction,
       });
+
+      await transaction.commit();
       
       if (account) {
         this.registerAutomaticTasks(tenantId, account).catch(err => {
@@ -503,7 +504,9 @@ export class AccountService {
       return account;
     }
     catch (error) {
-      await transaction.rollback();
+      if (transaction && !(transaction as any).finished) {
+        await transaction.rollback();
+      }
       throw error;
     }
   }
@@ -581,9 +584,7 @@ export class AccountService {
 
       await account.update(accountUpdateData, { transaction });
 
-      await transaction.commit();
-
-      // Refetch account with includes OUTSIDE transaction for task registration and response
+      // Refetch account with includes INSIDE transaction for task registration and response
       account = await this.accountRepository.findOne({
         where: { id: accountId },
         include: [
@@ -594,7 +595,10 @@ export class AccountService {
             include: [{ model: Product, as: 'product' }],
           },
         ],
+        transaction,
       });
+
+      await transaction.commit();
 
       if (
         account
@@ -625,7 +629,9 @@ export class AccountService {
       return account;
     }
     catch (error) {
-      await transaction.rollback();
+      if (transaction && !(transaction as any).finished) {
+        await transaction.rollback();
+      }
       throw error;
     }
   }

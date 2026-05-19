@@ -561,7 +561,7 @@ export class PublicService {
         );
       }
 
-      let siteName = 'Digital Premium';
+      let siteName = 'Volve Capital';
       if (shouldSendEmail) {
         try {
           const setting = await this.tenantSettingRepository.findOne({
