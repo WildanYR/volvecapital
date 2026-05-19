@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { TENANT_SETTING_REPOSITORY } from 'src/constants/database.const';
 import { TenantSetting } from 'src/database/models/tenant-setting.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
+import { Tenant } from 'src/database/models/tenant.model';
 
 @Injectable()
 export class SettingService {
@@ -41,6 +42,24 @@ export class SettingService {
       );
 
       await transaction.commit();
+
+      // Synchronize to the master tenant table if the key is CUSTOM_DOMAIN
+      if (key === 'CUSTOM_DOMAIN') {
+        const cleanDomain = value ? value.trim().toLowerCase() : null;
+        const masterTransaction = await this.postgresProvider.transaction();
+        try {
+          await this.postgresProvider.setSchema('master', masterTransaction);
+          await Tenant.update(
+            { custom_domain: cleanDomain || null },
+            { where: { id: tenantId }, transaction: masterTransaction }
+          );
+          await masterTransaction.commit();
+        } catch (masterError: any) {
+          await masterTransaction.rollback();
+          console.error(`Failed to sync custom_domain to master.tenant: ${masterError.message}`);
+        }
+      }
+
       return setting;
     } catch (error) {
       await transaction.rollback();
@@ -61,8 +80,25 @@ export class SettingService {
       );
 
       await Promise.all(updatePromises);
-
       await transaction.commit();
+
+      // Synchronize to the master tenant table if CUSTOM_DOMAIN is inside the bulk payload
+      if (settings.CUSTOM_DOMAIN !== undefined) {
+        const cleanDomain = settings.CUSTOM_DOMAIN ? settings.CUSTOM_DOMAIN.trim().toLowerCase() : null;
+        const masterTransaction = await this.postgresProvider.transaction();
+        try {
+          await this.postgresProvider.setSchema('master', masterTransaction);
+          await Tenant.update(
+            { custom_domain: cleanDomain || null },
+            { where: { id: tenantId }, transaction: masterTransaction }
+          );
+          await masterTransaction.commit();
+        } catch (masterError: any) {
+          await masterTransaction.rollback();
+          console.error(`Failed to sync custom_domain in bulk to master.tenant: ${masterError.message}`);
+        }
+      }
+
       return { success: true };
     } catch (error) {
       await transaction.rollback();

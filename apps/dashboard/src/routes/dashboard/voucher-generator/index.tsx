@@ -112,6 +112,14 @@ function RouteComponent() {
   })
 
   const getLinkRedeem = (voucherCode: string) => {
+    // Jika tenant mengonfigurasi domain kustom, gunakan itu sebagai prioritas utama!
+    if (settings?.CUSTOM_DOMAIN) {
+      const customDomain = settings.CUSTOM_DOMAIN.trim().toLowerCase()
+      if (customDomain) {
+        return `https://${customDomain}/redeem?code=${voucherCode}`
+      }
+    }
+
     const hostname = window.location.hostname
     const protocol = window.location.protocol
 

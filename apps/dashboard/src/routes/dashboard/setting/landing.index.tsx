@@ -24,6 +24,16 @@ import { Label } from '@/dashboard/components/ui/label'
 import { Textarea } from '@/dashboard/components/ui/textarea'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/dashboard/components/ui/tabs'
 import { Switch } from '@/dashboard/components/ui/switch'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/dashboard/components/ui/alert-dialog'
 import { API_URL } from '@/dashboard/constants/api-url.cont'
 import { useAuth } from '@/dashboard/context-providers/auth.provider'
 import { SettingServiceGenerator } from '@/dashboard/services/setting.service'
@@ -95,6 +105,30 @@ function LandingSettingPage() {
   const [siteDescription, setSiteDescription] = useState('Premium Streaming Voucher System')
   const [siteFavicon, setSiteFavicon] = useState('/favicon.ico')
   const [customDomain, setCustomDomain] = useState('')
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false)
+
+  const handleDisconnectDomain = () => {
+    setCustomDomain('')
+    const payload = {
+      CUSTOM_DOMAIN: '',
+      SITE_TITLE: siteTitle,
+      SITE_DESCRIPTION: siteDescription,
+      SITE_FAVICON: siteFavicon,
+      LANDING_HERO: JSON.stringify(hero),
+      LANDING_FEATURES: JSON.stringify(features),
+      LANDING_TESTIMONIALS: JSON.stringify(testimonials),
+      LANDING_FAQ: JSON.stringify(faqs),
+      LANDING_NAVBAR: JSON.stringify(navbar),
+      LANDING_FOOTER: JSON.stringify(footer),
+      LANDING_THEME_CSS: themeCss,
+    }
+    updateMutation.mutate(payload, {
+      onSuccess: () => {
+        toast.success('Domain kustom berhasil dicopot!')
+        setIsConfirmOpen(false)
+      }
+    })
+  }
 
   useEffect(() => {
     if (settings) {
@@ -245,21 +279,91 @@ function LandingSettingPage() {
 
                 {/* Custom Domain Section */}
                 <div className="space-y-4 border-t pt-6">
-                  <h3 className="text-sm font-semibold text-primary flex items-center gap-2">
-                    🌐 Pengaturan Kustom Domain (Opsional)
-                  </h3>
-
-                  <div className="space-y-2">
-                    <Label>Domain Kustom Anda</Label>
-                    <Input
-                      value={customDomain}
-                      onChange={e => setCustomDomain(e.target.value)}
-                      placeholder="Contoh: digitalpremium.id"
-                    />
-                    <p className="text-[10px] text-muted-foreground italic">
-                      * Biarkan kosong jika ingin menggunakan domain bawaan ({auth.tenant!.id}.digitalpremium.id).
-                    </p>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-primary flex items-center gap-2">
+                      🌐 Pengaturan Kustom Domain (Opsional)
+                    </h3>
+                    
+                    {settings?.CUSTOM_DOMAIN && (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                        <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        Domain Aktif Terpasang
+                      </span>
+                    )}
                   </div>
+
+                  {settings?.CUSTOM_DOMAIN ? (
+                    <div className="p-4 rounded-xl border border-emerald-500/20 bg-emerald-500/5 dark:bg-emerald-950/10 space-y-3 animate-in fade-in duration-200">
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="space-y-1">
+                          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Domain Terhubung</p>
+                          <a 
+                            href={`https://${settings.CUSTOM_DOMAIN}`} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="text-sm font-bold text-primary hover:underline hover:text-emerald-500 transition-colors"
+                          >
+                            https://{settings.CUSTOM_DOMAIN}
+                          </a>
+                        </div>
+                        <Button 
+                          variant="destructive" 
+                          size="sm" 
+                          className="h-8 text-xs font-bold px-3 shrink-0"
+                          onClick={() => setIsConfirmOpen(true)}
+                          disabled={updateMutation.isPending}
+                        >
+                          {updateMutation.isPending ? <Loader2 className="size-3.5 animate-spin mr-1" /> : <Trash2 className="size-3.5 mr-1" />}
+                          Copot Domain
+                        </Button>
+                      </div>
+
+                      <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Apakah Anda Yakin?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Apakah Anda yakin ingin mencopot domain kustom ini? Halaman toko premium Anda akan kembali menggunakan subdomain bawaan (<span className="font-semibold text-primary">{auth.tenant!.id}.digitalpremium.id</span>).
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter className="gap-2">
+                            <AlertDialogCancel disabled={updateMutation.isPending} onClick={() => setIsConfirmOpen(false)}>
+                              Batal
+                            </AlertDialogCancel>
+                            <AlertDialogAction
+                              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+                              disabled={updateMutation.isPending}
+                              onClick={(e) => {
+                                e.preventDefault()
+                                handleDisconnectDomain()
+                              }}
+                            >
+                              {updateMutation.isPending ? (
+                                <>
+                                  <Loader2 className="size-3.5 animate-spin mr-1" />
+                                  Mencopot...
+                                </>
+                              ) : (
+                                'Ya, Copot Domain'
+                              )}
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <Label>Domain Kustom Anda</Label>
+                      <Input
+                        value={customDomain}
+                        onChange={e => setCustomDomain(e.target.value)}
+                        placeholder="Contoh: digitalpremium.id"
+                      />
+                      <p className="text-[10px] text-muted-foreground italic">
+                        * Biarkan kosong jika ingin menggunakan domain bawaan ({auth.tenant!.id}.digitalpremium.id).
+                      </p>
+                    </div>
+                  )}
 
                   {/* Alert Box Panduan DNS */}
                   <div className="p-4 border border-blue-200 bg-blue-50/50 dark:bg-blue-950/20 dark:border-blue-800 rounded-lg space-y-2 text-xs">
