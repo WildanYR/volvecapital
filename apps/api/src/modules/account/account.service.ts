@@ -164,7 +164,12 @@ export class AccountService {
             }
             // Add other nested sorts here if needed
           } else {
-            finalOrder.push([col, dir]);
+            // Replace default fallback sorting by 'id' with 'updated_at' to sort recently edited/created first
+            if (col === 'id') {
+              finalOrder.push(['updated_at', 'DESC']);
+            } else {
+              finalOrder.push([col, dir]);
+            }
           }
         }
       }
@@ -662,7 +667,9 @@ export class AccountService {
 
     }
     catch (error) {
-      await transaction.rollback();
+      if (transaction && !(transaction as any).finished) {
+        await transaction.rollback();
+      }
       throw error;
     }
   }
@@ -683,9 +690,10 @@ export class AccountService {
         );
       }
 
-      // Calculate freeze_until from duration (days)
-      const freezeUntil = new Date();
-      freezeUntil.setDate(freezeUntil.getDate() + (freezeAccountDto.duration || 7));
+      // Calculate freeze_until from duration (milliseconds)
+      // Default to 7 days if duration is not provided: 7 * 24 * 60 * 60 * 1000
+      const durationMs = freezeAccountDto.duration || (7 * 24 * 60 * 60 * 1000);
+      const freezeUntil = new Date(Date.now() + durationMs);
 
       // 1. Expire users
       await this.postgresProvider.rawQuery(
@@ -731,7 +739,9 @@ export class AccountService {
       return account;
     }
     catch (error) {
-      await transaction.rollback();
+      if (transaction && !(transaction as any).finished) {
+        await transaction.rollback();
+      }
       throw error;
     }
   }
@@ -757,9 +767,7 @@ export class AccountService {
         { transaction },
       );
 
-      await transaction.commit();
-
-      // Refetch for task registration
+      // Refetch for task registration INSIDE transaction
       const updatedAccount = await this.accountRepository.findOne({
         where: { id: accountId },
         include: [
@@ -770,7 +778,10 @@ export class AccountService {
             include: [{ model: Product, as: 'product' }],
           },
         ],
+        transaction,
       });
+
+      await transaction.commit();
 
       if (updatedAccount) {
         this.registerAutomaticTasks(tenantId, updatedAccount).catch(err => {
@@ -786,7 +797,9 @@ export class AccountService {
       return updatedAccount;
     }
     catch (error) {
-      await transaction.rollback();
+      if (transaction && !(transaction as any).finished) {
+        await transaction.rollback();
+      }
       throw error;
     }
   }
