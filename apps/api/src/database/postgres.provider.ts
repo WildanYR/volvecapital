@@ -130,7 +130,7 @@ export class PostgresProvider {
     if (!/^[\w-]+$/.test(schema)) {
       throw new Error('invalid schema name');
     }
-    await this.sequelize.query(`SET search_path TO "${schema}"`, {
+    await this.sequelize.query(`SET LOCAL search_path TO "${schema}"`, {
       transaction,
     });
   }
