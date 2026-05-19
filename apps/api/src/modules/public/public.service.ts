@@ -561,6 +561,19 @@ export class PublicService {
         );
       }
 
+      let siteName = 'Digital Premium';
+      if (shouldSendEmail) {
+        try {
+          const setting = await this.tenantSettingRepository.findOne({
+            where: { key: 'SITE_NAME' } as any,
+            transaction: dbTransaction,
+          });
+          if (setting) siteName = setting.value;
+        } catch (e) {
+          this.logger.error(`Failed to fetch SITE_NAME for email in notify: ${e.message}`);
+        }
+      }
+
       await dbTransaction.commit();
 
       if (shouldSendEmail) {
@@ -573,6 +586,7 @@ export class PublicService {
           voucher.id,
           productName,
           voucher.expired_at,
+          siteName,
         ).catch((err) => {
           this.logger.error(`[PaymentNotify] Failed to send email for voucher ${voucher.id}: ${err.message}`);
         });
@@ -894,6 +908,7 @@ export class PublicService {
     voucherCode: string,
     productName: string,
     expiredAt: Date,
+    siteName: string,
   ): Promise<void> {
     const host = this.configService.get<string>('mail.host');
     const port = this.configService.get<number>('mail.port');
@@ -902,17 +917,6 @@ export class PublicService {
     const from = this.configService.get<string>('mail.from');
 
     if (!host || !user || !pass) return;
-
-    // Get SITE_NAME from settings
-    let siteName = 'Digital Premium';
-    try {
-      const setting = await this.tenantSettingRepository.findOne({
-        where: { tenant_id: tenantId, key: 'SITE_NAME' } as any,
-      });
-      if (setting) siteName = setting.value;
-    } catch (e) {
-      this.logger.error(`Failed to fetch SITE_NAME for email: ${e.message}`);
-    }
 
     const transporter = nodemailer.createTransport({
       host,

@@ -47,6 +47,9 @@ export class PostgresProvider {
       this.sequelize = new Sequelize(databaseUrl!, {
         dialect: 'postgres',
         dialectModule: pg,
+        dialectOptions: {
+          keepAlive: true,
+        },
         define: {
           freezeTableName: true,
           timestamps: true,
