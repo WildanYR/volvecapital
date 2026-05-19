@@ -74,8 +74,8 @@ export default function TermsPage() {
                 'Refund hanya diproses jika sistem gagal mengirimkan kode voucher dalam waktu 1x24 jam.'
               ].map((item, i) => (
                 <li key={i} className="flex items-start gap-4 text-muted-foreground font-medium text-lg">
-                  <div className="size-6 rounded-full bg-accent/20 border border-emerald-100 flex items-center justify-center shrink-0 mt-1">
-                    <div className="size-1.5 rounded-full bg-accent/200" />
+                  <div className="size-6 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0 mt-1">
+                    <div className="size-1.5 rounded-full bg-primary" />
                   </div>
                   {item}
                 </li>

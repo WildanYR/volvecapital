@@ -16,9 +16,9 @@ export default function PrivacyPage() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-20"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/20 border border-emerald-100 mb-6">
-            <Lock className="size-4 text-accent-foreground" />
-            <span className="text-[10px] font-black tracking-[0.3em] text-accent-foreground uppercase">Privasi Aman</span>
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 mb-6">
+            <Lock className="size-4 text-primary" />
+            <span className="text-[10px] font-black tracking-[0.3em] text-primary uppercase">Privasi Aman</span>
           </div>
           <h1 className="text-4xl md:text-7xl font-black mb-6 tracking-tight text-foreground">
             Kebijakan <span className="bg-clip-text text-transparent bg-gradient-to-br from-primary to-primary/80">Privasi.</span>
