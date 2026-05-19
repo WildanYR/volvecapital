@@ -667,8 +667,13 @@ export class NetflixModule extends BaseModule {
     const isLastDay = timeToExpiry <= oneDayInMs;
 
     if (isLastDay) {
-        // Cek jam 15:00 (Asumsi server/bot di WIB)
-        const hour = now.getHours();
+        // Cek jam 15:00 WIB secara robust menggunakan timezone Asia/Jakarta
+        const hour = parseInt(new Intl.DateTimeFormat('id-ID', {
+            timeZone: 'Asia/Jakarta',
+            hour: 'numeric',
+            hour12: false
+        }).format(now), 10);
+
         if (hour >= 15) {
             return { status: 'disable', reason: 'Sudah lewat jam 15:00 (Hari Terakhir)' };
         }
