@@ -1276,7 +1276,7 @@ function RouteComponent() {
                                 <Pin className="size-6 text-red-600" />
                               )
                             : null}
-                          <p className="truncate">{account.email.email}</p>
+                          <p className="truncate leading-normal pb-[2px] pt-1">{account.email.email}</p>
                         </CardTitle>
                         <CardDescription>
                           <p>{account.account_password}</p>
