@@ -2,6 +2,7 @@ import { generateApiFetch, parseApiResponse } from '@/dashboard/lib/api-fetch.ut
 
 export interface WalletBalance {
   available_balance: number
+  pending_balance: number
   total_profit: number
   total_withdrawal: number
 }
