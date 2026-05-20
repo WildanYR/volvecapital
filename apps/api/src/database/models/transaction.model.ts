@@ -18,6 +18,9 @@ export interface TransactionAttributes {
   customer: string;
   platform: string;
   total_price: number;
+  mdr_fee: number;
+  platform_fee: number;
+  net_profit: number;
   items: TransactionItemAttributes[];
   created_at: Date;
   updated_at: Date;
@@ -26,7 +29,7 @@ export interface TransactionAttributes {
 interface TransactionCreationAttributes
   extends Optional<
     TransactionAttributes,
-    'created_at' | 'updated_at' | 'items'
+    'created_at' | 'updated_at' | 'items' | 'mdr_fee' | 'platform_fee' | 'net_profit'
   > {}
 
 @Table({ tableName: 'transaction' })
@@ -50,6 +53,18 @@ export class Transaction extends Model<
   @AllowNull(false)
   @Column(DataType.INTEGER)
   declare total_price: number;
+
+  @AllowNull(false)
+  @Column(DataType.INTEGER)
+  declare mdr_fee: number;
+
+  @AllowNull(false)
+  @Column(DataType.INTEGER)
+  declare platform_fee: number;
+
+  @AllowNull(false)
+  @Column(DataType.INTEGER)
+  declare net_profit: number;
 
   @HasMany(() => TransactionItem)
   declare items: TransactionItem[];

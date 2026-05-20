@@ -25,6 +25,8 @@ import {
   ACCOUNT_CAPITAL_REPOSITORY,
   TENANT_OWNER_REPOSITORY,
   PROMO_CODE_REPOSITORY,
+  WITHDRAWAL_REQUEST_REPOSITORY,
+  TENANT_BANK_ACCOUNT_REPOSITORY,
 } from 'src/constants/database.const';
 import { AccountProfile } from './models/account-profile.model';
 import { AccountUser } from './models/account-user.model';
@@ -51,6 +53,8 @@ import { Article } from './models/article.model';
 import { AccountCapital } from './models/account-capital.model';
 import { TenantOwner } from './models/tenant-owner.model';
 import { PromoCode } from './models/promo-code.model';
+import { WithdrawalRequest } from './models/withdrawal-request.model';
+import { TenantBankAccount } from './models/tenant-bank-account.model';
 
 export const RepositoryProvider: Provider[] = [
   { provide: TENANT_REPOSITORY, useValue: Tenant },
@@ -81,4 +85,6 @@ export const RepositoryProvider: Provider[] = [
   { provide: ACCOUNT_CAPITAL_REPOSITORY, useValue: AccountCapital },
   { provide: TENANT_OWNER_REPOSITORY, useValue: TenantOwner },
   { provide: PROMO_CODE_REPOSITORY, useValue: PromoCode },
+  { provide: WITHDRAWAL_REQUEST_REPOSITORY, useValue: WithdrawalRequest },
+  { provide: TENANT_BANK_ACCOUNT_REPOSITORY, useValue: TenantBankAccount },
 ];

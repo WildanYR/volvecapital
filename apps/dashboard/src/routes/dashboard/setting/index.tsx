@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { House, LayoutTemplate, Loader2, Save } from 'lucide-react'
+import { House, LayoutTemplate, Loader2, Save, BookOpen, FileText } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/dashboard/components/ui/button'
@@ -114,20 +114,52 @@ function RouteComponent() {
         <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight">Pengaturan Aplikasi</h1>
       </div>
 
-      <Card className="border-primary/50 bg-primary/5">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-primary">
-            <LayoutTemplate className="size-5" />
-            Landing Page CMS
-          </CardTitle>
-          <CardDescription>Kustomisasi hero, fitur, testimoni, FAQ, navbar, dan footer website Anda.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button asChild>
-            <Link to="/dashboard/setting/landing">Buka Pengaturan Landing Page</Link>
-          </Button>
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="border-primary/50 bg-primary/5 flex flex-col">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-primary">
+              <LayoutTemplate className="size-5" />
+              Landing Page CMS
+            </CardTitle>
+            <CardDescription>Kustomisasi hero, fitur, testimoni, FAQ, navbar, dan footer website Anda.</CardDescription>
+          </CardHeader>
+          <CardContent className="mt-auto">
+            <Button asChild className="w-full">
+              <Link to="/dashboard/setting/landing">Buka Pengaturan Landing Page</Link>
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="border-primary/50 bg-primary/5 flex flex-col">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-primary">
+              <BookOpen className="size-5" />
+              Tutorial
+            </CardTitle>
+            <CardDescription>Kelola video tutorial dan panduan penggunaan untuk ditampilkan ke user.</CardDescription>
+          </CardHeader>
+          <CardContent className="mt-auto">
+            <Button asChild className="w-full">
+              <Link to="/dashboard/setting/tutorial">Kelola Tutorial</Link>
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="border-primary/50 bg-primary/5 flex flex-col">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-primary">
+              <FileText className="size-5" />
+              Artikel / Blog
+            </CardTitle>
+            <CardDescription>Buat dan kelola artikel atau blog post untuk ditampilkan di landing page.</CardDescription>
+          </CardHeader>
+          <CardContent className="mt-auto">
+            <Button asChild className="w-full">
+              <Link to="/dashboard/setting/article">Kelola Artikel</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
 
       <Card>
         <CardHeader>

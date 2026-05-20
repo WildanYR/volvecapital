@@ -379,7 +379,14 @@ export class AccountService {
         accounts_reset_today: 0,
       };
 
-      const todayStr = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Jakarta' });
+      const getWibDateStr = (date: Date | string | number) => {
+        const d = new Date(date);
+        const wibTime = d.getTime() + (7 * 60 * 60 * 1000);
+        const wibDate = new Date(wibTime);
+        return `${wibDate.getUTCFullYear()}-${wibDate.getUTCMonth()}-${wibDate.getUTCDate()}`;
+      };
+
+      const todayStr = getWibDateStr(new Date());
 
       for (const acc of accounts) {
         // Check disabled/frozen/banned
@@ -390,7 +397,7 @@ export class AccountService {
 
         // Check expiring today
         if (acc.subscription_expiry) {
-          const expDateStr = new Date(acc.subscription_expiry).toLocaleDateString('en-US', { timeZone: 'Asia/Jakarta' });
+          const expDateStr = getWibDateStr(acc.subscription_expiry);
           if (expDateStr === todayStr) {
             stats.accounts_expiring_today++;
           }
@@ -412,7 +419,7 @@ export class AccountService {
         }
         const resetDate = latestUserExpiry || acc.batch_end_date;
         if (resetDate) {
-          const resetDateStr = new Date(resetDate).toLocaleDateString('en-US', { timeZone: 'Asia/Jakarta' });
+          const resetDateStr = getWibDateStr(resetDate);
           if (resetDateStr === todayStr) {
             stats.accounts_reset_today++;
           }

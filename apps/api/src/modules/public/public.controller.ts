@@ -126,6 +126,32 @@ export class PublicController {
     return this.publicService.handlePaymentNotify(tenantId, body);
   }
 
+  @Post('webhook/doku/payout')
+  handlePayoutNotify(
+    @Body() body: any,
+    @Headers('signature') signature: string,
+    @Headers('request-id') requestId: string,
+    @Headers('request-timestamp') timestamp: string,
+  ) {
+    console.log(`[PayoutNotify] Incoming Body: ${JSON.stringify(body)}`);
+    // Assuming external_id format: WD-TENANTID-REQUESTID
+    // DOKU payload for payout notification structure usually has external_id in the root or transaction
+    const externalId = body.transaction?.external_id || body.payouts?.[0]?.external_id || body.external_id || '';
+    const parts = externalId.split('-');
+
+    if (parts.length < 3 || parts[0] !== 'WD') {
+      console.error(`[PayoutNotify] Invalid external_id format: ${externalId}`);
+      throw new BadRequestException('Invalid external_id format');
+    }
+
+    const tenantId = parts[1].toLowerCase();
+    const withdrawalRequestId = parts.slice(2).join('-');
+    console.log(`[PayoutNotify] Extracted Tenant: ${tenantId}, Request: ${withdrawalRequestId}`);
+
+    // Delegate to publicService to handle signature and logic
+    return this.publicService.handlePayoutNotify(tenantId, withdrawalRequestId, body, { signature, requestId, timestamp });
+  }
+
   @Get('payment/status/:order_id')
   async checkPaymentStatus(
     @Headers() headers: any,

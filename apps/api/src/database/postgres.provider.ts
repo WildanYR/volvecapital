@@ -29,7 +29,8 @@ import { Article } from './models/article.model';
 import { AccountCapital } from './models/account-capital.model';
 import { TenantOwner } from './models/tenant-owner.model';
 import { PromoCode } from './models/promo-code.model';
-
+import { WithdrawalRequest } from './models/withdrawal-request.model';
+import { TenantBankAccount } from './models/tenant-bank-account.model';
 @Injectable()
 export class PostgresProvider {
   private sequelize?: Sequelize;
@@ -91,6 +92,8 @@ export class PostgresProvider {
         AccountCapital,
         TenantOwner,
         PromoCode,
+        WithdrawalRequest,
+        TenantBankAccount,
       ]);
     }
     else {

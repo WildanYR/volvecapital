@@ -72,6 +72,9 @@ export class VoucherService {
           customer: dto.buyer_name,
           platform: dto.platform || 'dashboard',
           total_price: dto.price ? Number(dto.price) : Number(variant.price || 0),
+          mdr_fee: 0,
+          platform_fee: 0,
+          net_profit: dto.price ? Number(dto.price) : Number(variant.price || 0),
         },
         { transaction },
       );

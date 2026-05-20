@@ -5,6 +5,7 @@ import {
   PRODUCT_VARIANT_REPOSITORY,
   TRANSACTION_ITEM_REPOSITORY,
   TRANSACTION_REPOSITORY,
+  TENANT_SETTING_REPOSITORY,
 } from 'src/constants/database.const';
 import { AccountProfile } from 'src/database/models/account-profile.model';
 import {
@@ -15,6 +16,7 @@ import { Account } from 'src/database/models/account.model';
 import { Email } from 'src/database/models/email.model';
 import { ProductVariant } from 'src/database/models/product-variant.model';
 import { Product } from 'src/database/models/product.model';
+import { TenantSetting } from 'src/database/models/tenant-setting.model';
 import {
   TransactionItem,
   TransactionItemCreationAttributes,
@@ -49,6 +51,8 @@ export class TransactionService {
     private readonly accountUserRepository: typeof AccountUser,
     @Inject(PRODUCT_VARIANT_REPOSITORY)
     private readonly productVariantRepository: typeof ProductVariant,
+    @Inject(TENANT_SETTING_REPOSITORY)
+    private readonly tenantSettingRepository: typeof TenantSetting,
   ) {}
 
   async findAll(
@@ -346,8 +350,33 @@ export class TransactionService {
         throw new NotFoundException('tidak ada item transaksi yang dibuat');
       }
 
+      // Hitung fee dan net_profit
+      const settings = await this.tenantSettingRepository.findAll({
+        where: { key: ['doku_mdr', 'platform_fee'] },
+        transaction: tx,
+      });
+      let mdr_fee = 4500; // default 4500
+      let platform_fee = 500; // default 500
+
+      for (const setting of settings) {
+        if (setting.key === 'doku_mdr' && !isNaN(Number(setting.value))) {
+          mdr_fee = Number(setting.value);
+        }
+        if (setting.key === 'platform_fee' && !isNaN(Number(setting.value))) {
+          platform_fee = Number(setting.value);
+        }
+      }
+
+      const net_profit = transactionData.total_price - mdr_fee - platform_fee;
+
       await this.transactionRepository.create(
-        { id: transactionId, ...transactionData },
+        { 
+          id: transactionId, 
+          ...transactionData,
+          mdr_fee,
+          platform_fee,
+          net_profit,
+        },
         {
           transaction: tx,
         },

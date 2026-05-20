@@ -129,7 +129,7 @@ Silakan jawab pertanyaan di bawah ini untuk memulai proses coding:
 
 ### 4. Hak Akses Dashboard (Super Admin vs. Tenant Owner)
 * **Pertanyaan:** Bagaimana pemisahan tampilan Approval untuk Super Admin (`role: 'ADMIN'`) di frontend? Apakah setuju jika kita tambahkan sidebar group khusus **"Admin Panel"** di dashboard yang sama jika user yang login memiliki role `ADMIN`?
-* **Jawaban Anda:** admin panel akan dibuat berbeda (nanti saya mau buat di subdomain lain misal : admin.digitalpremium.id)
+* **Jawaban Anda:** ya setuju, daftarkan sekalian juga untuk tenant paytronik yang role nya admin
 
 ### 5. Webhook DOKU Payout
 * **Pertanyaan:** Apakah Anda memiliki dokumentasi spesifikasi payload webhook DOKU Payout yang ingin digunakan, atau kita akan melakukan validasi tanda tangan (*Signature Verification*) HMAC-SHA256 menggunakan `secretKey` yang sudah dikonfigurasi di `DokuConfig`?

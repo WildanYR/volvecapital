@@ -383,6 +383,9 @@ export class AccountUserService {
             id: transactionId,
             customer: accountUserData.name,
             ...userTransaction,
+            mdr_fee: 0,
+            platform_fee: 0,
+            net_profit: userTransaction.total_price || 0,
           },
           { transaction },
         );

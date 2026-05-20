@@ -40,6 +40,8 @@ import { EmailSubjectModule } from './modules/email-subject/email-subject.module
 import { TutorialModule } from './modules/tutorial/tutorial.module';
 import { ArticleModule } from './modules/article/article.module';
 import { PromoModule } from './modules/promo/promo.module';
+import { WithdrawalModule } from './modules/withdrawal/withdrawal.module';
+import { BankAccountModule } from './modules/bank-account/bank-account.module';
 
 @Module({
   imports: [
@@ -88,6 +90,8 @@ import { PromoModule } from './modules/promo/promo.module';
     TutorialModule,
     ArticleModule,
     PromoModule,
+    WithdrawalModule,
+    BankAccountModule,
   ],
   controllers: [AppController],
   providers: [{ provide: APP_GUARD, useClass: VcAuthGuard }, AppService],

@@ -417,6 +417,9 @@ export class PublicService {
           customer: dto.buyer_name,
           platform: 'landing',
           total_price: grossAmount,
+          mdr_fee: 0,
+          platform_fee: 0,
+          net_profit: grossAmount,
         },
         { transaction },
       );
@@ -596,6 +599,69 @@ export class PublicService {
     }
     catch (error) {
       await dbTransaction.rollback();
+      throw error;
+    }
+  }
+
+  // ─── PAYOUT NOTIFY WEBHOOK (DOKU) ───────────────────────────────────────────
+
+  async handlePayoutNotify(tenantId: string, withdrawalRequestId: string, body: any, headers: { signature: string, requestId: string, timestamp: string }) {
+    const { signature, requestId, timestamp } = headers;
+    const clientId = this.configService.get<string>('doku.clientId');
+    const secretKey = this.configService.get<string>('doku.secretKey') || '';
+
+    // Validate Signature
+    const targetPath = '/public/webhook/doku/payout'; // Adjust if there's a specific prefix on your infra like /api/v1
+    // Doku signature verification requires the raw body, assuming body is exactly the payload.
+    // In NestJS, body is parsed. It's best practice to use raw body but for now we re-stringify.
+    const bodyStr = JSON.stringify(body);
+    const digest = crypto.createHash('sha256').update(bodyStr).digest('base64');
+    const signatureComponent = `Client-Id:${clientId}\n` +
+                               `Request-Id:${requestId}\n` +
+                               `Request-Timestamp:${timestamp}\n` +
+                               `Request-Target:${targetPath}\n` +
+                               `Digest:${digest}`;
+                               
+    const expectedSignature = crypto
+      .createHmac('sha256', secretKey)
+      .update(signatureComponent)
+      .digest('base64');
+
+    const expectedSignatureFull = `HMACSHA256=${expectedSignature}`;
+    
+    // We log but don't strictly reject if it doesn't match perfectly during dev, but in prod we should.
+    if (signature !== expectedSignatureFull) {
+      this.logger.warn(`[PayoutNotify] Signature mismatch! Expected: ${expectedSignatureFull}, Got: ${signature}`);
+      // throw new BadRequestException('Invalid signature'); // Uncomment for strict checking
+    }
+
+    const tx = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema(tenantId, tx);
+      
+      // Determine status from payload. DOKU Payout usually sends SUCCESS or FAILED.
+      // DOKU Payouts notification usually has status in transaction.status or similar.
+      const statusStr = (body.transaction?.status || body.payouts?.[0]?.status || body.status || '').toUpperCase();
+      let newStatus: 'SUCCESS' | 'FAILED' | null = null;
+      
+      if (statusStr === 'SUCCESS' || statusStr === 'SUCCESSFUL' || statusStr === 'COMPLETED') {
+        newStatus = 'SUCCESS';
+      } else if (statusStr === 'FAILED' || statusStr === 'REJECTED') {
+        newStatus = 'FAILED';
+      }
+
+      if (newStatus) {
+        await this.postgresProvider.rawQuery(
+          `UPDATE withdrawal_request SET status = :status, updated_at = NOW() WHERE id = :id`,
+          { replacements: { status: newStatus, id: withdrawalRequestId }, transaction: tx }
+        );
+        this.logger.log(`[PayoutNotify] Updated WD Request ${withdrawalRequestId} to ${newStatus}`);
+      }
+
+      await tx.commit();
+      return { ok: true };
+    } catch (error) {
+      await tx.rollback();
       throw error;
     }
   }

@@ -16,6 +16,7 @@ import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as DashboardRouteRouteImport } from './routes/dashboard/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
+import { Route as DashboardWalletIndexRouteImport } from './routes/dashboard/wallet/index'
 import { Route as DashboardVoucherGeneratorIndexRouteImport } from './routes/dashboard/voucher-generator/index'
 import { Route as DashboardTransactionIndexRouteImport } from './routes/dashboard/transaction/index'
 import { Route as DashboardSettingIndexRouteImport } from './routes/dashboard/setting/index'
@@ -32,9 +33,11 @@ import { Route as DashboardEmailCreateRouteImport } from './routes/dashboard/ema
 import { Route as DashboardEmailIdRouteImport } from './routes/dashboard/email/$id'
 import { Route as DashboardAccountCreateRouteImport } from './routes/dashboard/account/create'
 import { Route as DashboardAccountSlugRouteImport } from './routes/dashboard/account/$slug'
+import { Route as DashboardWalletBankAccountIndexRouteImport } from './routes/dashboard/wallet/bank-account/index'
 import { Route as DashboardSettingTutorialIndexRouteImport } from './routes/dashboard/setting/tutorial.index'
 import { Route as DashboardSettingLandingIndexRouteImport } from './routes/dashboard/setting/landing.index'
 import { Route as DashboardSettingArticleIndexRouteImport } from './routes/dashboard/setting/article.index'
+import { Route as DashboardAdminWithdrawalIndexRouteImport } from './routes/dashboard/admin/withdrawal/index'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -69,6 +72,11 @@ const IndexRoute = IndexRouteImport.update({
 const DashboardIndexRoute = DashboardIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
+const DashboardWalletIndexRoute = DashboardWalletIndexRouteImport.update({
+  id: '/wallet/',
+  path: '/wallet/',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
 const DashboardVoucherGeneratorIndexRoute =
@@ -158,6 +166,12 @@ const DashboardAccountSlugRoute = DashboardAccountSlugRouteImport.update({
   path: '/account/$slug',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
+const DashboardWalletBankAccountIndexRoute =
+  DashboardWalletBankAccountIndexRouteImport.update({
+    id: '/wallet/bank-account/',
+    path: '/wallet/bank-account/',
+    getParentRoute: () => DashboardRouteRoute,
+  } as any)
 const DashboardSettingTutorialIndexRoute =
   DashboardSettingTutorialIndexRouteImport.update({
     id: '/setting/tutorial/',
@@ -174,6 +188,12 @@ const DashboardSettingArticleIndexRoute =
   DashboardSettingArticleIndexRouteImport.update({
     id: '/setting/article/',
     path: '/setting/article/',
+    getParentRoute: () => DashboardRouteRoute,
+  } as any)
+const DashboardAdminWithdrawalIndexRoute =
+  DashboardAdminWithdrawalIndexRouteImport.update({
+    id: '/admin/withdrawal/',
+    path: '/admin/withdrawal/',
     getParentRoute: () => DashboardRouteRoute,
   } as any)
 
@@ -201,9 +221,12 @@ export interface FileRoutesByFullPath {
   '/dashboard/setting': typeof DashboardSettingIndexRoute
   '/dashboard/transaction': typeof DashboardTransactionIndexRoute
   '/dashboard/voucher-generator': typeof DashboardVoucherGeneratorIndexRoute
+  '/dashboard/wallet': typeof DashboardWalletIndexRoute
+  '/dashboard/admin/withdrawal': typeof DashboardAdminWithdrawalIndexRoute
   '/dashboard/setting/article': typeof DashboardSettingArticleIndexRoute
   '/dashboard/setting/landing': typeof DashboardSettingLandingIndexRoute
   '/dashboard/setting/tutorial': typeof DashboardSettingTutorialIndexRoute
+  '/dashboard/wallet/bank-account': typeof DashboardWalletBankAccountIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -228,9 +251,12 @@ export interface FileRoutesByTo {
   '/dashboard/setting': typeof DashboardSettingIndexRoute
   '/dashboard/transaction': typeof DashboardTransactionIndexRoute
   '/dashboard/voucher-generator': typeof DashboardVoucherGeneratorIndexRoute
+  '/dashboard/wallet': typeof DashboardWalletIndexRoute
+  '/dashboard/admin/withdrawal': typeof DashboardAdminWithdrawalIndexRoute
   '/dashboard/setting/article': typeof DashboardSettingArticleIndexRoute
   '/dashboard/setting/landing': typeof DashboardSettingLandingIndexRoute
   '/dashboard/setting/tutorial': typeof DashboardSettingTutorialIndexRoute
+  '/dashboard/wallet/bank-account': typeof DashboardWalletBankAccountIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -257,9 +283,12 @@ export interface FileRoutesById {
   '/dashboard/setting/': typeof DashboardSettingIndexRoute
   '/dashboard/transaction/': typeof DashboardTransactionIndexRoute
   '/dashboard/voucher-generator/': typeof DashboardVoucherGeneratorIndexRoute
+  '/dashboard/wallet/': typeof DashboardWalletIndexRoute
+  '/dashboard/admin/withdrawal/': typeof DashboardAdminWithdrawalIndexRoute
   '/dashboard/setting/article/': typeof DashboardSettingArticleIndexRoute
   '/dashboard/setting/landing/': typeof DashboardSettingLandingIndexRoute
   '/dashboard/setting/tutorial/': typeof DashboardSettingTutorialIndexRoute
+  '/dashboard/wallet/bank-account/': typeof DashboardWalletBankAccountIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -287,9 +316,12 @@ export interface FileRouteTypes {
     | '/dashboard/setting'
     | '/dashboard/transaction'
     | '/dashboard/voucher-generator'
+    | '/dashboard/wallet'
+    | '/dashboard/admin/withdrawal'
     | '/dashboard/setting/article'
     | '/dashboard/setting/landing'
     | '/dashboard/setting/tutorial'
+    | '/dashboard/wallet/bank-account'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -314,9 +346,12 @@ export interface FileRouteTypes {
     | '/dashboard/setting'
     | '/dashboard/transaction'
     | '/dashboard/voucher-generator'
+    | '/dashboard/wallet'
+    | '/dashboard/admin/withdrawal'
     | '/dashboard/setting/article'
     | '/dashboard/setting/landing'
     | '/dashboard/setting/tutorial'
+    | '/dashboard/wallet/bank-account'
   id:
     | '__root__'
     | '/'
@@ -342,9 +377,12 @@ export interface FileRouteTypes {
     | '/dashboard/setting/'
     | '/dashboard/transaction/'
     | '/dashboard/voucher-generator/'
+    | '/dashboard/wallet/'
+    | '/dashboard/admin/withdrawal/'
     | '/dashboard/setting/article/'
     | '/dashboard/setting/landing/'
     | '/dashboard/setting/tutorial/'
+    | '/dashboard/wallet/bank-account/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -405,6 +443,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/dashboard/'
       preLoaderRoute: typeof DashboardIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/wallet/': {
+      id: '/dashboard/wallet/'
+      path: '/wallet'
+      fullPath: '/dashboard/wallet'
+      preLoaderRoute: typeof DashboardWalletIndexRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
     '/dashboard/voucher-generator/': {
@@ -519,6 +564,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardAccountSlugRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
+    '/dashboard/wallet/bank-account/': {
+      id: '/dashboard/wallet/bank-account/'
+      path: '/wallet/bank-account'
+      fullPath: '/dashboard/wallet/bank-account'
+      preLoaderRoute: typeof DashboardWalletBankAccountIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
     '/dashboard/setting/tutorial/': {
       id: '/dashboard/setting/tutorial/'
       path: '/setting/tutorial'
@@ -538,6 +590,13 @@ declare module '@tanstack/react-router' {
       path: '/setting/article'
       fullPath: '/dashboard/setting/article'
       preLoaderRoute: typeof DashboardSettingArticleIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/admin/withdrawal/': {
+      id: '/dashboard/admin/withdrawal/'
+      path: '/admin/withdrawal'
+      fullPath: '/dashboard/admin/withdrawal'
+      preLoaderRoute: typeof DashboardAdminWithdrawalIndexRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
   }
@@ -561,9 +620,12 @@ interface DashboardRouteRouteChildren {
   DashboardSettingIndexRoute: typeof DashboardSettingIndexRoute
   DashboardTransactionIndexRoute: typeof DashboardTransactionIndexRoute
   DashboardVoucherGeneratorIndexRoute: typeof DashboardVoucherGeneratorIndexRoute
+  DashboardWalletIndexRoute: typeof DashboardWalletIndexRoute
+  DashboardAdminWithdrawalIndexRoute: typeof DashboardAdminWithdrawalIndexRoute
   DashboardSettingArticleIndexRoute: typeof DashboardSettingArticleIndexRoute
   DashboardSettingLandingIndexRoute: typeof DashboardSettingLandingIndexRoute
   DashboardSettingTutorialIndexRoute: typeof DashboardSettingTutorialIndexRoute
+  DashboardWalletBankAccountIndexRoute: typeof DashboardWalletBankAccountIndexRoute
 }
 
 const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
@@ -584,9 +646,12 @@ const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardSettingIndexRoute: DashboardSettingIndexRoute,
   DashboardTransactionIndexRoute: DashboardTransactionIndexRoute,
   DashboardVoucherGeneratorIndexRoute: DashboardVoucherGeneratorIndexRoute,
+  DashboardWalletIndexRoute: DashboardWalletIndexRoute,
+  DashboardAdminWithdrawalIndexRoute: DashboardAdminWithdrawalIndexRoute,
   DashboardSettingArticleIndexRoute: DashboardSettingArticleIndexRoute,
   DashboardSettingLandingIndexRoute: DashboardSettingLandingIndexRoute,
   DashboardSettingTutorialIndexRoute: DashboardSettingTutorialIndexRoute,
+  DashboardWalletBankAccountIndexRoute: DashboardWalletBankAccountIndexRoute,
 }
 
 const DashboardRouteRouteWithChildren = DashboardRouteRoute._addFileChildren(

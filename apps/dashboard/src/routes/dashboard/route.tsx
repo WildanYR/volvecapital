@@ -74,13 +74,26 @@ const navGroups = [
     ],
   },
   {
+    title: 'Keuangan',
+    items: [
+      { title: 'Wallet', url: '/dashboard/wallet', icon: Receipt },
+    ],
+  },
+  {
     title: 'Settings',
     items: [
       { title: 'Landing Page', url: '/dashboard/setting', icon: House },
-      { title: 'Tutorial', url: '/dashboard/setting/tutorial', icon: BookOpen },
-      { title: 'Artikel', url: '/dashboard/setting/article', icon: FileText },
     ],
   },
+]
+
+const adminGroups = [
+  {
+    title: 'Admin Panel',
+    items: [
+      { title: 'Approval WD', url: '/dashboard/admin/withdrawal', icon: FileText },
+    ],
+  }
 ]
 
 export const Route = createFileRoute('/dashboard')({
@@ -132,6 +145,28 @@ function RouteComponent() {
           </SidebarGroup>
           {navGroups.map((nav, i) => (
             <SidebarGroup key={`nav=${i}`}>
+              <SidebarGroupLabel>{nav.title}</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {nav.items.map(item => (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={pathname === item.url}
+                      >
+                        <Link to={item.url}>
+                          <item.icon />
+                          <span>{item.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          ))}
+          {auth.tenant?.id === 'paytronik' && adminGroups.map((nav, i) => (
+            <SidebarGroup key={`admin-nav=${i}`}>
               <SidebarGroupLabel>{nav.title}</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
