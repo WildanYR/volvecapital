@@ -393,13 +393,13 @@ function RouteComponent() {
                                   )
                                 : transaction.platform.toLowerCase() === 'dashboard'
                                   ? (
-                                      <div className="p-1 bg-blue-500/20 text-blue-500 w-min rounded-md">
+                                      <div className="p-1 bg-primary/20 text-primary w-min rounded-md">
                                         <LayoutDashboard className="size-6" />
                                       </div>
                                     )
                                   : transaction.platform.toLowerCase() === 'landing' || transaction.platform.toLowerCase() === 'landingpage'
                                     ? (
-                                        <div className="p-1 bg-indigo-500/20 text-indigo-500 w-min rounded-md">
+                                        <div className="p-1 bg-primary/20 text-primary w-min rounded-md">
                                           <Globe className="size-6" />
                                         </div>
                                       )

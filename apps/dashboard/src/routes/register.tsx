@@ -77,7 +77,7 @@ function RouteComponent() {
           <Card>
             <CardHeader>
               <div className="flex justify-center items-center mb-6">
-                <img src={logo} className="h-12" />
+                <img src={logo} className="h-12 w-auto object-contain" />
               </div>
               <CardTitle>Daftar Akun Tenant</CardTitle>
               <CardDescription>
