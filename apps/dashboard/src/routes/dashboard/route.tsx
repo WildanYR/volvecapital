@@ -7,7 +7,6 @@ import {
 } from '@tanstack/react-router'
 import {
   Blocks,
-  BookOpen,
   FileText,
   House,
   Inbox,
