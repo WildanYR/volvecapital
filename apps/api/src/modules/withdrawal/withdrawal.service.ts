@@ -36,7 +36,7 @@ export class WithdrawalService {
     try {
       await this.postgresProvider.setSchema(tenantId, tx);
 
-      // 1. Calculate Total Net Profit from transactions older than T+2
+      // 1. Calculate Total Net Profit from transactions older than T+2 (cleared)
       const tPlus2 = new Date();
       tPlus2.setDate(tPlus2.getDate() - 2);
 
@@ -47,7 +47,15 @@ export class WithdrawalService {
       
       const totalProfit = Number((profitResult as any)[0]?.total_profit || 0);
 
-      // 2. Calculate Total Withdrawn or Pending/Processing
+      // 2. Calculate Pending Balance (transactions within T+2, not yet cleared)
+      const [pendingResult] = await this.postgresProvider.rawQuery(
+        `SELECT SUM(net_profit) as pending_profit FROM transaction WHERE created_at > :tPlus2`,
+        { replacements: { tPlus2 }, transaction: tx }
+      );
+
+      const pendingBalance = Number((pendingResult as any)[0]?.pending_profit || 0);
+
+      // 3. Calculate Total Withdrawn or Pending/Processing
       const [wdResult] = await this.postgresProvider.rawQuery(
         `SELECT SUM(amount + admin_fee) as total_wd FROM withdrawal_request WHERE status IN ('PENDING', 'APPROVED', 'PROCESSING', 'SUCCESS')`,
         { transaction: tx }
@@ -60,6 +68,7 @@ export class WithdrawalService {
       await tx.commit();
       return {
         available_balance: availableBalance,
+        pending_balance: pendingBalance,
         total_profit: totalProfit,
         total_withdrawal: totalWd
       };
