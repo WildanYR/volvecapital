@@ -376,12 +376,10 @@ export class AccountService {
         accounts_disabled_or_frozen: 0,
         profiles_locked_but_has_slot: 0,
         accounts_expiring_today: 0,
+        accounts_reset_today: 0,
       };
 
-      const now = new Date();
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
+      const todayStr = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Jakarta' });
 
       for (const acc of accounts) {
         // Check disabled/frozen/banned
@@ -392,9 +390,31 @@ export class AccountService {
 
         // Check expiring today
         if (acc.subscription_expiry) {
-          const expDate = new Date(acc.subscription_expiry);
-          if (expDate >= today && expDate < tomorrow) {
+          const expDateStr = new Date(acc.subscription_expiry).toLocaleDateString('en-US', { timeZone: 'Asia/Jakarta' });
+          if (expDateStr === todayStr) {
             stats.accounts_expiring_today++;
+          }
+        }
+
+        // Check reset today
+        let latestUserExpiry: Date | null = null;
+        if (acc.profile && acc.profile.length > 0) {
+          for (const prof of acc.profile) {
+            prof.user?.forEach(u => {
+              if (u.expired_at) {
+                const uDate = new Date(u.expired_at);
+                if (!latestUserExpiry || uDate > latestUserExpiry) {
+                   latestUserExpiry = uDate;
+                }
+              }
+            });
+          }
+        }
+        const resetDate = latestUserExpiry || acc.batch_end_date;
+        if (resetDate) {
+          const resetDateStr = new Date(resetDate).toLocaleDateString('en-US', { timeZone: 'Asia/Jakarta' });
+          if (resetDateStr === todayStr) {
+            stats.accounts_reset_today++;
           }
         }
 

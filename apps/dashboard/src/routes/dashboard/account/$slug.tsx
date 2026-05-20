@@ -1122,6 +1122,16 @@ function RouteComponent() {
                         {countAccounts?.accounts_expiring_today}
                       </p>
                     </div>
+                    <div className="space-y-1 w-full px-3 border-l-2 border-secondary">
+                      <p className="text-muted-foreground inline-flex items-center gap-1">
+                        <LockKeyholeOpen className="size-4" />
+                        {' '}
+                        Reset Password Hari Ini
+                      </p>
+                      <p className="font-semibold text-2xl">
+                        {countAccounts?.accounts_reset_today}
+                      </p>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -1419,9 +1429,18 @@ function RouteComponent() {
                               Reset Password
                             </p>
                             <p className="font-semibold text-sm">
-                              {account.batch_end_date
-                                ? formatDateIdStandard(account.batch_end_date)
-                                : '-'}
+                              {(() => {
+                                let latestDate: Date | null = null;
+                                account.profile?.forEach((p) => {
+                                  p.user?.forEach((u) => {
+                                    if (u.expired_at && (!latestDate || u.expired_at > latestDate)) {
+                                      latestDate = u.expired_at;
+                                    }
+                                  });
+                                });
+                                const resetDate = latestDate || account.batch_end_date;
+                                return resetDate ? formatDateIdStandard(resetDate) : '-';
+                              })()}
                             </p>
                           </div>
                           <div className="space-y-1 w-full px-3 border-l-2 border-secondary">

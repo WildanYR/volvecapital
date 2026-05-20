@@ -160,6 +160,7 @@ export interface CountStatusAccount {
   accounts_disabled_or_frozen: number
   profiles_locked_but_has_slot: number
   accounts_expiring_today: number
+  accounts_reset_today: number
 }
 
 export function AccountServiceGenerator(apiUrl: string, accessToken: string, tenantId: string) {
