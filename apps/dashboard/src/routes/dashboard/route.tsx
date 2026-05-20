@@ -7,6 +7,7 @@ import {
 } from '@tanstack/react-router'
 import {
   Blocks,
+  BookOpen,
   FileText,
   House,
   Inbox,
@@ -16,8 +17,8 @@ import {
   Receipt,
   Ticket,
   User,
-  BookOpen,
 } from 'lucide-react'
+import { StockNotification } from '@/dashboard/components/stock-notification'
 import { Button } from '@/dashboard/components/ui/button'
 import {
   Sidebar,
@@ -35,7 +36,6 @@ import {
 } from '@/dashboard/components/ui/sidebar'
 import { useAuth } from '@/dashboard/context-providers/auth.provider'
 import logo from '@/dashboard/logo.svg'
-import { StockNotification } from '@/dashboard/components/stock-notification'
 
 const navGroups = [
   {
