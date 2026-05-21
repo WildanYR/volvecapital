@@ -1,8 +1,8 @@
-import { Inject, Injectable } from "@nestjs/common";
+import { Inject, Injectable } from '@nestjs/common';
 import {
   EMAIL_MESSAGE_REPOSITORY,
   EMAIL_SUBJECT_REPOSITORY,
-} from "src/constants/database.const";
+} from 'src/constants/database.const';
 import {
   NETFLIX_CANCELLATION,
   NETFLIX_HOUSE_CHANGE,
@@ -10,14 +10,14 @@ import {
   NETFLIX_REQ_RESET_PASSWORD,
   NETFLIX_TRAVEL_OTP,
   NETFLIX_VERIFY_EMAIL,
-} from "src/constants/email-subject.const";
-import { EmailMessage } from "src/database/models/email-message.model";
-import { EmailSubject } from "src/database/models/email-subject.model";
-import { PostgresProvider } from "src/database/postgres.provider";
-import { AppLoggerService } from "../logger/logger.service";
-import { SocketGateway } from "../socket/socket.gateway";
-import { EmailParser } from "../utility/email-parser.provider";
-import { RecieveEmailDto } from "./dto/recieve-email.dto";
+} from 'src/constants/email-subject.const';
+import { EmailMessage } from 'src/database/models/email-message.model';
+import { EmailSubject } from 'src/database/models/email-subject.model';
+import { PostgresProvider } from 'src/database/postgres.provider';
+import { AppLoggerService } from '../logger/logger.service';
+import { SocketGateway } from '../socket/socket.gateway';
+import { EmailParser } from '../utility/email-parser.provider';
+import { RecieveEmailDto } from './dto/recieve-email.dto';
 
 @Injectable()
 export class EmailForwardProcessorService {
@@ -44,9 +44,9 @@ export class EmailForwardProcessorService {
     const transaction = await this.postgresProvider.transaction();
 
     try {
-      await this.postgresProvider.setSchema("master", transaction);
+      await this.postgresProvider.setSchema('master', transaction);
 
-      const emailSubjects = payload.emails.map((e) => e.subject);
+      const emailSubjects = payload.emails.map(e => e.subject);
 
       const emailSubject = await this.emailSubjectRepository.findAll({
         where: {
@@ -97,9 +97,6 @@ export class EmailForwardProcessorService {
 
                 const sanitizeEmail = this.emailParser.sanitizeEmail(e.from);
                 const eventName = `${sanitizeEmail}:${context}`;
-                // TODO #send-event: send event only if there is active task depend on the event
-                // saat ini setiap ada email masuk selalu mengirim event via socket,
-                // ini membuat
                 void this.socketGateway
                   .sendEvent(eventName, {
                     from: e.from,
@@ -111,7 +108,7 @@ export class EmailForwardProcessorService {
                     this.logger.error(
                       error.message,
                       error.stack,
-                      "EmailForwardSendEvent",
+                      'EmailForwardSendEvent',
                     );
                   });
               }
@@ -121,11 +118,12 @@ export class EmailForwardProcessorService {
       }
 
       await transaction.commit();
-    } catch (error) {
+    }
+    catch (error) {
       this.logger.error(
         (error as Error).message,
         (error as Error).stack,
-        "EmailForwardRecieve",
+        'EmailForwardRecieve',
       );
       await transaction.rollback();
       throw error;
