@@ -1,16 +1,19 @@
-const APP_ID = "GANTI_DENGAN_APP_ID_VOLVECAPITAL"
+const APP_ID = "paytronik"
 const API_URL = "https://api.volve-capital.com"
-const BATCH_SIZE = 15
 const PROP_KEY_LAST_RUN = 'last_run'
 const CACHE_KEY_SUBJECT = "email_subjects"
 const CACHE_KEY_PAYLOAD = "webhook_payload"
 const TTL_SUBJECT = 600
 const TTL_PAYLOAD = 600
-const MAX_GMAIL_LOOKBACK = 600
+const BATCH_SIZE = 30; // Aman dan super cepat untuk diproses per 1 menit
+const MAX_WINDOW_SEC = 1800; // 30 Menit (Window opsional jika ada backlog)
+const BUFFER_SEC = 30; 
+const MAX_GMAIL_LOOKBACK = 600; // 10 Menit dari now() sesuai kebutuhan Anda
+const CHUNK_SIZE = 95 * 1024
+
 // == CACHE HELPER ==
 function setCachedPayload(payload, cacheService) {
   const cache = cacheService || CacheService.getScriptCache()
-  const CHUNK_SIZE = 95 * 1024
   const numChunks = Math.ceil(payload.length / CHUNK_SIZE)
   const cacheData = {}
   cacheData[`${CACHE_KEY_PAYLOAD}_meta`] = numChunks.toString()
@@ -18,7 +21,7 @@ function setCachedPayload(payload, cacheService) {
     const start = i * CHUNK_SIZE
     cacheData[`${CACHE_KEY_PAYLOAD}_${i}`] = payload.substring(start, start + CHUNK_SIZE)
   }
-  cache.putAll(cacheData, 600)
+  cache.putAll(cacheData, TTL_PAYLOAD)
 }
 
 function getCachedPayload(cacheService) {
@@ -84,12 +87,6 @@ function sendPayload(payloadString) {
 function processEmails() {
   const props = PropertiesService.getScriptProperties();
   const cache = CacheService.getScriptCache();
-  
-  // Konfigurasi
-  const BATCH_SIZE = 30; // Aman dan super cepat untuk diproses per 1 menit
-  const MAX_WINDOW_SEC = 1800; // 30 Menit (Window opsional jika ada backlog)
-  const BUFFER_SEC = 30; 
-  const MAX_GMAIL_LOOKBACK = 600; // 10 Menit dari now() sesuai kebutuhan Anda
   
   let lastRunStr = props.getProperty(PROP_KEY_LAST_RUN);
   if (!lastRunStr) lastRunStr = (Math.floor(Date.now() / 1000) - 3600).toString();
