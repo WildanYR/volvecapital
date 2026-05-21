@@ -186,9 +186,10 @@ export class StatisticService {
            (SELECT SUM(total_price) AS total_revenue, COUNT(id) AS transaction_count 
             FROM "transaction" 
             WHERE created_at >= :start AND created_at <= :end) rev,
-           (SELECT SUM(capital_price) AS total_capital_price 
-            FROM "account" 
-            WHERE created_at >= :start AND created_at <= :end) cap`,
+           (SELECT 
+              (SELECT COALESCE(SUM(capital_price), 0) FROM "account" WHERE created_at >= :start AND created_at <= :end) +
+              (SELECT COALESCE(SUM(amount), 0) FROM "account_capital" WHERE created_at >= :start AND created_at <= :end)
+            AS total_capital_price) cap`,
         { type: QueryTypes.SELECT, transaction: tx, replacements: repl },
       ) as any[];
 
@@ -211,9 +212,10 @@ export class StatisticService {
              (SELECT SUM(total_price) AS total_revenue, COUNT(id) AS transaction_count 
               FROM "transaction" 
               WHERE created_at >= :start AND created_at <= :end) rev,
-             (SELECT SUM(capital_price) AS total_capital_price 
-              FROM "account" 
-              WHERE created_at >= :start AND created_at <= :end) cap`,
+             (SELECT 
+                (SELECT COALESCE(SUM(capital_price), 0) FROM "account" WHERE created_at >= :start AND created_at <= :end) +
+                (SELECT COALESCE(SUM(amount), 0) FROM "account_capital" WHERE created_at >= :start AND created_at <= :end)
+              AS total_capital_price) cap`,
           { type: QueryTypes.SELECT, transaction: tx, replacements: prevRepl },
         ) as any[];
         prevSummary = prevSummaryRaw[0] ?? {};
