@@ -3,6 +3,7 @@ import { TimeUnitEnum } from './time-unit.schema'
 
 export const ProductVariantFormSchema = z.object({
   name: z.string().nonempty(),
+  base_price: z.string().nonempty(),
   duration: z.string().nonempty(),
   duration_unit: TimeUnitEnum,
   interval: z.string().nonempty(),

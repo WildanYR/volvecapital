@@ -35,6 +35,7 @@ export interface ProductVariant {
   interval_unit: string
   cooldown: number
   cooldown_unit: string
+  base_price: string
   copy_template?: string
   product_id: string
   product?: {
@@ -55,6 +56,7 @@ export interface CreateProductVariantPayload {
   duration: number
   interval: number
   cooldown: number
+  base_price: string
   copy_template?: string
 }
 
@@ -68,6 +70,7 @@ export interface UpdateProductVariantPayload {
   duration?: number
   interval?: number
   cooldown?: number
+  base_price?: string
   copy_template?: string
 }
 

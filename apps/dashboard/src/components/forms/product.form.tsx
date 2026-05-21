@@ -22,6 +22,7 @@ function getInitialData(data?: Product): ProductFormSubmitData {
       variants: [
         {
           name: '',
+          base_price: '',
           cooldown: '',
           cooldown_unit: 'millisecond',
           duration: '',
@@ -37,6 +38,7 @@ function getInitialData(data?: Product): ProductFormSubmitData {
   const variants = data.variants.map((v) => {
     return {
       name: v.name,
+      base_price: v.base_price?.toString() || '',
       duration: v.duration.toString(),
       duration_unit: v.duration_unit as TimeUnit,
       interval: v.interval.toString(),
@@ -92,6 +94,7 @@ export function ProductForm({
           interval_unit: 'millisecond' as TimeUnit,
           cooldown: cooldown.toString(),
           cooldown_unit: 'millisecond' as TimeUnit,
+          base_price: v.base_price,
           copy_template: v.copy_template,
         }
       })
@@ -151,6 +154,16 @@ export function ProductForm({
                         />
                       )}
                     />
+                    <form.AppField
+                      name={`variants[${i}].base_price`}
+                      children={subfield => (
+                        <subfield.TextField
+                          label="Harga Dasar"
+                          type="number"
+                          placeholder="masukkan harga dasar varian..."
+                        />
+                      )}
+                    />
                     <DurationFieldGroup
                       form={form}
                       fields={{
@@ -198,6 +211,7 @@ export function ProductForm({
                   onClick={() =>
                     field.pushValue({
                       name: '',
+                      base_price: '',
                       duration: '',
                       duration_unit: 'millisecond',
                       interval: '',

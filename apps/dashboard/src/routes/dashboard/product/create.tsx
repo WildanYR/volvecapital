@@ -43,6 +43,7 @@ function RouteComponent() {
         duration: Number.parseInt(v.duration),
         interval: Number.parseInt(v.interval),
         cooldown: Number.parseInt(v.cooldown),
+        base_price: v.base_price,
         copy_template: v.copy_template || undefined,
       })),
     }

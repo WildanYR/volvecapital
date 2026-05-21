@@ -15,13 +15,13 @@ function setup() {
   }
   ScriptApp.newTrigger('processEmails').timeBased().everyMinutes(1).create();
   
-  const client = EmailForwarderLib.init(CONFIG);
+  const client = VolveCapitalLib.init(CONFIG);
   client.deleteCachedPayload();
   
   Logger.log("Setup Berhasil untuk tenant: " + CONFIG.appId);
 }
 
 function processEmails() {
-  const client = EmailForwarderLib.init(CONFIG);
+  const client = VolveCapitalLib.init(CONFIG);
   client.initCore();
 }

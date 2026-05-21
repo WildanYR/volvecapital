@@ -24,6 +24,7 @@ export interface ProductVariantAttributes {
   duration: number;
   interval: number;
   cooldown: number;
+  base_price: string;
   copy_template?: string;
   product_id: string;
   product: ProductAttributes;
@@ -69,6 +70,10 @@ export class ProductVariant extends Model<
   @AllowNull(false)
   @Column(DataType.BIGINT)
   declare cooldown: number;
+
+  @AllowNull(false)
+  @Column(DataType.BIGINT)
+  declare base_price: string;
 
   @Column(DataType.TEXT)
   declare copy_template?: string;

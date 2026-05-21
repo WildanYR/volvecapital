@@ -62,6 +62,7 @@ import { Skeleton } from '@/dashboard/components/ui/skeleton'
 import { API_URL } from '@/dashboard/constants/api-url.cont'
 import { useGlobalAlertDialog } from '@/dashboard/context-providers/alert-dialog.provider'
 import { useAuth } from '@/dashboard/context-providers/auth.provider'
+import { formatRupiah } from '@/dashboard/lib/currency.util'
 import { getTimeUnitSymbol } from '@/dashboard/lib/time-converter.util'
 import {
   GetProductsParamsSchema,
@@ -195,6 +196,7 @@ function RouteComponent() {
       duration: Number.parseInt(value.duration),
       interval: Number.parseInt(value.interval),
       cooldown: Number.parseInt(value.cooldown),
+      base_price: value.base_price,
       copy_template: value.copy_template ? value.copy_template : undefined,
     }
     if (productVariantFormMode === 'CREATE') {
@@ -440,7 +442,10 @@ function RouteComponent() {
                             className="py-4 border-t border-neutral-600 space-y-4"
                           >
                             <div className="flex justify-between items-center">
-                              <p>{variant.name}</p>
+                              <div className="flex flex-col gap-1">
+                                <p>{variant.name}</p>
+                                <p className="text-primary text-sm">{variant.base_price ? formatRupiah(Number.parseInt(variant.base_price)) : 'Rp 0'}</p>
+                              </div>
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                   <Button

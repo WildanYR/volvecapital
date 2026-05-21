@@ -17,6 +17,10 @@ export class CreateProductVariantDto {
   @IsNumber()
   cooldown: number;
 
+  @IsNotEmpty()
+  @IsString()
+  base_price: string;
+
   @IsOptional()
   @IsString()
   copy_template?: string;

@@ -31,6 +31,7 @@ export function ProductVariantForm({
     validators: { onSubmit: ProductVariantFormSchema },
     defaultValues: {
       name: initialData?.name ?? '',
+      base_price: initialData?.base_price ?? '',
       duration: initialData?.duration.toString() ?? '',
       duration_unit: initialData?.duration_unit ?? 'millisecond',
       interval: initialData?.interval.toString() ?? '',
@@ -83,6 +84,16 @@ export function ProductVariantForm({
               <field.TextField
                 label="Nama"
                 placeholder="masukkan nama varian produk..."
+              />
+            )}
+          />
+          <form.AppField
+            name="base_price"
+            children={field => (
+              <field.TextField
+                label="Harga Dasar"
+                type="number"
+                placeholder="masukkan harga dasar varian..."
               />
             )}
           />
