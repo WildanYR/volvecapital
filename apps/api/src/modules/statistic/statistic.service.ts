@@ -178,17 +178,17 @@ export class StatisticService {
       // ── Summary card ────────────────────────────────────────────
       const summaryRaw = await this.postgresProvider.rawQuery(
         `SELECT
-           COALESCE(SUM(t.total_price), 0)    AS total_revenue,
-           COALESCE(SUM(a.capital_price), 0)  AS total_capital_price,
-           COALESCE(SUM(t.total_price), 0)
-             - COALESCE(SUM(a.capital_price), 0) AS gross_profit,
-           COUNT(DISTINCT t.id)               AS transaction_count
-         FROM "transaction" t
-         LEFT JOIN "transaction_item" ti ON ti.transaction_id = t.id
-         LEFT JOIN "account_user"     au ON au.id = ti.account_user_id
-         LEFT JOIN "account"           a ON  a.id = au.account_id
-         WHERE t.created_at >= :start
-           AND t.created_at <= :end`,
+           COALESCE(rev.total_revenue, 0) AS total_revenue,
+           COALESCE(cap.total_capital_price, 0) AS total_capital_price,
+           (COALESCE(rev.total_revenue, 0) - COALESCE(cap.total_capital_price, 0)) AS gross_profit,
+           COALESCE(rev.transaction_count, 0) AS transaction_count
+         FROM
+           (SELECT SUM(total_price) AS total_revenue, COUNT(id) AS transaction_count 
+            FROM "transaction" 
+            WHERE created_at >= :start AND created_at <= :end) rev,
+           (SELECT SUM(capital_price) AS total_capital_price 
+            FROM "account" 
+            WHERE created_at >= :start AND created_at <= :end) cap`,
         { type: QueryTypes.SELECT, transaction: tx, replacements: repl },
       ) as any[];
 
@@ -203,17 +203,17 @@ export class StatisticService {
         };
         const prevSummaryRaw = await this.postgresProvider.rawQuery(
           `SELECT
-             COALESCE(SUM(t.total_price), 0)    AS total_revenue,
-             COALESCE(SUM(a.capital_price), 0)  AS total_capital_price,
-             COALESCE(SUM(t.total_price), 0)
-               - COALESCE(SUM(a.capital_price), 0) AS gross_profit,
-             COUNT(DISTINCT t.id)               AS transaction_count
-           FROM "transaction" t
-           LEFT JOIN "transaction_item" ti ON ti.transaction_id = t.id
-           LEFT JOIN "account_user"     au ON au.id = ti.account_user_id
-           LEFT JOIN "account"           a ON  a.id = au.account_id
-           WHERE t.created_at >= :start
-             AND t.created_at <= :end`,
+             COALESCE(rev.total_revenue, 0) AS total_revenue,
+             COALESCE(cap.total_capital_price, 0) AS total_capital_price,
+             (COALESCE(rev.total_revenue, 0) - COALESCE(cap.total_capital_price, 0)) AS gross_profit,
+             COALESCE(rev.transaction_count, 0) AS transaction_count
+           FROM
+             (SELECT SUM(total_price) AS total_revenue, COUNT(id) AS transaction_count 
+              FROM "transaction" 
+              WHERE created_at >= :start AND created_at <= :end) rev,
+             (SELECT SUM(capital_price) AS total_capital_price 
+              FROM "account" 
+              WHERE created_at >= :start AND created_at <= :end) cap`,
           { type: QueryTypes.SELECT, transaction: tx, replacements: prevRepl },
         ) as any[];
         prevSummary = prevSummaryRaw[0] ?? {};
