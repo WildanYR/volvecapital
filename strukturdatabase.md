@@ -199,6 +199,7 @@ Akun streaming utama yang dikelola dan disewakan ke customer.
 | `batch_end_date` | TIMESTAMP | NULLABLE | Tanggal selesai batch pengelolaan |
 | `freeze_until` | TIMESTAMP | NULLABLE | Akun dibekukan sampai tanggal ini |
 | `pinned` | BOOLEAN | NULLABLE | Apakah akun di-pin di dashboard |
+| `capital_price` | INTEGER | NOT NULL, DEFAULT 0 | Harga modal akun |
 | `email_id` | BIGINT | FK email.id, NOT NULL | Email akun streaming |
 | `product_variant_id` | BIGINT | FK product_variant.id | Varian produk untuk akun ini |
 | `created_at` | TIMESTAMP | NOT NULL | |
@@ -240,6 +241,7 @@ User/penyewa yang sedang menggunakan profile akun tertentu.
 | `name` | VARCHAR | NOT NULL | Nama customer/penyewa |
 | `status` | VARCHAR | NULLABLE | `active` / `expired` |
 | `expired_at` | TIMESTAMP | NULLABLE | Waktu akses berakhir |
+| `is_reminder_sent` | BOOLEAN | DEFAULT false | Apakah reminder perpanjangan sudah dikirim |
 | `account_id` | BIGINT | FK account.id, NOT NULL | Akun yang digunakan |
 | `account_profile_id` | BIGINT | FK account_profile.id, NOT NULL | Profile yang digunakan |
 | `created_at` | TIMESTAMP | NOT NULL | |

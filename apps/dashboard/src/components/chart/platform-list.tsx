@@ -1,6 +1,6 @@
 import type { AllStatistic } from '@/dashboard/services/statistic.service'
 
-export function PlatformList({ data }: { data: AllStatistic['platform'] }) {
+export function PlatformList({ data }: { data: AllStatistic['charts']['platform'] }) {
   return (
     <div className="flex flex-col gap-4 py-2">
       {data.length === 0 ? (

@@ -3,7 +3,7 @@ import { useMemo } from 'react'
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '../ui/chart'
 
-export function PeakHourChart({ data }: { data: AllStatistic['peakHour'] }) {
+export function PeakHourChart({ data }: { data: AllStatistic['charts']['peakHour'] }) {
   const yAxisMax = useMemo(() => {
     if (!data || data.length === 0) return 10
     const maxVal = Math.max(...data.map((d) => Number(d.transaction_count || 0)))

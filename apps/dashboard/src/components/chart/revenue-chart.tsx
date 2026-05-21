@@ -1,15 +1,16 @@
-import type { RevenueStatistic } from '@/dashboard/services/statistic.service'
+import type { RevenueChartData } from '@/dashboard/services/statistic.service'
 import { useMemo } from 'react'
 import { Bar, CartesianGrid, ComposedChart, Line, XAxis, YAxis } from 'recharts'
 import { formatRupiah } from '@/dashboard/lib/currency.util'
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '../ui/chart'
 
-function RevenueChart({ data }: { data: RevenueStatistic }) {
+function RevenueChart({ data }: { data: RevenueChartData[] }) {
   // 2. HITUNG MANUAL (Menggunakan useMemo agar performa terjaga)
   // Kita cari nilai transaksi tertinggi dari seluruh data yang ada
   const maxTransactionVal = useMemo(() => {
+    if (!data || data.length === 0) return 0
     const max = Math.max(
-      ...data.daily.map((d: any) => Number(d.transaction_count || 0)),
+      ...data.map((d) => Number(d.transaction_count || 0)),
     )
     return max
   }, [data])
@@ -32,9 +33,9 @@ function RevenueChart({ data }: { data: RevenueStatistic }) {
         },
       }}
     >
-      <ComposedChart accessibilityLayer data={data.daily}>
+      <ComposedChart accessibilityLayer data={data}>
         <CartesianGrid vertical={false} />
-        <XAxis dataKey="date" />
+        <XAxis dataKey="bucket" />
         <YAxis
           yAxisId="axis_revenue"
           orientation="left"

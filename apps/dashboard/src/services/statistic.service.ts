@@ -2,55 +2,74 @@ import z from 'zod'
 import { generateApiFetch, parseApiResponse } from '@/dashboard/lib/api-fetch.util'
 
 export const AllStatisticFilterSchema = z.object({
+  filter: z.enum([
+    'realtime',
+    'today',
+    'yesterday',
+    'last_7_days',
+    'last_30_days',
+    'custom_day',
+    'custom_week',
+    'custom_month',
+    'custom_year',
+  ]).optional(),
+  date: z.string().optional(),
+  start_date: z.string().optional(),
+  end_date: z.string().optional(),
   year: z.string().optional(),
   month: z.string().optional(),
 })
 
 export type AllStatisticFilter = z.infer<typeof AllStatisticFilterSchema>
 
-interface BaseStatistic {
-  date: string
-  type: string
-  created_at: Date
-  updated_at: Date
+export interface StatisticSummary {
+  total_revenue: number
+  revenue_percentage?: number
+  total_capital_price: number
+  gross_profit: number
+  profit_percentage?: number
+  transaction_count: number
+  transaction_percentage?: number
 }
 
-interface BaseRevenueStatistic extends BaseStatistic {
+export interface RevenueChartData {
+  bucket: string
   total_revenue: number
   transaction_count: number
 }
 
-export interface RevenueStatistic {
-  today: BaseRevenueStatistic
-  month: BaseRevenueStatistic
-  daily: Array<BaseRevenueStatistic>
-}
-
-interface ProductSalesStatistic {
-  product_variant_id: string
-  items_sold: number
-  product_variant: {
-    id: string
-    name: string
-    product: { id: string, name: string }
-  }
-}
-
-interface PlatformStatistic {
-  platform: string
-  transaction_count: number
-}
-
-interface PeakHourStatistic {
+export interface PeakHourChartData {
   hour: number
   transaction_count: number
 }
 
+export interface PlatformChartData {
+  platform: string
+  transaction_count: number
+  total_revenue: number
+}
+
+export interface ProductChartData {
+  product_variant_id: string
+  product_name: string
+  variant_name: string
+  items_sold: number
+}
+
 export interface AllStatistic {
-  revenue: RevenueStatistic
-  product: Array<ProductSalesStatistic>
-  platform: Array<PlatformStatistic>
-  peakHour: Array<PeakHourStatistic>
+  summary: StatisticSummary
+  charts: {
+    revenue: Array<RevenueChartData>
+    peakHour: Array<PeakHourChartData>
+    platform: Array<PlatformChartData>
+    products: Array<ProductChartData>
+  }
+  meta: {
+    filter: string
+    granularity: string
+    start: string
+    end: string
+  }
 }
 
 export function statisticServiceGenerator(apiUrl: string, accessToken: string, tenantId: string) {
@@ -63,7 +82,7 @@ export function statisticServiceGenerator(apiUrl: string, accessToken: string, t
       accessToken,
       tenantId,
       '/statistic',
-      { filter, signal },
+      { ...filter, signal } as any,
     )
     if (!response.ok) {
       const errorData = await parseApiResponse(response)
@@ -74,29 +93,7 @@ export function statisticServiceGenerator(apiUrl: string, accessToken: string, t
     }
 
     const data = (await response.json()) as AllStatistic
-    return {
-      ...data,
-      revenue: {
-        today: {
-          ...data.revenue.today,
-          total_revenue: Number.parseInt(data.revenue.today.total_revenue as any),
-          created_at: new Date(data.revenue.today.created_at),
-          updated_at: new Date(data.revenue.today.updated_at),
-        },
-        month: {
-          ...data.revenue.month,
-          total_revenue: Number.parseInt(data.revenue.month.total_revenue as any),
-          created_at: new Date(data.revenue.month.created_at),
-          updated_at: new Date(data.revenue.month.updated_at),
-        },
-        daily: data.revenue.daily.map(item => ({
-          ...item,
-          total_revenue: Number.parseInt(item.total_revenue as any),
-          created_at: new Date(item.created_at),
-          updated_at: new Date(item.updated_at),
-        })),
-      },
-    }
+    return data
   }
 
   return { getAllStatistic }

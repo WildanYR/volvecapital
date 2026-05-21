@@ -1,6 +1,6 @@
 import type { AllStatistic } from '@/dashboard/services/statistic.service'
 
-export function ProductSales({ data }: { data: AllStatistic['product'] }) {
+export function ProductSales({ data }: { data: AllStatistic['charts']['products'] }) {
   // Ambil hanya 3 data teratas (data dari API sudah di sort secara DESC)
   const topProducts = data.slice(0, 3)
 
@@ -19,10 +19,10 @@ export function ProductSales({ data }: { data: AllStatistic['product'] }) {
               </div>
               <div className="flex flex-col">
                 <span className="font-medium text-sm">
-                  {item.product_variant.product.name}
+                  {item.product_name}
                 </span>
                 <span className="text-xs text-muted-foreground">
-                  {item.product_variant.name}
+                  {item.variant_name}
                 </span>
               </div>
             </div>
