@@ -37,126 +37,147 @@ export class StatisticService {
   constructor(private readonly postgresProvider: PostgresProvider) {}
 
   // ──────────────────────────────────────────────────────────────────────────
-  // Date-range resolver
+  // Date-range resolver (WIB/UTC+7)
   // ──────────────────────────────────────────────────────────────────────────
+  private readonly WIB_OFFSET_MS = 7 * 60 * 60 * 1000;
+
+  private toWIBDate(date: Date): Date {
+    return new Date(date.getTime() + this.WIB_OFFSET_MS);
+  }
+
+  private fromWIBToUTC(date: Date): Date {
+    return new Date(date.getTime() - this.WIB_OFFSET_MS);
+  }
+
   private resolveDateRange(params: StatisticParams): DateRange {
     const now = new Date();
-    const todayStart = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
-    );
+    const nowWIB = this.toWIBDate(now);
+    
+    const todayStartWIB = new Date(Date.UTC(
+      nowWIB.getUTCFullYear(),
+      nowWIB.getUTCMonth(),
+      nowWIB.getUTCDate(),
+    ));
+
     const filter: StatisticFilterType = params.filter ?? 'today';
 
+    let startWIB: Date, endWIB: Date, prevStartWIB: Date | null = null, prevEndWIB: Date | null = null;
+    let granularity: ChartGranularity = 'hour';
+
     switch (filter) {
-      /* ── realtime / today ─────────────────────────────────────── */
       case 'realtime':
       case 'today': {
-        const pStart = new Date(todayStart);
-        pStart.setDate(pStart.getDate() - 1);
-        const pEnd = new Date(todayStart);
-        pEnd.setMilliseconds(-1);
-        return { start: todayStart, end: now, prevStart: pStart, prevEnd: pEnd, granularity: 'hour' };
+        startWIB = new Date(todayStartWIB);
+        endWIB = nowWIB;
+        
+        prevStartWIB = new Date(todayStartWIB);
+        prevStartWIB.setUTCDate(prevStartWIB.getUTCDate() - 1);
+        prevEndWIB = new Date(todayStartWIB);
+        prevEndWIB.setUTCMilliseconds(-1);
+        granularity = 'hour';
+        break;
       }
-
-      /* ── yesterday ────────────────────────────────────────────── */
       case 'yesterday': {
-        const ys = new Date(todayStart);
-        ys.setDate(ys.getDate() - 1);
-        const ye = new Date(todayStart);
-        ye.setMilliseconds(-1);
+        startWIB = new Date(todayStartWIB);
+        startWIB.setUTCDate(startWIB.getUTCDate() - 1);
+        endWIB = new Date(todayStartWIB);
+        endWIB.setUTCMilliseconds(-1);
 
-        const pStart = new Date(ys);
-        pStart.setDate(pStart.getDate() - 1);
-        const pEnd = new Date(ys);
-        pEnd.setMilliseconds(-1);
-        
-        return { start: ys, end: ye, prevStart: pStart, prevEnd: pEnd, granularity: 'hour' };
+        prevStartWIB = new Date(startWIB);
+        prevStartWIB.setUTCDate(prevStartWIB.getUTCDate() - 1);
+        prevEndWIB = new Date(startWIB);
+        prevEndWIB.setUTCMilliseconds(-1);
+        granularity = 'hour';
+        break;
       }
-
-      /* ── last 7 days ──────────────────────────────────────────── */
       case 'last_7_days': {
-        const s = new Date(todayStart);
-        s.setDate(s.getDate() - 7);
-        
-        const pStart = new Date(s);
-        pStart.setDate(pStart.getDate() - 7);
-        const pEnd = new Date(s);
-        pEnd.setMilliseconds(-1);
+        startWIB = new Date(todayStartWIB);
+        startWIB.setUTCDate(startWIB.getUTCDate() - 7);
+        endWIB = nowWIB;
 
-        return { start: s, end: now, prevStart: pStart, prevEnd: pEnd, granularity: 'day' };
+        prevStartWIB = new Date(startWIB);
+        prevStartWIB.setUTCDate(prevStartWIB.getUTCDate() - 7);
+        prevEndWIB = new Date(startWIB);
+        prevEndWIB.setUTCMilliseconds(-1);
+        granularity = 'day';
+        break;
       }
-
-      /* ── last 30 days ─────────────────────────────────────────── */
       case 'last_30_days': {
-        const s = new Date(todayStart);
-        s.setDate(s.getDate() - 30);
-        
-        const pStart = new Date(s);
-        pStart.setDate(pStart.getDate() - 30);
-        const pEnd = new Date(s);
-        pEnd.setMilliseconds(-1);
+        startWIB = new Date(todayStartWIB);
+        startWIB.setUTCDate(startWIB.getUTCDate() - 30);
+        endWIB = nowWIB;
 
-        return { start: s, end: now, prevStart: pStart, prevEnd: pEnd, granularity: 'day' };
+        prevStartWIB = new Date(startWIB);
+        prevStartWIB.setUTCDate(prevStartWIB.getUTCDate() - 30);
+        prevEndWIB = new Date(startWIB);
+        prevEndWIB.setUTCMilliseconds(-1);
+        granularity = 'day';
+        break;
       }
-
-      /* ── specific day ─────────────────────────────────────────── */
       case 'custom_day': {
-        const d = params.date ? new Date(params.date) : todayStart;
-        const s = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-        const e = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
-        
-        const pStart = new Date(s);
-        pStart.setDate(pStart.getDate() - 1);
-        const pEnd = new Date(pStart);
-        pEnd.setHours(23, 59, 59, 999);
+        if (params.date) {
+          const [y, m, d] = params.date.split('-');
+          startWIB = new Date(Date.UTC(parseInt(y), parseInt(m) - 1, parseInt(d)));
+        } else {
+          startWIB = new Date(todayStartWIB);
+        }
+        endWIB = new Date(startWIB);
+        endWIB.setUTCDate(endWIB.getUTCDate() + 1);
+        endWIB.setUTCMilliseconds(-1);
 
-        return { start: s, end: e, prevStart: pStart, prevEnd: pEnd, granularity: 'hour' };
+        prevStartWIB = new Date(startWIB);
+        prevStartWIB.setUTCDate(prevStartWIB.getUTCDate() - 1);
+        prevEndWIB = new Date(startWIB);
+        prevEndWIB.setUTCMilliseconds(-1);
+        granularity = 'hour';
+        break;
       }
-
-      /* ── date-range (week or arbitrary range) ─────────────────── */
       case 'custom_week': {
-        const s = params.start_date ? new Date(params.start_date) : todayStart;
-        const e = params.end_date ? new Date(params.end_date) : now;
-        e.setHours(23, 59, 59, 999);
+        startWIB = params.start_date ? new Date(params.start_date + 'T00:00:00.000Z') : new Date(todayStartWIB);
+        endWIB = params.end_date ? new Date(params.end_date + 'T23:59:59.999Z') : new Date(nowWIB);
         
-        const diffDays = Math.round((e.getTime() - s.getTime()) / (1000 * 60 * 60 * 24));
-        const pStart = new Date(s);
-        pStart.setDate(pStart.getDate() - diffDays);
-        const pEnd = new Date(s);
-        pEnd.setMilliseconds(-1);
-
-        return { start: s, end: e, prevStart: pStart, prevEnd: pEnd, granularity: 'day' };
+        const diffDays = Math.round((endWIB.getTime() - startWIB.getTime()) / (1000 * 60 * 60 * 24));
+        prevStartWIB = new Date(startWIB);
+        prevStartWIB.setUTCDate(prevStartWIB.getUTCDate() - diffDays);
+        prevEndWIB = new Date(startWIB);
+        prevEndWIB.setUTCMilliseconds(-1);
+        granularity = 'day';
+        break;
       }
-
-      /* ── specific month ───────────────────────────────────────── */
       case 'custom_month': {
-        const yr = params.year ? parseInt(params.year, 10) : now.getFullYear();
-        const mo = params.month ? parseInt(params.month, 10) - 1 : now.getMonth();
-        const s = new Date(yr, mo, 1);
-        const e = new Date(yr, mo + 1, 0, 23, 59, 59, 999);
-        
-        const pStart = new Date(yr, mo - 1, 1);
-        const pEnd = new Date(yr, mo, 0, 23, 59, 59, 999);
+        const yr = params.year ? parseInt(params.year, 10) : nowWIB.getUTCFullYear();
+        const mo = params.month ? parseInt(params.month, 10) - 1 : nowWIB.getUTCMonth();
+        startWIB = new Date(Date.UTC(yr, mo, 1));
+        endWIB = new Date(Date.UTC(yr, mo + 1, 0, 23, 59, 59, 999));
 
-        return { start: s, end: e, prevStart: pStart, prevEnd: pEnd, granularity: 'day' };
+        prevStartWIB = new Date(Date.UTC(yr, mo - 1, 1));
+        prevEndWIB = new Date(Date.UTC(yr, mo, 0, 23, 59, 59, 999));
+        granularity = 'day';
+        break;
       }
-
-      /* ── specific year ────────────────────────────────────────── */
       case 'custom_year': {
-        const yr = params.year ? parseInt(params.year, 10) : now.getFullYear();
-        const s = new Date(yr, 0, 1);
-        const e = new Date(yr, 11, 31, 23, 59, 59, 999);
-        
-        const pStart = new Date(yr - 1, 0, 1);
-        const pEnd = new Date(yr - 1, 11, 31, 23, 59, 59, 999);
+        const yr = params.year ? parseInt(params.year, 10) : nowWIB.getUTCFullYear();
+        startWIB = new Date(Date.UTC(yr, 0, 1));
+        endWIB = new Date(Date.UTC(yr, 11, 31, 23, 59, 59, 999));
 
-        return { start: s, end: e, prevStart: pStart, prevEnd: pEnd, granularity: 'month' };
+        prevStartWIB = new Date(Date.UTC(yr - 1, 0, 1));
+        prevEndWIB = new Date(Date.UTC(yr - 1, 11, 31, 23, 59, 59, 999));
+        granularity = 'month';
+        break;
       }
-
       default:
-        return { start: todayStart, end: now, prevStart: null, prevEnd: null, granularity: 'hour' };
+        startWIB = new Date(todayStartWIB);
+        endWIB = nowWIB;
+        granularity = 'hour';
     }
+
+    return {
+      start: this.fromWIBToUTC(startWIB),
+      end: this.fromWIBToUTC(endWIB),
+      prevStart: prevStartWIB ? this.fromWIBToUTC(prevStartWIB) : null,
+      prevEnd: prevEndWIB ? this.fromWIBToUTC(prevEndWIB) : null,
+      granularity,
+    };
   }
 
   // ──────────────────────────────────────────────────────────────────────────
@@ -224,7 +245,7 @@ export class StatisticService {
       // ── Revenue chart (bucketed by granularity) ─────────────────
       const revenueChart = await this.postgresProvider.rawQuery(
         `SELECT
-           date_trunc(:granularity, t.created_at) AS bucket,
+           date_trunc(:granularity, t.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Jakarta') AS bucket,
            COALESCE(SUM(t.total_price), 0)        AS total_revenue,
            COUNT(DISTINCT t.id)                   AS transaction_count
          FROM "transaction" t
@@ -238,7 +259,7 @@ export class StatisticService {
       // ── Peak-hour distribution ───────────────────────────────────
       const peakHour = await this.postgresProvider.rawQuery(
         `SELECT
-           EXTRACT(hour FROM t.created_at)::INTEGER AS hour,
+           EXTRACT(hour FROM t.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Jakarta')::INTEGER AS hour,
            COUNT(DISTINCT t.id)                     AS transaction_count
          FROM "transaction" t
          WHERE t.created_at >= :start
@@ -288,6 +309,10 @@ export class StatisticService {
       // ── Format label for X-axis based on granularity ─────────────
       const fmtBucket = (raw: string) => {
         const d = new Date(raw);
+        // raw is already truncated in WIB using AT TIME ZONE 'Asia/Jakarta'
+        // Which means Postgres returns the timestamp without timezone at the WIB local time.
+        // E.g., '2026-05-22 00:00:00'. When passed to new Date(raw), JS interprets it in UTC since we use `toISOString` later, or local.
+        // It's safest to treat `d` as UTC because of Postgres driver behavior with "timestamp without time zone".
         if (granularity === 'hour')  return `${String(d.getUTCHours()).padStart(2, '0')}:00`;
         if (granularity === 'month') return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
         // day: YYYY-MM-DD
