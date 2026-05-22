@@ -41,6 +41,9 @@ export const getProductMeta = (locator: Locator) =>
 export const getProductQty = (locator: Locator) =>
   locator.locator('.qty');
 
+export const getProductPrice = (locator: Locator) =>
+  locator.locator('.price');
+
 // Price
 export const getTotalPriceCard = (page: Page) =>
   page.locator('div[type="FinalAmount"]');

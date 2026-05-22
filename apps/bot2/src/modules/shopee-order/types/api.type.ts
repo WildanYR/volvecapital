@@ -11,11 +11,16 @@ export interface ProductLookupItem {
   variant?: string;
 }
 
+export interface TransactionAccountItemPayload {
+  product_variant_id: string;
+  price: number;
+}
+
 export interface TransactionAccountPayload {
   customer: string;
   platform: string;
   total_price: number;
-  items: { product_variant_id: string }[];
+  items: TransactionAccountItemPayload[];
 }
 
 export interface AccountUser {

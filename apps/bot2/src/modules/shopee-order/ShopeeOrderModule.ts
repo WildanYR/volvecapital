@@ -3,8 +3,6 @@
  */
 
 import type { Page } from "playwright";
-import { errors as PlaywrightErrors } from "playwright";
-
 import { BaseModule } from "../../core/BaseModule.js";
 import type { ModuleDependencies } from "../../types/module.type.js";
 import type { ModuleConfig } from "../../types/config.type.js";
@@ -21,7 +19,10 @@ import {
   ORDER_DETAIL_URL,
   URL_PATTERNS,
   STATUS_PATTERNS,
-  ORDER_CARD_ID_ATTRIBUTE,
+  DEFAULT_TIMEOUT_MS,
+  MAX_RETRY_ATTEMPT,
+  MAX_WAIT_TIME_MS,
+  MIN_WAIT_TIME_MS,
 } from "./constants.js";
 import {
   checkProductNames,
@@ -31,38 +32,7 @@ import {
 
 // Locators
 import {
-  getLoginKeyInput,
-  getPasswordInput,
-  getLoginButton,
-  getLoginAlert,
-  getLanguageSelectionModal,
-  getBahasaIndonesiaButton,
-} from "./locators/login.js";
-import {
-  getVerifyOpenModalButton,
-  getVerifyByWhatsappButton,
-} from "./locators/verify.js";
-import {
-  getOrderCards,
-  getAccountInfo,
-  getTerapkanButton,
-} from "./locators/order-list.js";
-import {
   getOrderStatus,
-  getKirimButton,
-  getAturPengirimanButton,
-  getBuyerUsername,
-  getProductList,
-  getProductMeta,
-  getProductName,
-  getProductQty,
-  getTotalPriceCard,
-  getPriceAmount,
-  getChatButton,
-  getChatInput,
-  getConfirmModal,
-  getJKTAcceptButton,
-  getJKPAcceptButton,
 } from "./locators/order-detail.js";
 import {
   TransactionAccountPayload,
@@ -71,17 +41,26 @@ import {
 } from "./types/api.type.js";
 import { ShopeeOrderConfig } from "./types/config.type.js";
 import { OrderStatus, OrderRecord } from "./types/order.type.js";
-
-// Constants
-const VERIFY_TIMEOUT_MS = 600000; // 10 minutes
-const DEFAULT_TIMEOUT_MS = 30000;
-const MIN_WAIT_TIME_MS = 5000;
-const MAX_WAIT_TIME_MS = 15000;
-const MAX_RETRY_ATTEMPT = 3;
+import { selectLanguage } from "./helpers/language-selector.helper.js";
+import { handleLogin, handleVerify } from "./helpers/login.helper.js";
+import { jitter, randBetween } from "../../utils/time.js";
+import {
+  checkOrderState,
+  ensureChatOpen,
+  extractOrderIds,
+  extractProducts,
+  extractTotalPrice,
+  extractUsername,
+  processShipping,
+  refreshOrderList
+} from "./helpers/order.helper.js";
+import { ProductList } from "./types/product.type.js";
+import { generateItemPayload } from "./helpers/product-payload.helper.js";
 
 export class ShopeeOrderModule extends BaseModule {
   private moduleConfig: ShopeeOrderConfig;
   private loopPage: Page | null = null;
+  private isLanguageSelected: boolean = false
 
   constructor(
     deps: ModuleDependencies,
@@ -133,14 +112,20 @@ export class ShopeeOrderModule extends BaseModule {
     }
 
     if (this.loopPage.url() === "about:blank") {
-      await this.loopPage.goto(ORDER_LIST_URL);
-      await this.sleep(5000);
+      await this.loopPage.goto(ORDER_LIST_URL, { waitUntil: 'domcontentloaded' });
+      if (!this.isLanguageSelected) {
+        await selectLanguage(this.loopPage)
+        this.isLanguageSelected = true
+      }
     }
 
     // Check if on login this.loopPage
     if (this.loopPage.url().includes(URL_PATTERNS.LOGIN)) {
       try {
-        await this.handleLogin(this.loopPage);
+        this.logger.info("Mencoba Login ke Shopee");
+        await handleLogin(this.loopPage, this.moduleConfig.loginKey, this.moduleConfig.password);
+        this.logger.info("Login ke Shopee Berhasil");
+        await this.saveSession("shopee");
       } catch (error) {
         await this.requestStop((error as Error).message);
         this.logger.error(
@@ -161,7 +146,7 @@ export class ShopeeOrderModule extends BaseModule {
     // Check if on verify this.loopPage
     if (this.loopPage.url().includes(URL_PATTERNS.VERIFY)) {
       try {
-        await this.handleVerify(this.loopPage);
+        await handleVerify(this.loopPage);
       } catch (error) {
         await this.requestStop((error as Error).message);
         this.logger.error(
@@ -186,7 +171,11 @@ export class ShopeeOrderModule extends BaseModule {
       });
     } else {
       // Get order cards
-      const orderIds = await this.extractOrderIds(this.loopPage);
+      const { orderIds, message: extractOrderErrorMsg } = await extractOrderIds(this.loopPage);
+
+      if (extractOrderErrorMsg) {
+        this.logger.warn(extractOrderErrorMsg)
+      }
 
       if (orderIds.length > 0) {
         // Update status to queued
@@ -205,11 +194,9 @@ export class ShopeeOrderModule extends BaseModule {
       }
 
       // Reload this.loopPage and wait before next loop
-      await this.sleep(this.randBetween(MIN_WAIT_TIME_MS, MAX_WAIT_TIME_MS));
-      await this.refreshOrderList(this.loopPage);
+      await this.sleep(randBetween(MIN_WAIT_TIME_MS, MAX_WAIT_TIME_MS));
+      await refreshOrderList(this.loopPage);
     }
-
-    await this.sleep(1000);
   }
 
   // ==========================================================================
@@ -259,7 +246,7 @@ export class ShopeeOrderModule extends BaseModule {
     for (let attempt = 1; attempt <= MAX_RETRY_ATTEMPT; attempt++) {
       try {
         // Check order status
-        const orderState = await this.checkOrderState(page);
+        const orderState = await checkOrderState(page);
 
         if (orderState === "processed") {
           const stateText =
@@ -279,21 +266,24 @@ export class ShopeeOrderModule extends BaseModule {
         }
 
         // Get order data
-        const username = await this.extractUsername(page, orderId);
-        const products = await this.extractProducts(page);
-        const totalPrice = await this.extractTotalPrice(page);
+        const { username, message: usernameErrorMsg } = await extractUsername(page, orderId);
+        if (usernameErrorMsg) {
+          this.logger.warn(usernameErrorMsg);
+        }
+        const products = await extractProducts(page);
+        const totalPrice = await extractTotalPrice(page);
 
         // Process shipping if not already processing
         let jasaKirim = "";
         if (orderStatus !== "processing") {
-          jasaKirim = await this.processShipping(page);
+          jasaKirim = await processShipping(page);
           this.updateOrderStatus(orderId, "processing");
           orderStatus = "processing";
         }
 
         // Reload and open chat
         await page.reload({ waitUntil: "domcontentloaded" });
-        const chatInput = await this.ensureChatOpen(page);
+        const chatInput = await ensureChatOpen(page);
 
         // Request accounts from server
         const platformProducts = await checkProductNames(
@@ -301,7 +291,7 @@ export class ShopeeOrderModule extends BaseModule {
           this.authCredentials,
           products.map((p) => ({ name: p.name, variant: p.variant })),
         );
-        const productList: { id: string; name: string; variant?: string }[] =
+        const productList: ProductList[] =
           [];
 
         for (const [index, pp] of platformProducts.entries()) {
@@ -320,6 +310,7 @@ export class ShopeeOrderModule extends BaseModule {
               productList.push({
                 id: pp.product_variant_id,
                 name: pp.name,
+                price: sourceProduct.price,
                 variant: pp.variant,
               });
             }
@@ -332,11 +323,12 @@ export class ShopeeOrderModule extends BaseModule {
           );
         }
 
+        const itemPayload = generateItemPayload(productList, totalPrice)
         const transactionPayload: TransactionAccountPayload = {
           customer: username,
           platform: "Shopee",
           total_price: totalPrice,
-          items: productList.map((p) => ({ product_variant_id: p.id })),
+          items: itemPayload,
         };
 
         const generatedAccounts = await generateAccountTransaction(
@@ -421,7 +413,7 @@ export class ShopeeOrderModule extends BaseModule {
           this.logger.warn(
             `${orderId}: Mengulangi proses pesanan (${attempt + 1}/${MAX_RETRY_ATTEMPT}): ${(error as Error).message}`,
           );
-          const waitTime = this.jitter(400 * Math.pow(2, attempt - 1));
+          const waitTime = jitter(400 * Math.pow(2, attempt - 1));
           await this.sleep(waitTime);
           await page.reload({ waitUntil: "domcontentloaded" });
           continue;
@@ -441,11 +433,11 @@ export class ShopeeOrderModule extends BaseModule {
         if (this.moduleConfig.message_fallback) {
           try {
             await page.reload({ waitUntil: "domcontentloaded" });
-            const chatInput = await this.ensureChatOpen(page);
+            const chatInput = await ensureChatOpen(page);
             await chatInput.fill(this.moduleConfig.message_fallback);
             await page.keyboard.press("Enter");
             await this.sleep(500);
-          } catch {}
+          } catch { }
         }
 
         break;
@@ -453,336 +445,6 @@ export class ShopeeOrderModule extends BaseModule {
     }
 
     await page.close();
-  }
-
-  // ==========================================================================
-  // Helper methods
-  // ==========================================================================
-
-  private async handleLogin(page: Page): Promise<void> {
-    this.logger.info("Mencoba Login ke Shopee");
-
-    await page.waitForLoadState("domcontentloaded");
-
-    let isSelectLanguage = false;
-    try {
-      isSelectLanguage = await Promise.race([
-        getLanguageSelectionModal(page)
-          .waitFor({ state: "visible" })
-          .then(() => true),
-        getLoginButton(page)
-          .waitFor({ state: "visible" })
-          .then(() => false),
-      ]);
-    } catch {
-      isSelectLanguage = false;
-    }
-
-    if (isSelectLanguage) {
-      try {
-        const selectLanguageModal = getLanguageSelectionModal(page);
-        await getBahasaIndonesiaButton(selectLanguageModal).first().click();
-        await this.sleep(1000);
-      } catch (error) {
-        throw new ElementNotFoundError(
-          "Login Gagal: tombol bahasa indonesia tidak ditemukan",
-        );
-      }
-    }
-
-    try {
-      await getLoginKeyInput(page).first().fill(this.moduleConfig.loginKey);
-      await getPasswordInput(page).first().fill(this.moduleConfig.password);
-      await getLoginButton(page).first().click();
-    } catch (error) {
-      throw new ElementNotFoundError(
-        "Login Gagal: input loginKey, password, atau tombol login tidak ditemukan",
-      );
-    }
-
-    // Wait for login result
-    let afterLoginStatus = "";
-    try {
-      afterLoginStatus = await Promise.race([
-        page
-          .waitForURL((url) => url.pathname.includes(URL_PATTERNS.VERIFY))
-          .then(() => "verify"),
-        getAccountInfo(page)
-          .waitFor({ state: "visible" })
-          .then(() => "success"),
-        getLoginAlert(page)
-          .waitFor({ state: "visible" })
-          .then(() => "error"),
-      ]);
-    } catch {
-      throw new ElementNotFoundError("Login Gagal: status login tidak berubah");
-    }
-
-    if (afterLoginStatus === "verify") {
-      await this.handleVerify(page);
-    } else if (afterLoginStatus === "error") {
-      const errorMessage =
-        (await getLoginAlert(page).textContent())?.trim() || "Unknown error";
-      throw new Error(`Login ke Shopee Gagal: ${errorMessage}`);
-    }
-
-    this.logger.info("Login ke Shopee Berhasil");
-    await this.saveSession("shopee");
-  }
-
-  private async handleVerify(page: Page): Promise<void> {
-    try {
-      await getVerifyOpenModalButton(page).first().click();
-      await getVerifyByWhatsappButton(page).first().click();
-    } catch {
-      throw new ElementNotFoundError(
-        "Verify Gagal: modal untuk verify tidak ditemukan",
-      );
-    }
-
-    // Wait for verify to complete (max 10 minutes)
-    let elapsedTimeMs = 0;
-    while (
-      page.url().includes(URL_PATTERNS.VERIFY) &&
-      elapsedTimeMs < VERIFY_TIMEOUT_MS
-    ) {
-      elapsedTimeMs += MIN_WAIT_TIME_MS;
-      await this.sleep(MIN_WAIT_TIME_MS);
-    }
-
-    if (elapsedTimeMs >= VERIFY_TIMEOUT_MS) {
-      throw new Error(
-        "Verify Shopee Gagal: timeout lebih dari 10 menit tanpa tindakan",
-      );
-    }
-
-    // Redirect ke order list jika belum di halaman yang benar
-    if (!page.url().includes(URL_PATTERNS.NEW_ORDER_LIST)) {
-      await page.goto(ORDER_LIST_URL, { waitUntil: "domcontentloaded" });
-    }
-  }
-
-  private async extractOrderIds(page: Page): Promise<string[]> {
-    const orderCards = getOrderCards(page);
-    let orderIds: string[] = [];
-
-    try {
-      await orderCards
-        .first()
-        .waitFor({ state: "visible", timeout: MIN_WAIT_TIME_MS });
-      const allOrderCards = await orderCards.all();
-      const orderHrefs = await Promise.all(
-        allOrderCards.map((locator) =>
-          locator.getAttribute(ORDER_CARD_ID_ATTRIBUTE),
-        ),
-      );
-      orderIds = orderHrefs
-        .map((href) => (href ? href.trim().split("/").pop() : null))
-        .filter((id): id is string => id !== null && id !== undefined);
-    } catch (error) {
-      if (!(error instanceof PlaywrightErrors.TimeoutError)) {
-        this.logger.warn(`Order card error: ${(error as Error).message}`);
-      }
-    }
-
-    return orderIds;
-  }
-
-  private async checkOrderState(
-    page: Page,
-  ): Promise<"jkt" | "jkp" | "processed"> {
-    const orderStatusLocator = getOrderStatus(page);
-    const kirimButton = getKirimButton(page);
-    const aturPengirimanButton = getAturPengirimanButton(page);
-
-    try {
-      return await Promise.race([
-        kirimButton.waitFor({ state: "visible" }).then(() => "jkt" as const),
-        aturPengirimanButton
-          .waitFor({ state: "visible" })
-          .then(() => "jkp" as const),
-        orderStatusLocator
-          .waitFor({ state: "visible" })
-          .then(() => "processed" as const),
-      ]);
-    } catch {
-      throw new ElementNotFoundError(
-        "tombol modal kirim atau status order tidak ditemukan",
-      );
-    }
-  }
-
-  private async extractUsername(page: Page, orderId: string): Promise<string> {
-    try {
-      const usernameLocator = getBuyerUsername(page);
-      await usernameLocator.waitFor({ state: "attached" });
-      return (await usernameLocator.textContent()) || orderId;
-    } catch {
-      this.logger.warn(
-        `${orderId}: username tidak ditemukan, menggunakan order ID`,
-      );
-      return orderId;
-    }
-  }
-
-  private async extractProducts(
-    page: Page,
-  ): Promise<{ name: string; qty: number; variant?: string }[]> {
-    const productRowLocator = getProductList(page);
-
-    try {
-      await productRowLocator.first().waitFor({ state: "attached" });
-    } catch {
-      throw new ElementNotFoundError(
-        "List produk di halaman pesanan tidak ditemukan",
-      );
-    }
-
-    const allProductRows = await productRowLocator.all();
-
-    if (!allProductRows.length) {
-      throw new ElementNotFoundError(
-        "List produk di halaman pesanan tidak ditemukan",
-      );
-    }
-
-    const productsWithInvalid = await Promise.all(
-      allProductRows.map(async (pr) => {
-        const [productName, productVariant, productQty] = await Promise.all([
-          getProductName(pr)
-            .first()
-            .textContent({ timeout: 1000 })
-            .catch(() => null),
-          getProductMeta(pr)
-            .first()
-            .textContent({ timeout: 1000 })
-            .catch(() => null),
-          getProductQty(pr)
-            .first()
-            .textContent({ timeout: 1000 })
-            .catch(() => null),
-        ]);
-
-        let normalizedVariant;
-
-        if (productVariant?.trim().toLowerCase().startsWith("variasi:")) {
-          normalizedVariant = productVariant
-            .replace(/^Variasi:\s*/i, "")
-            .trim();
-        } else {
-          normalizedVariant = undefined;
-        }
-
-        return {
-          name: productName?.trim() ?? "",
-          variant: normalizedVariant,
-          qty: productQty ? parseInt(productQty.trim().replace(/\D+/g, "")) : 0,
-        };
-      }),
-    );
-
-    const products = productsWithInvalid.filter((p) => !!p.name && p.qty > 0);
-
-    if (!products.length) {
-      throw new ElementNotFoundError(
-        "nama atau qty dalam list produk tidak ditemukan",
-      );
-    }
-
-    return products;
-  }
-
-  private async extractTotalPrice(page: Page): Promise<number> {
-    const totalPriceCard = getTotalPriceCard(page);
-    const priceLocator = getPriceAmount(totalPriceCard);
-
-    try {
-      await priceLocator.waitFor({ state: "attached" });
-    } catch {
-      throw new ElementNotFoundError("harga total pesanan tidak ditemukan");
-    }
-
-    return parseInt(
-      (await priceLocator.textContent())?.replace(/\D+/g, "") || "0",
-    );
-  }
-
-  private async processShipping(page: Page): Promise<"jkt" | "jkp"> {
-    const kirimButton = getKirimButton(page);
-    const aturPengirimanButton = getAturPengirimanButton(page);
-
-    let jasaKirim: "jkt" | "jkp";
-
-    try {
-      jasaKirim = await Promise.race([
-        kirimButton
-          .first()
-          .click()
-          .then(() => "jkt" as const),
-        aturPengirimanButton
-          .first()
-          .click()
-          .then(() => "jkp" as const),
-      ]);
-    } catch {
-      throw new ElementNotFoundError("tombol modal kirim tidak ditemukan");
-    }
-
-    // Click confirm button
-    const confirmModalBox = getConfirmModal(page);
-    const jktAccButton = getJKTAcceptButton(confirmModalBox);
-    const jkpAccButton = getJKPAcceptButton(confirmModalBox);
-
-    try {
-      await Promise.race([
-        jktAccButton.first().click(),
-        jkpAccButton.first().click(),
-      ]);
-    } catch {
-      throw new ElementNotFoundError("tombol konfirmasi kirim tidak ditemukan");
-    }
-
-    // Wait for modal to close
-    if (jasaKirim === "jkt") {
-      await Promise.race([
-        jktAccButton.waitFor({ state: "hidden" }),
-        this.sleep(MIN_WAIT_TIME_MS),
-      ]);
-    } else {
-      await Promise.race([
-        jkpAccButton.waitFor({ state: "hidden" }),
-        this.sleep(MIN_WAIT_TIME_MS),
-      ]);
-    }
-
-    return jasaKirim;
-  }
-
-  private async ensureChatOpen(page: Page) {
-    try {
-      await getChatButton(page).first().click();
-    } catch {
-      throw new ElementNotFoundError("tombol Chat Sekarang tidak ditemukan");
-    }
-
-    const chatInput = getChatInput(page);
-    try {
-      await chatInput.waitFor({ state: "visible" });
-    } catch {
-      throw new ElementNotFoundError(
-        "input untuk mengirim chat tidak ditemukan",
-      );
-    }
-
-    return chatInput;
-  }
-
-  private async refreshOrderList(page: Page) {
-    try {
-      await getTerapkanButton(page).first().click({ timeout: 2000 });
-    } catch {
-      await page.reload();
-    }
   }
 
   // Database helpers
@@ -854,14 +516,5 @@ export class ShopeeOrderModule extends BaseModule {
        AND orderId = ?`,
       [this.instanceId, orderId],
     );
-  }
-
-  // Utility helpers
-  private randBetween(min: number, max: number): number {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-  }
-
-  private jitter(baseMs: number): number {
-    return baseMs + Math.floor(Math.random() * baseMs * 0.5);
   }
 }

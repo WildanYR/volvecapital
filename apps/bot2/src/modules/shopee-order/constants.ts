@@ -19,3 +19,9 @@ export const STATUS_PATTERNS = {
 } as const;
 
 export const ORDER_CARD_ID_ATTRIBUTE = 'href';
+
+export const VERIFY_TIMEOUT_MS = 600000; // 10 minutes
+export const MIN_WAIT_TIME_MS = 5000;
+export const DEFAULT_TIMEOUT_MS = 30000;
+export const MAX_WAIT_TIME_MS = 15000;
+export const MAX_RETRY_ATTEMPT = 3;

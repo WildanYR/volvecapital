@@ -4,12 +4,6 @@
 
 import type { Locator, Page } from 'playwright';
 
-export const getLanguageSelectionModal = (page: Page) =>
-  page.locator('.language-selection')
-
-export const getBahasaIndonesiaButton = (locator: Locator) =>
-  locator.getByRole('button', {name: 'Bahasa Indonesia'})
-
 export const getLoginKeyInput = (page: Page) =>
   page.locator('input[name="loginKey"]');
 
