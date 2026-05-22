@@ -3,30 +3,43 @@ import { FormatDateOptions } from './types/format-date-options.type';
 
 @Injectable()
 export class DateConverterProvider {
+  // Offset WIB = UTC+7 = 7 * 60 menit
+  private readonly WIB_OFFSET_MS = 7 * 60 * 60 * 1000;
+
+  private toWIBDate(date: Date): Date {
+    return new Date(date.getTime() + this.WIB_OFFSET_MS);
+  }
+
+  private fromWIBToUTC(date: Date): Date {
+    return new Date(date.getTime() - this.WIB_OFFSET_MS);
+  }
+
   getStartOfTheDayDate(date: Date): Date {
-    const startDayDate = new Date(date);
-    startDayDate.setHours(0, 0, 0, 0);
-    return startDayDate;
+    const wibDate = this.toWIBDate(date);
+    wibDate.setUTCHours(0, 0, 0, 0); // jam 00:00 WIB
+    return this.fromWIBToUTC(wibDate);
   }
 
   getStartOfTheMonthDate(date = new Date()): Date {
-    const year = date.getFullYear();
-    const month = date.getMonth();
-
-    return new Date(year, month, 1, 0, 0, 0, 0);
+    const wibDate = this.toWIBDate(date);
+    const year = wibDate.getUTCFullYear();
+    const month = wibDate.getUTCMonth();
+    const startWIB = new Date(Date.UTC(year, month, 1, 0, 0, 0, 0));
+    return this.fromWIBToUTC(startWIB);
   }
 
   getEndOfTheDayDate(date: Date): Date {
-    const endDayDate = new Date(date);
-    endDayDate.setHours(23, 59, 59, 999);
-    return endDayDate;
+    const wibDate = this.toWIBDate(date);
+    wibDate.setUTCHours(23, 59, 59, 999); // jam 23:59:59 WIB
+    return this.fromWIBToUTC(wibDate);
   }
 
   getEndOfTheMonthDate(date = new Date()): Date {
-    const year = date.getFullYear();
-    const month = date.getMonth();
-
-    return new Date(year, month + 1, 0, 23, 59, 59, 999);
+    const wibDate = this.toWIBDate(date);
+    const year = wibDate.getUTCFullYear();
+    const month = wibDate.getUTCMonth();
+    const endWIB = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59, 999));
+    return this.fromWIBToUTC(endWIB);
   }
 
   formatDateIdStandard(date?: Date, options?: FormatDateOptions) {
