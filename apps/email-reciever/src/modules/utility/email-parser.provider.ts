@@ -29,9 +29,9 @@ export class EmailParser {
   extractDisneyOtp(emailText: string) {
     const cleanText = emailText.replace(/[\u200C-\u200F]/g, '').trim();
 
-    const otpRegex = /^\s*(\d{4,6})\s*$/m;
-
-    const otpMatch = cleanText.match(otpRegex);
+    // Ekstrak angka 4 hingga 6 digit pertama yang ada di dalam text
+    // Karena plain-body Disney kadang menyatu dengan teks lain
+    const otpMatch = cleanText.match(/\b(\d{4,6})\b/);
     const otpCode = otpMatch ? otpMatch[1] : null;
 
     return otpCode;

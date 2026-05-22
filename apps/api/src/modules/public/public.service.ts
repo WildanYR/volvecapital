@@ -1124,6 +1124,11 @@ export class PublicService {
         where: { access_token: token },
         include: [
           {
+            model: ProductVariant,
+            as: 'product_variant',
+            include: [{ model: Product, as: 'product' }],
+          },
+          {
             model: TransactionItem,
             as: 'transaction_item',
             include: [
@@ -1164,7 +1169,17 @@ export class PublicService {
         where: { is_public: true },
         transaction,
       });
-      const allowedSubjectTexts = publicSubjects.map(s => s.subject);
+      
+      const productName = (voucher.product_variant as any)?.product?.name?.toLowerCase() || '';
+      let allowedSubjectTexts = publicSubjects.map(s => s.subject);
+
+      if (productName.includes('netflix')) {
+        allowedSubjectTexts = publicSubjects.filter(s => s.context.includes('NETFLIX')).map(s => s.subject);
+      } else if (productName.includes('disney')) {
+        allowedSubjectTexts = publicSubjects.filter(s => s.context.includes('DISNEY')).map(s => s.subject);
+      } else if (productName.includes('spotify')) {
+        allowedSubjectTexts = publicSubjects.filter(s => s.context.includes('SPOTIFY')).map(s => s.subject);
+      }
 
       // 2. Sekarang baru pindah ke schema TENANT untuk mengambil pesan email-nya
       await this.postgresProvider.setSchema(tenantId, transaction);

@@ -29,6 +29,9 @@ export class EmailForwardProcessorService {
       await this.postgresProvider.setSchema('master', transaction);
 
       const emailSubjects = payload.emails.map(e => e.subject);
+      console.log('--- DEBUG: Menerima payload dari GAS ---');
+      console.log('Total Email:', payload.emails.length);
+      console.log('Subjects:', emailSubjects);
 
       const emailSubject = await this.emailSubjectRepository.findAll({
         where: {
