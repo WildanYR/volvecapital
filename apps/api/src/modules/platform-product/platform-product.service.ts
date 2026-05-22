@@ -185,10 +185,13 @@ export class PlatformProductService {
       const platformProducts = await this.platformProductRepository.findAll({
         where: {
           platform: resolvePlatformProductDto.platform,
-          [Op.or]: items.map(item => ({
-            name: item.name,
-            variant: item.variant || null,
-          })),
+          [Op.or]: items.map((item) => {
+            const v = item.variant?.trim();
+            if (v) {
+              return { name: item.name, variant: v };
+            }
+            return { name: item.name, variant: { [Op.or]: [null, ''] } };
+          }),
         },
         transaction,
       });
