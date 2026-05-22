@@ -36,16 +36,20 @@ async function bootstrap() {
       transaction
     });
     
+    // Commit the outer transaction immediately so we release the connection!
+    await transaction.commit();
+    
     console.log(`Ditemukan ${accounts.length} akun yang perlu disinkronkan. Menyinkronkan jadwal bot...`);
 
     for (const account of accounts) {
       await accountService.registerAutomaticTasks(tenantId, account);
     }
 
-    await transaction.commit();
     console.log(`Selesai! Jadwal Redis dan Task Queue untuk ${accounts.length} akun berhasil di-update dengan aman.`);
   } catch (error) {
-    await transaction.rollback();
+    if (!transaction.finished) {
+      await transaction.rollback();
+    }
     console.error('Gagal menyinkronkan:', error);
   } finally {
     await app.close();
