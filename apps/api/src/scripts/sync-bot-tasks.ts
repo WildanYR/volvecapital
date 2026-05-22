@@ -38,6 +38,7 @@ async function bootstrap() {
     
     // Commit the outer transaction immediately so we release the connection!
     await transaction.commit();
+    let isCommitted = true;
     
     console.log(`Ditemukan ${accounts.length} akun yang perlu disinkronkan. Menyinkronkan jadwal bot...`);
 
@@ -47,9 +48,8 @@ async function bootstrap() {
 
     console.log(`Selesai! Jadwal Redis dan Task Queue untuk ${accounts.length} akun berhasil di-update dengan aman.`);
   } catch (error) {
-    if (!transaction.finished) {
-      await transaction.rollback();
-    }
+    // Attempt rollback only if not already committed
+    try { await transaction.rollback(); } catch (e) {}
     console.error('Gagal menyinkronkan:', error);
   } finally {
     await app.close();
