@@ -64,6 +64,26 @@ export class AccountUserService {
     private readonly productVariantRepository: typeof ProductVariant
   ) {}
 
+  private async syncAccountBatchEndDate(accountId: string, transaction: DbTransaction) {
+    const query = `
+      WITH max_expiry AS (
+        SELECT MAX(au.expired_at) as max_expired_at
+        FROM account_user au
+        JOIN account_profile ap ON ap.id = au.account_profile_id
+        WHERE ap.account_id = :accountId AND au.status = 'active'
+      )
+      UPDATE account a
+      SET batch_end_date = (SELECT max_expired_at FROM max_expiry)
+      WHERE a.id = :accountId;
+    `;
+    
+    await this.postgresProvider.rawQuery(query, {
+      type: QueryTypes.UPDATE,
+      replacements: { accountId },
+      transaction,
+    });
+  }
+
   async findAll(
     tenantId: string,
     pagination?: BaseGetAllUrlQuery,
@@ -405,8 +425,7 @@ export class AccountUserService {
           UPDATE ${accountTable}
           SET
               status = 'active',
-              batch_start_date = COALESCE(${accountTable}.batch_start_date, NOW()),
-              batch_end_date = GREATEST(${accountTable}.batch_end_date, :expiredAt)
+              batch_start_date = COALESCE(${accountTable}.batch_start_date, NOW())
           FROM
               ${productVariantTable} AS pv
           WHERE
@@ -419,11 +438,12 @@ export class AccountUserService {
         transaction,
         type: QueryTypes.UPDATE,
         replacements: {
-          expiredAt: expired_at,
           accountId: userProfile.account_id,
           pvId: product_variant_id,
         },
       });
+
+      await this.syncAccountBatchEndDate(userProfile.account_id, transaction);
 
       accountUser = await this.accountUserRepository.findOne({
         where: { id: newUser.id },
@@ -527,17 +547,7 @@ export class AccountUserService {
 
       await accountUser.update(updateData, { transaction });
 
-      if (updateData.expired_at) {
-        await this.accountRepository.update({
-          batch_end_date: updateData.expired_at,
-        }, {
-          where: {
-            id: accountUser.dataValues.account_id,
-            batch_end_date: { [Op.lt]: updateData.expired_at },
-          },
-          transaction,
-        });
-      }
+      await this.syncAccountBatchEndDate(accountUser.dataValues.account_id, transaction);
 
       const accountUserUpdate = await this.accountUserRepository.findOne({
         where: { id: accountUserId },
@@ -559,6 +569,14 @@ export class AccountUserService {
       });
 
       await transaction.commit();
+
+      if (accountUserUpdate) {
+        await this.accountService.registerAutomaticTasks(
+          tenantId,
+          accountUserUpdate.account,
+        );
+      }
+
       return accountUserUpdate;
     }
     catch (error) {
@@ -583,8 +601,29 @@ export class AccountUserService {
         );
       }
 
+      const accountId = accountUser.dataValues.account_id;
       await accountUser.destroy({ transaction });
+      await this.syncAccountBatchEndDate(accountId, transaction);
       await transaction.commit();
+
+      const accountUpdate = await this.accountRepository.findOne({
+        where: { id: accountId },
+        include: [
+          { model: Email, as: 'email' },
+          {
+            model: ProductVariant,
+            as: 'product_variant',
+            include: [{ model: Product, as: 'product' }],
+          },
+        ],
+      });
+
+      if (accountUpdate) {
+        await this.accountService.registerAutomaticTasks(
+          tenantId,
+          accountUpdate,
+        );
+      }
     }
     catch (error) {
       await transaction.rollback();
