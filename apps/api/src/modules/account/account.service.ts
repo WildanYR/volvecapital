@@ -167,6 +167,8 @@ export class AccountService {
             // Replace default fallback sorting by 'id' with 'updated_at' to sort recently edited/created first
             if (col === 'id') {
               finalOrder.push(['updated_at', 'DESC']);
+            } else if (['batch_end_date', 'subscription_expiry'].includes(col)) {
+              finalOrder.push([col, dir, 'NULLS LAST']);
             } else {
               finalOrder.push([col, dir]);
             }
