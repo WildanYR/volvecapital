@@ -25,4 +25,15 @@ export class EmailParser {
 
     return otpCode;
   }
+
+  extractDisneyOtp(emailText: string) {
+    const cleanText = emailText.replace(/[\u200C-\u200F]/g, '').trim();
+
+    const otpRegex = /^\s*(\d{4,6})\s*$/m;
+
+    const otpMatch = cleanText.match(otpRegex);
+    const otpCode = otpMatch ? otpMatch[1] : null;
+
+    return otpCode;
+  }
 }

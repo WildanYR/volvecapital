@@ -196,6 +196,7 @@ function RouteComponent() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="NETFLIX_OTP">Netflix OTP</SelectItem>
+                      <SelectItem value="DISNEY_OTP">Disney OTP</SelectItem>
                       <SelectItem value="NETFLIX_REQ_RESET_PASSWORD">Netflix Reset Link</SelectItem>
                       <SelectItem value="NETFLIX_GENERAL_NOTIFICATION">General Notification</SelectItem>
                     </SelectContent>
@@ -251,6 +252,7 @@ function RouteComponent() {
                     <TableCell>
                       <span className={`text-[11px] font-bold uppercase px-3 py-1 rounded-md ${
                         s.context === 'NETFLIX_OTP' ? 'bg-blue-500/20 text-blue-400' :
+                        s.context === 'DISNEY_OTP' ? 'bg-blue-500/20 text-blue-400' :
                         s.context === 'NETFLIX_REQ_RESET_PASSWORD' ? 'bg-purple-500/20 text-purple-400' :
                         'bg-orange-500/20 text-orange-400'
                       }`}>
