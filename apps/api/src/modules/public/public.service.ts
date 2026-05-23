@@ -1163,8 +1163,7 @@ export class PublicService {
       
       // 3. Update access count (Optional but good for stats)
       
-      // 2. Pindah ke schema MASTER untuk ambil daftar subjek yang diizinkan
-      await this.postgresProvider.setSchema('master', transaction);
+      // 2. Ambil daftar subjek yang diizinkan dari schema TENANT (is_public subjects)
       const publicSubjects = await this.emailSubjectRepository.findAll({
         where: { is_public: true },
         transaction,
