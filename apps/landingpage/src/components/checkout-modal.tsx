@@ -37,13 +37,29 @@ export function CheckoutModal({ isOpen, onClose, product, variant, initialData }
   const [showCloseConfirm, setShowCloseConfirm] = useState(false)
   const { addNotification } = useNotification()
   
-  // Handle initial data population
+  // Handle initial data population and local storage
   useEffect(() => {
-    if (isOpen && initialData) {
-      if (initialData.formData) {
+    if (isOpen) {
+      if (initialData?.formData) {
         setFormData(initialData.formData);
+      } else {
+        const saved = localStorage.getItem('checkout_buyer_info');
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            setFormData(prev => ({
+              ...prev,
+              name: parsed.name || prev.name,
+              email: parsed.email || prev.email,
+              whatsapp: parsed.whatsapp || prev.whatsapp
+            }));
+          } catch (e) {
+            console.error('Failed to parse saved buyer info', e);
+          }
+        }
       }
-      if (initialData.paymentUrl) {
+
+      if (initialData?.paymentUrl) {
         setPaymentUrl(initialData.paymentUrl);
         // If we have paymentUrl, we might want to skip to step 2
         setStep(2);
@@ -91,6 +107,13 @@ export function CheckoutModal({ isOpen, onClose, product, variant, initialData }
       setTimeout(() => setIsShaking(false), 500)
       return
     }
+
+    // Save to local storage for future autofill
+    localStorage.setItem('checkout_buyer_info', JSON.stringify({
+      name: formData.name,
+      email: formData.email,
+      whatsapp: formData.whatsapp
+    }));
 
     setStep(2)
   }
