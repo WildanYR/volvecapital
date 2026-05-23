@@ -25,7 +25,7 @@ export class EmailForwardService {
   async recieveEmail(payload: RecieveEmailDto) {
     const transaction = await this.postgresProvider.transaction();
     try {
-      await this.postgresProvider.setSchema('master', transaction);
+      await this.postgresProvider.setSchema(payload.tenant, transaction);
 
       const emailSubjects = payload.emails.map(e => e.subject);
 
@@ -39,8 +39,6 @@ export class EmailForwardService {
       });
 
       if (emailSubject?.length) {
-        // Switch to tenant schema to save messages
-        await this.postgresProvider.setSchema(payload.tenant, transaction);
 
         for (const es of emailSubject) {
           for (const e of payload.emails) {
@@ -116,17 +114,28 @@ export class EmailForwardService {
   async getEmailSubject() {
     const transaction = await this.postgresProvider.transaction();
     try {
-      await this.postgresProvider.setSchema('master', transaction);
+      const schemasResult: any = await this.postgresProvider.rawQuery(
+        "SELECT schema_name FROM information_schema.schemata WHERE schema_name NOT IN ('public', 'master', 'information_schema', 'pg_catalog', 'pg_toast')"
+      );
+      const schemas = schemasResult[0] || schemasResult;
+      const allSubjects = new Set<string>();
 
-      const emailSubject = await this.emailSubjectRepository.findAll({ transaction });
-
-      const subjects = emailSubject.map(es => es.dataValues.subject);
+      for (const row of schemas) {
+        try {
+          await this.postgresProvider.setSchema(row.schema_name, transaction);
+          const emailSubject = await this.emailSubjectRepository.findAll({ transaction });
+          emailSubject.forEach(es => allSubjects.add(es.dataValues.subject));
+        } catch (e) {
+          // Ignore if table not found in this schema
+        }
+      }
 
       await transaction.commit();
-      return { subjects };
+      return { subjects: Array.from(allSubjects) };
     }
     catch {
       await transaction.rollback();
+      return { subjects: [] };
     }
   }
 }
