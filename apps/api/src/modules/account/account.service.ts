@@ -167,7 +167,18 @@ export class AccountService {
             // Replace default fallback sorting by 'id' with 'updated_at' to sort recently edited/created first
             if (col === 'id') {
               finalOrder.push(['updated_at', 'DESC']);
-            } else if (['batch_end_date', 'subscription_expiry'].includes(col)) {
+            } else if (col === 'batch_end_date') {
+              finalOrder.push([
+                Sequelize.literal(`COALESCE((
+                  SELECT MAX(au.expired_at)
+                  FROM account_user au
+                  JOIN account_profile ap ON ap.id = au.account_profile_id
+                  WHERE ap.account_id = "Account".id AND au.status = 'active'
+                ), "Account".batch_end_date)`),
+                dir,
+                'NULLS LAST'
+              ]);
+            } else if (col === 'subscription_expiry') {
               finalOrder.push([col, dir, 'NULLS LAST']);
             } else {
               finalOrder.push([col, dir]);
