@@ -11,10 +11,10 @@ export class EmailSubjectService {
     private readonly emailSubjectRepository: typeof EmailSubject,
   ) {}
 
-  async findAll() {
+  async findAll(tenantId: string) {
     const transaction = await this.postgresProvider.transaction();
     try {
-      await this.postgresProvider.setSchema('master', transaction);
+      await this.postgresProvider.setSchema(tenantId, transaction);
       const subjects = await this.emailSubjectRepository.findAll({
         order: [['created_at', 'DESC']],
         transaction,
@@ -27,10 +27,10 @@ export class EmailSubjectService {
     }
   }
 
-  async create(data: { context: string; subject: string; is_public?: boolean }) {
+  async create(tenantId: string, data: { context: string; subject: string; is_public?: boolean }) {
     const transaction = await this.postgresProvider.transaction();
     try {
-      await this.postgresProvider.setSchema('master', transaction);
+      await this.postgresProvider.setSchema(tenantId, transaction);
       const subject = await this.emailSubjectRepository.create(data, { transaction });
       await transaction.commit();
       return subject;
@@ -40,10 +40,10 @@ export class EmailSubjectService {
     }
   }
 
-  async update(id: string, data: { context?: string; subject?: string; is_public?: boolean }) {
+  async update(tenantId: string, id: string, data: { context?: string; subject?: string; is_public?: boolean }) {
     const transaction = await this.postgresProvider.transaction();
     try {
-      await this.postgresProvider.setSchema('master', transaction);
+      await this.postgresProvider.setSchema(tenantId, transaction);
       await this.emailSubjectRepository.update(data, {
         where: { id },
         transaction,
@@ -56,10 +56,10 @@ export class EmailSubjectService {
     }
   }
 
-  async remove(id: string) {
+  async remove(tenantId: string, id: string) {
     const transaction = await this.postgresProvider.transaction();
     try {
-      await this.postgresProvider.setSchema('master', transaction);
+      await this.postgresProvider.setSchema(tenantId, transaction);
       await this.emailSubjectRepository.destroy({
         where: { id },
         transaction,

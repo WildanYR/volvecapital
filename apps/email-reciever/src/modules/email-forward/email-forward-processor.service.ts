@@ -26,7 +26,7 @@ export class EmailForwardProcessorService {
     const transaction = await this.postgresProvider.transaction();
 
     try {
-      await this.postgresProvider.setSchema('master', transaction);
+      await this.postgresProvider.setSchema(payload.tenant, transaction);
 
       const emailSubjects = payload.emails.map(e => e.subject);
       console.log('--- DEBUG: Menerima payload dari GAS ---');
@@ -39,8 +39,6 @@ export class EmailForwardProcessorService {
         },
         transaction,
       });
-
-      let tenantSchemaSet = false;
 
       if (emailSubject?.length) {
         for (const es of emailSubject) {
@@ -65,10 +63,6 @@ export class EmailForwardProcessorService {
               }
 
               if (data && context) {
-                if (!tenantSchemaSet) {
-                  await this.postgresProvider.setSchema(payload.tenant, transaction);
-                  tenantSchemaSet = true;
-                }
 
                 await this.emailMessageRepository.create({
                   tenant_id: payload.tenant,
