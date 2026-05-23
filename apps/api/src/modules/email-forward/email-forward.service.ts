@@ -115,7 +115,8 @@ export class EmailForwardService {
     const transaction = await this.postgresProvider.transaction();
     try {
       const schemasResult: any = await this.postgresProvider.rawQuery(
-        "SELECT schema_name FROM information_schema.schemata WHERE schema_name NOT IN ('public', 'master', 'information_schema', 'pg_catalog', 'pg_toast')"
+        "SELECT schema_name FROM information_schema.schemata WHERE schema_name NOT IN ('public', 'master', 'information_schema', 'pg_catalog', 'pg_toast')",
+        { transaction }
       );
       const schemas = schemasResult[0] || schemasResult;
       const allSubjects = new Set<string>();
