@@ -140,9 +140,9 @@ function RouteComponent() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Semua Platform</SelectItem>
-                <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                <SelectItem value="Whatsapp">WhatsApp</SelectItem>
                 <SelectItem value="landing">Landing</SelectItem>
-                <SelectItem value="shopee">Shopee</SelectItem>
+                <SelectItem value="Shopee">Shopee</SelectItem>
                 <SelectItem value="dashboard">Dashboard</SelectItem>
               </SelectContent>
             </Select>

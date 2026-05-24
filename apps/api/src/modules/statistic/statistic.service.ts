@@ -195,7 +195,7 @@ export class StatisticService {
       // Build dynamic filters
       let trxWhere = '';
       if (params.platform) {
-        trxWhere += ` AND t.platform = :platform`;
+        trxWhere += ` AND t.platform ILIKE :platform`;
       }
       if (params.product_variant_id) {
         trxWhere += ` AND t.id IN (
@@ -215,13 +215,13 @@ export class StatisticService {
             SELECT au.account_id FROM "account_user" au 
             JOIN "transaction_item" ti ON ti.account_user_id = au.id
             JOIN "transaction" t ON t.id = ti.transaction_id
-            WHERE t.platform = :platform AND t.created_at >= :start AND t.created_at <= :end
+            WHERE t.platform ILIKE :platform AND t.created_at >= :start AND t.created_at <= :end
           )) +
           (SELECT COALESCE(SUM(ac.amount), 0) FROM "account_capital" ac WHERE ac.account_id IN (
             SELECT au.account_id FROM "account_user" au 
             JOIN "transaction_item" ti ON ti.account_user_id = au.id
             JOIN "transaction" t ON t.id = ti.transaction_id
-            WHERE t.platform = :platform AND t.created_at >= :start AND t.created_at <= :end
+            WHERE t.platform ILIKE :platform AND t.created_at >= :start AND t.created_at <= :end
           ) AND ac.account_id IN (
             SELECT id FROM "account" WHERE product_variant_id = :product_variant_id
           ))
@@ -237,13 +237,13 @@ export class StatisticService {
             SELECT au.account_id FROM "account_user" au 
             JOIN "transaction_item" ti ON ti.account_user_id = au.id
             JOIN "transaction" t ON t.id = ti.transaction_id
-            WHERE t.platform = :platform AND t.created_at >= :start AND t.created_at <= :end
+            WHERE t.platform ILIKE :platform AND t.created_at >= :start AND t.created_at <= :end
           )) +
           (SELECT COALESCE(SUM(ac.amount), 0) FROM "account_capital" ac WHERE ac.account_id IN (
             SELECT au.account_id FROM "account_user" au 
             JOIN "transaction_item" ti ON ti.account_user_id = au.id
             JOIN "transaction" t ON t.id = ti.transaction_id
-            WHERE t.platform = :platform AND t.created_at >= :start AND t.created_at <= :end
+            WHERE t.platform ILIKE :platform AND t.created_at >= :start AND t.created_at <= :end
           ))
         `;
       } else {
