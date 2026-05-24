@@ -22,6 +22,8 @@ export interface StatisticParams {
   end_date?: string;    // YYYY-MM-DD  — for custom_week end
   year?: string;        // YYYY        — for custom_year / custom_month
   month?: string;       // MM (1-12)   — for custom_month
+  product_variant_id?: string;
+  platform?: string;
 }
 
 interface DateRange {
@@ -190,10 +192,73 @@ export class StatisticService {
       await this.postgresProvider.setSchema(tenantId, tx);
       const { start, end, prevStart, prevEnd, granularity } = this.resolveDateRange(params);
 
+      // Build dynamic filters
+      let trxWhere = '';
+      if (params.platform) {
+        trxWhere += ` AND t.platform = :platform`;
+      }
+      if (params.product_variant_id) {
+        trxWhere += ` AND t.id IN (
+          SELECT ti.transaction_id
+          FROM "transaction_item" ti
+          JOIN "account_user" au ON au.id = ti.account_user_id
+          JOIN "account" acc ON acc.id = au.account_id
+          WHERE acc.product_variant_id = :product_variant_id
+        )`;
+      }
+
+      // Build capital dynamic query
+      let capitalQuery = '';
+      if (params.product_variant_id && params.platform) {
+        capitalQuery = `
+          (SELECT COALESCE(SUM(acc.capital_price), 0) FROM "account" acc WHERE acc.product_variant_id = :product_variant_id AND acc.id IN (
+            SELECT au.account_id FROM "account_user" au 
+            JOIN "transaction_item" ti ON ti.account_user_id = au.id
+            JOIN "transaction" t ON t.id = ti.transaction_id
+            WHERE t.platform = :platform AND t.created_at >= :start AND t.created_at <= :end
+          )) +
+          (SELECT COALESCE(SUM(ac.amount), 0) FROM "account_capital" ac WHERE ac.account_id IN (
+            SELECT au.account_id FROM "account_user" au 
+            JOIN "transaction_item" ti ON ti.account_user_id = au.id
+            JOIN "transaction" t ON t.id = ti.transaction_id
+            WHERE t.platform = :platform AND t.created_at >= :start AND t.created_at <= :end
+          ) AND ac.account_id IN (
+            SELECT id FROM "account" WHERE product_variant_id = :product_variant_id
+          ))
+        `;
+      } else if (params.product_variant_id) {
+        capitalQuery = `
+          (SELECT COALESCE(SUM(capital_price), 0) FROM "account" WHERE product_variant_id = :product_variant_id AND created_at >= :start AND created_at <= :end) +
+          (SELECT COALESCE(SUM(ac.amount), 0) FROM "account_capital" ac JOIN "account" acc ON acc.id = ac.account_id WHERE acc.product_variant_id = :product_variant_id AND ac.created_at >= :start AND ac.created_at <= :end)
+        `;
+      } else if (params.platform) {
+        capitalQuery = `
+          (SELECT COALESCE(SUM(acc.capital_price), 0) FROM "account" acc WHERE acc.id IN (
+            SELECT au.account_id FROM "account_user" au 
+            JOIN "transaction_item" ti ON ti.account_user_id = au.id
+            JOIN "transaction" t ON t.id = ti.transaction_id
+            WHERE t.platform = :platform AND t.created_at >= :start AND t.created_at <= :end
+          )) +
+          (SELECT COALESCE(SUM(ac.amount), 0) FROM "account_capital" ac WHERE ac.account_id IN (
+            SELECT au.account_id FROM "account_user" au 
+            JOIN "transaction_item" ti ON ti.account_user_id = au.id
+            JOIN "transaction" t ON t.id = ti.transaction_id
+            WHERE t.platform = :platform AND t.created_at >= :start AND t.created_at <= :end
+          ))
+        `;
+      } else {
+        capitalQuery = `
+          (SELECT COALESCE(SUM(capital_price), 0) FROM "account" WHERE created_at >= :start AND created_at <= :end) +
+          (SELECT COALESCE(SUM(amount), 0) FROM "account_capital" WHERE created_at >= :start AND created_at <= :end)
+        `;
+      }
+
       const repl = {
         start: start.toISOString(),
         end:   end.toISOString(),
         granularity,
+        product_variant_id: params.product_variant_id ?? null,
+        platform: params.platform ?? null,
       };
 
       // ── Summary card ────────────────────────────────────────────
@@ -204,13 +269,10 @@ export class StatisticService {
            (COALESCE(rev.total_revenue, 0) - COALESCE(cap.total_capital_price, 0)) AS gross_profit,
            COALESCE(rev.transaction_count, 0) AS transaction_count
          FROM
-           (SELECT SUM(total_price) AS total_revenue, COUNT(id) AS transaction_count 
-            FROM "transaction" 
-            WHERE created_at >= :start AND created_at <= :end) rev,
-           (SELECT 
-              (SELECT COALESCE(SUM(capital_price), 0) FROM "account" WHERE created_at >= :start AND created_at <= :end) +
-              (SELECT COALESCE(SUM(amount), 0) FROM "account_capital" WHERE created_at >= :start AND created_at <= :end)
-            AS total_capital_price) cap`,
+           (SELECT SUM(t.total_price) AS total_revenue, COUNT(t.id) AS transaction_count 
+            FROM "transaction" t
+            WHERE t.created_at >= :start AND t.created_at <= :end${trxWhere}) rev,
+           (SELECT ${capitalQuery} AS total_capital_price) cap`,
         { type: QueryTypes.SELECT, transaction: tx, replacements: repl },
       ) as any[];
 
@@ -222,6 +284,8 @@ export class StatisticService {
         const prevRepl = {
           start: prevStart.toISOString(),
           end:   prevEnd.toISOString(),
+          product_variant_id: params.product_variant_id ?? null,
+          platform: params.platform ?? null,
         };
         const prevSummaryRaw = await this.postgresProvider.rawQuery(
           `SELECT
@@ -230,13 +294,10 @@ export class StatisticService {
              (COALESCE(rev.total_revenue, 0) - COALESCE(cap.total_capital_price, 0)) AS gross_profit,
              COALESCE(rev.transaction_count, 0) AS transaction_count
            FROM
-             (SELECT SUM(total_price) AS total_revenue, COUNT(id) AS transaction_count 
-              FROM "transaction" 
-              WHERE created_at >= :start AND created_at <= :end) rev,
-             (SELECT 
-                (SELECT COALESCE(SUM(capital_price), 0) FROM "account" WHERE created_at >= :start AND created_at <= :end) +
-                (SELECT COALESCE(SUM(amount), 0) FROM "account_capital" WHERE created_at >= :start AND created_at <= :end)
-              AS total_capital_price) cap`,
+             (SELECT SUM(t.total_price) AS total_revenue, COUNT(t.id) AS transaction_count 
+              FROM "transaction" t
+              WHERE t.created_at >= :start AND t.created_at <= :end${trxWhere}) rev,
+             (SELECT ${capitalQuery} AS total_capital_price) cap`,
           { type: QueryTypes.SELECT, transaction: tx, replacements: prevRepl },
         ) as any[];
         prevSummary = prevSummaryRaw[0] ?? {};
@@ -250,7 +311,7 @@ export class StatisticService {
            COUNT(DISTINCT t.id)                   AS transaction_count
          FROM "transaction" t
          WHERE t.created_at >= :start
-           AND t.created_at <= :end
+           AND t.created_at <= :end${trxWhere}
          GROUP BY bucket
          ORDER BY bucket ASC`,
         { type: QueryTypes.SELECT, transaction: tx, replacements: repl },
@@ -263,7 +324,7 @@ export class StatisticService {
            COUNT(DISTINCT t.id)                     AS transaction_count
          FROM "transaction" t
          WHERE t.created_at >= :start
-           AND t.created_at <= :end
+           AND t.created_at <= :end${trxWhere}
          GROUP BY hour
          ORDER BY hour ASC`,
         { type: QueryTypes.SELECT, transaction: tx, replacements: repl },
@@ -277,7 +338,7 @@ export class StatisticService {
            COALESCE(SUM(t.total_price), 0) AS total_revenue
          FROM "transaction" t
          WHERE t.created_at >= :start
-           AND t.created_at <= :end
+           AND t.created_at <= :end${trxWhere}
          GROUP BY t.platform
          ORDER BY transaction_count DESC`,
         { type: QueryTypes.SELECT, transaction: tx, replacements: repl },
@@ -297,7 +358,7 @@ export class StatisticService {
          JOIN "product_variant" pv ON pv.id  = acc.product_variant_id
          JOIN "product"         p  ON p.id   = pv.product_id
          WHERE t.created_at >= :start
-           AND t.created_at <= :end
+           AND t.created_at <= :end${trxWhere}
          GROUP BY pv.id, p.name, pv.name
          ORDER BY items_sold DESC
          LIMIT 10`,

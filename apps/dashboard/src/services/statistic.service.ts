@@ -18,6 +18,8 @@ export const AllStatisticFilterSchema = z.object({
   end_date: z.string().optional(),
   year: z.string().optional(),
   month: z.string().optional(),
+  product_variant_id: z.string().optional(),
+  platform: z.string().optional(),
 })
 
 export type AllStatisticFilter = z.infer<typeof AllStatisticFilterSchema>

@@ -29,8 +29,16 @@ import { API_URL } from '@/dashboard/constants/api-url.cont'
 import { useAuth } from '@/dashboard/context-providers/auth.provider'
 import { formatRupiah } from '@/dashboard/lib/currency.util'
 import { statisticServiceGenerator } from '@/dashboard/services/statistic.service'
+import { ProductServiceGenerator } from '@/dashboard/services/product.service'
 import { formatDateIdStandard } from '@/dashboard/lib/time-converter.util'
 import { ArrowDownIcon, ArrowUpIcon, MinusIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from 'lucide-react'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/dashboard/components/ui/select'
 
 export const Route = createFileRoute('/dashboard/')({
   component: RouteComponent,
@@ -43,14 +51,26 @@ function RouteComponent() {
     auth.tenant!.accessToken,
     auth.tenant!.id,
   )
+  const productService = ProductServiceGenerator(
+    API_URL,
+    auth.tenant!.accessToken,
+    auth.tenant!.id,
+  )
 
   const [filter, setFilter] = useState<string>('today')
   const [customDate, setCustomDate] = useState<string>('')
   const [customMonth, setCustomMonth] = useState<string>('')
   const [customYear, setCustomYear] = useState<string>(new Date().getFullYear().toString())
+  const [selectedVariantId, setSelectedVariantId] = useState<string>('all')
+  const [selectedPlatform, setSelectedPlatform] = useState<string>('all')
+
+  const { data: variants } = useQuery({
+    queryKey: ['allProductVariants'],
+    queryFn: ({ signal }) => productService.getAllProductVariant({ limit: 100, signal }),
+  })
 
   const { data: allStatistic, isLoading: isFetchStatisticLoading } = useQuery({
-    queryKey: ['allStatistic', filter, customDate, customMonth, customYear],
+    queryKey: ['allStatistic', filter, customDate, customMonth, customYear, selectedVariantId, selectedPlatform],
     queryFn: ({ signal }) => {
       const params: any = { filter }
       if (filter === 'custom_day' && customDate) {
@@ -63,6 +83,12 @@ function RouteComponent() {
       }
       if (filter === 'custom_year' && customYear) {
         params.year = customYear
+      }
+      if (selectedVariantId !== 'all') {
+        params.product_variant_id = selectedVariantId
+      }
+      if (selectedPlatform !== 'all') {
+        params.platform = selectedPlatform
       }
       return statisticService.getAllStatistic(params, signal)
     },
@@ -94,6 +120,33 @@ function RouteComponent() {
             Dashboard
           </h1>
           <div className="flex items-center gap-2">
+            <Select value={selectedVariantId} onValueChange={setSelectedVariantId}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Semua Varian" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua Varian</SelectItem>
+                {variants?.items?.map((v: any) => (
+                  <SelectItem key={v.id} value={v.id}>
+                    {v.product?.name ? `${v.product.name} - ${v.name}` : v.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={selectedPlatform} onValueChange={setSelectedPlatform}>
+              <SelectTrigger className="w-[150px]">
+                <SelectValue placeholder="Semua Platform" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua Platform</SelectItem>
+                <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                <SelectItem value="landing">Landing</SelectItem>
+                <SelectItem value="shopee">Shopee</SelectItem>
+                <SelectItem value="dashboard">Dashboard</SelectItem>
+              </SelectContent>
+            </Select>
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="w-[200px] justify-between">
