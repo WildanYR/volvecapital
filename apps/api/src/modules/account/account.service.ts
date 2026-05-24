@@ -353,12 +353,13 @@ export class AccountService {
         const variantWhere: any = {};
         if (filter.product_id) variantWhere.product_id = filter.product_id;
         
-        const productInclude: any = { model: Product, as: 'product' };
+        const productInclude: any = { model: Product, as: 'product', attributes: [] };
         if (filter.product_slug) productInclude.where = { slug: filter.product_slug };
 
         include.push({
           model: ProductVariant,
           as: 'product_variant',
+          attributes: [],
           where: variantWhere,
           include: [productInclude],
         });
@@ -366,14 +367,17 @@ export class AccountService {
 
       const accounts = await this.accountRepository.findAll({
         where,
+        attributes: ['id', 'status', 'freeze_until', 'subscription_expiry', 'batch_end_date'],
         include: [
           ...include,
           {
             model: AccountProfile,
             as: 'profile',
+            attributes: ['id', 'max_user', 'allow_generate'],
             include: [{ 
               model: AccountUser, 
               as: 'user',
+              attributes: ['id', 'expired_at'],
               where: { status: 'active' },
               required: false 
             }],
