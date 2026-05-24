@@ -21,6 +21,7 @@ import { CreateAccountDto } from './dto/create-account.dto';
 import { FreezeAccountDto } from './dto/freeze-account.dto';
 import { GetAllAccountQueryUrlDto } from './dto/get-all-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
+import { BulkCreateAccountDto } from './dto/bulk-create-account.dto';
 
 @Controller('account')
 export class AccountController {
@@ -74,6 +75,14 @@ export class AccountController {
     @Request() request: AppRequest,
   ) {
     return this.accountService.create(request.tenant_id!, createAccountDto);
+  }
+
+  @Post('bulk')
+  bulkCreate(
+    @Body() bulkCreateDto: BulkCreateAccountDto,
+    @Request() request: AppRequest,
+  ) {
+    return this.accountService.bulkCreate(request.tenant_id!, bulkCreateDto);
   }
 
   @Patch('bulk')

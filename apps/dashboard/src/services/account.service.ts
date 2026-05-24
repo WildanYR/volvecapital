@@ -110,6 +110,22 @@ export interface CreateAccountPayload {
   capital_price?: number
 }
 
+export interface BulkAccountItemPayload {
+  email: string
+  account_password: string
+  subscription_expiry: Date
+  status?: string
+  billing?: string
+  label?: string
+  product_variant_id: string
+  profile?: Array<CreateAccountProfilePayload>
+  capital_price?: number
+}
+
+export interface BulkCreateAccountPayload {
+  accounts: Array<BulkAccountItemPayload>
+}
+
 export interface CreateAccountUserTransaction {
   platform: string
   total_price: number
@@ -276,6 +292,33 @@ export function AccountServiceGenerator(apiUrl: string, accessToken: string, ten
         ? errorData.message[0]
         : errorData.message
       throw new Error(errorMessage || 'Failed to create account')
+    }
+
+    return response.json()
+  }
+
+  const bulkCreateAccount = async (
+    payload: BulkCreateAccountPayload,
+  ): Promise<{ success: boolean; message: string; created_accounts: number; created_profiles: number }> => {
+    const response = await generateApiFetch(
+      apiUrl,
+      accessToken,
+      tenantId,
+      '/account/bulk',
+      undefined,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      },
+    )
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      const errorMessage = Array.isArray(errorData.message)
+        ? errorData.message[0]
+        : errorData.message
+      throw new Error(errorMessage || 'Failed to bulk create accounts')
     }
 
     return response.json()
@@ -563,6 +606,7 @@ export function AccountServiceGenerator(apiUrl: string, accessToken: string, ten
     getAllAccount,
     getAccountById,
     createNewAccount,
+    bulkCreateAccount,
     createNewAccountProfile,
     createNewAccountUser,
     updateAccountUser,

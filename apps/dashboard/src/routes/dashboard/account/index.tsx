@@ -20,6 +20,7 @@ import {
 } from '@/dashboard/components/ui/card'
 import { Skeleton } from '@/dashboard/components/ui/skeleton'
 import { NoData } from '@/dashboard/components/no-data'
+import { BulkUploadAccountModal } from '@/dashboard/components/bulk-upload-account-modal'
 
 export const Route = createFileRoute('/dashboard/account/')({
   component: RouteComponent,
@@ -56,6 +57,7 @@ function RouteComponent() {
               Kelola Produk
             </Link>
           </Button>
+          <BulkUploadAccountModal />
           <Button variant="secondary" asChild>
              <Link to="/dashboard/account/create">
                 <Plus className="size-4" />

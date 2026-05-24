@@ -11,6 +11,7 @@ import {
   ACCOUNT_USER_REPOSITORY,
   ACCOUNT_CAPITAL_REPOSITORY,
   PRODUCT_VARIANT_REPOSITORY,
+  EMAIL_REPOSITORY,
 } from 'src/constants/database.const';
 import {
   NETFLIX_RESET_PASSWORD,
@@ -38,6 +39,7 @@ import { DateConverterProvider } from '../utility/date-converter.provider';
 import { PaginationProvider } from '../utility/pagination.provider';
 import { BaseGetAllUrlQuery } from '../utility/types/base-get-all-url-query.type';
 import { CreateAccountDto } from './dto/create-account.dto';
+import { BulkCreateAccountDto } from './dto/bulk-create-account.dto';
 import { FreezeAccountDto } from './dto/freeze-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
 import { IAccountGetFilter } from './filter/account-get.filter';
@@ -65,6 +67,8 @@ export class AccountService {
     private readonly accountCapitalRepository: typeof AccountCapital,
     @Inject(PRODUCT_VARIANT_REPOSITORY)
     private readonly productVariantRepository: typeof ProductVariant,
+    @Inject(EMAIL_REPOSITORY)
+    private readonly emailRepository: typeof Email,
     private readonly logger: AppLoggerService,
   ) {}
 
@@ -559,6 +563,93 @@ export class AccountService {
       throw error;
     }
   }
+
+  async bulkCreate(tenantId: string, bulkCreateAccountDto: BulkCreateAccountDto) {
+    const transaction = await this.postgresProvider.transaction();
+    let createdAccountsCount = 0;
+    let createdProfilesCount = 0;
+    const skippedEmails: string[] = [];
+    
+    try {
+      await this.postgresProvider.setSchema(tenantId, transaction);
+
+      for (const accountItem of bulkCreateAccountDto.accounts) {
+        const { profile, email, ...accountData } = accountItem;
+
+        // 1. Find or create the email
+        const [emailRecord] = await this.emailRepository.findOrCreate({
+          where: { email },
+          defaults: { email },
+          transaction,
+        });
+
+        // 2. Check if account already exists
+        const existingAccount = await this.accountRepository.count({
+          where: {
+            email_id: emailRecord.id,
+            product_variant_id: accountData.product_variant_id,
+          },
+          transaction,
+        });
+
+        // Skip if account already exists to prevent failing the entire batch
+        if (existingAccount) {
+          skippedEmails.push(email);
+          continue;
+        }
+
+        if (accountData.status === 'freeze') {
+          const freezeUntil = new Date();
+          freezeUntil.setDate(freezeUntil.getDate() + 7);
+          (accountData as any).freeze_until = freezeUntil;
+        }
+
+        // 3. Create the account
+        const newAccount = await this.accountRepository.create({
+          ...accountData,
+          email_id: emailRecord.id,
+        }, {
+          transaction,
+        });
+
+        createdAccountsCount++;
+
+        // 4. Create profiles
+        if (profile && profile.length > 0) {
+          const profileData = profile.map(p => ({
+            ...p,
+            account_id: newAccount.id,
+          }));
+          
+          await this.accountProfileRepository.bulkCreate(profileData, {
+            transaction,
+          });
+          
+          createdProfilesCount += profileData.length;
+        }
+      }
+
+      await transaction.commit();
+      
+      const skippedInfo = skippedEmails.length > 0
+        ? ` ${skippedEmails.length} akun dilewati karena sudah ada: ${skippedEmails.join(', ')}.`
+        : '';
+
+      return {
+        success: true,
+        message: `Berhasil membuat ${createdAccountsCount} akun dan ${createdProfilesCount} profil.${skippedInfo}`,
+        created_accounts: createdAccountsCount,
+        created_profiles: createdProfilesCount,
+        skipped_accounts: skippedEmails,
+      };
+    } catch (error) {
+      if (transaction && !(transaction as any).finished) {
+        await transaction.rollback();
+      }
+      throw error;
+    }
+  }
+
 
   async update(
     tenantId: string,

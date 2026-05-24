@@ -8,11 +8,21 @@ export class InvalidDataException extends BadRequestException {
       message = [errors];
     }
     else {
-      message = [];
-      for (const err of errors) {
-        message.push(...Object.values(err.constraints!));
-      }
+      message = InvalidDataException.extractConstraints(errors);
     }
     super({ message, invalidData: true });
+  }
+
+  private static extractConstraints(errors: ValidationError[]): string[] {
+    const result: string[] = [];
+    for (const err of errors) {
+      if (err.constraints) {
+        result.push(...Object.values(err.constraints));
+      }
+      if (err.children && err.children.length > 0) {
+        result.push(...this.extractConstraints(err.children));
+      }
+    }
+    return result;
   }
 }
