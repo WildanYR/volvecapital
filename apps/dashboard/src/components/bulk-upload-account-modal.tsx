@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import Papa from 'papaparse'
 import { Upload, FileUp, Loader2, AlertCircle, Info, CheckCircle2 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
