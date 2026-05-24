@@ -18,9 +18,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/dashboard/components/ui/dropdown-menu'
 import { Calendar } from '@/dashboard/components/ui/calendar'
@@ -63,6 +60,7 @@ function RouteComponent() {
   const [customYear, setCustomYear] = useState<string>(new Date().getFullYear().toString())
   const [selectedVariantId, setSelectedVariantId] = useState<string>('all')
   const [selectedPlatform, setSelectedPlatform] = useState<string>('all')
+  const [activeSubMenu, setActiveSubMenu] = useState<'day' | 'month' | 'year' | null>(null)
 
   const { data: variants } = useQuery({
     queryKey: ['allProductVariants'],
@@ -119,37 +117,39 @@ function RouteComponent() {
           <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight text-balance">
             Dashboard
           </h1>
-          <div className="flex items-center gap-2">
-            <Select value={selectedVariantId} onValueChange={setSelectedVariantId}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Semua Varian" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Semua Varian</SelectItem>
-                {variants?.items?.map((v: any) => (
-                  <SelectItem key={v.id} value={v.id}>
-                    {v.product?.name ? `${v.product.name} - ${v.name}` : v.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="flex flex-col gap-2 w-full md:w-auto md:flex-row md:items-center">
+            <div className="flex gap-2">
+              <Select value={selectedVariantId} onValueChange={setSelectedVariantId}>
+                <SelectTrigger className="flex-1 min-w-0 md:w-[180px]">
+                  <SelectValue placeholder="Semua Varian" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua Varian</SelectItem>
+                  {variants?.items?.map((v: any) => (
+                    <SelectItem key={v.id} value={v.id}>
+                      {v.product?.name ? `${v.product.name} - ${v.name}` : v.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-            <Select value={selectedPlatform} onValueChange={setSelectedPlatform}>
-              <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="Semua Platform" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Semua Platform</SelectItem>
-                <SelectItem value="Whatsapp">WhatsApp</SelectItem>
-                <SelectItem value="landing">Landing</SelectItem>
-                <SelectItem value="Shopee">Shopee</SelectItem>
-                <SelectItem value="dashboard">Dashboard</SelectItem>
-              </SelectContent>
-            </Select>
+              <Select value={selectedPlatform} onValueChange={setSelectedPlatform}>
+                <SelectTrigger className="flex-1 min-w-0 md:w-[150px]">
+                  <SelectValue placeholder="Semua Platform" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua Platform</SelectItem>
+                  <SelectItem value="Whatsapp">WhatsApp</SelectItem>
+                  <SelectItem value="landing">Landing</SelectItem>
+                  <SelectItem value="Shopee">Shopee</SelectItem>
+                  <SelectItem value="dashboard">Dashboard</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="w-[200px] justify-between">
+                <Button variant="outline" className="w-full md:w-[200px] justify-between">
                   {filter === 'realtime' && 'Real-time'}
                   {filter === 'today' && 'Hari Ini'}
                   {filter === 'yesterday' && 'Kemarin'}
@@ -163,17 +163,24 @@ function RouteComponent() {
                   <ChevronDownIcon className="w-4 h-4 opacity-50 ml-2" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-[200px]" align="end">
-                <DropdownMenuItem onClick={() => setFilter('realtime')}>Real-time</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setFilter('today')}>Hari Ini</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setFilter('yesterday')}>Kemarin</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setFilter('last_7_days')}>7 hari sebelumnya</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setFilter('last_30_days')}>30 hari sebelumnya</DropdownMenuItem>
+              <DropdownMenuContent className="w-[280px]" align="end">
+                <DropdownMenuItem onClick={() => { setFilter('realtime'); setActiveSubMenu(null) }}>Real-time</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => { setFilter('today'); setActiveSubMenu(null) }}>Hari Ini</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => { setFilter('yesterday'); setActiveSubMenu(null) }}>Kemarin</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => { setFilter('last_7_days'); setActiveSubMenu(null) }}>7 hari sebelumnya</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => { setFilter('last_30_days'); setActiveSubMenu(null) }}>30 hari sebelumnya</DropdownMenuItem>
                 <DropdownMenuSeparator />
-                
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>Per Hari</DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent className="p-0">
+
+                {/* Per Hari - inline accordion */}
+                <DropdownMenuItem
+                  onSelect={(e) => { e.preventDefault(); setActiveSubMenu(activeSubMenu === 'day' ? null : 'day') }}
+                  className="justify-between"
+                >
+                  Per Hari
+                  <ChevronDownIcon className={`w-4 h-4 opacity-50 transition-transform duration-200 ${activeSubMenu === 'day' ? 'rotate-180' : ''}`} />
+                </DropdownMenuItem>
+                {activeSubMenu === 'day' && (
+                  <div className="px-1 pb-1">
                     <Calendar
                       mode="single"
                       selected={customDate ? new Date(customDate) : undefined}
@@ -183,38 +190,55 @@ function RouteComponent() {
                           const localDate = new Date(date.getTime() - offset * 60 * 1000)
                           setCustomDate(localDate.toISOString().split('T')[0])
                           setFilter('custom_day')
+                          setActiveSubMenu(null)
                         }
                       }}
                       initialFocus
                     />
-                  </DropdownMenuSubContent>
-                </DropdownMenuSub>
+                  </div>
+                )}
 
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>Per Bulan</DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent className="p-0">
-                    <MonthPicker 
-                      value={customMonth} 
+                {/* Per Bulan - inline accordion */}
+                <DropdownMenuItem
+                  onSelect={(e) => { e.preventDefault(); setActiveSubMenu(activeSubMenu === 'month' ? null : 'month') }}
+                  className="justify-between"
+                >
+                  Per Bulan
+                  <ChevronDownIcon className={`w-4 h-4 opacity-50 transition-transform duration-200 ${activeSubMenu === 'month' ? 'rotate-180' : ''}`} />
+                </DropdownMenuItem>
+                {activeSubMenu === 'month' && (
+                  <div className="px-1 pb-1">
+                    <MonthPicker
+                      value={customMonth}
                       onChange={(val) => {
                         setCustomMonth(val)
                         setFilter('custom_month')
-                      }} 
+                        setActiveSubMenu(null)
+                      }}
                     />
-                  </DropdownMenuSubContent>
-                </DropdownMenuSub>
+                  </div>
+                )}
 
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>Berdasarkan Tahun</DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent className="p-0">
+                {/* Berdasarkan Tahun - inline accordion */}
+                <DropdownMenuItem
+                  onSelect={(e) => { e.preventDefault(); setActiveSubMenu(activeSubMenu === 'year' ? null : 'year') }}
+                  className="justify-between"
+                >
+                  Berdasarkan Tahun
+                  <ChevronDownIcon className={`w-4 h-4 opacity-50 transition-transform duration-200 ${activeSubMenu === 'year' ? 'rotate-180' : ''}`} />
+                </DropdownMenuItem>
+                {activeSubMenu === 'year' && (
+                  <div className="px-1 pb-1">
                     <YearPicker
                       value={customYear}
                       onChange={(val) => {
                         setCustomYear(val)
                         setFilter('custom_year')
+                        setActiveSubMenu(null)
                       }}
                     />
-                  </DropdownMenuSubContent>
-                </DropdownMenuSub>
+                  </div>
+                )}
 
               </DropdownMenuContent>
             </DropdownMenu>
