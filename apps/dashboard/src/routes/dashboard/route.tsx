@@ -20,11 +20,10 @@ import {
   ChevronDown,
 } from 'lucide-react'
 import { StockNotification } from '@/dashboard/components/stock-notification'
-import { Button } from '@/dashboard/components/ui/button'
+
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,

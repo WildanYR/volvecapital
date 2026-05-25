@@ -1,6 +1,6 @@
-import { toast } from 'sonner'
 
-export function TenantServiceGenerator(baseUrl: string, token: string, tenantId: string) {
+
+export function TenantServiceGenerator(baseUrl: string, token: string) {
   const changePassword = async (payload: any) => {
     const url = new URL(`${baseUrl}/tenant/owner/change-password`)
     const response = await fetch(url.toString(), {

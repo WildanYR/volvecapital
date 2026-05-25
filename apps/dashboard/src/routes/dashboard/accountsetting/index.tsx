@@ -25,7 +25,6 @@ function RouteComponent() {
   const tenantService = TenantServiceGenerator(
     API_URL,
     auth.tenant!.accessToken,
-    auth.tenant!.id,
   )
 
   const [oldPassword, setOldPassword] = useState('')
