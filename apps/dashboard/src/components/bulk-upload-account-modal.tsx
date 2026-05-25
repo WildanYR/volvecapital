@@ -301,7 +301,7 @@ export function BulkUploadAccountModal() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="gap-2">
+        <Button className="gap-2">
           <FileUp className="size-4" />
           Bulk Upload
         </Button>

@@ -51,9 +51,6 @@ function RouteComponent() {
     },
   })
 
-  const [oldPassword, setOldPassword] = useState('')
-  const [newPassword, setNewPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
 
   const handleSaveWhatsapp = (e: React.FormEvent) => {
     e.preventDefault()
@@ -65,39 +62,6 @@ function RouteComponent() {
     updateMutation.mutate({ key: 'BUYER_PORTAL_DAILY_LIMIT', value: buyerPortalLimit })
   }
 
-  const changePasswordMutation = useMutation({
-    mutationFn: async () => {
-      if (newPassword !== confirmPassword) {
-        throw new Error('Konfirmasi password tidak cocok')
-      }
-      const response = await fetch(`${API_URL}/tenant/owner/change-password`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `VC ${auth.tenant!.accessToken}`,
-          'x-tenant-id': auth.tenant!.id,
-        },
-        body: JSON.stringify({ oldPassword, newPassword }),
-      })
-      const result = await response.json()
-      if (!response.ok) throw new Error(result.message || 'Gagal mengubah password')
-      return result
-    },
-    onSuccess: () => {
-      toast.success('Password berhasil diubah.')
-      setOldPassword('')
-      setNewPassword('')
-      setConfirmPassword('')
-    },
-    onError: (error: any) => {
-      toast.error(error.message)
-    },
-  })
-
-  const handlePasswordChange = (e: React.FormEvent) => {
-    e.preventDefault()
-    changePasswordMutation.mutate()
-  }
 
   if (isLoading) {
     return (
@@ -228,71 +192,7 @@ function RouteComponent() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Keamanan & Password</CardTitle>
-          <CardDescription>Ubah password akun tenant owner Anda untuk keamanan yang lebih baik.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handlePasswordChange} className="space-y-6">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between max-w-md">
-                <Label htmlFor="old_password">Password Lama</Label>
-                <Link 
-                  to="/forgot-password" 
-                  className="text-xs text-zinc-400 hover:text-primary transition-colors"
-                >
-                  Lupa password lama?
-                </Link>
-              </div>
-              <Input
-                id="old_password"
-                type="password"
-                value={oldPassword}
-                onChange={(e) => setOldPassword(e.target.value)}
-                className="max-w-md"
-                required
-              />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl">
-              <div className="space-y-2">
-                <Label htmlFor="new_password">Password Baru</Label>
-                <Input
-                  id="new_password"
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirm_password">Konfirmasi Password Baru</Label>
-                <Input
-                  id="confirm_password"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                />
-              </div>
-            </div>
 
-            <Button 
-              disabled={changePasswordMutation.isPending} 
-              type="submit" 
-              variant="destructive"
-              className="bg-red-600 hover:bg-red-500"
-            >
-              {changePasswordMutation.isPending ? (
-                <Loader2 className="size-4 animate-spin mr-2" />
-              ) : (
-                <Save className="size-4 mr-2" />
-              )}
-              Perbarui Password
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
     </div>
   )
 }

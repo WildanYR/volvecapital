@@ -946,7 +946,6 @@ function RouteComponent() {
           </div>
           <div className="flex items-center gap-4">
             <Button
-              variant="secondary"
               onClick={() => {
                 handleOpenAccountUserDialog()
               }}
@@ -1181,15 +1180,15 @@ function RouteComponent() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start" className="w-48">
                       <DropdownMenuItem onSelect={() => handleBulkActionClick('enable')}>
-                        <Check className="mr-2 h-4 w-4 text-green-600" />
+                        <Check className="mr-2 h-4 w-4" />
                         Bulk Enable
                       </DropdownMenuItem>
                       <DropdownMenuItem onSelect={() => handleBulkActionClick('disable')}>
-                        <X className="mr-2 h-4 w-4 text-red-600" />
+                        <X className="mr-2 h-4 w-4" />
                         Bulk Disable
                       </DropdownMenuItem>
                       <DropdownMenuItem onSelect={() => handleBulkActionClick('banned')}>
-                        <Ban className="mr-2 h-4 w-4 text-[#ff00ff]" />
+                        <Ban className="mr-2 h-4 w-4" />
                         Bulk Banned
                       </DropdownMenuItem>
                       <DropdownMenuItem onSelect={() => handleBulkActionClick('pin')}>
@@ -1217,11 +1216,11 @@ function RouteComponent() {
                         Bulk Reload
                       </DropdownMenuItem>
                       <DropdownMenuItem onSelect={() => handleBulkActionClick('auto_upgrade')}>
-                        <TrendingUp className="mr-2 h-4 w-4 text-purple-600" />
+                        <TrendingUp className="mr-2 h-4 w-4" />
                         Bulk Upgrade Premium
                       </DropdownMenuItem>
                       <DropdownMenuItem onSelect={() => handleBulkActionClick('login_tv')}>
-                        <Monitor className="mr-2 h-4 w-4 text-blue-600" />
+                        <Monitor className="mr-2 h-4 w-4" />
                         Bulk Login TV
                       </DropdownMenuItem>
                       <DropdownMenuItem onSelect={() => handleBulkActionClick('clear')}>
@@ -1230,7 +1229,6 @@ function RouteComponent() {
                       </DropdownMenuItem>
                       <DropdownMenuItem 
                         onSelect={() => handleBulkActionClick('delete')}
-                        className="text-red-600 focus:text-red-700"
                       >
                         <Trash2 className="mr-2 h-4 w-4" />
                         Bulk Delete
@@ -1372,7 +1370,6 @@ function RouteComponent() {
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 onSelect={() => handleTriggerReset(account)}
-                                className="text-blue-500 focus:text-blue-600 font-bold"
                               >
                                 <span>
                                   <RefreshCw className={triggerResetMutation.isPending ? 'animate-spin' : ''} />
@@ -1382,7 +1379,6 @@ function RouteComponent() {
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 onSelect={() => handleTriggerReload(account)}
-                                className="text-orange-500 focus:text-orange-600 font-bold"
                               >
                                 <span>
                                   <RotateCw className={triggerReloadMutation.isPending ? 'animate-spin' : ''} />
@@ -1392,7 +1388,6 @@ function RouteComponent() {
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 onSelect={() => handleTriggerUpgrade(account)}
-                                className="text-purple-500 focus:text-purple-600 font-bold"
                               >
                                 <span>
                                   <TrendingUp className={triggerUpgradeMutation.isPending ? 'animate-spin' : ''} />
@@ -1402,7 +1397,6 @@ function RouteComponent() {
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 onSelect={() => triggerLoginTvMutation.mutate(account)}
-                                className="text-blue-600 focus:text-blue-700 font-bold"
                               >
                                 <span>
                                   <Monitor className={triggerLoginTvMutation.isPending ? 'animate-spin' : ''} />

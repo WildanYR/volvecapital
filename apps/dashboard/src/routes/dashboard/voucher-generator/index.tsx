@@ -384,7 +384,7 @@ function RouteComponent() {
       {/* Statistics Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
         {statCards.map((stat, i) => (
-          <Card key={i} className="border-none bg-muted/30 min-w-0 shadow-none">
+          <Card key={i} className="border py-6 bg-card min-w-0 shadow-none">
             <CardContent className="p-3 sm:p-4 flex flex-col gap-1 min-w-0">
               <div className="flex items-center justify-between gap-1">
                 <p className="text-[9px] sm:text-[10px] font-bold text-muted-foreground uppercase tracking-wider truncate">{stat.title}</p>
@@ -732,8 +732,8 @@ function RouteComponent() {
                 <Ticket className="size-5" />
                 Daftar Voucher
               </CardTitle>
-              <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
-                <div className="relative w-full sm:w-64">
+              <div className="flex flex-col gap-2 w-full sm:w-64">
+                <div className="relative w-full">
                   <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
                   <Input 
                     placeholder="Cari voucher/nama/tlp..." 
@@ -743,7 +743,7 @@ function RouteComponent() {
                   />
                 </div>
                 <Select value={statusFilter} onValueChange={(val) => { setStatusFilter(val); setPage(1) }}>
-                  <SelectTrigger className="h-9 w-full sm:w-[130px] text-xs">
+                  <SelectTrigger className="h-9 w-full text-xs">
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>

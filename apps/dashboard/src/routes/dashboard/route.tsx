@@ -16,6 +16,8 @@ import {
   Receipt,
   Ticket,
   User,
+  Settings,
+  ChevronDown,
 } from 'lucide-react'
 import { StockNotification } from '@/dashboard/components/stock-notification'
 import { Button } from '@/dashboard/components/ui/button'
@@ -33,6 +35,14 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from '@/dashboard/components/ui/sidebar'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/dashboard/components/ui/dropdown-menu'
 import { useAuth } from '@/dashboard/context-providers/auth.provider'
 import logo from '@/dashboard/logo.svg'
 
@@ -187,28 +197,32 @@ function RouteComponent() {
             </SidebarGroup>
           ))}
         </SidebarContent>
-        <SidebarFooter>
-          <div className="p-3">
-            <Button
-              variant="secondary"
-              onClick={handleLogout}
-              className="w-full cursor-pointer"
-            >
-              <span>
-                <LogOut />
-              </span>
-              {' '}
-              Logout
-            </Button>
-          </div>
-        </SidebarFooter>
       </Sidebar>
       <main className="flex-1 min-w-0 overflow-x-hidden max-w-full">
         <div className="flex justify-between items-center p-3 border-b-2 border-border bg-background sticky top-0 z-30">
           <SidebarTrigger className="cursor-pointer" />
           <div className="flex items-center gap-4">
             <StockNotification />
-            <p className="font-semibold text-sm truncate max-w-[100px] sm:max-w-none">{auth.tenant!.id}</p>
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center gap-2 hover:bg-muted/50 p-2 rounded-md transition-colors outline-none cursor-pointer">
+                <p className="font-semibold text-sm truncate max-w-[100px] sm:max-w-none">{auth.tenant!.id}</p>
+                <ChevronDown className="size-4 text-muted-foreground" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>Akun</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild className="cursor-pointer">
+                  <Link to="/dashboard/accountsetting">
+                    <Settings className="mr-2 size-4" />
+                    <span>Pengaturan Akun</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600 focus:text-red-700">
+                  <LogOut className="mr-2 size-4" />
+                  <span>Logout</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
         <div className="px-4 sm:px-6 py-4">

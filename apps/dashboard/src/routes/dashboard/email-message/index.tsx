@@ -175,7 +175,7 @@ function RouteComponent() {
           <h2 className="text-3xl font-extrabold tracking-tight">Email Subject Management</h2>
           <Dialog open={isSubjectDialogOpen} onOpenChange={setIsSubjectDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="cursor-pointer bg-red-600 hover:bg-red-700 text-white">
+              <Button className="cursor-pointer bg-primary hover:bg-primary/90 text-primary-foreground">
                 <Plus className="mr-2 size-4" /> Tambah Subjek
               </Button>
             </DialogTrigger>

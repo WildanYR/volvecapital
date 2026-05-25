@@ -58,7 +58,7 @@ function RouteComponent() {
             </Link>
           </Button>
           <BulkUploadAccountModal />
-          <Button variant="secondary" asChild>
+          <Button asChild>
              <Link to="/dashboard/account/create">
                 <Plus className="size-4" />
                 Tambah Akun

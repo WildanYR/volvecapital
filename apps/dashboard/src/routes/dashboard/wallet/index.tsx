@@ -100,7 +100,7 @@ function WalletPage() {
         </h1>
         <div className="flex gap-2">
           <Button onClick={() => setDialogOpen(true)}>Request Penarikan</Button>
-          <Button asChild variant="outline">
+          <Button asChild>
             <Link to="/dashboard/wallet/bank-account">Kelola Rekening</Link>
           </Button>
         </div>
