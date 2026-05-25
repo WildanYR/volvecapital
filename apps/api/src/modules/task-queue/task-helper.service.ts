@@ -93,14 +93,17 @@ export class TaskHelperService {
         payload: enrichedPayload,
       });
 
-      if (clientId) {
-        const eventName = `${this.emailParser.sanitizeEmail(payload.email)}:${NETFLIX_REQ_RESET_PASSWORD}`;
-        this.socketGateway.subscribeClientToEvent(clientId, eventName);
+      if (!clientId) {
+        throw new Error('No bot available to handle the task');
       }
+
+      const eventName = `${this.emailParser.sanitizeEmail(payload.email)}:${NETFLIX_REQ_RESET_PASSWORD}`;
+      this.socketGateway.subscribeClientToEvent(clientId, eventName);
     }
     catch (error) {
       await transaction.rollback();
       this.logger.error(error.message, error.stack, 'TaskProcessorNetflixResetPassword');
+      throw error;
     }
   }
 
@@ -113,28 +116,36 @@ export class TaskHelperService {
         payload,
       });
 
-      if (clientId) {
-        // Subscribe bot ke event konfirmasi top-up dari dashboard
-        const topupEventName = `${payload.accountId}:NETFLIX_TOPUP_CONFIRM`;
-        this.socketGateway.subscribeClientToEvent(clientId, topupEventName);
+      if (!clientId) {
+        throw new Error('No bot available to handle the task');
       }
+
+      // Subscribe bot ke event konfirmasi top-up dari dashboard
+      const topupEventName = `${payload.accountId}:NETFLIX_TOPUP_CONFIRM`;
+      this.socketGateway.subscribeClientToEvent(clientId, topupEventName);
     }
     catch (error) {
       this.logger.error(error.message, error.stack, 'TaskProcessorNetflixAutoReload');
+      throw error;
     }
   }
 
   async netflixAutoUpgrade(taskId: string, tenantId: string, payload: NetflixAutoUpgradePayload) {
     try {
       // Dispatch task ke bot via socket dengan method name 'autoUpgradePlan'
-      await this.socketGateway.dispatchTask(taskId, tenantId, {
+      const clientId = await this.socketGateway.dispatchTask(taskId, tenantId, {
         module: 'netflix',
         type: 'autoUpgradePlan',
         payload,
       });
+
+      if (!clientId) {
+        throw new Error('No bot available to handle the task');
+      }
     }
     catch (error) {
       this.logger.error(error.message, error.stack, 'TaskProcessorNetflixAutoUpgrade');
+      throw error;
     }
   }
 
@@ -146,14 +157,17 @@ export class TaskHelperService {
         payload,
       });
 
-      if (clientId) {
-        // Subscribe bot to the email reset link event (since it uses loginhelp flow)
-        const eventName = `${this.emailParser.sanitizeEmail(payload.email)}:${NETFLIX_REQ_RESET_PASSWORD}`;
-        this.socketGateway.subscribeClientToEvent(clientId, eventName);
+      if (!clientId) {
+        throw new Error('No bot available to handle the task');
       }
+
+      // Subscribe bot to the email reset link event (since it uses loginhelp flow)
+      const eventName = `${this.emailParser.sanitizeEmail(payload.email)}:${NETFLIX_REQ_RESET_PASSWORD}`;
+      this.socketGateway.subscribeClientToEvent(clientId, eventName);
     }
     catch (error) {
       this.logger.error(error.message, error.stack, 'TaskProcessorNetflixLoginTv');
+      throw error;
     }
   }
 }

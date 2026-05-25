@@ -67,13 +67,11 @@ export class TaskWorkerService {
     try {
       await this.postgresProvider.setSchema('master', transaction);
 
-      // Ambil tugas yang belum selesai (maksimal yang dijadwalkan 10 menit lalu)
-      // untuk menghindari "spam" eksekusi tugas lama saat server restart
-      const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+      // Ambil tugas yang belum selesai dari DB
+      // Ini memastikan task lama yang tertunda tetap dieksekusi saat server restart
       const pendingTasks = await this.taskQueueRepository.findAll({
         where: {
           status: ['QUEUED', 'DISPATCHED'],
-          execute_at: { [Op.gte]: tenMinutesAgo },
         },
         transaction,
       });
@@ -134,7 +132,7 @@ export class TaskWorkerService {
     }
   }
 
-  @Cron('* * * * * *')
+  @Cron('*/5 * * * * *')
   async dispatchReadyTasks() {
     const now = Date.now();
 
@@ -314,9 +312,16 @@ export class TaskWorkerService {
 
         await this.redisClient.xack(STREAM_KEY, CONSUMER_GROUP, tm.messageId);
 
+        const isAsyncNetflixTask = [
+          NETFLIX_RESET_PASSWORD,
+          NETFLIX_AUTO_RELOAD,
+          NETFLIX_AUTO_UPGRADE,
+          NETFLIX_LOGIN_TV
+        ].includes(tm.taskData.context);
+
         taskQueueUpdates.push({
           id: tm.taskId,
-          status: 'COMPLETED',
+          status: isAsyncNetflixTask ? 'DISPATCHED' : 'COMPLETED',
           attempt: tm.attempt || 0,
         });
       }
