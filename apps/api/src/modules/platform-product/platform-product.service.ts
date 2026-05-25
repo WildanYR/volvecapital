@@ -286,7 +286,7 @@ export class PlatformProductService {
         );
       }
 
-      await platformProduct.update({ ...updatePlatformProductDto });
+      await platformProduct.update({ ...updatePlatformProductDto }, { transaction });
       await transaction.commit();
       return platformProduct;
     }
