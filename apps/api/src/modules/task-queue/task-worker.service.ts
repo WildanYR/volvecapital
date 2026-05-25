@@ -188,6 +188,59 @@ export class TaskWorkerService {
     }
   }
 
+  /**
+   * Auto-cleanup: Setiap jam, hapus task QUEUED/DISPATCHED yang sudah lebih dari 5 jam
+   * melewati waktu execute_at-nya. Task seperti ini sudah pasti tidak akan tereksekusi
+   * (VPS mati terlalu lama) sehingga aman untuk dihapus agar DB tidak menumpuk.
+   */
+  @Cron(CronExpression.EVERY_HOUR)
+  async cleanupOverdueTasks() {
+    const fiveHoursAgo = new Date(Date.now() - 5 * 60 * 60 * 1000);
+    const transaction = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema('master', transaction);
+
+      const overdueTasks = await this.taskQueueRepository.findAll({
+        where: {
+          status: ['QUEUED', 'DISPATCHED'],
+          execute_at: { [Op.lt]: fiveHoursAgo },
+        },
+        transaction,
+      });
+
+      if (!overdueTasks.length) {
+        await transaction.commit();
+        return;
+      }
+
+      const overdueIds = overdueTasks.map(t => t.id);
+
+      // Hapus dari DB
+      await this.taskQueueRepository.destroy({
+        where: { id: overdueIds },
+        transaction,
+      });
+
+      await transaction.commit();
+
+      // Hapus dari Redis ZSET
+      const redisPipeline = this.redisClient.pipeline();
+      for (const id of overdueIds) {
+        redisPipeline.zrem(ZSET_KEY, `${TASK_REFERENCE_KEY}:${id}`);
+      }
+      await redisPipeline.exec();
+
+      this.logger.warn(
+        `Auto-Cleanup: Menghapus ${overdueIds.length} task yang sudah lewat lebih dari 5 jam.`,
+        'TaskWorkerCleanup',
+      );
+    }
+    catch (error) {
+      await transaction.rollback();
+      this.logger.error(`Auto-Cleanup gagal: ${error.message}`, error.stack, 'TaskWorkerCleanup');
+    }
+  }
+
   @Cron(CronExpression.EVERY_MINUTE)
   async recoverPendingTasks() {
     const minIdleTime = 60000; // 60 detik. Jika pesan pending > 60s, anggap consumer mati/gagal.
