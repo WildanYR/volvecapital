@@ -9,7 +9,7 @@ export const up: MigrationFn<MigrationContext> = async ({ context }) => {
     { tableName: 'product_variant', schema },
     'base_price',
     {
-      allowNull: true,
+      allowNull: false,
       type: DataTypes.BIGINT,
     },
   );

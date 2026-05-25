@@ -8,13 +8,13 @@ import { Label } from '../ui/label'
 
 const AccountUserTransactionFormSchema = z.object({
   platform: z.string().nonempty(),
-  total_price: z.string().nonempty(),
 })
 
 export const AccountUserFormSchema = z.object({
   name: z.string().nonempty(),
   product_variant_id: z.string().nonempty(),
   account_profile_id: z.string().optional(),
+  price: z.string(),
   transaction: AccountUserTransactionFormSchema.optional(),
   expired_at: z.date().optional(),
 })
@@ -44,9 +44,9 @@ export function AccountUserForm({
       name: '',
       product_variant_id: initialData?.product_variant_id || '',
       account_profile_id: initialData?.account_profile_id || undefined,
+      price: '',
       transaction: {
         platform: '',
-        total_price: '',
       },
       expired_at: undefined,
     } as AccountUserFormSubmitData,
@@ -60,7 +60,7 @@ export function AccountUserForm({
 
   const handleWithTransactionChange = (value: boolean) => {
     if (value) {
-      form.setFieldValue('transaction', { platform: '', total_price: '' })
+      form.setFieldValue('transaction', { platform: '' })
     }
     else {
       form.setFieldValue('transaction', undefined)
@@ -135,13 +135,14 @@ export function AccountUserForm({
                     )}
                   />
                   <form.AppField
-                    name="transaction.total_price"
+                    name="price"
                     children={field => (
                       <field.TextWithOptions
-                        id="total-price"
-                        label="Total Harga"
+                        id="price"
+                        itemStorageName="total-price"
+                        label="Harga (opsional)"
                         type="number"
-                        placeholder="Masukkan total harga transaksi"
+                        placeholder="Jika kosong maka pakai harga dasar varian produk..."
                       />
                     )}
                   />

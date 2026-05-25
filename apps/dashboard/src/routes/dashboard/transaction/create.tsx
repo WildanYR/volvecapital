@@ -38,9 +38,9 @@ function RouteComponent() {
   const handleSubmit = (values: TransactionFormSubmitData) => {
     const payload: CreateTransactionPayload = {
       ...values,
-      total_price: Number.parseInt(values.total_price),
       items: values.items.map(item => ({
         product_variant_id: item.product_variant_id,
+        price: item.price ? item.price : undefined,
       })),
     }
     mutation.mutate(payload)

@@ -7,6 +7,7 @@ import {
   EMAIL_MESSAGE_REPOSITORY,
   EMAIL_REPOSITORY,
   EMAIL_SUBJECT_REPOSITORY,
+  EXPENSE_REPOSITORY,
   PEAK_HOUR_STATISTICS_REPOSITORY,
   PLATFORM_PRODUCT_REPOSITORY,
   PLATFORM_STATISTICS_REPOSITORY,
@@ -18,7 +19,9 @@ import {
   TASK_QUEUE_REPOSITORY,
   TENANT_REPOSITORY,
   TRANSACTION_ITEM_REPOSITORY,
+  TRANSACTION_ITEM_TS_REPOSITORY,
   TRANSACTION_REPOSITORY,
+  TRANSACTION_TS_REPOSITORY,
 } from 'src/constants/database.const';
 import { AccountModifier } from './models/account-modifier.model';
 import { AccountProfile } from './models/account-profile.model';
@@ -27,6 +30,7 @@ import { Account } from './models/account.model';
 import { EmailMessage } from './models/email-message.model';
 import { EmailSubject } from './models/email-subject.model';
 import { Email } from './models/email.model';
+import { Expense } from './models/expense.model';
 import { PeakHourStatistics } from './models/peak-hour-statistics.model';
 import { PlatformProduct } from './models/platform-product.model';
 import { PlatformStatistics } from './models/platform-statistics.model';
@@ -37,7 +41,9 @@ import { RevenueStatistics } from './models/revenue-statistics.model';
 import { Syslog } from './models/syslog.model';
 import { TaskQueue } from './models/task-queue.model';
 import { Tenant } from './models/tenant.model';
+import { TransactionItemTS } from './models/transaction-item-ts.model';
 import { TransactionItem } from './models/transaction-item.model';
+import { TransactionTS } from './models/transaction-ts.model';
 import { Transaction } from './models/transaction.model';
 
 export const RepositoryProvider: Provider[] = [
@@ -63,4 +69,7 @@ export const RepositoryProvider: Provider[] = [
   { provide: PLATFORM_STATISTICS_REPOSITORY, useValue: PlatformStatistics },
   { provide: EMAIL_SUBJECT_REPOSITORY, useValue: EmailSubject },
   { provide: SYSLOG_REPOSITORY, useValue: Syslog },
+  { provide: TRANSACTION_TS_REPOSITORY, useValue: TransactionTS },
+  { provide: TRANSACTION_ITEM_TS_REPOSITORY, useValue: TransactionItemTS },
+  { provide: EXPENSE_REPOSITORY, useValue: Expense },
 ];

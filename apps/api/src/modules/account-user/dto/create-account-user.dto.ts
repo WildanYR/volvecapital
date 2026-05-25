@@ -12,10 +12,6 @@ class CreateTransactionDto {
   @IsNotEmpty()
   @IsString()
   platform: string;
-
-  @IsNotEmpty()
-  @IsNumber()
-  total_price: number;
 }
 
 export class CreateAccountUserDto {
@@ -26,6 +22,10 @@ export class CreateAccountUserDto {
   @IsNotEmpty()
   @IsString()
   product_variant_id: string;
+
+  @IsOptional()
+  @IsNumber()
+  price?: number;
 
   @IsOptional()
   @IsString()

@@ -6,4 +6,5 @@ export interface IAccountGetFilter {
   user?: string;
   billing?: string;
   product_id?: string;
+  lite?: string;
 }

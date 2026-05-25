@@ -16,12 +16,14 @@ interface TextInputOptionsProps extends Omit<
   'onChange'
 > {
   label: string
+  itemStorageName: string
   onChange: (value: string) => void
   errors?: any
 }
 
 export function TextInputOptions({
   id,
+  itemStorageName,
   label,
   value,
   onChange,
@@ -29,7 +31,6 @@ export function TextInputOptions({
   errors,
   ...attributes
 }: TextInputOptionsProps) {
-  const itemStorageName = `${id}-items`
   const [open, setOpen] = useState(false)
   const itemList = useRef<Array<string>>([])
   const [filteredList, setFilteredList] = useState<Array<string>>([])

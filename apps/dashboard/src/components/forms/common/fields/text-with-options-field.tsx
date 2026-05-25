@@ -4,11 +4,13 @@ import { TextInputOptions } from '../inputs/text-input-options'
 
 export function TextWithOptions({
   id,
+  itemStorageName,
   label,
   placeholder,
   type,
 }: {
   id: string
+  itemStorageName: string
   label: string
   placeholder: string
   type?: HTMLInputTypeAttribute
@@ -17,6 +19,7 @@ export function TextWithOptions({
   return (
     <TextInputOptions
       id={id}
+      itemStorageName={itemStorageName}
       label={label}
       name={field.name}
       type={type || 'text'}

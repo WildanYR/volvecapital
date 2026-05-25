@@ -30,14 +30,19 @@ export function AccountStatus({
       return { color: 'bg-neutral-300', text: 'Enable (User Kosong)' }
     }
     if (account.status === 'active') {
-      const { maxUser, userCount } = account.profile.reduce(
-        (acc, profile) => {
-          acc.maxUser += profile.max_user
-          acc.userCount += profile.user?.length || 0
-          return acc
-        },
-        { maxUser: 0, userCount: 0 },
-      )
+      const { maxUser, userCount } = account.profile
+        ? account.profile.reduce(
+            (acc, profile) => {
+              acc.maxUser += profile.max_user
+              acc.userCount += profile.user?.length || 0
+              return acc
+            },
+            { maxUser: 0, userCount: 0 },
+          )
+        : {
+            maxUser: account.max_user || 0,
+            userCount: account.user_count || 0,
+          }
 
       if (userCount >= maxUser) {
         return { color: 'bg-green-500', text: 'Aktif (User Penuh)' }

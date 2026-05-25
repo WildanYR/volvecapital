@@ -1,7 +1,6 @@
 import type { Account } from '@/dashboard/services/account.service'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { BrushCleaning, CalendarClock, CircleQuestionMark, Cog, EllipsisVertical, Info, LockKeyholeOpen, Package, Pin, PinOff, SquarePen, SquareUser, Timer, TimerOff, Trash2, Wallet } from 'lucide-react'
-import { useState } from 'react'
 import { toast } from 'sonner'
 import { API_URL } from '@/dashboard/constants/api-url.cont'
 import { useGlobalAlertDialog } from '@/dashboard/context-providers/alert-dialog.provider'
@@ -12,12 +11,22 @@ import { AccountStatus } from '../../account-status'
 import { Button } from '../../ui/button'
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '../../ui/card'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../../ui/dropdown-menu'
-import { PagesAccountIndexDialogEdit } from './dialogs/edit-account-dialog'
-import { PagesAccountIndexDialogEditModifier } from './dialogs/edit-account-modifier-dialog'
-import { PagesAccountIndexDialogFreeze } from './dialogs/freeze-account-dialog'
-import { PagesAccountIndexDialogProfile } from './dialogs/profile-dialog'
 
-export function AccountCard({ account }: { account: Account }) {
+export function AccountCard({
+  account,
+  onEditClick,
+  onModifierClick,
+  onFreezeClick,
+  onProfileClick,
+  onExpenseClick,
+}: {
+  account: Account
+  onEditClick: () => void
+  onModifierClick: () => void
+  onFreezeClick: () => void
+  onProfileClick: () => void
+  onExpenseClick: () => void
+}) {
   const auth = useAuth()
   const accountService = AccountServiceGenerator(
     API_URL,
@@ -26,11 +35,6 @@ export function AccountCard({ account }: { account: Account }) {
   )
   const queryClient = useQueryClient()
   const { showAlertDialog, hideAlertDialog } = useGlobalAlertDialog()
-
-  const [dialogAccountEditOpen, setDialogAccountEditOpen] = useState(false)
-  const [dialogAccountModifierOpen, setDialogAccountModifierOpen] = useState(false)
-  const [dialogFreezeOpen, setDialogFreezeOpen] = useState(false)
-  const [dialogProfileDetailOpen, setDialogProfileDetailOpen] = useState(false)
 
   const pinAccountMutation = useMutation({
     mutationFn: (payload: { accountId: string, pinned: boolean }) =>
@@ -162,7 +166,7 @@ export function AccountCard({ account }: { account: Account }) {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="center">
                 <DropdownMenuItem
-                  onSelect={() => { setDialogAccountEditOpen(true) }}
+                  onSelect={onEditClick}
                 >
                   <span>
                     <SquarePen />
@@ -171,7 +175,7 @@ export function AccountCard({ account }: { account: Account }) {
                   Update
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onSelect={() => { setDialogAccountModifierOpen(true) }}
+                  onSelect={onModifierClick}
                 >
                   <span>
                     <Cog />
@@ -202,7 +206,7 @@ export function AccountCard({ account }: { account: Account }) {
                 {!account.freeze_until
                   ? (
                       <DropdownMenuItem
-                        onSelect={() => { setDialogFreezeOpen(true) }}
+                        onSelect={onFreezeClick}
                       >
                         <span>
                           <TimerOff />
@@ -312,25 +316,26 @@ export function AccountCard({ account }: { account: Account }) {
           </div>
           <Button
             variant="outline"
-            onClick={() => { setDialogProfileDetailOpen(true) }}
+            onClick={onProfileClick}
             className="w-full cursor-pointer"
           >
             <SquareUser className="size-4" />
             {' '}
             Profil
             {' '}
-            {`( ${account.profile.length || 0} )`}
+            {`( ${account.profile?.length ?? account.profile_count ?? 0} )`}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={onExpenseClick}
+            className="w-full cursor-pointer"
+          >
+            <Wallet className="size-4" />
+            {' '}
+            Expense
           </Button>
         </CardContent>
       </Card>
-      {/* Edit Account Dialog */}
-      <PagesAccountIndexDialogEdit open={dialogAccountEditOpen} onOpenChange={setDialogAccountEditOpen} selectedAccount={account} />
-      {/* Edit Modifier Dialog */}
-      <PagesAccountIndexDialogEditModifier open={dialogAccountModifierOpen} onOpenChange={setDialogAccountModifierOpen} selectedAccount={account} />
-      {/* Account Freeze Dialog */}
-      <PagesAccountIndexDialogFreeze open={dialogFreezeOpen} onOpenChange={setDialogFreezeOpen} selectedAccount={account} />
-      {/* Profile Detail Dialog */}
-      <PagesAccountIndexDialogProfile open={dialogProfileDetailOpen} onOpenChange={setDialogProfileDetailOpen} selectedAccount={account} />
     </>
   )
 }

@@ -4,7 +4,9 @@ import {
   ACCOUNT_USER_REPOSITORY,
   PRODUCT_VARIANT_REPOSITORY,
   TRANSACTION_ITEM_REPOSITORY,
+  TRANSACTION_ITEM_TS_REPOSITORY,
   TRANSACTION_REPOSITORY,
+  TRANSACTION_TS_REPOSITORY,
 } from 'src/constants/database.const';
 import { AccountProfile } from 'src/database/models/account-profile.model';
 import {
@@ -15,10 +17,12 @@ import { Account } from 'src/database/models/account.model';
 import { Email } from 'src/database/models/email.model';
 import { ProductVariant } from 'src/database/models/product-variant.model';
 import { Product } from 'src/database/models/product.model';
+import { TransactionItemTS, TransactionItemTSCreationAttributes } from 'src/database/models/transaction-item-ts.model';
 import {
   TransactionItem,
   TransactionItemCreationAttributes,
 } from 'src/database/models/transaction-item.model';
+import { TransactionTS } from 'src/database/models/transaction-ts.model';
 import {
   Transaction,
   TransactionAttributes,
@@ -49,6 +53,10 @@ export class TransactionService {
     private readonly accountUserRepository: typeof AccountUser,
     @Inject(PRODUCT_VARIANT_REPOSITORY)
     private readonly productVariantRepository: typeof ProductVariant,
+    @Inject(TRANSACTION_TS_REPOSITORY)
+    private readonly transactionTSRepository: typeof TransactionTS,
+    @Inject(TRANSACTION_ITEM_TS_REPOSITORY)
+    private readonly transactionItemTSRepository: typeof TransactionItemTS,
   ) {}
 
   async findAll(
@@ -273,6 +281,7 @@ export class TransactionService {
 
       const transactionId = id || this.snowflakeIdProvider.generateId();
       const transactionItems: TransactionItemCreationAttributes[] = [];
+      const transactionTSItems: TransactionItemTSCreationAttributes[] = [];
       const generatedAccountUser: AccountUserAttributes[] = [];
 
       for (const item of items) {
@@ -282,15 +291,26 @@ export class TransactionService {
             {
               name: transactionData.customer,
               product_variant_id: item.product_variant_id,
+              price: item.price,
               account_profile_id: item.account_profile_id,
             },
             tx,
           );
 
           const itemName = `${accountUser.dataValues.account.product_variant.product.name} ${accountUser.dataValues.account.product_variant.name}`;
+          const itemPrice = item.price ? String(item.price) : String(accountUser.dataValues.account.product_variant.base_price);
 
           transactionItems.push({
             name: itemName,
+            transaction_id: transactionId,
+            account_user_id: accountUser.id,
+          });
+
+          transactionTSItems.push({
+            price: itemPrice as any,
+            account_id: accountUser.dataValues.account_id,
+            product_id: accountUser.dataValues.account.product_variant.product_id,
+            product_variant_id: accountUser.dataValues.account.product_variant_id,
             transaction_id: transactionId,
             account_user_id: accountUser.id,
           });
@@ -346,16 +366,21 @@ export class TransactionService {
         throw new NotFoundException('tidak ada item transaksi yang dibuat');
       }
 
+      const total_price = transactionTSItems.reduce((v, c) => v + Number.parseInt(c.price), 0);
       await this.transactionRepository.create(
-        { id: transactionId, ...transactionData },
+        { id: transactionId, ...transactionData, total_price },
         {
           transaction: tx,
         },
       );
 
+      await this.transactionTSRepository.create({ id: transactionId, ...transactionData, total_price }, { transaction: tx });
+
       await this.transactionItemRepository.bulkCreate(transactionItems, {
         transaction: tx,
       });
+
+      await this.transactionItemTSRepository.bulkCreate(transactionTSItems, { transaction: tx });
 
       const newTransaction = await this.transactionRepository.findOne({
         where: { id: transactionId },

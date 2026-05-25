@@ -1,7 +1,5 @@
 import type { AccountSearchFilter } from '@/dashboard/components/pages/account-index/account-search'
-import type {
-  AccountFilter,
-} from '@/dashboard/services/account.service'
+import type { AccountFilter } from '@/dashboard/services/account.service'
 import type { OrderByDirection } from '@/dashboard/types/order-by.type'
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
@@ -9,12 +7,17 @@ import {
   Plus,
   UserPlus,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { NoData } from '@/dashboard/components/no-data'
 import { AccountCard } from '@/dashboard/components/pages/account-index/account-card'
 import { PagesAccountIndexCount } from '@/dashboard/components/pages/account-index/account-count'
 import { AccountFilterTab } from '@/dashboard/components/pages/account-index/account-filter-tab'
 import { PagesAccountIndexSearch } from '@/dashboard/components/pages/account-index/account-search'
+import { PagesAccountIndexDialogEdit } from '@/dashboard/components/pages/account-index/dialogs/edit-account-dialog'
+import { PagesAccountIndexDialogEditModifier } from '@/dashboard/components/pages/account-index/dialogs/edit-account-modifier-dialog'
+import { PagesAccountIndexDialogExpense } from '@/dashboard/components/pages/account-index/dialogs/expense-dialog'
+import { PagesAccountIndexDialogFreeze } from '@/dashboard/components/pages/account-index/dialogs/freeze-account-dialog'
+import { PagesAccountIndexDialogProfile } from '@/dashboard/components/pages/account-index/dialogs/profile-dialog'
 import { PagesAccountIndexDialogUserCreate } from '@/dashboard/components/pages/account-index/dialogs/user-create-dialog'
 import { Pagination } from '@/dashboard/components/pagination'
 import { Button } from '@/dashboard/components/ui/button'
@@ -59,11 +62,24 @@ function RouteComponent() {
   const [dialogCreateUserOpen, setDialogCreateUserOpen]
     = useState<boolean>(false)
 
+  const [selectedAccountId, setSelectedAccountId] = useState<string | undefined>(undefined)
+  const [dialogAccountEditOpen, setDialogAccountEditOpen] = useState<boolean>(false)
+  const [dialogAccountModifierOpen, setDialogAccountModifierOpen] = useState<boolean>(false)
+  const [dialogFreezeOpen, setDialogFreezeOpen] = useState<boolean>(false)
+  const [dialogProfileDetailOpen, setDialogProfileDetailOpen] = useState<boolean>(false)
+  const [dialogExpenseOpen, setDialogExpenseOpen] = useState<boolean>(false)
+
   const { data: accounts, isLoading: isFetchAccountLoading } = useQuery({
     queryKey: ['account', searchParam],
     queryFn: ({ signal }) =>
       accountService.getAllAccount({ ...searchParam, signal }),
   })
+
+  const selectedAccount = useMemo(() => {
+    if (!selectedAccountId || !accounts?.items)
+      return undefined
+    return accounts.items.find(acc => acc.id === selectedAccountId)
+  }, [accounts?.items, selectedAccountId])
 
   const handleSearchChange = (searchFilter: AccountSearchFilter) => {
     setFilter({ ...filter, ...searchFilter })
@@ -170,7 +186,30 @@ function RouteComponent() {
                   </div>
                   <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
                     {accounts.items.map(account => (
-                      <AccountCard key={`account-${account.id}`} account={account}></AccountCard>
+                      <AccountCard
+                        key={`account-${account.id}`}
+                        account={account}
+                        onEditClick={() => {
+                          setSelectedAccountId(account.id)
+                          setDialogAccountEditOpen(true)
+                        }}
+                        onModifierClick={() => {
+                          setSelectedAccountId(account.id)
+                          setDialogAccountModifierOpen(true)
+                        }}
+                        onFreezeClick={() => {
+                          setSelectedAccountId(account.id)
+                          setDialogFreezeOpen(true)
+                        }}
+                        onProfileClick={() => {
+                          setSelectedAccountId(account.id)
+                          setDialogProfileDetailOpen(true)
+                        }}
+                        onExpenseClick={() => {
+                          setSelectedAccountId(account.id)
+                          setDialogExpenseOpen(true)
+                        }}
+                      />
                     ))}
                   </div>
                   <div className="flex items-center justify-center">
@@ -188,6 +227,56 @@ function RouteComponent() {
       </div>
       {/* Create Account User Dialog */}
       <PagesAccountIndexDialogUserCreate open={dialogCreateUserOpen} onOpenChange={setDialogCreateUserOpen} />
+      {/* Edit Account Dialog */}
+      <PagesAccountIndexDialogEdit
+        open={dialogAccountEditOpen}
+        onOpenChange={(open) => {
+          setDialogAccountEditOpen(open)
+          if (!open)
+            setSelectedAccountId(undefined)
+        }}
+        selectedAccount={selectedAccount}
+      />
+      {/* Edit Modifier Dialog */}
+      <PagesAccountIndexDialogEditModifier
+        open={dialogAccountModifierOpen}
+        onOpenChange={(open) => {
+          setDialogAccountModifierOpen(open)
+          if (!open)
+            setSelectedAccountId(undefined)
+        }}
+        selectedAccount={selectedAccount}
+      />
+      {/* Account Freeze Dialog */}
+      <PagesAccountIndexDialogFreeze
+        open={dialogFreezeOpen}
+        onOpenChange={(open) => {
+          setDialogFreezeOpen(open)
+          if (!open)
+            setSelectedAccountId(undefined)
+        }}
+        selectedAccount={selectedAccount}
+      />
+      {/* Profile Detail Dialog */}
+      <PagesAccountIndexDialogProfile
+        open={dialogProfileDetailOpen}
+        onOpenChange={(open) => {
+          setDialogProfileDetailOpen(open)
+          if (!open)
+            setSelectedAccountId(undefined)
+        }}
+        selectedAccount={selectedAccount}
+      />
+      {/* Expense Dialog */}
+      <PagesAccountIndexDialogExpense
+        open={dialogExpenseOpen}
+        onOpenChange={(open) => {
+          setDialogExpenseOpen(open)
+          if (!open)
+            setSelectedAccountId(undefined)
+        }}
+        selectedAccount={selectedAccount}
+      />
     </>
   )
 }

@@ -65,9 +65,12 @@ export interface Account {
   product_variant_id: string
   email: Email
   product_variant: ProductVariant
-  profile: Array<AccountProfile>
+  profile?: Array<AccountProfile>
   modifier?: Array<AccountModifier>
   pinned?: boolean
+  profile_count?: number
+  max_user?: number
+  user_count?: number
 }
 
 export interface CreateAccountProfilePayload {
@@ -97,7 +100,6 @@ export interface CreateAccountPayload {
 
 export interface CreateAccountUserTransaction {
   platform: string
-  total_price: number
 }
 
 export interface CreateAccountUserPayload {
@@ -105,6 +107,7 @@ export interface CreateAccountUserPayload {
   product_variant_id: string
   status?: string
   account_profile_id?: string
+  price?: string
   transaction?: CreateAccountUserTransaction
   expired_at?: Date
 }
@@ -166,7 +169,7 @@ export function AccountServiceGenerator(
       accessToken,
       tenantId,
       '/account',
-      params,
+      { ...params, lite: 'true' },
     )
     if (!response.ok) {
       const errorData = await parseApiResponse(response)
@@ -191,20 +194,22 @@ export function AccountServiceGenerator(
           freeze_until: account.freeze_until
             ? new Date(account.freeze_until)
             : undefined,
-          profile: account.profile.map(profile => ({
-            ...profile,
-            metadata: convertStringToMetadataObject(profile.metadata as any),
-            user: profile.user
-              ? profile.user.map(user => ({
-                  ...user,
-                  created_at: new Date(user.created_at),
-                  updated_at: new Date(user.updated_at),
-                  expired_at: user.expired_at
-                    ? new Date(user.expired_at)
-                    : undefined,
-                }))
-              : undefined,
-          })),
+          profile: account.profile
+            ? account.profile.map(profile => ({
+                ...profile,
+                metadata: convertStringToMetadataObject(profile.metadata as any),
+                user: profile.user
+                  ? profile.user.map(user => ({
+                      ...user,
+                      created_at: new Date(user.created_at),
+                      updated_at: new Date(user.updated_at),
+                      expired_at: user.expired_at
+                        ? new Date(user.expired_at)
+                        : undefined,
+                    }))
+                  : undefined,
+              }))
+            : undefined,
           modifier: account.modifier?.length
             ? account.modifier.map(modifier => ({
                 ...modifier,

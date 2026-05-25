@@ -18,6 +18,19 @@ export interface MigrationContext {
   schema: string;
 }
 
+async function ensureTimescaleDB() {
+  const [results] = await sequelize.query(
+    'SELECT 1 FROM pg_extension WHERE extname = \'timescaledb\' LIMIT 1;',
+  );
+
+  if (results.length === 0) {
+    throw new Error(
+      '❌ DATABASE ERROR: TimescaleDB extension is not installed. This application requires TimescaleDB.',
+    );
+  }
+  console.log('✅ Database check: TimescaleDB is verified.');
+}
+
 function createUmzug(schema: string, folder: string) {
   return new Umzug({
     migrations: { glob: path.join(__dirname, folder, '*.{ts,js}') },
@@ -36,6 +49,8 @@ function createUmzug(schema: string, folder: string) {
 
 export async function migrateUp() {
   try {
+    await ensureTimescaleDB();
+
     console.log('▶ Running master migrations...');
     const masterUmzug = createUmzug('master', './master');
     await masterUmzug.up();
@@ -69,6 +84,8 @@ export async function migrateUp() {
 
 export async function migrateDown() {
   try {
+    await ensureTimescaleDB();
+
     console.log('▶ Running master reverse migrations...');
     const masterUmzug = createUmzug('master', './master');
     await masterUmzug.down({ step: 99 });

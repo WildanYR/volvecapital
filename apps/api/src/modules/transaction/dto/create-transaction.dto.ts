@@ -14,6 +14,10 @@ class CreateTransactionItemDto {
   product_variant_id: string;
 
   @IsOptional()
+  @IsNumber()
+  price?: number;
+
+  @IsOptional()
   @IsString()
   account_profile_id?: string;
 }
@@ -30,10 +34,6 @@ export class CreateTransactionDto {
   @IsNotEmpty()
   @IsString()
   platform: string;
-
-  @IsNotEmpty()
-  @IsNumber()
-  total_price: number;
 
   @IsNotEmpty()
   @IsArray()

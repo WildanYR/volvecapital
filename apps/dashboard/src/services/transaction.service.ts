@@ -60,12 +60,12 @@ export interface CreateTransactionResponse {
 
 interface CreateTransactionItemPayload {
   product_variant_id: string
+  price?: string
 }
 
 export interface CreateTransactionPayload {
   customer: string
   platform: string
-  total_price: number
   items: Array<CreateTransactionItemPayload>
 }
 

@@ -1,5 +1,5 @@
-import { IsOptional, IsString } from "class-validator";
-import { BaseGetAllUrlQueryDto } from "src/modules/utility/dto/base-get-all-url-query.dto";
+import { IsOptional, IsString } from 'class-validator';
+import { BaseGetAllUrlQueryDto } from 'src/modules/utility/dto/base-get-all-url-query.dto';
 
 export class GetAllAccountQueryUrlDto extends BaseGetAllUrlQueryDto {
   @IsOptional()
@@ -29,4 +29,8 @@ export class GetAllAccountQueryUrlDto extends BaseGetAllUrlQueryDto {
   @IsOptional()
   @IsString()
   product_id: string;
+
+  @IsOptional()
+  @IsString()
+  lite: string;
 }

@@ -107,6 +107,8 @@ export class AccountService {
           })
         : [];
 
+      const isLite = filter?.lite === 'true';
+
       const includeOptions = [
         {
           model: Email,
@@ -128,38 +130,76 @@ export class AccountService {
             },
           ],
         },
-        {
-          model: AccountProfile,
-          as: 'profile',
-          required: !!filter?.user,
-          include: [
-            {
-              model: AccountUser,
-              as: 'user',
-              where: {
-                status: 'active',
-                ...(filter?.user && {
-                  name: { [Op.iLike]: `%${filter.user}%` },
-                }),
-              },
-              required: !!filter?.user,
-            },
-          ],
-        },
-        {
-          model: AccountModifier,
-          as: 'modifier',
-          where: { enabled: true },
-          required: false,
-        },
       ];
 
+      if (!isLite) {
+        includeOptions.push(
+          {
+            model: AccountProfile,
+            as: 'profile',
+            required: !!filter?.user,
+            include: [
+              {
+                model: AccountUser,
+                as: 'user',
+                where: {
+                  status: 'active',
+                  ...(filter?.user && {
+                    name: { [Op.iLike]: `%${filter.user}%` },
+                  }),
+                },
+                required: !!filter?.user,
+              },
+            ],
+          } as any,
+          {
+            model: AccountModifier,
+            as: 'modifier',
+            where: { enabled: true },
+            required: false,
+          } as any,
+        );
+
+        orderOptions.push([{ model: AccountProfile, as: 'profile' }, 'name', 'ASC']);
+      }
+
+      const attributes: any = { include: [] };
+      if (isLite) {
+        attributes.include.push(
+          [
+            this.accountRepository.sequelize!.literal(`(
+              SELECT COUNT(*)
+              FROM account_profile AS profile
+              WHERE profile.account_id = "Account".id
+            )`),
+            'profile_count',
+          ],
+          [
+            this.accountRepository.sequelize!.literal(`(
+              SELECT COALESCE(SUM(max_user), 0)
+              FROM account_profile AS profile
+              WHERE profile.account_id = "Account".id
+            )`),
+            'max_user',
+          ],
+          [
+            this.accountRepository.sequelize!.literal(`(
+              SELECT COUNT(*)
+              FROM account_user AS "user"
+              INNER JOIN account_profile AS profile ON profile.id = "user".account_profile_id
+              WHERE profile.account_id = "Account".id AND "user".status = 'active'
+            )`),
+            'user_count',
+          ],
+        );
+      }
+
       const accounts = await this.accountRepository.findAll({
+        attributes: attributes.include.length ? attributes : undefined,
         where: whereOptions,
         order: [
           ['pinned', 'DESC'],
           ...orderOptions,
-          [{ model: AccountProfile, as: 'profile' }, 'name', 'ASC'],
         ],
         limit,
         offset,

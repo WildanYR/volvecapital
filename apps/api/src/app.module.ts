@@ -18,6 +18,7 @@ import { AccountModule } from './modules/account/account.module';
 import { CronModule } from './modules/cron/cron.module';
 import { EmailMessageModule } from './modules/email-message/email-message.module';
 import { EmailModule } from './modules/email/email.module';
+import { ExpenseModule } from './modules/expense/expense.module';
 import { AppLoggerModule } from './modules/logger/logger.module';
 import { PlatformProductModule } from './modules/platform-product/platform-product.module';
 import { ProductVariantModule } from './modules/product-variant/product-variant.module';
@@ -65,6 +66,7 @@ import { UtilityModule } from './modules/utility/utility.module';
     ProductVariantModule,
     PlatformProductModule,
     AccountModule,
+    ExpenseModule,
     AccountProfileModule,
     AccountUserModule,
     TransactionModule,

@@ -10,6 +10,7 @@ import { Account } from './models/account.model';
 import { EmailMessage } from './models/email-message.model';
 import { EmailSubject } from './models/email-subject.model';
 import { Email } from './models/email.model';
+import { Expense } from './models/expense.model';
 import { PeakHourStatistics } from './models/peak-hour-statistics.model';
 import { PlatformProduct } from './models/platform-product.model';
 import { PlatformStatistics } from './models/platform-statistics.model';
@@ -20,7 +21,9 @@ import { RevenueStatistics } from './models/revenue-statistics.model';
 import { Syslog } from './models/syslog.model';
 import { TaskQueue } from './models/task-queue.model';
 import { Tenant } from './models/tenant.model';
+import { TransactionItemTS } from './models/transaction-item-ts.model';
 import { TransactionItem } from './models/transaction-item.model';
+import { TransactionTS } from './models/transaction-ts.model';
 import { Transaction as TransactionModel } from './models/transaction.model';
 
 @Injectable()
@@ -75,6 +78,9 @@ export class PostgresProvider {
         PlatformStatistics,
         EmailSubject,
         Syslog,
+        TransactionTS,
+        TransactionItemTS,
+        Expense,
       ]);
     }
     else {

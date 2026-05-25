@@ -6,12 +6,12 @@ import { Button } from '../ui/button'
 
 const TransactionItemFormSchema = z.object({
   product_variant_id: z.string().nonempty(),
+  price: z.string(),
 })
 
 export const TransactionFormSchema = z.object({
   customer: z.string().nonempty(),
   platform: z.string().nonempty(),
-  total_price: z.string().nonempty(),
   items: z.array(TransactionItemFormSchema).min(1),
 })
 
@@ -31,10 +31,10 @@ export function TransactionCreateForm({
     defaultValues: {
       customer: '',
       platform: '',
-      total_price: '',
       items: [
         {
           product_variant_id: '',
+          price: '',
         },
       ],
     } as TransactionFormSubmitData,
@@ -75,17 +75,6 @@ export function TransactionCreateForm({
               />
             )}
           />
-          <form.AppField
-            name="total_price"
-            children={field => (
-              <field.TextWithOptions
-                id="total-price"
-                label="Total Harga"
-                type="number"
-                placeholder="Masukkan total harga transaksi..."
-              />
-            )}
-          />
           <form.AppField name="items" mode="array">
             {field => (
               <div className="flex flex-col gap-4">
@@ -99,6 +88,18 @@ export function TransactionCreateForm({
                       Item
                       {i + 1}
                     </p>
+                    <form.AppField
+                      name={`items[${i}].price`}
+                      children={field => (
+                        <field.TextWithOptions
+                          id={`variant-price-${i}`}
+                          itemStorageName="total-price"
+                          label="Harga (opsional)"
+                          type="number"
+                          placeholder="Jika kosong maka pakai harga dasar varian produk..."
+                        />
+                      )}
+                    />
                     <Button
                       type="button"
                       variant="outline"
@@ -128,6 +129,7 @@ export function TransactionCreateForm({
                   onClick={() =>
                     field.pushValue({
                       product_variant_id: '',
+                      price: '',
                     })}
                   className="w-full cursor-pointer"
                 >

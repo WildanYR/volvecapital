@@ -17,7 +17,9 @@ import {
   ACCOUNT_USER_REPOSITORY,
   PRODUCT_VARIANT_REPOSITORY,
   TRANSACTION_ITEM_REPOSITORY,
+  TRANSACTION_ITEM_TS_REPOSITORY,
   TRANSACTION_REPOSITORY,
+  TRANSACTION_TS_REPOSITORY,
 } from 'src/constants/database.const';
 import { NETFLIX_RESET_PASSWORD } from 'src/constants/task.const';
 import { AccountModifier } from 'src/database/models/account-modifier.model';
@@ -27,7 +29,9 @@ import { Account } from 'src/database/models/account.model';
 import { Email } from 'src/database/models/email.model';
 import { ProductVariant } from 'src/database/models/product-variant.model';
 import { Product } from 'src/database/models/product.model';
+import { TransactionItemTS } from 'src/database/models/transaction-item-ts.model';
 import { TransactionItem } from 'src/database/models/transaction-item.model';
+import { TransactionTS } from 'src/database/models/transaction-ts.model';
 import { Transaction } from 'src/database/models/transaction.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
 import { NetflixResetPasswordMetadata } from '../account/types/netflix-reset-password-metadata.type';
@@ -62,7 +66,11 @@ export class AccountUserService {
     @Inject(TRANSACTION_ITEM_REPOSITORY)
     private readonly transactionItemRepository: typeof TransactionItem,
     @Inject(PRODUCT_VARIANT_REPOSITORY)
-    private readonly productVariantRepository: typeof ProductVariant
+    private readonly productVariantRepository: typeof ProductVariant,
+    @Inject(TRANSACTION_TS_REPOSITORY)
+    private readonly transactionTSRepository: typeof TransactionTS,
+    @Inject(TRANSACTION_ITEM_TS_REPOSITORY)
+    private readonly transactionItemTSRepository: typeof TransactionItemTS,
   ) {}
 
   async findAll(
@@ -168,6 +176,7 @@ export class AccountUserService {
     const {
       transaction: userTransaction,
       product_variant_id,
+      price,
       account_profile_id,
       ...accountUserData
     } = createAccountUserDto;
@@ -269,6 +278,7 @@ export class AccountUserService {
               WHEN cs.current_user_count > 0 THEN 0
               ELSE 1
             END ASC,
+            (cs.max_user - cs.current_user_count) ASC,
             cs.profile_id ASC
           LIMIT 1;`;
         const results = (await this.postgresProvider.rawQuery(sqlQuery, {
@@ -332,13 +342,13 @@ export class AccountUserService {
       if (userTransaction) {
         const accountWithProduct = await this.accountRepository.findOne({
           where: { id: userProfile.account_id },
-          attributes: ['id'],
+          attributes: ['id', 'product_variant_id'],
           include: [
             {
               model: ProductVariant,
               as: 'product_variant',
               required: true,
-              attributes: ['id', 'name'],
+              attributes: ['id', 'name', 'base_price', 'product_id'],
               include: [
                 {
                   model: Product,
@@ -361,13 +371,24 @@ export class AccountUserService {
         }
 
         const transactionId = this.snowflakeIdProvider.generateId();
+        const itemPrice = price ? String(price) : String(accountWithProduct.product_variant.base_price);
         const newUserTransaction = await this.transactionRepository.create(
           {
             id: transactionId,
             customer: accountUserData.name,
             ...userTransaction,
+            total_price: itemPrice as any,
           },
           { transaction },
+        );
+        const newTransactionTS = await this.transactionTSRepository.create(
+          {
+            id: transactionId,
+            customer: accountUserData.name,
+            platform: userTransaction.platform,
+            total_price: itemPrice as any,
+          },
+          { transaction }
         );
 
         const productName = `${accountWithProduct.product_variant.product.name} ${accountWithProduct.product_variant.name}`;
@@ -378,6 +399,17 @@ export class AccountUserService {
             account_user_id: accountUser.id,
           },
           { transaction },
+        );
+        await this.transactionItemTSRepository.create(
+          {
+            price: itemPrice,
+            transaction_id: newTransactionTS.id,
+            account_id: accountWithProduct.id,
+            account_user_id: accountUser.id,
+            product_id: accountWithProduct.product_variant.product_id,
+            product_variant_id: accountWithProduct.product_variant_id,
+          },
+          { transaction }
         );
       }
 
