@@ -16,6 +16,38 @@ async function check() {
     password: process.env.REDIS_PASSWORD || undefined,
   });
 
+  // Jika ada argumen (email), cari task spesifik untuk akun itu
+  const searchEmail = process.argv[2];
+  if (searchEmail) {
+    console.log(`\n🔎 Mencari task untuk akun: ${searchEmail}`);
+    const [rows] = await sequelize.query(`
+      SELECT id, subject_id, context, status, execute_at, error_message, payload
+      FROM master.task_queue
+      WHERE payload::text ILIKE :email
+      ORDER BY execute_at ASC
+    `, { replacements: { email: `%${searchEmail}%` } });
+
+    if (rows.length === 0) {
+      console.log(`❌ TIDAK ADA task ditemukan untuk email: ${searchEmail}`);
+      console.log(`   Kemungkinan: task belum dibuat, atau sudah COMPLETED/FAILED`);
+    } else {
+      console.log(`✅ Ditemukan ${rows.length} task:\n`);
+      rows.forEach((r, i) => {
+        const execTime = new Date(r.execute_at);
+        const now = new Date();
+        const wibTime = execTime.toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
+        const flag = execTime <= now ? "🔴 SUDAH LEWAT" : "🟡 BELUM WAKTUNYA";
+        console.log(`  ${i+1}. Context: ${r.context}`);
+        console.log(`     Status: ${r.status}`);
+        console.log(`     Jadwal: ${wibTime} WIB -> ${flag}`);
+        if (r.error_message) console.log(`     Error: ${r.error_message}`);
+        console.log(``);
+      });
+    }
+
+    process.exit(0);
+  }
+
   try {
     const now = new Date();
     console.log(`\n🕒 Waktu Sekarang (Server): ${now.toLocaleString()}`);
