@@ -67,11 +67,15 @@ export class TaskWorkerService {
     try {
       await this.postgresProvider.setSchema('master', transaction);
 
-      // Ambil tugas yang belum selesai dari DB
-      // Ini memastikan task lama yang tertunda tetap dieksekusi saat server restart
+      // Ambil tugas yang belum selesai dari DB:
+      // - Task yang BELUM waktunya (future) → harus selalu dimuat agar terjadwal
+      // - Task yang baru saja terlewat maks 1 jam → untuk recovery saat VPS restart singkat
+      // - Task lama (> 1 jam yang lalu) → TIDAK dimuat agar tidak spam eksekusi massal
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
       const pendingTasks = await this.taskQueueRepository.findAll({
         where: {
           status: ['QUEUED', 'DISPATCHED'],
+          execute_at: { [Op.gte]: oneHourAgo },
         },
         transaction,
       });
