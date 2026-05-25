@@ -63,7 +63,7 @@ export default function TutorialListPage() {
                 className="group h-full"
               >
                 <Link href={`/tutorial/${tutorial.slug}`} className="block h-full">
-                  <div className="relative h-full bg-background rounded-[40px] overflow-hidden border border-border shadow-xl shadow-slate-200/50 group-hover:border-primary/30 group-hover:-translate-y-2 transition-all duration-500 flex flex-col">
+                  <div className="relative h-full bg-background rounded-[40px] overflow-hidden border border-border group-hover:border-primary/30 group-hover:-translate-y-2 transition-all duration-500 flex flex-col">
                     <div className="aspect-[16/10] overflow-hidden relative bg-muted/50">
                       {tutorial.thumbnail_url ? (
                         <img 
@@ -81,7 +81,7 @@ export default function TutorialListPage() {
                     
                     <div className="p-10 flex-grow flex flex-col">
                       <div className="flex items-center gap-3 mb-6">
-                        <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-black uppercase tracking-widest bg-muted/50 px-3 py-1.5 rounded-full border border-border">
+                        <div className="flex items-center gap-1.5 text-[10px] text-primary font-black uppercase tracking-widest bg-primary/10 px-3 py-1.5 rounded-full border border-primary/20 shadow-sm">
                           <Clock className="size-3" />
                           {new Date(tutorial.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
                         </div>

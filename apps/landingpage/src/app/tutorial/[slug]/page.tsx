@@ -116,7 +116,7 @@ export default function TutorialDetailPage({ params }: { params: Promise<{ slug:
       <div className="container mx-auto max-w-4xl px-6 mb-20">
         <Link 
           href="/tutorial" 
-          className="inline-flex items-center gap-2 text-sm text-black hover:text-primary transition-colors mb-8 group"
+          className="inline-flex items-center gap-2 text-sm text-foreground hover:text-primary transition-colors mb-8 group"
         >
           <div className="size-8 rounded-full bg-background flex items-center justify-center group-hover:bg-primary/10 transition-colors shadow-sm">
             <ArrowLeft className="size-4" />
@@ -148,7 +148,7 @@ export default function TutorialDetailPage({ params }: { params: Promise<{ slug:
             transition={{ delay: index * 0.1 }}
             className="group"
           >
-            <div className="bg-background rounded-[40px] overflow-hidden border border-border shadow-xl shadow-slate-200/50 hover:border-primary/30 transition-all duration-500">
+            <div className="bg-background rounded-[40px] overflow-hidden border border-border hover:border-primary/30 transition-all duration-500">
               <div className="flex flex-col lg:flex-row">
                 {/* Left: Image (Clickable) */}
                 <div 
@@ -229,7 +229,7 @@ export default function TutorialDetailPage({ params }: { params: Promise<{ slug:
           initial={{ opacity: 0, scale: 0.9 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
-          className="bg-background rounded-[40px] p-10 md:p-16 border border-border shadow-2xl shadow-slate-200/50 flex flex-col md:flex-row items-center justify-between gap-10"
+          className="bg-background rounded-[40px] p-10 md:p-16 border border-border flex flex-col md:flex-row items-center justify-between gap-10"
         >
           <div className="space-y-3 text-center md:text-left">
             <h3 className="text-3xl font-black text-foreground uppercase italic">Sudah Selesai?</h3>

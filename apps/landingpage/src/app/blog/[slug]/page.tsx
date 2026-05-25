@@ -96,7 +96,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
       <div className="container mx-auto max-w-4xl px-6 mb-20">
         <Link 
           href="/blog" 
-          className="inline-flex items-center gap-2 text-sm text-black hover:text-primary transition-colors mb-8 group"
+          className="inline-flex items-center gap-2 text-sm text-foreground hover:text-primary transition-colors mb-8 group"
         >
           <div className="size-8 rounded-full bg-background flex items-center justify-center group-hover:bg-primary/10 transition-colors shadow-sm">
             <ArrowLeft className="size-4" />
@@ -109,9 +109,9 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
           animate={{ opacity: 1, y: 0 }}
         >
           <div className="flex flex-wrap items-center gap-4 mb-6">
-             <div className="flex items-center gap-2 px-3 py-1 bg-background rounded-full border border-border shadow-sm">
-                <Clock className="size-3 text-slate-400" />
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+             <div className="flex items-center gap-2 px-3 py-1 bg-primary/10 rounded-full border border-primary/20 shadow-sm">
+                <Clock className="size-3 text-primary" />
+                <span className="text-[10px] font-black text-primary uppercase tracking-widest">
                   {new Date(article.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
                 </span>
              </div>
@@ -123,9 +123,9 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
              )}
           </div>
           
-          <h1 className="text-4xl md:text-6xl font-black mb-8 text-foreground tracking-tight leading-tight uppercase italic">
+          <h1 className="text-xl md:text-xl font-black mb-8 text-foreground tracking-tight leading-tight uppercase italic">
             {article.title}
-          </h1>
+          </h1> 
           
           {article.thumbnail_url && (
             <div className="relative aspect-video rounded-[40px] overflow-hidden border border-border shadow-2xl mb-12">
@@ -147,7 +147,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="bg-background rounded-[40px] overflow-hidden border border-border shadow-xl shadow-slate-200/50 hover:border-primary/30 transition-all duration-500"
+            className="bg-background rounded-[40px] overflow-hidden border border-border hover:border-primary/30 transition-all duration-500"
           >
             <div className="flex flex-col lg:flex-row">
               {/* Image if available */}
