@@ -56,13 +56,14 @@ export class TaskWorkerService {
   }
 
   /**
-   * Recovery mechanism: saat API restart, Redis ZSET kosong.
+   * Recovery mechanism: saat API restart atau secara berkala,
    * Method ini membaca semua task yang belum selesai dari PostgreSQL
    * dan mendaftarkannya kembali ke Redis ZSET agar terjadwal dengan benar.
-   * CATATAN: Hanya reload task yang execute_at >= 5 menit yang lalu (buffer),
+   * CATATAN: Hanya reload task yang execute_at >= 1 jam yang lalu (buffer),
    * agar task lama yang sudah lewat tidak ikut dieksekusi ulang.
    */
-  private async reloadQueuedTasksToRedis() {
+  @Cron(CronExpression.EVERY_10_MINUTES)
+  async reloadQueuedTasksToRedis() {
     const transaction = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema('master', transaction);
