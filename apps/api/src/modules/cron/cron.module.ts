@@ -5,9 +5,10 @@ import { TransactionReportService } from './transaction-report.service';
 import { VoucherModule } from '../voucher/voucher.module';
 import { ExpiryReminderService } from './expiry-reminder.service';
 import { UtilityModule } from '../utility/utility.module';
+import { TaskQueueModule } from '../task-queue/task-queue.module';
 
 @Module({
-  imports: [VoucherModule, UtilityModule],
+  imports: [VoucherModule, UtilityModule, TaskQueueModule],
   providers: [CronService, TransactionReportService, LogTtlService, ExpiryReminderService],
 })
 export class CronModule {}

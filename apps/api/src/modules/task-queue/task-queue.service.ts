@@ -204,4 +204,43 @@ export class TaskQueueService {
       throw error;
     }
   }
+
+  async deleteExpiredTasks() {
+    const transaction = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema('master', transaction);
+
+      const fiveHoursAgo = new Date(Date.now() - 5 * 60 * 60 * 1000);
+      const expiredTasks = await this.taskQueueRepository.findAll({
+        where: {
+          status: ['QUEUED', 'DISPATCHED'],
+          execute_at: { [Op.lt]: fiveHoursAgo },
+        },
+        transaction,
+      });
+
+      if (!expiredTasks.length) {
+        await transaction.commit();
+        return;
+      }
+
+      const taskQueueIds = expiredTasks.map(t => t.id);
+      await this.taskQueueRepository.destroy({
+        where: { id: taskQueueIds },
+        transaction,
+      });
+
+      const redisPipeline = this.redisClient.pipeline();
+      for (const id of taskQueueIds) {
+        redisPipeline.zrem(ZSET_KEY, `${TASK_REFERENCE_KEY}:${id}`);
+      }
+      await redisPipeline.exec();
+
+      await transaction.commit();
+    }
+    catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
 }
