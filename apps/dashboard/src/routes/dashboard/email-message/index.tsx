@@ -198,6 +198,7 @@ function RouteComponent() {
                       <SelectItem value="NETFLIX_OTP">Netflix OTP</SelectItem>
                       <SelectItem value="DISNEY_OTP">Disney OTP</SelectItem>
                       <SelectItem value="NETFLIX_REQ_RESET_PASSWORD">Netflix Reset Link</SelectItem>
+                      <SelectItem value="NETFLIX_HOUSE_CHANGE">Netflix Update Household</SelectItem>
                       <SelectItem value="NETFLIX_GENERAL_NOTIFICATION">General Notification</SelectItem>
                     </SelectContent>
                   </Select>
@@ -254,6 +255,7 @@ function RouteComponent() {
                         s.context === 'NETFLIX_OTP' ? 'bg-blue-500/20 text-blue-400' :
                         s.context === 'DISNEY_OTP' ? 'bg-blue-500/20 text-blue-400' :
                         s.context === 'NETFLIX_REQ_RESET_PASSWORD' ? 'bg-purple-500/20 text-purple-400' :
+                        s.context === 'NETFLIX_HOUSE_CHANGE' ? 'bg-green-500/20 text-green-400' :
                         'bg-orange-500/20 text-orange-400'
                       }`}>
                         {s.context.replace('NETFLIX_', '').replace('_', ' ')}

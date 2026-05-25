@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { EMAIL_MESSAGE_REPOSITORY, EMAIL_SUBJECT_REPOSITORY } from 'src/constants/database.const';
-import { NETFLIX_OTP, NETFLIX_REQ_RESET_PASSWORD, DISNEY_OTP } from 'src/constants/email-subject.const';
+import { NETFLIX_OTP, NETFLIX_REQ_RESET_PASSWORD, DISNEY_OTP, NETFLIX_HOUSE_CHANGE } from 'src/constants/email-subject.const';
 import { EmailSubject } from 'src/database/models/email-subject.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
 import { AppLoggerService } from '../logger/logger.service';
@@ -59,9 +59,9 @@ export class EmailForwardService {
                 context = DISNEY_OTP;
               }
 
-              if (es.dataValues.context === NETFLIX_REQ_RESET_PASSWORD) {
+              if (es.dataValues.context === NETFLIX_REQ_RESET_PASSWORD || es.dataValues.context === NETFLIX_HOUSE_CHANGE) {
                 data = this.emailParser.extractNetflixResetLink(e.text);
-                context = NETFLIX_REQ_RESET_PASSWORD;
+                context = es.dataValues.context;
               }
 
               if (es.dataValues.context === 'NETFLIX_GENERAL_NOTIFICATION') {
