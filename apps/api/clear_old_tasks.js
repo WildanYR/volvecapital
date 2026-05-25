@@ -1,9 +1,15 @@
+require('dotenv').config();
 const { Sequelize } = require('sequelize');
 const Redis = require('ioredis');
 
 async function run() {
-  // Gunakan connection string yang sesuai dengan .env
-  const sequelize = new Sequelize('postgres://postgres:123456@localhost:5432/volvecapital', {
+  const dbUrl = process.env.DATABASE_URL;
+  if (!dbUrl) {
+    console.error("❌ DATABASE_URL tidak ditemukan di .env!");
+    process.exit(1);
+  }
+
+  const sequelize = new Sequelize(dbUrl, {
     logging: false
   });
   const redisClient = new Redis();
