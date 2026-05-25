@@ -185,6 +185,9 @@ export class Connector {
     this.eventBus.on('socket:bot-tv-login-success', (data: { taskId: string; accountId: string }) => {
       this.emitBotTvLoginSuccess(data.taskId, data.accountId);
     });
+    this.eventBus.on('socket:bot-tv-progress', (data: { taskId: string; accountId: string; message: string }) => {
+      this.emitBotTvProgress(data.taskId, data.accountId, data.message);
+    });
 
     this.logger.debug("Command handlers registered");
   }
@@ -214,6 +217,14 @@ export class Connector {
     if (!this.socket || !this.isConnected) return;
     this.socket.emit("bot-tv-login-success", { taskId, accountId });
     this.logger.info(`Emitted bot-tv-login-success for task ${taskId}`);
+  }
+
+  /**
+   * Emit bot-tv-progress event to the server
+   */
+  emitBotTvProgress(taskId: string, accountId: string, message: string): void {
+    if (!this.socket || !this.isConnected) return;
+    this.socket.emit("bot-tv-progress", { taskId, accountId, message });
   }
 
   /**

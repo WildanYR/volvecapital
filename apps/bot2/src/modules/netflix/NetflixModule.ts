@@ -1244,6 +1244,18 @@ export class NetflixModule extends BaseModule {
 
 
   /**
+   * Helper untuk log dan emit progress TV Login
+   */
+  private logTvProgress(task: Task, accountId: string, email: string, message: string) {
+    this.logger.info(`[LoginTV][${email}] ${message}`);
+    this.eventBus.emit('socket:bot-tv-progress', {
+      taskId: task.id,
+      accountId,
+      message,
+    });
+  }
+
+  /**
    * Login TV Flow
    */
   async loginTvFlow(task: Task): Promise<void> {
@@ -1251,114 +1263,158 @@ export class NetflixModule extends BaseModule {
     const { email, password, accountId } = payload;
     const contextName = sanitizeEmail(email);
 
-    this.logger.info(`[LoginTV][${email}] Memulai proses login TV...`);
+    this.logTvProgress(task, accountId, email, "Memulai proses login TV...");
 
     const context = await this.getOrCreateContext(contextName);
     const page = await context.newPage();
 
     try {
-      // 1. Navigasi ke TV2
+      // 1. Validasi Sesi Login di halaman /account
+      this.logTvProgress(task, accountId, email, "Memverifikasi sesi login di halaman akun...");
+      await page.goto("https://www.netflix.com/account");
+      await this.sleep(3000);
+
+      // 2. Deteksi status login
+      const loginState = await this.detectLoginState(page);
+      if (loginState === "not_logged_in") {
+        this.logTvProgress(task, accountId, email, "Belum login, mencoba login manual...");
+        const loginOk = await this.attemptManualLogin(page, email, password);
+        if (!loginOk) {
+          this.logger.warn(`[LoginTV][${email}] Login manual gagal, mencoba alur recovery session...`);
+          await this.handleSessionRecovery(page, task, email);
+          
+          // Verifikasi akhir apakah sesi sudah valid setelah recovery
+          await page.goto("https://www.netflix.com/account");
+          await this.sleep(3000);
+          const finalState = await this.detectLoginState(page);
+          if (finalState === "not_logged_in") {
+             this.eventBus.emit('socket:bot-tv-pin-error', {
+               taskId: task.id,
+               message: "Gagal login akun. Akun mungkin bermasalah/hold.",
+             });
+             throw new Error("Gagal mendapatkan sesi login valid.");
+          }
+        }
+      }
+
+      this.logTvProgress(task, accountId, email, "Sesi terbukti valid di /account. Redirect ke TV2...");
+      // 2b. Navigasi ke Halaman TV2
       await page.goto(TV_LOGIN_URL);
       await this.sleep(3000);
 
-      // 2. Cek apakah sudah di halaman PIN atau perlu login
-      const isLoginPage = page.url().includes(LOGIN_PATH);
-      if (isLoginPage) {
-        this.logger.info(`[LoginTV][${email}] Terdeteksi halaman login, mencoba login manual...`);
-        const loginOk = await this.attemptManualLogin(page, email, password);
-        if (!loginOk) {
-          this.logger.warn(`[LoginTV][${email}] Login manual gagal, mencoba alur recovery session...`);
-          await this.handleSessionRecovery(page, task, email);
-        }
-        await page.goto(TV_LOGIN_URL);
-        await this.sleep(3000);
-      }
-
       // 3. Tunggu elemen input PIN muncul
-      this.logger.info(`[LoginTV][${email}] Menunggu form PIN muncul di netflix.com/tv2...`);
+      this.logTvProgress(task, accountId, email, "Menunggu form PIN muncul di netflix.com/tv2...");
       await page.waitForSelector(TV_LOGIN_LOCATORS.PIN_INPUTS, { timeout: 30000 });
 
-      // 4. Beritahu Dashboard bahwa Bot siap menerima PIN
-      this.eventBus.emit('socket:bot-awaiting-tv-pin', {
-        taskId: task.id,
-        accountId,
-      });
-
-      // 5. Tunggu PIN dari Dashboard (Timeout 5 menit)
-      const pinEventName = `${this.instanceId}:dashboard-send-tv-pin`;
-      this.logger.info(`[LoginTV][${email}] Menunggu PIN dari dashboard (Event: ${pinEventName})...`);
+      // 4. Beritahu Dashboard bahwa Bot siap menerima PIN (Loop hingga 3x)
+      let maxRetries = 3;
+      let success = false;
       
-      // Kita gunakan event bus internal untuk menangkap PIN yang diteruskan dari Connector
-      const pinData = await this.waitForTaskEvent<{ pin: string }>(task.id, pinEventName);
-      const pin = pinData.pin;
-
-      if (!pin || pin.length !== 8) {
-        throw new Error("PIN yang diterima tidak valid (harus 8 digit)");
-      }
-
-      this.logger.info(`[LoginTV][${email}] PIN diterima: ${pin}. Memasukkan PIN ke Netflix...`);
-
-      // 6. Masukkan PIN satu per satu
-      const inputs = page.locator(TV_LOGIN_LOCATORS.PIN_INPUTS);
-      for (let i = 0; i < 8; i++) {
-        await inputs.nth(i).click();
-        await page.keyboard.type(pin[i], { delay: 150 });
-      }
-
-      await this.sleep(1000);
-      await page.locator(TV_LOGIN_LOCATORS.SUBMIT_BUTTON).click();
-      this.logger.info(`[LoginTV][${email}] PIN disubmit, menunggu verifikasi...`);
-
-      // 7. Tunggu hasil (Redirect ke success atau Error atau Re-login)
-      try {
-        await Promise.race([
-          page.waitForURL(url => url.toString().includes('/tv/out/success'), { timeout: 30000 }),
-          page.waitForSelector(TV_LOGIN_LOCATORS.ERROR_MESSAGE, { timeout: 30000 }),
-          page.waitForURL(url => url.toString().includes(LOGIN_PATH), { timeout: 30000 }),
-        ]);
-      } catch (e) {
-        this.logger.warn(`[LoginTV][${email}] Timeout menunggu verifikasi PIN. Memeriksa URL saat ini...`);
-      }
-
-      // 8. Cek apakah disuruh login ulang setelah isi PIN
-      if (page.url().includes(LOGIN_PATH)) {
-        this.logger.info(`[LoginTV][${email}] Diminta login ulang setelah isi PIN, mencoba login manual...`);
-        const loginOk = await this.attemptManualLogin(page, email, password);
-        if (!loginOk) {
-          this.logger.warn(`[LoginTV][${email}] Login manual gagal, mencoba alur recovery session...`);
-          await this.handleSessionRecovery(page, task, email);
-        }
-        // Setelah login, balik ke tv2 dan ulangi isi PIN
-        await page.goto(TV_LOGIN_URL);
-        await this.sleep(3000);
-        return this.loginTvFlow(task); // Rekursif untuk mencoba lagi setelah login
-      }
-
-      if (page.url().includes('/tv/out/success')) {
-        this.logger.info(`[LoginTV][${email}] Login TV Berhasil! Memfinalisasi...`);
-        
-        const finalBtn = page.locator(TV_LOGIN_LOCATORS.GO_TO_NETFLIX_BUTTON);
-        if (await finalBtn.isVisible()) {
-          await finalBtn.click();
-          await this.sleep(2000);
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        // Jika ini retry (attempt > 1), kita reload halaman TV2 agar bersih dari error state sebelumnya
+        if (attempt > 1) {
+          this.logTvProgress(task, accountId, email, `Mereload halaman /tv2 untuk percobaan ke-${attempt}...`);
+          await page.goto(TV_LOGIN_URL);
+          await this.sleep(3000);
         }
 
-        // Emit success event ke dashboard
-        this.eventBus.emit('socket:bot-tv-login-success', {
+        this.eventBus.emit('socket:bot-awaiting-tv-pin', {
           taskId: task.id,
           accountId,
         });
-      } else {
-        const errorMsg = await page.locator(TV_LOGIN_LOCATORS.ERROR_MESSAGE).isVisible() 
-          ? await page.locator(TV_LOGIN_LOCATORS.ERROR_MESSAGE).innerText() 
-          : "PIN salah atau terjadi kesalahan pada Netflix.";
+
+        // 5. Tunggu PIN dari Dashboard (Timeout 5 menit)
+        const pinEventName = `${this.instanceId}:dashboard-send-tv-pin`;
+        this.logTvProgress(task, accountId, email, `Menunggu PIN dari dashboard [Attempt ${attempt}/${maxRetries}]...`);
         
-        this.eventBus.emit('socket:bot-tv-pin-error', {
-          taskId: task.id,
-          message: errorMsg,
-        });
-        
-        throw new Error(`Login TV Gagal: ${errorMsg}`);
+        // Kita gunakan event bus internal untuk menangkap PIN yang diteruskan dari Connector
+        const pinData = await this.waitForTaskEvent<{ pin: string }>(task.id, pinEventName);
+        const pin = pinData.pin;
+
+        if (!pin || pin.length !== 8) {
+          if (attempt === maxRetries) {
+            throw new Error("PIN yang diterima tidak valid (harus 8 digit)");
+          } else {
+            this.logTvProgress(task, accountId, email, "PIN tidak valid. Mengulangi...");
+            continue;
+          }
+        }
+
+        this.logTvProgress(task, accountId, email, `PIN diterima. Memasukkan PIN ke Netflix...`);
+
+        // 6. Masukkan PIN satu per satu
+        const inputs = page.locator(TV_LOGIN_LOCATORS.PIN_INPUTS);
+        for (let i = 0; i < 8; i++) {
+          await inputs.nth(i).click();
+          await page.keyboard.type(pin[i], { delay: 150 });
+        }
+
+        await this.sleep(1000);
+        await page.locator(TV_LOGIN_LOCATORS.SUBMIT_BUTTON).click();
+        this.logTvProgress(task, accountId, email, "PIN disubmit, menunggu verifikasi...");
+
+        // 7. Tunggu hasil (Redirect ke success atau Error atau Re-login)
+        try {
+          await Promise.race([
+            page.waitForURL(url => url.toString().includes('/tv/out/success'), { timeout: 30000 }),
+            page.waitForSelector(TV_LOGIN_LOCATORS.ERROR_MESSAGE, { timeout: 30000 }),
+            page.waitForURL(url => url.toString().includes(LOGIN_PATH), { timeout: 30000 }),
+          ]);
+        } catch (e) {
+          this.logger.warn(`[LoginTV][${email}] Timeout menunggu verifikasi PIN. Memeriksa URL saat ini...`);
+        }
+
+        // 8. Cek apakah disuruh login ulang setelah isi PIN
+        if (page.url().includes(LOGIN_PATH)) {
+          this.logTvProgress(task, accountId, email, "Diminta login ulang setelah isi PIN, mencoba login manual...");
+          const loginOk = await this.attemptManualLogin(page, email, password);
+          if (!loginOk) {
+            this.logger.warn(`[LoginTV][${email}] Login manual gagal, mencoba alur recovery session...`);
+            await this.handleSessionRecovery(page, task, email);
+          }
+          // Setelah login, balik ke tv2 dan ulangi isi PIN
+          await page.goto(TV_LOGIN_URL);
+          await this.sleep(3000);
+          return this.loginTvFlow(task); // Rekursif untuk mencoba lagi setelah login
+        }
+
+        if (page.url().includes('/tv/out/success')) {
+          this.logTvProgress(task, accountId, email, "Login TV Berhasil! Memfinalisasi...");
+          
+          const finalBtn = page.locator(TV_LOGIN_LOCATORS.GO_TO_NETFLIX_BUTTON);
+          if (await finalBtn.isVisible()) {
+            await finalBtn.click();
+            await this.sleep(2000);
+          }
+
+          // Emit success event ke dashboard
+          this.eventBus.emit('socket:bot-tv-login-success', {
+            taskId: task.id,
+            accountId,
+          });
+          
+          success = true;
+          break; // Keluar dari loop retries karena berhasil
+        } else {
+          const errorMsg = await page.locator(TV_LOGIN_LOCATORS.ERROR_MESSAGE).isVisible() 
+            ? await page.locator(TV_LOGIN_LOCATORS.ERROR_MESSAGE).innerText() 
+            : "PIN salah atau terjadi kesalahan pada Netflix.";
+          
+          this.eventBus.emit('socket:bot-tv-pin-error', {
+            taskId: task.id,
+            message: errorMsg,
+          });
+          
+          if (attempt === maxRetries) {
+            throw new Error(`Login TV Gagal setelah ${maxRetries} percobaan: ${errorMsg}`);
+          } else {
+            this.logTvProgress(task, accountId, email, `Percobaan PIN salah (${attempt}/${maxRetries}): ${errorMsg}`);
+          }
+        }
+      }
+      
+      if (!success) {
+        throw new Error("Gagal login TV setelah maksimal percobaan.");
       }
 
     } catch (error) {

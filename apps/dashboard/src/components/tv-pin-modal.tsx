@@ -20,9 +20,10 @@ interface TvPinModalProps {
   email?: string
   errorMessage?: string | null
   isBotReady?: boolean
+  progressMessage?: string | null
 }
 
-export function TvPinModal({ isOpen, onClose, onSendPin, isSending, email, errorMessage, isBotReady = true }: TvPinModalProps) {
+export function TvPinModal({ isOpen, onClose, onSendPin, isSending, email, errorMessage, isBotReady = true, progressMessage }: TvPinModalProps) {
   const [pin, setPin] = useState('')
   const [shouldShake, setShouldShake] = useState(false)
 
@@ -83,8 +84,8 @@ export function TvPinModal({ isOpen, onClose, onSendPin, isSending, email, error
            <div className="flex flex-col items-center justify-center py-10 gap-4">
              <Loader2 className="size-12 animate-spin text-red-600" />
              <div className="text-center space-y-1">
-               <p className="font-bold text-lg">Bot Sedang Menyiapkan...</p>
-               <p className="text-sm text-muted-foreground">Bot sedang membuka halaman Netflix TV.<br/>Mohon tunggu sebentar.</p>
+               <p className="font-bold text-lg">Bot Sedang Bekerja...</p>
+               <p className="text-sm text-muted-foreground">{progressMessage || 'Mempersiapkan tugas, mohon tunggu...'}</p>
              </div>
            </div>
         ) : (

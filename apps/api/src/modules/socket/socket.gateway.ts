@@ -361,6 +361,25 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect, 
     }
   }
 
+  @SubscribeMessage('bot-tv-progress')
+  handleBotTvProgress(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { taskId: string; accountId: string; message: string }
+  ) {
+    const conn = this.connections.get(client.id);
+    if (!conn || conn.type !== 'BOT')
+      return;
+
+    for (const c of this.connections.values()) {
+      if (c.tenant_id === conn.tenant_id && c.type === 'DASHBOARD') {
+        c.socket.emit('event', {
+          eventName: 'bot-tv-progress',
+          payload: { taskId: data.taskId, accountId: data.accountId, message: data.message },
+        });
+      }
+    }
+  }
+
   @SubscribeMessage('dashboard-send-tv-pin')
   handleDashboardSendTvPin(
     @ConnectedSocket() client: Socket,

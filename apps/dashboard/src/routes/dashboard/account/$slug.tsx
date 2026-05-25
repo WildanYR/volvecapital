@@ -208,6 +208,7 @@ function RouteComponent() {
   const [tvPinModalOpen, setTvPinModalOpen] = useState(false)
   const [tvPinError, setTvPinError] = useState<string | null>(null)
   const [currentTvTask, setCurrentTvTask] = useState<{ taskId: string; botSocketId: string; accountId: string } | null>(null)
+  const [tvPinProgress, setTvPinProgress] = useState<string | null>(null)
 
   useEffect(() => {
     if (!socket) return
@@ -217,6 +218,7 @@ function RouteComponent() {
         const { taskId, accountId, botSocketId } = data.payload
         setCurrentTvTask({ taskId, botSocketId, accountId })
         setTvPinError(null)
+        setTvPinProgress(null)
         setTvPinModalOpen(true)
       }
       else if (data.eventName === 'bot-tv-pin-error') {
@@ -225,6 +227,9 @@ function RouteComponent() {
            setTvPinError(message)
            toast.error(`PIN Netflix Salah: ${message}`)
         }
+      }
+      else if (data.eventName === 'bot-tv-progress') {
+        setTvPinProgress(data.payload.message)
       }
     }
 
@@ -865,6 +870,7 @@ function RouteComponent() {
       setSelectedAccount(account)
       setTvPinError(null)
       setCurrentTvTask(null) // Reset task info, will be filled by socket
+      setTvPinProgress(null)
       setTvPinModalOpen(true)
     },
     onSuccess: () => {
@@ -1997,6 +2003,8 @@ function RouteComponent() {
         isSending={false} // Diatur oleh socket flow
         errorMessage={tvPinError}
         email={accounts?.items?.find(a => a.id === currentTvTask?.accountId)?.email?.email}
+        isBotReady={!!currentTvTask}
+        progressMessage={tvPinProgress}
       />
     </>
   )
