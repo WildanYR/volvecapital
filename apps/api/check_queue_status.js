@@ -16,7 +16,6 @@ async function check() {
     password: process.env.REDIS_PASSWORD || undefined,
   });
 
-  // Jika ada argumen (email), cari task spesifik untuk akun itu
   const searchEmail = process.argv[2];
   if (searchEmail) {
     console.log(`\n🔎 Mencari task untuk akun: ${searchEmail}`);
@@ -29,7 +28,6 @@ async function check() {
 
     if (rows.length === 0) {
       console.log(`❌ TIDAK ADA task ditemukan untuk email: ${searchEmail}`);
-      console.log(`   Kemungkinan: task belum dibuat, atau sudah COMPLETED/FAILED`);
     } else {
       console.log(`✅ Ditemukan ${rows.length} task:\n`);
       rows.forEach((r, i) => {
@@ -44,7 +42,6 @@ async function check() {
         console.log(``);
       });
     }
-
     process.exit(0);
   }
 
@@ -52,41 +49,51 @@ async function check() {
     const now = new Date();
     console.log(`\n🕒 Waktu Sekarang (Server): ${now.toLocaleString()}`);
 
-    // 1. Cek berapa task yang antre di DB
-    const [tasks] = await sequelize.query(`
-      SELECT id, subject_id, context, status, execute_at 
+    const [allTasks] = await sequelize.query(`
+      SELECT COUNT(*) as total FROM master.task_queue 
+      WHERE status IN ('QUEUED', 'DISPATCHED')
+    `);
+    const totalQueued = parseInt(allTasks[0].total || 0, 10);
+
+    const [pastDueTasks] = await sequelize.query(`
+      SELECT COUNT(*) as total FROM master.task_queue 
+      WHERE status IN ('QUEUED', 'DISPATCHED') 
+      AND execute_at <= NOW()
+    `);
+    const totalPastDue = parseInt(pastDueTasks[0].total || 0, 10);
+    const totalFuture = totalQueued - totalPastDue;
+
+    console.log(`\n📋 TOTAL TASK ANTRIAN (DB): ${totalQueued}`);
+    if (totalPastDue > 0) {
+      console.log(`⚠️ Task yang SUDAH LEWAT WAKTU tapi belum tereksekusi: ${totalPastDue}`);
+    }
+    console.log(`⏳ Task yang JADWALNYA MASIH DI MASA DEPAN: ${totalFuture}`);
+
+    const [topTasks] = await sequelize.query(`
+      SELECT id, subject_id, context, status, execute_at, payload 
       FROM master.task_queue 
       WHERE status IN ('QUEUED', 'DISPATCHED') 
-      ORDER BY execute_at ASC
+      ORDER BY execute_at ASC 
+      LIMIT 5
     `);
 
-    console.log(`\n📋 TOTAL TASK ANTRIAN (DB): ${tasks.length}`);
-    
-    let missedTasks = 0;
-    let futureTasks = 0;
+    console.log(`\n🔍 5 Task Paling Awal (Terdekat/Terlewat):`);
+    topTasks.forEach((t, i) => {
+      const execTime = new Date(t.execute_at);
+      const isPast = execTime <= now;
+      const wibTime = execTime.toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
+      
+      let email = 'Tanpa Email';
+      try {
+        if (t.payload) {
+          const parsed = typeof t.payload === 'string' ? JSON.parse(t.payload) : t.payload;
+          if (parsed.email) email = parsed.email;
+        }
+      } catch(e) {}
 
-    tasks.forEach(task => {
-      const execTime = new Date(task.execute_at);
-      if (execTime <= now) {
-        missedTasks++;
-      } else {
-        futureTasks++;
-      }
+      console.log(`  ${i+1}. [${email}] Context: ${t.context} | Status: ${t.status} | Jadwal: ${wibTime} WIB -> ${isPast ? '🔴 HARUSNYA JALAN' : '🟡 BELUM WAKTUNYA'}`);
     });
 
-    console.log(`⚠️ Task yang SUDAH LEWAT WAKTU tapi belum tereksekusi: ${missedTasks}`);
-    console.log(`⏳ Task yang JADWALNYA MASIH DI MASA DEPAN: ${futureTasks}`);
-
-    if (tasks.length > 0) {
-      console.log("\n🔍 5 Task Paling Awal (Terdekat/Terlewat):");
-      tasks.slice(0, 5).forEach((t, i) => {
-        const execTime = new Date(t.execute_at);
-        const status = execTime <= now ? "🔴 HARUSNYA JALAN" : "🟡 BELUM WAKTUNYA";
-        console.log(`  ${i+1}. ID: ${t.id.slice(0,8)}... | Status: ${t.status} | Jadwal: ${execTime.toLocaleString()} -> ${status}`);
-      });
-    }
-
-    // 2. Cek di Redis ZSET
     const redisTasks = await redisClient.zrangebyscore('scheduler:task_zset', 0, now.getTime());
     console.log(`\n🚀 TASK DI REDIS YANG SIAP JALAN (<= Waktu Sekarang): ${redisTasks.length}`);
     
