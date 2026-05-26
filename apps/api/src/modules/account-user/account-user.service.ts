@@ -236,6 +236,7 @@ export class AccountUserService {
               ap.max_user,
               COUNT(au.id) AS current_user_count,
               MAX(au.created_at) AS last_user_created_at
+              SUM(COUNT(au.id)) OVER(PARTITION BY ap.account_id) AS total_account_users
             FROM
               ${accountProfileTable} AS ap
               JOIN ${accountTable} AS a ON ap.account_id = a.id
@@ -278,6 +279,7 @@ export class AccountUserService {
               WHEN cs.current_user_count > 0 THEN 0
               ELSE 1
             END ASC,
+            cs.total_account_users DESC,
             (cs.max_user - cs.current_user_count) ASC,
             cs.profile_id ASC
           LIMIT 1;`;
