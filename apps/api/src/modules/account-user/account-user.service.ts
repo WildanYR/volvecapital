@@ -235,7 +235,7 @@ export class AccountUserService {
               pv.cooldown,
               ap.max_user,
               COUNT(au.id) AS current_user_count,
-              MAX(au.created_at) AS last_user_created_at
+              MAX(au.created_at) AS last_user_created_at,
               SUM(COUNT(au.id)) OVER(PARTITION BY ap.account_id) AS total_account_users
             FROM
               ${accountProfileTable} AS ap

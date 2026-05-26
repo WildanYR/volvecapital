@@ -244,7 +244,14 @@ export class AccountService {
           {
             model: AccountProfile,
             as: 'profile',
-            include: [{ model: AccountUser, as: 'user' }],
+            include: [{
+              model: AccountUser,
+              as: 'user',
+              where: {
+                status: 'active',
+              },
+              required: false,
+            }],
           },
           {
             model: AccountModifier,
