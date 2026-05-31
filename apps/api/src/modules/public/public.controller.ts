@@ -55,20 +55,29 @@ export class PublicController {
         where: { custom_domain: cleanHost },
         transaction,
       });
+      if (matchedTenant) {
+        await transaction.commit();
+        return matchedTenant.id;
+      }
+
+      // 3. Fallback: gunakan subdomain dari digitalpremium.id (e.g. paytronik.digitalpremium.id)
+      const parts = cleanHost.split('.');
+      if (parts.length >= 2) {
+        const subdomain = parts[0];
+        if (subdomain !== 'www') {
+          const matchedSubdomain = await this.tenantRepository.findOne({
+            where: { id: subdomain },
+            transaction,
+          });
+          if (matchedSubdomain) {
+            await transaction.commit();
+            return matchedSubdomain.id;
+          }
+        }
+      }
       await transaction.commit();
-      if (matchedTenant) return matchedTenant.id;
     } catch {
       await transaction.rollback();
-      // lanjutkan ke fallback subdomain jika DB error
-    }
-
-    // 3. Fallback: gunakan subdomain dari digitalpremium.id (e.g. paytronik.digitalpremium.id)
-    const parts = cleanHost.split('.');
-    if (parts.length >= 2) {
-      const subdomain = parts[0];
-      if (subdomain !== 'www') {
-        return subdomain;
-      }
     }
 
     throw new BadRequestException('Tenant ID tidak ditemukan untuk domain/host ini');

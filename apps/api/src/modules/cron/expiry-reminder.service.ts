@@ -30,7 +30,7 @@ export class ExpiryReminderService {
     private readonly productVariantRepository: typeof ProductVariant,
   ) {}
 
-  @Cron('*/15 * * * *', { timeZone: 'Asia/Jakarta' }) // Every 15 minutes
+  @Cron('0 10 * * *', { timeZone: 'Asia/Jakarta' }) // Every day at 10:00 AM
   async checkExpiringSubscriptions() {
     this.logger.log('Checking for expiring subscriptions to send reminders...');
 
@@ -50,10 +50,7 @@ export class ExpiryReminderService {
     const tenantName = tenant.name || 'Digital Premium';
     const customDomain = tenant.custom_domain;
 
-    const transaction = await this.postgresProvider.transaction();
     try {
-      await this.postgresProvider.setSchema(tenantId, transaction);
-
       const sqlQuery = `
         SELECT 
           au.id as "userId",
@@ -82,7 +79,6 @@ export class ExpiryReminderService {
       `;
 
       const results = await this.postgresProvider.rawQuery(sqlQuery, {
-        transaction,
         type: QueryTypes.SELECT,
       }) as any[];
 
@@ -92,17 +88,25 @@ export class ExpiryReminderService {
 
       for (const row of results) {
         this.logger.log(`Sending reminder to ${row.buyerEmail} for ${row.productName}`);
-        await this.sendReminderEmail(tenantId, tenantName, customDomain, row, transaction);
         
-        await this.accountUserRepository.update(
-          { is_reminder_sent: true },
-          { where: { id: row.userId }, transaction }
-        );
+        // Send email without holding a database transaction
+        await this.sendReminderEmail(tenantId, tenantName, customDomain, row);
+        
+        // Update user row after successful email
+        const transaction = await this.postgresProvider.transaction();
+        try {
+          await this.postgresProvider.setSchema(tenantId, transaction);
+          await this.accountUserRepository.update(
+            { is_reminder_sent: true },
+            { where: { id: row.userId }, transaction }
+          );
+          await transaction.commit();
+        } catch (updateError) {
+          await transaction.rollback();
+          this.logger.error(`Failed to update reminder status for user ${row.userId}: ${updateError.message}`);
+        }
       }
-
-      await transaction.commit();
     } catch (error) {
-      await transaction.rollback();
       throw error;
     }
   }
@@ -111,25 +115,35 @@ export class ExpiryReminderService {
     tenantId: string,
     tenantName: string,
     customDomain: string | null,
-    data: any,
-    transaction: any,
+    data: any
   ) {
     const { buyerEmail, buyerName, productName, variantName, expiredAt, productSlug, productId, variantId } = data;
 
-    // Get recommendations: other variants of the same product with LONGER duration
-    const currentVariant = await this.productVariantRepository.findByPk(variantId, { transaction });
-    if (!currentVariant) return;
+    let recommendations: ProductVariant[] = [];
+    const tempTx = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema(tenantId, tempTx);
+      // Get recommendations: other variants of the same product with LONGER duration
+      const currentVariant = await this.productVariantRepository.findByPk(variantId, { transaction: tempTx });
+      if (!currentVariant) {
+        await tempTx.rollback();
+        return;
+      }
 
-    const recommendations = await this.productVariantRepository.findAll({
-      where: {
-        product_id: productId,
-        id: { [Op.ne]: variantId },
-        duration: { [Op.gt]: currentVariant.duration },
-      },
-      order: [['duration', 'ASC']],
-      limit: 2,
-      transaction,
-    });
+      recommendations = await this.productVariantRepository.findAll({
+        where: {
+          product_id: productId,
+          id: { [Op.ne]: variantId },
+          duration: { [Op.gt]: currentVariant.duration },
+        },
+        order: [['duration', 'ASC']],
+        limit: 2,
+        transaction: tempTx,
+      });
+      await tempTx.commit();
+    } catch (e) {
+      await tempTx.rollback();
+    }
 
     const expiryDateStr = new Date(expiredAt).toLocaleString('id-ID', {
       dateStyle: 'long',

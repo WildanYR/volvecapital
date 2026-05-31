@@ -75,7 +75,7 @@ export class TaskWorkerService {
       const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
       const pendingTasks = await this.taskQueueRepository.findAll({
         where: {
-          status: ['QUEUED', 'DISPATCHED'],
+          status: ['QUEUED'],
           execute_at: { [Op.gte]: oneHourAgo },
         },
         transaction,
@@ -339,6 +339,8 @@ export class TaskWorkerService {
     const taskQueueUpdates: TaskQueueUpdate[] = [];
     for (const tm of taskMessages) {
       if (!tm.taskData) {
+        // Task not found in DB (probably deleted by cleanup), ACK to remove from stream
+        await this.redisClient.xack(STREAM_KEY, CONSUMER_GROUP, tm.messageId);
         continue;
       }
 
@@ -406,36 +408,36 @@ export class TaskWorkerService {
           });
         }
       }
+    }
 
-      if (taskQueueUpdates.length) {
-        const taskQueueUpdateQuery = taskQueueUpdates.map((tqu) => {
-          const safeErrorMessage = tqu.error_message ? `'${tqu.error_message}'` : 'NULL';
-          return `(${tqu.id}, ${tqu.attempt}, '${tqu.status}', ${safeErrorMessage})`;
-        }).join(', ');
-        const transaction = await this.postgresProvider.transaction();
-        try {
-          await this.postgresProvider.setSchema('master', transaction);
-          const query = `
-            UPDATE task_queue AS t
-            SET 
-                attempt = v.attempt::integer,
-                status = v.status::varchar,
-                error_message = v.error_message::text,
-                updated_at = NOW()
-            FROM (VALUES ${taskQueueUpdateQuery}) AS v(id, attempt, status, error_message)
-            WHERE t.id = v.id::bigint;
-          `;
+    if (taskQueueUpdates.length) {
+      const taskQueueUpdateQuery = taskQueueUpdates.map((tqu) => {
+        const safeErrorMessage = tqu.error_message ? `'${tqu.error_message}'` : 'NULL';
+        return `(${tqu.id}, ${tqu.attempt}, '${tqu.status}', ${safeErrorMessage})`;
+      }).join(', ');
+      const transaction = await this.postgresProvider.transaction();
+      try {
+        await this.postgresProvider.setSchema('master', transaction);
+        const query = `
+          UPDATE task_queue AS t
+          SET 
+              attempt = v.attempt::integer,
+              status = v.status::varchar,
+              error_message = v.error_message::text,
+              updated_at = NOW()
+          FROM (VALUES ${taskQueueUpdateQuery}) AS v(id, attempt, status, error_message)
+          WHERE t.id = v.id::bigint;
+        `;
 
-          await this.postgresProvider.rawQuery(query, {
-            type: QueryTypes.UPDATE,
-            transaction,
-          });
-          await transaction.commit();
-        }
-        catch (error) {
-          this.logger.error(`Error update task status: ${error.message}`, error.stack, 'TaskWorker');
-          await transaction.rollback();
-        }
+        await this.postgresProvider.rawQuery(query, {
+          type: QueryTypes.UPDATE,
+          transaction,
+        });
+        await transaction.commit();
+      }
+      catch (error) {
+        this.logger.error(`Error update task status: ${error.message}`, error.stack, 'TaskWorker');
+        await transaction.rollback();
       }
     }
   }
