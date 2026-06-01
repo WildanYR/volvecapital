@@ -58,4 +58,10 @@ export class TransactionItem extends Model<
 
   @BelongsTo(() => AccountUser, 'account_user_id')
   declare user?: AccountUser;
+
+  @Column(DataType.DATE)
+  declare created_at: Date;
+
+  @Column(DataType.DATE)
+  declare updated_at: Date;
 }

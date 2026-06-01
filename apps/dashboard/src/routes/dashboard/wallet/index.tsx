@@ -45,7 +45,7 @@ function WalletPage() {
   const [transactionModalType, setTransactionModalType] = useState<'available' | 'pending'>('available')
   const [transactionPage, setTransactionPage] = useState(1)
 
-  const { data: transactionData, isLoading: isTransactionLoading } = useQuery({
+  const { data: transactionData, isLoading: isTransactionLoading, isError, error } = useQuery({
     queryKey: ['wallet-transactions', transactionModalType, transactionPage],
     queryFn: () => withdrawalService.getWalletTransactions({
       type: transactionModalType,
@@ -325,6 +325,12 @@ function WalletPage() {
                         <CircleDashed className="size-5 animate-spin" />
                         <p>Memuat data...</p>
                       </div>
+                    </TableCell>
+                  </TableRow>
+                ) : isError ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="h-[200px] text-center text-destructive">
+                      Gagal memuat data transaksi: {error?.message}
                     </TableCell>
                   </TableRow>
                 ) : transactionData?.data?.length === 0 ? (
