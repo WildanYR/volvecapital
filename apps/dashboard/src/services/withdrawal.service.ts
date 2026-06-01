@@ -25,6 +25,25 @@ export interface CreateWithdrawalPayload {
   bank_account_id: string
 }
 
+export interface WalletTransactionItem {
+  id: string
+  created_at: string
+  customer: string
+  platform: string
+  net_profit: number
+  items: { name: string }[]
+}
+
+export interface WalletTransactionsResponse {
+  data: WalletTransactionItem[]
+  meta: {
+    page: number
+    limit: number
+    totalItems: number
+    totalPages: number
+  }
+}
+
 export function WithdrawalServiceGenerator(apiUrl: string, accessToken: string, tenantId: string) {
   const getWalletBalance = async (): Promise<WalletBalance> => {
     const response = await generateApiFetch(
@@ -113,11 +132,27 @@ export function WithdrawalServiceGenerator(apiUrl: string, accessToken: string, 
     }
   }
 
+  const getWalletTransactions = async (params: { type: 'available' | 'pending'; page: number; limit: number }): Promise<WalletTransactionsResponse> => {
+    const response = await generateApiFetch(
+      apiUrl,
+      accessToken,
+      tenantId,
+      '/withdrawals/wallet-transactions',
+      params as any,
+    )
+    if (!response.ok) {
+      const errorData = await parseApiResponse(response)
+      throw new Error(errorData.message || 'Failed to fetch wallet transactions')
+    }
+    return response.json()
+  }
+
   return {
     getWalletBalance,
     getWithdrawalHistory,
     requestWithdrawal,
     getAdminPendingRequests,
     approveWithdrawal,
+    getWalletTransactions,
   }
 }

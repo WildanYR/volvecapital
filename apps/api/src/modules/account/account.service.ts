@@ -153,6 +153,38 @@ export class AccountService {
             ),
           };
         }
+        else if (filter.status === 'expiring_today') {
+           whereOptions.freeze_until = null;
+           whereOptions.status = { [Op.notIn]: ['disable', 'banned'] };
+           whereOptions.subscription_expiry = {
+              [Op.ne]: null,
+           };
+           whereOptions.id = {
+             [Op.in]: Sequelize.literal(`
+                (SELECT a.id FROM account a
+                 WHERE DATE(a.subscription_expiry AT TIME ZONE 'Asia/Jakarta') = DATE(NOW() AT TIME ZONE 'Asia/Jakarta')
+                )
+             `)
+           }
+        }
+        else if (filter.status === 'reset_today') {
+           whereOptions.freeze_until = null;
+           whereOptions.status = { [Op.notIn]: ['disable', 'banned'] };
+           whereOptions.id = {
+             [Op.in]: Sequelize.literal(`
+                (SELECT a.id FROM account a
+                 WHERE DATE(
+                   COALESCE((
+                     SELECT MAX(au.expired_at)
+                     FROM account_user au
+                     JOIN account_profile ap ON ap.id = au.account_profile_id
+                     WHERE ap.account_id = a.id AND au.status = 'active'
+                   ), a.batch_end_date) AT TIME ZONE 'Asia/Jakarta'
+                 ) = DATE(NOW() AT TIME ZONE 'Asia/Jakarta')
+                )
+             `)
+           };
+        }
       }
 
       // Process order: handle nested models if necessary (e.g. email.email)

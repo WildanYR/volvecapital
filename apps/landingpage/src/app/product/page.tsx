@@ -15,9 +15,14 @@ export default function ProductPage() {
   const { data: products, isLoading } = useProducts(tenantId)
   const [search, setSearch] = useState('')
 
-  const filteredProducts = products?.filter(p => 
-    p.name.toLowerCase().includes(search.toLowerCase())
-  ) || []
+  const searchTerms = search.toLowerCase().split(' ').filter(Boolean)
+  const filteredProducts = products?.filter(p => {
+    if (searchTerms.length === 0) return true
+    return searchTerms.every(term => 
+      p.name.toLowerCase().includes(term) || 
+      p.variants?.some(v => v.name.toLowerCase().includes(term))
+    )
+  }) || []
 
   return (
     <main className="min-h-screen flex flex-col pt-40 pb-0 bg-muted/50">

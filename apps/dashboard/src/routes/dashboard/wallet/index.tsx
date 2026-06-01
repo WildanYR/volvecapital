@@ -2,9 +2,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { ChevronLeft, ChevronRight, CircleDashed } from 'lucide-react'
 import { Button } from '@/dashboard/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/dashboard/components/ui/card'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/dashboard/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogDescription } from '@/dashboard/components/ui/dialog'
 import { Input } from '@/dashboard/components/ui/input'
 import { Label } from '@/dashboard/components/ui/label'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/dashboard/components/ui/table'
@@ -39,6 +40,20 @@ function WalletPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [amount, setAmount] = useState('')
   const [bankAccountId, setBankAccountId] = useState('')
+
+  const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false)
+  const [transactionModalType, setTransactionModalType] = useState<'available' | 'pending'>('available')
+  const [transactionPage, setTransactionPage] = useState(1)
+
+  const { data: transactionData, isLoading: isTransactionLoading } = useQuery({
+    queryKey: ['wallet-transactions', transactionModalType, transactionPage],
+    queryFn: () => withdrawalService.getWalletTransactions({
+      type: transactionModalType,
+      page: transactionPage,
+      limit: 10,
+    }),
+    enabled: isTransactionModalOpen,
+  })
 
   const { data: balanceData, isLoading: isBalanceLoading } = useQuery({
     queryKey: ['wallet-balance'],
@@ -116,7 +131,16 @@ function WalletPage() {
             {isBalanceLoading ? (
               <Skeleton className="h-8 w-32" />
             ) : (
-              <p className="text-3xl font-bold">{formatRupiah(balanceData?.available_balance || 0)}</p>
+              <p 
+                className="text-3xl font-bold cursor-pointer hover:underline text-primary"
+                onClick={() => {
+                  setTransactionModalType('available')
+                  setTransactionPage(1)
+                  setIsTransactionModalOpen(true)
+                }}
+              >
+                {formatRupiah(balanceData?.available_balance || 0)}
+              </p>
             )}
           </CardContent>
         </Card>
@@ -129,7 +153,16 @@ function WalletPage() {
             {isBalanceLoading ? (
               <Skeleton className="h-8 w-32" />
             ) : (
-              <p className="text-3xl font-bold text-yellow-500">{formatRupiah(balanceData?.pending_balance || 0)}</p>
+              <p 
+                className="text-3xl font-bold text-yellow-500 cursor-pointer hover:underline"
+                onClick={() => {
+                  setTransactionModalType('pending')
+                  setTransactionPage(1)
+                  setIsTransactionModalOpen(true)
+                }}
+              >
+                {formatRupiah(balanceData?.pending_balance || 0)}
+              </p>
             )}
           </CardContent>
         </Card>
@@ -258,6 +291,112 @@ function WalletPage() {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isTransactionModalOpen} onOpenChange={setIsTransactionModalOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>
+              Detail Transaksi - {transactionModalType === 'available' ? 'Saldo Tersedia' : 'Saldo Pending'}
+            </DialogTitle>
+            <DialogDescription className="sr-only">
+              Daftar transaksi yang menyusun saldo wallet Anda.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="flex-1 overflow-y-auto min-h-0 border rounded-md relative">
+            <Table>
+              <TableHeader className="bg-secondary text-secondary-foreground sticky top-0 z-10 shadow-sm">
+                <TableRow>
+                  <TableHead>Invoice</TableHead>
+                  <TableHead>Tanggal</TableHead>
+                  <TableHead>Preview Item</TableHead>
+                  <TableHead>Customer</TableHead>
+                  <TableHead>Platform</TableHead>
+                  <TableHead className="text-right">Harga</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isTransactionLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="h-[200px] text-center">
+                      <div className="flex justify-center items-center h-full text-muted-foreground gap-2">
+                        <CircleDashed className="size-5 animate-spin" />
+                        <p>Memuat data...</p>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : transactionData?.data?.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="h-[200px] text-center text-muted-foreground">
+                      Tidak ada data transaksi.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  transactionData?.data?.map((item: any) => (
+                    <TableRow key={item.id}>
+                      <TableCell className="font-mono text-xs">{item.id}</TableCell>
+                      <TableCell>{formatDateIdStandard(new Date(item.created_at))}</TableCell>
+                      <TableCell>{item.items?.[0]?.name || '-'}</TableCell>
+                      <TableCell>{item.customer}</TableCell>
+                      <TableCell>{item.platform}</TableCell>
+                      <TableCell className="text-right font-semibold">
+                        {formatRupiah(item.net_profit)}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+          
+          {transactionData?.meta && transactionData.meta.totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-4">
+              <Button
+                variant="outline"
+                size="icon"
+                disabled={transactionPage === 1}
+                onClick={() => setTransactionPage(p => Math.max(1, p - 1))}
+              >
+                <ChevronLeft className="size-4" />
+              </Button>
+              <div className="flex gap-1">
+                {Array.from({ length: transactionData.meta.totalPages }).map((_, i) => {
+                  const pageNumber = i + 1;
+                  const isNearCurrent = Math.abs(pageNumber - transactionPage) <= 2;
+                  const isEdge = pageNumber === 1 || pageNumber === transactionData.meta.totalPages;
+                  
+                  if (!isNearCurrent && !isEdge) {
+                    if (pageNumber === 2 || pageNumber === transactionData.meta.totalPages - 1) {
+                      return <span key={pageNumber} className="px-2 self-center">...</span>;
+                    }
+                    return null;
+                  }
+
+                  return (
+                    <Button
+                      key={pageNumber}
+                      variant={pageNumber === transactionPage ? 'default' : 'outline'}
+                      size="icon"
+                      className="w-8 h-8"
+                      onClick={() => setTransactionPage(pageNumber)}
+                    >
+                      {pageNumber}
+                    </Button>
+                  );
+                })}
+              </div>
+              <Button
+                variant="outline"
+                size="icon"
+                disabled={transactionPage === transactionData.meta.totalPages}
+                onClick={() => setTransactionPage(p => Math.min(transactionData.meta.totalPages, p + 1))}
+              >
+                <ChevronRight className="size-4" />
+              </Button>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

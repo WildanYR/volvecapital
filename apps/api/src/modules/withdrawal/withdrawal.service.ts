@@ -14,6 +14,9 @@ import { WithdrawalRequest } from 'src/database/models/withdrawal-request.model'
 import { PostgresProvider } from 'src/database/postgres.provider';
 import { SnowflakeIdProvider } from '../utility/snowflake-id.provider';
 import { CreateWithdrawalDto } from './dto/create-withdrawal.dto';
+import { PaginationProvider } from '../utility/pagination.provider';
+import { BaseGetAllUrlQuery } from '../utility/types/base-get-all-url-query.type';
+import { TransactionItem } from 'src/database/models/transaction-item.model';
 
 @Injectable()
 export class WithdrawalService {
@@ -29,6 +32,7 @@ export class WithdrawalService {
     private readonly tenantSettingRepository: typeof TenantSetting,
     @Inject(WITHDRAWAL_REQUEST_REPOSITORY)
     private readonly withdrawalRequestRepository: typeof WithdrawalRequest,
+    private readonly paginationProvider: PaginationProvider,
   ) {}
 
   async getWalletBalance(tenantId: string) {
@@ -72,6 +76,52 @@ export class WithdrawalService {
         total_profit: totalProfit,
         total_withdrawal: totalWd
       };
+    } catch (error) {
+      await tx.rollback();
+      throw error;
+    }
+  }
+
+  async getWalletTransactions(
+    tenantId: string,
+    type: 'available' | 'pending',
+    pagination?: BaseGetAllUrlQuery
+  ) {
+    const tx = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema(tenantId, tx);
+
+      const { limit, offset } = this.paginationProvider.generatePaginationQuery(pagination);
+      
+      const tPlus2 = new Date();
+      tPlus2.setDate(tPlus2.getDate() - 2);
+
+      const whereOptions: WhereOptions = {};
+      if (type === 'available') {
+        whereOptions.created_at = { [Op.lte]: tPlus2 };
+      } else if (type === 'pending') {
+        whereOptions.created_at = { [Op.gt]: tPlus2 };
+      }
+
+      const transactions = await this.transactionRepository.findAndCountAll({
+        where: whereOptions,
+        include: [{
+          model: TransactionItem,
+          as: 'items'
+        }],
+        order: [['created_at', 'DESC']],
+        limit,
+        offset,
+        distinct: true,
+        transaction: tx
+      });
+
+      await tx.commit();
+      return this.paginationProvider.generatePaginationResponse(
+        transactions.rows,
+        transactions.count,
+        pagination
+      );
     } catch (error) {
       await tx.rollback();
       throw error;

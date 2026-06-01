@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, UseGuards, Req, Query } from '@nestjs/common';
 import { WithdrawalService } from './withdrawal.service';
 import { CreateWithdrawalDto } from './dto/create-withdrawal.dto';
 import { VcAuthGuard } from 'src/guards/vc-auth.guard';
@@ -13,6 +13,17 @@ export class WithdrawalController {
   async getBalance(@Req() req: Request) {
     const tenantId = (req as any).tenant_id;
     return await this.withdrawalService.getWalletBalance(tenantId);
+  }
+
+  @Get('wallet-transactions')
+  async getWalletTransactions(
+    @Req() req: Request,
+    @Query('type') type: 'available' | 'pending',
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ) {
+    const tenantId = (req as any).tenant_id;
+    return await this.withdrawalService.getWalletTransactions(tenantId, type, { page, limit });
   }
 
   @Get('history')

@@ -693,6 +693,18 @@ function RouteComponent() {
     })
   }
 
+  const handleQuickFilterStatus = (status: string) => {
+    setFilter(prev => ({ ...prev, status }))
+    navigate({
+      search: prev => ({
+        ...prev,
+        status,
+        page: 1,
+      }),
+      replace: true,
+    })
+  }
+
   const handleSearchEmail = useDebouncedCallback((value: string) => {
     setFilter({ ...filter, email: value })
     const email = value || undefined
@@ -1123,7 +1135,10 @@ function RouteComponent() {
                         {' '}
                         Akun Berakhir Hari Ini
                       </p>
-                      <p className="font-semibold text-2xl">
+                      <p 
+                        className="font-semibold text-2xl cursor-pointer hover:underline text-primary"
+                        onClick={() => handleQuickFilterStatus('expiring_today')}
+                      >
                         {countAccounts?.accounts_expiring_today}
                       </p>
                     </div>
@@ -1133,7 +1148,10 @@ function RouteComponent() {
                         {' '}
                         Reset Password Hari Ini
                       </p>
-                      <p className="font-semibold text-2xl">
+                      <p 
+                        className="font-semibold text-2xl cursor-pointer hover:underline text-primary"
+                        onClick={() => handleQuickFilterStatus('reset_today')}
+                      >
                         {countAccounts?.accounts_reset_today}
                       </p>
                     </div>

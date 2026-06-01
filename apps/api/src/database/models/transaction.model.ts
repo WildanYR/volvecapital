@@ -68,4 +68,10 @@ export class Transaction extends Model<
 
   @HasMany(() => TransactionItem)
   declare items: TransactionItem[];
+
+  @Column(DataType.DATE)
+  declare created_at: Date;
+
+  @Column(DataType.DATE)
+  declare updated_at: Date;
 }

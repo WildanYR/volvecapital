@@ -209,42 +209,10 @@ export class StatisticService {
 
       // Build capital dynamic query
       let capitalQuery = '';
-      if (params.product_variant_id && params.platform) {
-        capitalQuery = `
-          (SELECT COALESCE(SUM(acc.capital_price), 0) FROM "account" acc WHERE acc.product_variant_id = :product_variant_id AND acc.id IN (
-            SELECT au.account_id FROM "account_user" au 
-            JOIN "transaction_item" ti ON ti.account_user_id = au.id
-            JOIN "transaction" t ON t.id = ti.transaction_id
-            WHERE t.platform ILIKE :platform AND t.created_at >= :start AND t.created_at <= :end
-          )) +
-          (SELECT COALESCE(SUM(ac.amount), 0) FROM "account_capital" ac WHERE ac.account_id IN (
-            SELECT au.account_id FROM "account_user" au 
-            JOIN "transaction_item" ti ON ti.account_user_id = au.id
-            JOIN "transaction" t ON t.id = ti.transaction_id
-            WHERE t.platform ILIKE :platform AND t.created_at >= :start AND t.created_at <= :end
-          ) AND ac.account_id IN (
-            SELECT id FROM "account" WHERE product_variant_id = :product_variant_id
-          ))
-        `;
-      } else if (params.product_variant_id) {
+      if (params.product_variant_id) {
         capitalQuery = `
           (SELECT COALESCE(SUM(capital_price), 0) FROM "account" WHERE product_variant_id = :product_variant_id AND created_at >= :start AND created_at <= :end) +
           (SELECT COALESCE(SUM(ac.amount), 0) FROM "account_capital" ac JOIN "account" acc ON acc.id = ac.account_id WHERE acc.product_variant_id = :product_variant_id AND ac.created_at >= :start AND ac.created_at <= :end)
-        `;
-      } else if (params.platform) {
-        capitalQuery = `
-          (SELECT COALESCE(SUM(acc.capital_price), 0) FROM "account" acc WHERE acc.id IN (
-            SELECT au.account_id FROM "account_user" au 
-            JOIN "transaction_item" ti ON ti.account_user_id = au.id
-            JOIN "transaction" t ON t.id = ti.transaction_id
-            WHERE t.platform ILIKE :platform AND t.created_at >= :start AND t.created_at <= :end
-          )) +
-          (SELECT COALESCE(SUM(ac.amount), 0) FROM "account_capital" ac WHERE ac.account_id IN (
-            SELECT au.account_id FROM "account_user" au 
-            JOIN "transaction_item" ti ON ti.account_user_id = au.id
-            JOIN "transaction" t ON t.id = ti.transaction_id
-            WHERE t.platform ILIKE :platform AND t.created_at >= :start AND t.created_at <= :end
-          ))
         `;
       } else {
         capitalQuery = `
@@ -365,6 +333,110 @@ export class StatisticService {
         { type: QueryTypes.SELECT, transaction: tx, replacements: repl },
       ) as any[];
 
+      // ── Capital Details ──────────────────────────────────────────
+      let capitalDetailsQuery = '';
+      if (params.product_variant_id) {
+        capitalDetailsQuery = `
+          SELECT 
+            e.email,
+            CONCAT(p.name, ' - ', pv.name) AS variant_name,
+            acc.created_at AS date,
+            acc.capital_price AS nominal,
+            'Account Creation' AS type
+          FROM "account" acc
+          JOIN "email" e ON e.id = acc.email_id
+          JOIN "product_variant" pv ON pv.id = acc.product_variant_id
+          JOIN "product" p ON p.id = pv.product_id
+          WHERE acc.product_variant_id = :product_variant_id 
+            AND acc.created_at >= :start AND acc.created_at <= :end
+            AND acc.capital_price > 0
+          
+          UNION ALL
+          
+          SELECT 
+            e.email,
+            CONCAT(p.name, ' - ', pv.name) AS variant_name,
+            ac.created_at AS date,
+            ac.amount AS nominal,
+            'Additional Capital' AS type
+          FROM "account_capital" ac
+          JOIN "account" acc ON acc.id = ac.account_id
+          JOIN "email" e ON e.id = acc.email_id
+          JOIN "product_variant" pv ON pv.id = acc.product_variant_id
+          JOIN "product" p ON p.id = pv.product_id
+          WHERE acc.product_variant_id = :product_variant_id 
+            AND ac.created_at >= :start AND ac.created_at <= :end
+            AND ac.amount > 0
+          
+          ORDER BY date DESC
+        `;
+      } else {
+        capitalDetailsQuery = `
+          SELECT 
+            e.email,
+            CONCAT(p.name, ' - ', pv.name) AS variant_name,
+            acc.created_at AS date,
+            acc.capital_price AS nominal,
+            'Account Creation' AS type
+          FROM "account" acc
+          JOIN "email" e ON e.id = acc.email_id
+          JOIN "product_variant" pv ON pv.id = acc.product_variant_id
+          JOIN "product" p ON p.id = pv.product_id
+          WHERE acc.created_at >= :start AND acc.created_at <= :end
+            AND acc.capital_price > 0
+          
+          UNION ALL
+          
+          SELECT 
+            e.email,
+            CONCAT(p.name, ' - ', pv.name) AS variant_name,
+            ac.created_at AS date,
+            ac.amount AS nominal,
+            'Additional Capital' AS type
+          FROM "account_capital" ac
+          JOIN "account" acc ON acc.id = ac.account_id
+          JOIN "email" e ON e.id = acc.email_id
+          JOIN "product_variant" pv ON pv.id = acc.product_variant_id
+          JOIN "product" p ON p.id = pv.product_id
+          WHERE ac.created_at >= :start AND ac.created_at <= :end
+            AND ac.amount > 0
+            
+          ORDER BY date DESC
+        `;
+      }
+
+      const capitalDetails = await this.postgresProvider.rawQuery(
+        capitalDetailsQuery,
+        { type: QueryTypes.SELECT, transaction: tx, replacements: repl },
+      ) as any[];
+
+      // ── Revenue Details ──────────────────────────────────────────
+      const revenueDetailsQuery = `
+        SELECT 
+          t.id,
+          t.created_at AS date,
+          MAX(e.email) AS email,
+          MAX(CONCAT(p.name, ' - ', pv.name)) AS variant_name,
+          t.customer,
+          t.platform,
+          t.total_price AS nominal
+        FROM "transaction" t
+        LEFT JOIN "transaction_item" ti ON ti.transaction_id = t.id
+        LEFT JOIN "account_user" au ON au.id = ti.account_user_id
+        LEFT JOIN "account" acc ON acc.id = au.account_id
+        LEFT JOIN "email" e ON e.id = acc.email_id
+        LEFT JOIN "product_variant" pv ON pv.id = acc.product_variant_id
+        LEFT JOIN "product" p ON p.id = pv.product_id
+        WHERE t.created_at >= :start AND t.created_at <= :end ${trxWhere}
+        GROUP BY t.id, t.created_at, t.customer, t.platform, t.total_price
+        ORDER BY t.created_at DESC
+      `;
+
+      const revenueDetails = await this.postgresProvider.rawQuery(
+        revenueDetailsQuery,
+        { type: QueryTypes.SELECT, transaction: tx, replacements: repl },
+      ) as any[];
+
       await tx.commit();
 
       // ── Format label for X-axis based on granularity ─────────────
@@ -423,6 +495,22 @@ export class StatisticService {
             product_name:       p.product_name as string,
             variant_name:       p.variant_name as string,
             items_sold:         Number(p.items_sold),
+          })),
+          capital_details: capitalDetails.map(c => ({
+            email:   c.email as string,
+            variant_name: c.variant_name as string,
+            date:    new Date(c.date).toISOString(),
+            nominal: Number(c.nominal),
+            type:    c.type as string,
+          })),
+          revenue_details: revenueDetails.map(r => ({
+            id:           r.id as string,
+            date:         new Date(r.date).toISOString(),
+            email:        r.email as string,
+            variant_name: r.variant_name as string,
+            customer:     r.customer as string,
+            platform:     r.platform as string,
+            nominal:      Number(r.nominal),
           })),
         },
         meta: {
