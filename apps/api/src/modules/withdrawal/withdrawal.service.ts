@@ -45,7 +45,7 @@ export class WithdrawalService {
       tPlus2.setDate(tPlus2.getDate() - 2);
 
       const [profitResult] = await this.postgresProvider.rawQuery(
-        `SELECT SUM(net_profit) as total_profit FROM transaction WHERE created_at <= :tPlus2`,
+        `SELECT SUM(net_profit) as total_profit FROM transaction WHERE platform = 'landing' AND created_at <= :tPlus2`,
         { replacements: { tPlus2 }, transaction: tx }
       );
       
@@ -53,7 +53,7 @@ export class WithdrawalService {
 
       // 2. Calculate Pending Balance (transactions within T+2, not yet cleared)
       const [pendingResult] = await this.postgresProvider.rawQuery(
-        `SELECT SUM(net_profit) as pending_profit FROM transaction WHERE created_at > :tPlus2`,
+        `SELECT SUM(net_profit) as pending_profit FROM transaction WHERE platform = 'landing' AND created_at > :tPlus2`,
         { replacements: { tPlus2 }, transaction: tx }
       );
 
@@ -96,7 +96,7 @@ export class WithdrawalService {
       const tPlus2 = new Date();
       tPlus2.setDate(tPlus2.getDate() - 2);
 
-      const whereOptions: WhereOptions = {};
+      const whereOptions: WhereOptions = { platform: 'landing' };
       if (type === 'available') {
         whereOptions.created_at = { [Op.lte]: tPlus2 };
       } else if (type === 'pending') {
