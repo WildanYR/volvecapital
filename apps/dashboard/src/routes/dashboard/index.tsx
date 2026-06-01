@@ -34,7 +34,7 @@ import { formatRupiah } from '@/dashboard/lib/currency.util'
 import { statisticServiceGenerator } from '@/dashboard/services/statistic.service'
 import { ProductServiceGenerator } from '@/dashboard/services/product.service'
 import { formatDateIdStandard } from '@/dashboard/lib/time-converter.util'
-import { ArrowDownIcon, ArrowUpIcon, MinusIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, CopyIcon, GlobeIcon, LayoutGridIcon, MessageCircleIcon, CalendarIcon } from 'lucide-react'
+import { ArrowDownIcon, ArrowUpIcon, MinusIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, GlobeIcon, LayoutGridIcon, MessageCircleIcon, CalendarIcon } from 'lucide-react'
 import {
   Select,
   SelectContent,

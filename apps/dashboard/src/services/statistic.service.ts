@@ -65,6 +65,8 @@ export interface AllStatistic {
     peakHour: Array<PeakHourChartData>
     platform: Array<PlatformChartData>
     products: Array<ProductChartData>
+    revenue_details?: Array<any>
+    capital_details?: Array<any>
   }
   meta: {
     filter: string
