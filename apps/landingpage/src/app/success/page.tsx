@@ -144,7 +144,22 @@ function SuccessContent() {
             Pesanan Anda telah kami terima. Gunakan kode voucher di bawah ini untuk mengaktifkan layanan premium Anda sekarang juga.
           </p>
 
-          <div className="bg-muted/50 border border-border rounded-[32px] p-10 mb-6 relative group shadow-inner">
+          {/* Primary: Claim directly from this page */}
+          {code && voucherData?.status === 'UNUSED' && (
+            <button
+              onClick={handleClaim}
+              disabled={isClaiming}
+              className="w-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-black py-5 rounded-2xl flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-95 transition-all uppercase tracking-widest text-sm shadow-xl shadow-primary/20 disabled:opacity-60 disabled:scale-100 mb-6"
+            >
+              {isClaiming ? (
+                <><Loader2 className="size-5 animate-spin" /> Memproses Klaim...</>
+              ) : (
+                <><Zap className="size-5" /> Claim Sekarang</>
+              )}
+            </button>
+          )}
+
+          <div className="bg-muted/50 border border-border rounded-[32px] p-10 mb-12 relative group shadow-inner">
             <p className="text-[10px] uppercase tracking-[0.3em] text-slate-400 font-black mb-4">Kode Voucher Eksklusif Anda</p>
             <div className="flex flex-row items-center justify-center gap-4">
               <span className="text-xl md:text-3xl lg:text-4xl font-black text-foreground tracking-tight">
@@ -158,21 +173,6 @@ function SuccessContent() {
               </button>
             </div>
           </div>
-          
-          {/* Primary: Claim directly from this page */}
-          {code && voucherData?.status === 'UNUSED' && (
-            <button
-              onClick={handleClaim}
-              disabled={isClaiming}
-              className="w-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-black py-5 rounded-2xl flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-95 transition-all uppercase tracking-widest text-sm shadow-xl shadow-primary/20 disabled:opacity-60 disabled:scale-100 mb-12"
-            >
-              {isClaiming ? (
-                <><Loader2 className="size-5 animate-spin" /> Memproses Klaim...</>
-              ) : (
-                <><Zap className="size-5" /> Claim Sekarang</>
-              )}
-            </button>
-          )}
 
           {voucherData?.expired_at && (
             <motion.div 
