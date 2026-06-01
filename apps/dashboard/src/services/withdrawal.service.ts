@@ -144,7 +144,16 @@ export function WithdrawalServiceGenerator(apiUrl: string, accessToken: string, 
       const errorData = await parseApiResponse(response)
       throw new Error(errorData.message || 'Failed to fetch wallet transactions')
     }
-    return response.json()
+    const result = await response.json()
+    return {
+      data: result.items || [],
+      meta: {
+        page: result.paginationData?.currentPage || params.page,
+        limit: result.paginationData?.limit || params.limit,
+        totalItems: result.paginationData?.totalItems || 0,
+        totalPages: result.paginationData?.totalPage || 1,
+      }
+    }
   }
 
   return {
