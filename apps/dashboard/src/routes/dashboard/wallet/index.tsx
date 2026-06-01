@@ -295,7 +295,7 @@ function WalletPage() {
       </Dialog>
 
       <Dialog open={isTransactionModalOpen} onOpenChange={setIsTransactionModalOpen}>
-        <DialogContent className="max-w-4xl max-h-[80vh] flex flex-col">
+        <DialogContent className="max-w-[95vw] lg:max-w-5xl xl:max-w-6xl max-h-[85vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>
               Detail Transaksi - {transactionModalType === 'available' ? 'Saldo Tersedia' : 'Saldo Pending'}
