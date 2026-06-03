@@ -60,7 +60,6 @@ import { UtilityModule } from './modules/utility/utility.module';
     TenantModule,
     TaskQueueModule,
     SocketModule,
-    ...(process.env.SOCKET_TEST_MODULE_ENABLED === 'true' ? [SocketTestModule] : []),
     EmailModule,
     EmailMessageModule,
     ProductModule,

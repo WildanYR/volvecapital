@@ -1,44 +1,10 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AppLoggerService } from '../logger/logger.service';
-
-interface DispatchTaskRequest {
-  taskId: string;
-  tenantId: string;
-  dispatchTaskData?: {
-    module?: string;
-    type?: string;
-    executeAt?: string;
-    payload?: any;
-    maxRetries?: number;
-  };
-}
-
-interface DispatchTaskResponse {
-  clientId: string | null;
-}
-
-interface SendEventRequest {
-  eventName: string;
-  payload: any;
-}
-
-interface SubscriptionRequest {
-  clientId: string;
-  eventName: string;
-}
-
-interface SocketConnectionSummary {
-  id: string;
-  name: string;
-  tenant_id: string;
-  type: 'BOT' | 'WEB';
-  inflight: number;
-  connectedAt: number;
-}
+import { DispatchTaskRequest, DispatchTaskResponse, SendEventRequest, SocketConnectionSummary, SubscriptionRequest } from './types/socket-connection.type';
 
 @Injectable()
-export class SocketGateway {
+export class SocketService {
   constructor(
     private readonly configService: ConfigService,
     private readonly logger: AppLoggerService,

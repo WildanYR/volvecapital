@@ -1,11 +1,11 @@
 import { IsNotEmpty, IsString } from 'class-validator';
 
-export class SubscriptionDto {
-  @IsNotEmpty()
-  @IsString()
-  clientId: string;
-
+export class SocketSendEventDTO {
   @IsNotEmpty()
   @IsString()
   eventName: string;
+
+  @IsNotEmpty()
+  @IsString()
+  payload: string;
 }

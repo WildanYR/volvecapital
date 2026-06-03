@@ -1,16 +1,34 @@
-export type SocketConnectionType = 'BOT' | 'WEB';
+export interface DispatchTaskRequest {
+  taskId: string;
+  tenantId: string;
+  dispatchTaskData?: {
+    module?: string;
+    type?: string;
+    executeAt?: string;
+    payload?: any;
+    maxRetries?: number;
+  };
+}
 
-export interface SocketConnection {
+export interface DispatchTaskResponse {
+  clientId: string | null;
+}
+
+export interface SendEventRequest {
+  eventName: string;
+  payload: any;
+}
+
+export interface SubscriptionRequest {
+  clientId: string;
+  eventName: string;
+}
+
+export interface SocketConnectionSummary {
   id: string;
   name: string;
   tenant_id: string;
-  type: SocketConnectionType;
+  type: 'BOT' | 'WEB';
   inflight: number;
   connectedAt: number;
-}
-
-export interface SocketAuthContext {
-  tenant_id: string;
-  name: string;
-  type: SocketConnectionType;
 }
