@@ -6,7 +6,7 @@ import { Email } from 'src/database/models/email.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
 import { AppLoggerService } from '../logger/logger.service';
 import { SyslogService } from '../logger/syslog.service';
-import { SocketGateway } from '../socket/socket.gateway';
+import { SocketService } from '../socket/socket.service';
 import { TeleNotifierService } from '../tele-notifier/tele-notifier.service';
 import { EmailParser } from '../utility/email-parser.provider';
 import {
@@ -22,7 +22,7 @@ export class TaskHelperService {
     private readonly emailParser: EmailParser,
     private readonly sysLogService: SyslogService,
     private readonly teleNotifierService: TeleNotifierService,
-    private readonly socketGateway: SocketGateway,
+    private readonly socketService: SocketService,
     private readonly postgresProvider: PostgresProvider,
     @Inject(ACCOUNT_REPOSITORY)
     private readonly accountRepository: typeof Account,
