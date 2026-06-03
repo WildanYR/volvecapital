@@ -3,7 +3,7 @@
  */
 
 import { FetchFailedError, TransactionExistNoAccountError } from './errors.js';
-import { ProductLookupItem, ProductPlatform, TransactionAccountPayload, AccountUser, FailedAccountUser, AccountProfile, Account } from './types/api.type.js';
+import { ProductLookupItem, ProductPlatform, TransactionAccountPayload, AccountUser, FailedAccountUser, AccountProfile, Account, MetadataObject } from './types/api.type.js';
 import type { AuthCredentials } from '../../core/auth.js';
 import { authHeaders } from '../../core/auth.js';
 
@@ -93,19 +93,13 @@ export async function generateAccountTransaction(
  * Convert metadata string to object array
  */
 function convertStringToMetadataObject(
-  metadata: string
-): { key: string; value: string }[] {
-  try {
-    const parsedData = JSON.parse(metadata);
-
-    if (Array.isArray(parsedData)) {
-      return parsedData;
-    }
-
-    return [];
-  } catch {
-    return [];
-  }
+  metadata?: string,
+): Array<MetadataObject> {
+  if (!metadata)
+    return []
+  const obj = JSON.parse(metadata)
+  const entries = Object.entries(obj)
+  return entries.map(v => ({ key: v[0], value: v[1] as string }))
 }
 
 /**

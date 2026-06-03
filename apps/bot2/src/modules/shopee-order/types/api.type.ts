@@ -1,3 +1,8 @@
+export interface MetadataObject {
+  key: string
+  value: string
+}
+
 export interface ProductPlatform {
   name: string;
   variant?: string;
@@ -71,6 +76,6 @@ export interface AccountProfile {
   name: string;
   max_user: number;
   allow_generate: boolean;
-  metadata?: { key: string; value: string }[];
+  metadata?: MetadataObject[];
   account_id: string;
 }
