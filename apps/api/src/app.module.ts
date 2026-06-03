@@ -17,6 +17,7 @@ import { AccountUserModule } from './modules/account-user/account-user.module';
 import { AccountModule } from './modules/account/account.module';
 import { CronModule } from './modules/cron/cron.module';
 import { EmailMessageModule } from './modules/email-message/email-message.module';
+import { EmailSubjectModule } from './modules/email-subject/email-subject.module';
 import { EmailModule } from './modules/email/email.module';
 import { ExpenseModule } from './modules/expense/expense.module';
 import { AppLoggerModule } from './modules/logger/logger.module';
@@ -71,6 +72,7 @@ import { UtilityModule } from './modules/utility/utility.module';
     AccountUserModule,
     TransactionModule,
     StatisticModule,
+    EmailSubjectModule,
   ],
   controllers: [AppController],
   providers: [{ provide: APP_GUARD, useClass: VcAuthGuard }, AppService],

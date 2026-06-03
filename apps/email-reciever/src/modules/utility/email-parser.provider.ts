@@ -15,7 +15,7 @@ export class EmailParser {
     return resetLink;
   }
 
-  extractNetflixOtp(emailText: string) {
+  extractOtp(emailText: string) {
     const cleanText = emailText.replace(/[\u200C-\u200F]/g, '').trim();
 
     const otpRegex = /^\s*(\d{4,6})\s*$/m;

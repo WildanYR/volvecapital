@@ -13,6 +13,7 @@ export interface EmailSubjectAttributes {
   id: string;
   context: string;
   subject: string;
+  extract_method: string;
   created_at: Date;
   updated_at: Date;
 }
@@ -37,4 +38,8 @@ export class EmailSubject extends Model<EmailSubjectAttributes, EmailSubjectCrea
   @AllowNull(false)
   @Column(DataType.STRING)
   declare subject: string;
+
+  @AllowNull(false)
+  @Column(DataType.STRING)
+  declare extract_method: string;
 }

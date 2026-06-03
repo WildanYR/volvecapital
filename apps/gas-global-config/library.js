@@ -130,7 +130,7 @@ class Forwarder {
     let subjectStr = this.cacheService.get(this.KEYS.SUBJECT);
     if (!subjectStr) {
       try {
-        const res = UrlFetchApp.fetch(`${this.API_URL}/email-forward/subject`, { muteHttpExceptions: true });
+        const res = UrlFetchApp.fetch(`${this.API_URL}/email-forward/subject?tenant=${this.APP_ID}`, { muteHttpExceptions: true });
         if (res.getResponseCode() >= 200 && res.getResponseCode() < 300) {
           subjectStr = res.getContentText();
           this.cacheService.put(this.KEYS.SUBJECT, subjectStr, this.TTL_SUBJECT);

@@ -20,11 +20,11 @@ export class EmailForwardService {
     this.logger.log(`Queued email-forward payload ${jobId}`, 'EmailForwardEnqueue');
   }
 
-  async getEmailSubject() {
+  async getEmailSubject(tenantId: string) {
     const transaction = await this.postgresProvider.transaction();
 
     try {
-      await this.postgresProvider.setSchema('master', transaction);
+      await this.postgresProvider.setSchema(tenantId, transaction);
 
       const emailSubject = await this.emailSubjectRepository.findAll({ transaction });
       const subjects = emailSubject.map(es => es.dataValues.subject);

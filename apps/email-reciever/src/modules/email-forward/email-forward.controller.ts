@@ -1,5 +1,5 @@
 import { CacheInterceptor } from '@nestjs/cache-manager';
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query, UseInterceptors } from '@nestjs/common';
 import { RecieveEmailDto } from './dto/recieve-email.dto';
 import { EmailForwardService } from './email-forward.service';
 
@@ -15,7 +15,10 @@ export class EmailForwardController {
 
   @UseInterceptors(CacheInterceptor)
   @Get('/subject')
-  async getEmailSubject() {
-    return await this.emailForwardService.getEmailSubject();
+  async getEmailSubject(@Query('tenant') tenant: string) {
+    if (!tenant) {
+      return { subjects: [] };
+    }
+    return await this.emailForwardService.getEmailSubject(tenant);
   }
 }

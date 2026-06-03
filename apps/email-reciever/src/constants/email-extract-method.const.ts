@@ -1,0 +1,2 @@
+export const OTP_EXTRACT = 'OTP_EXTRACT';
+export const NETFLIX_URL_EXTRACT = 'NETFLIX_URL_EXTRACT';
