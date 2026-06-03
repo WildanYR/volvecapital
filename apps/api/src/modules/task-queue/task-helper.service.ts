@@ -106,17 +106,12 @@ export class TaskHelperService {
       await transaction.commit();
       transactionCommitted = true;
 
-      const clientId = await this.socketGateway.dispatchTask(taskId, tenantId, {
+      await this.socketService.dispatchTask(taskId, tenantId, {
         module: 'netflix',
         type: 'resetPassword',
         maxRetries: 0,
         payload,
       });
-
-      if (clientId) {
-        const eventName = `${this.emailParser.sanitizeEmail(payload.email)}:${NETFLIX_REQ_RESET_PASSWORD}`;
-        this.socketGateway.subscribeClientToEvent(clientId, eventName);
-      }
     }
     catch (error) {
       if (!transactionCommitted) {
