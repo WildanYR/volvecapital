@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { useMutation } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { Loader2, Save } from 'lucide-react'
@@ -25,6 +25,7 @@ function RouteComponent() {
   const tenantService = TenantServiceGenerator(
     API_URL,
     auth.tenant!.accessToken,
+    auth.tenant!.id,
   )
 
   const [oldPassword, setOldPassword] = useState('')
@@ -83,7 +84,7 @@ function RouteComponent() {
             <div className="space-y-2 max-w-md">
               <div className="flex justify-between items-center">
                 <label className="text-sm font-bold">Password Lama</label>
-                <a href="#" className="text-xs text-muted-foreground hover:text-primary transition-colors">Lupa password lama?</a>
+                <Link to="/forgot-password" className="text-xs text-muted-foreground hover:text-primary transition-colors">Lupa password lama?</Link>
               </div>
               <Input
                 type="password"

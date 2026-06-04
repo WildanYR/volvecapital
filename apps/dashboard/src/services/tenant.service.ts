@@ -1,13 +1,14 @@
 
 
-export function TenantServiceGenerator(baseUrl: string, token: string) {
+export function TenantServiceGenerator(baseUrl: string, token: string, tenantId: string) {
   const changePassword = async (payload: any) => {
     const url = new URL(`${baseUrl}/tenant/owner/change-password`)
     const response = await fetch(url.toString(), {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
+        'Authorization': `VC ${token}`,
+        'x-tenant-id': tenantId,
       },
       body: JSON.stringify(payload),
     })
