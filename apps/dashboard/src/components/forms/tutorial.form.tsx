@@ -1,10 +1,10 @@
 import type { z } from 'zod'
 import type { Tutorial } from '@/dashboard/services/tutorial.service'
-import { Plus, Trash2, ArrowUp, ArrowDown, Image as ImageIcon } from 'lucide-react'
+import { ArrowDown, ArrowUp, Image as ImageIcon, Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/dashboard/components/ui/button'
+import { Card, CardContent } from '@/dashboard/components/ui/card'
 import { useAppForm } from '@/dashboard/hooks/form.hook'
 import { TutorialFormSchema } from './common/schemas/tutorial-form.schema'
-import { Card, CardContent } from '@/dashboard/components/ui/card'
 
 export type TutorialFormSubmitData = z.infer<typeof TutorialFormSchema>
 
@@ -70,10 +70,10 @@ export function TutorialForm({
                   />
                   {field.state.value && (
                     <div className="relative aspect-video rounded-lg overflow-hidden border border-white/10 bg-black/20 group">
-                       <img src={field.state.value} alt="Preview" className="w-full h-full object-cover" />
-                       <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
-                         <ImageIcon className="text-white size-8" />
-                       </div>
+                      <img src={field.state.value} alt="Preview" className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <ImageIcon className="text-white size-8" />
+                      </div>
                     </div>
                   )}
                 </div>
@@ -195,16 +195,18 @@ export function TutorialForm({
                               children={sub => (
                                 <div className="space-y-2">
                                   <sub.TextField label="URL Gambar Preview" placeholder="Paste link gambar di sini..." />
-                                  {sub.state.value ? (
-                                    <div className="aspect-video rounded-lg overflow-hidden border border-white/10 bg-black/40">
-                                      <img src={sub.state.value} alt="Step Preview" className="w-full h-full object-cover" />
-                                    </div>
-                                  ) : (
-                                    <div className="aspect-video rounded-lg border border-dashed border-white/10 bg-white/5 flex flex-col items-center justify-center text-muted-foreground gap-2">
-                                      <ImageIcon className="size-8 opacity-20" />
-                                      <p className="text-xs">Pratinjau gambar akan muncul di sini</p>
-                                    </div>
-                                  )}
+                                  {sub.state.value
+                                    ? (
+                                        <div className="aspect-video rounded-lg overflow-hidden border border-white/10 bg-black/40">
+                                          <img src={sub.state.value} alt="Step Preview" className="w-full h-full object-cover" />
+                                        </div>
+                                      )
+                                    : (
+                                        <div className="aspect-video rounded-lg border border-dashed border-white/10 bg-white/5 flex flex-col items-center justify-center text-muted-foreground gap-2">
+                                          <ImageIcon className="size-8 opacity-20" />
+                                          <p className="text-xs">Pratinjau gambar akan muncul di sini</p>
+                                        </div>
+                                      )}
                                 </div>
                               )}
                             />

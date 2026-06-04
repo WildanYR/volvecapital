@@ -1,7 +1,9 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
-import { io, Socket } from 'socket.io-client'
-import { useAuth } from './auth.provider'
+import type { ReactNode } from 'react'
+import type { Socket } from 'socket.io-client'
+import { createContext, use, useEffect, useState } from 'react'
+import { io } from 'socket.io-client'
 import { API_URL } from '@/dashboard/constants/api-url.cont'
+import { useAuth } from './auth.provider'
 
 interface SocketContextType {
   socket: Socket | null
@@ -13,7 +15,7 @@ const SocketContext = createContext<SocketContextType>({
   isConnected: false,
 })
 
-export const useSocket = () => useContext(SocketContext)
+export const useSocket = () => use(SocketContext)
 
 interface SocketProviderProps {
   children: ReactNode
@@ -27,9 +29,9 @@ export function SocketProvider({ children }: SocketProviderProps) {
   useEffect(() => {
     if (auth.tenant?.accessToken) {
       // Try to build socket URL properly
-      let baseUrl = API_URL;
+      let baseUrl = API_URL
       if (baseUrl.endsWith('/api')) {
-        baseUrl = baseUrl.slice(0, -4);
+        baseUrl = baseUrl.slice(0, -4)
       }
 
       const newSocket = io(baseUrl, {
@@ -63,15 +65,16 @@ export function SocketProvider({ children }: SocketProviderProps) {
       return () => {
         newSocket.disconnect()
       }
-    } else {
+    }
+    else {
       setSocket(null)
       setIsConnected(false)
     }
   }, [auth.tenant?.accessToken])
 
   return (
-    <SocketContext.Provider value={{ socket, isConnected }}>
+    <SocketContext value={{ socket, isConnected }}>
       {children}
-    </SocketContext.Provider>
+    </SocketContext>
   )
 }

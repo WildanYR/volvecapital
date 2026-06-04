@@ -1,8 +1,10 @@
-import { useState } from 'react'
+import type { BulkAccountItemPayload, BulkCreateAccountPayload } from '@/dashboard/services/account.service'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { AlertCircle, CheckCircle2, FileUp, Info, Loader2, Upload } from 'lucide-react'
 import Papa from 'papaparse'
-import { Upload, FileUp, Loader2, AlertCircle, Info, CheckCircle2 } from 'lucide-react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useState } from 'react'
 import { toast } from 'sonner'
+import { Alert, AlertDescription } from '@/dashboard/components/ui/alert'
 import { Button } from '@/dashboard/components/ui/button'
 import {
   Dialog,
@@ -14,25 +16,23 @@ import {
   DialogTrigger,
 } from '@/dashboard/components/ui/dialog'
 import { Input } from '@/dashboard/components/ui/input'
-import { Alert, AlertDescription } from '@/dashboard/components/ui/alert'
-import { useAuth } from '@/dashboard/context-providers/auth.provider'
 import { API_URL } from '@/dashboard/constants/api-url.cont'
-import { ProductServiceGenerator } from '@/dashboard/services/product.service'
+import { useAuth } from '@/dashboard/context-providers/auth.provider'
 import { AccountServiceGenerator } from '@/dashboard/services/account.service'
-import type { BulkAccountItemPayload, BulkCreateAccountPayload } from '@/dashboard/services/account.service'
+import { ProductServiceGenerator } from '@/dashboard/services/product.service'
 
 interface CSVRow {
-  email: string
-  password?: string
+  'email': string
+  'password'?: string
   'Subscription Berakhir'?: string
-  status?: string
-  Billing?: string
+  'status'?: string
+  'Billing'?: string
   'Harga Modal (HPP) '?: string
   'Varian Produk'?: string
   'label/ Catatan'?: string
   'Nama Profil'?: string
   'Maksimal User'?: string
-  Metadata?: string
+  'Metadata'?: string
 }
 
 // Peta status: nilai yang diketik user → nilai yang dikenali sistem
@@ -55,8 +55,9 @@ const STATUS_MAP: Record<string, string> = {
 
 const VALID_STATUSES = ['ready', 'disable', 'active', 'freeze', 'banned']
 
-function normalizeStatus(raw: string | undefined): { value: string; corrected: boolean; original: string } {
-  if (!raw) return { value: 'active', corrected: false, original: '' }
+function normalizeStatus(raw: string | undefined): { value: string, corrected: boolean, original: string } {
+  if (!raw)
+    return { value: 'active', corrected: false, original: '' }
   const lower = raw.trim().toLowerCase()
   const mapped = STATUS_MAP[lower]
   if (mapped) {
@@ -103,7 +104,7 @@ export function BulkUploadAccountModal() {
       if (created === 0 && skipped.length > 0) {
         // Semua akun sudah ada — tidak ada yang dibuat baru
         setErrorMsg(
-          `Upload dibatalkan: Semua ${skipped.length} akun dari CSV sudah ada di database (${skipped.join(', ')}). Tidak ada akun baru yang dibuat.`
+          `Upload dibatalkan: Semua ${skipped.length} akun dari CSV sudah ada di database (${skipped.join(', ')}). Tidak ada akun baru yang dibuat.`,
         )
         setIsProcessing(false)
         return
@@ -113,16 +114,18 @@ export function BulkUploadAccountModal() {
         // Sebagian di-skip
         setWarnings(prev => [
           ...prev,
-          `🚫 ${skipped.length} akun dilewati karena sudah ada di database: ${skipped.join(', ')}`
+          `🚫 ${skipped.length} akun dilewati karena sudah ada di database: ${skipped.join(', ')}`,
         ])
         toast.success(`${created} akun berhasil dibuat. ${skipped.length} akun dilewati (duplikat).`)
-      } else {
+      }
+      else {
         toast.success(res.message)
       }
 
       if (skipped.length === 0) {
         handleClose()
-      } else {
+      }
+      else {
         setIsProcessing(false)
       }
     },
@@ -141,7 +144,8 @@ export function BulkUploadAccountModal() {
   }
 
   const findVariantId = (name: string) => {
-    if (!variantsData?.items || !name) return ''
+    if (!variantsData?.items || !name)
+      return ''
     const searchName = name.toLowerCase().trim()
     const found = variantsData.items.find((v) => {
       const variantNameOnly = v.name.toLowerCase()
@@ -152,7 +156,8 @@ export function BulkUploadAccountModal() {
   }
 
   const handleUpload = () => {
-    if (!file) return
+    if (!file)
+      return
     setIsProcessing(true)
     setErrorMsg(null)
     setWarnings([])
@@ -163,7 +168,8 @@ export function BulkUploadAccountModal() {
       complete: (results) => {
         try {
           const rows = results.data
-          if (rows.length === 0) throw new Error('File CSV kosong.')
+          if (rows.length === 0)
+            throw new Error('File CSV kosong.')
 
           const accountsMap = new Map<string, BulkAccountItemPayload>()
           const newWarnings: string[] = []
@@ -171,7 +177,8 @@ export function BulkUploadAccountModal() {
 
           for (let i = 0; i < rows.length; i++) {
             const row = rows[i]
-            if (!row.email) continue
+            if (!row.email)
+              continue
 
             const email = row.email.trim()
             const variantId = findVariantId(row['Varian Produk'] || '')
@@ -189,11 +196,12 @@ export function BulkUploadAccountModal() {
                 if (!VALID_STATUSES.includes(row.status?.toLowerCase().trim() || '')) {
                   newWarnings.push(
                     `ℹ️ Status "${statusResult.original}" pada baris ${i + 2} tidak valid → diubah ke "${statusResult.value}". `
-                    + `Status yang valid: ready (Enable), disable, active, freeze, banned.`
+                    + `Status yang valid: ready (Enable), disable, active, freeze, banned.`,
                   )
-                } else {
+                }
+                else {
                   newWarnings.push(
-                    `ℹ️ Status "${statusResult.original}" pada baris ${i + 2} dikoreksi ke "${statusResult.value}" (sistem menggunakan "ready" untuk Enable).`
+                    `ℹ️ Status "${statusResult.original}" pada baris ${i + 2} dikoreksi ke "${statusResult.value}" (sistem menggunakan "ready" untuk Enable).`,
                   )
                 }
               }
@@ -209,7 +217,8 @@ export function BulkUploadAccountModal() {
                 label: row['label/ Catatan'],
                 profile: [],
               })
-            } else {
+            }
+            else {
               // Email sudah ada — deteksi konflik data akun-level
               const existing = accountsMap.get(email)!
               const conflicts: string[] = []
@@ -240,7 +249,7 @@ export function BulkUploadAccountModal() {
 
               if (conflicts.length > 0) {
                 newWarnings.push(
-                  `⚠️ Email "${email}" punya data berbeda di baris ${i + 2} (hanya data baris pertama yang dipakai):\n   • ${conflicts.join('\n   • ')}`
+                  `⚠️ Email "${email}" punya data berbeda di baris ${i + 2} (hanya data baris pertama yang dipakai):\n   • ${conflicts.join('\n   • ')}`,
                 )
               }
             }
@@ -249,7 +258,7 @@ export function BulkUploadAccountModal() {
 
             // Tambahkan profil
             if (row['Nama Profil']) {
-              let parsedMetadata: string | undefined = undefined
+              let parsedMetadata: string | undefined
               if (row.Metadata) {
                 const metaString = row.Metadata.trim()
                 // Support format: "pin:1234,screen:2" → {"pin":"1234","screen":"2"}
@@ -261,13 +270,15 @@ export function BulkUploadAccountModal() {
                     if (colonIdx > -1) {
                       const key = pair.slice(0, colonIdx).trim()
                       const value = pair.slice(colonIdx + 1).trim()
-                      if (key) metaObj[key] = value
+                      if (key)
+                        metaObj[key] = value
                     }
                   }
                   if (Object.keys(metaObj).length > 0) {
                     parsedMetadata = JSON.stringify(metaObj)
                   }
-                } catch {
+                }
+                catch {
                   parsedMetadata = undefined
                 }
               }
@@ -282,17 +293,19 @@ export function BulkUploadAccountModal() {
           }
 
           const accounts = Array.from(accountsMap.values())
-          if (accounts.length === 0) throw new Error('Tidak ada data akun valid yang bisa diproses.')
+          if (accounts.length === 0)
+            throw new Error('Tidak ada data akun valid yang bisa diproses.')
 
           setWarnings(newWarnings)
           bulkMutation.mutate({ accounts })
-        } catch (err: any) {
+        }
+        catch (err: any) {
           setErrorMsg(err.message)
           setIsProcessing(false)
         }
       },
       error: (err) => {
-        setErrorMsg('Gagal membaca file CSV: ' + err.message)
+        setErrorMsg(`Gagal membaca file CSV: ${err.message}`)
         setIsProcessing(false)
       },
     })
@@ -321,11 +334,31 @@ export function BulkUploadAccountModal() {
             <AlertDescription className="text-xs space-y-1">
               <p className="font-semibold text-blue-400">Nilai Status yang valid di CSV:</p>
               <div className="grid grid-cols-2 gap-x-4 mt-1">
-                <span><code className="text-blue-300">ready</code> → Enable (tersedia)</span>
-                <span><code className="text-blue-300">disable</code> → Disable</span>
-                <span><code className="text-blue-300">active</code> → Active (dipakai)</span>
-                <span><code className="text-blue-300">freeze</code> → Freeze</span>
-                <span><code className="text-blue-300">banned</code> → Banned</span>
+                <span>
+                  <code className="text-blue-300">ready</code>
+                  {' '}
+                  → Enable (tersedia)
+                </span>
+                <span>
+                  <code className="text-blue-300">disable</code>
+                  {' '}
+                  → Disable
+                </span>
+                <span>
+                  <code className="text-blue-300">active</code>
+                  {' '}
+                  → Active (dipakai)
+                </span>
+                <span>
+                  <code className="text-blue-300">freeze</code>
+                  {' '}
+                  → Freeze
+                </span>
+                <span>
+                  <code className="text-blue-300">banned</code>
+                  {' '}
+                  → Banned
+                </span>
               </div>
             </AlertDescription>
           </Alert>
@@ -368,17 +401,19 @@ export function BulkUploadAccountModal() {
             Batal
           </Button>
           <Button onClick={handleUpload} disabled={!file || isProcessing} className="gap-2">
-            {isProcessing ? (
-              <>
-                <Loader2 className="size-4 animate-spin" />
-                Memproses...
-              </>
-            ) : (
-              <>
-                <Upload className="size-4" />
-                Upload CSV
-              </>
-            )}
+            {isProcessing
+              ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" />
+                    Memproses...
+                  </>
+                )
+              : (
+                  <>
+                    <Upload className="size-4" />
+                    Upload CSV
+                  </>
+                )}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -14,7 +14,7 @@ export function publicStatsServiceGenerator(apiUrl: string, tenantId: string) {
       },
       signal,
     })
-    
+
     if (!response.ok) {
       throw new Error('Failed to fetch stock status')
     }

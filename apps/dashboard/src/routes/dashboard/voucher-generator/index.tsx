@@ -142,9 +142,12 @@ function RouteComponent() {
     return `${protocol}//${hostname}/redeem?code=${voucherCode}`
   }
 
+  const hasSettingView = auth.tenant?.role === 'TENANT_OWNER' || auth.tenant?.permissions?.includes('setting.view')
+
   const { data: settings } = useQuery({
     queryKey: ['settings'],
     queryFn: () => settingService.getSettings(),
+    enabled: !!auth.tenant?.accessToken && hasSettingView,
   })
 
   const { data: promoCodes, isLoading: isPromoLoading } = useQuery({

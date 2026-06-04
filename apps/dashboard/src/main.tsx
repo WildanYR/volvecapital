@@ -3,12 +3,12 @@ import { StrictMode } from 'react'
 import ReactDOM from 'react-dom/client'
 
 import { AuthProvider, useAuth } from './context-providers/auth.provider.tsx'
-import { SocketProvider } from './context-providers/socket.provider.tsx'
-
 import {
   queryClient,
   QueryClientProvider,
 } from './context-providers/query-client.provider.tsx'
+
+import { SocketProvider } from './context-providers/socket.provider.tsx'
 // Import the generated route tree
 import { routeTree } from './routeTree.gen'
 import './styles.css'

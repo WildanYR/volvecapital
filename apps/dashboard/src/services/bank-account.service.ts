@@ -23,7 +23,7 @@ export function BankAccountServiceGenerator(apiUrl: string, accessToken: string,
     bank_name: string
     account_number: string
     account_holder: string
-  }): Promise<{ id: string; message: string; expires_at: string }> => {
+  }): Promise<{ id: string, message: string, expires_at: string }> => {
     const response = await generateApiFetch(apiUrl, accessToken, tenantId, '/bank-accounts', undefined, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

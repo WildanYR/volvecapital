@@ -2,6 +2,7 @@ import { Controller, Get, Query, Request } from '@nestjs/common';
 import { AppRequest } from 'src/types/app-request.type';
 import { PaginationProvider } from '../utility/pagination.provider';
 import { GetEmailMessageQueryDto } from './dto/get-email-message-query.dto';
+import { RequirePermissions } from 'src/guards/permissions.decorator';
 import { EmailMessageService } from './email-message.service';
 
 @Controller('email-message')
@@ -12,6 +13,7 @@ export class EmailMessageController {
   ) {}
 
   @Get()
+  @RequirePermissions('email_message.view')
   findAll(
     @Query() query: GetEmailMessageQueryDto,
     @Request() request: AppRequest,

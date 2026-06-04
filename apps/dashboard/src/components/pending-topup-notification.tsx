@@ -23,11 +23,13 @@ export function PendingTopupNotification() {
   
   const [dismissed, setDismissed] = useState<string[]>([])
 
+  const hasAccountView = auth.tenant?.role === 'TENANT_OWNER' || auth.tenant?.permissions?.includes('account.view')
+
   const { data: pendingTopups, refetch } = useQuery({
     queryKey: ['pendingTopups', auth.tenant?.id],
     queryFn: () => accountService.getPendingTopups(),
     refetchInterval: 5000, 
-    enabled: !!auth.tenant?.accessToken,
+    enabled: !!auth.tenant?.accessToken && hasAccountView,
   })
 
   const confirmTopupMutation = useMutation({

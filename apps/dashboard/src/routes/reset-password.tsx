@@ -1,12 +1,12 @@
-import { createFileRoute, useNavigate, Link } from '@tanstack/react-router'
-import { useState } from 'react'
 import { useForm } from '@tanstack/react-form'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+import { ArrowRight, Lock, ShieldCheck } from 'lucide-react'
+import { useState } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/dashboard/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/dashboard/components/ui/card'
 import { Input } from '@/dashboard/components/ui/input'
 import { Label } from '@/dashboard/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/dashboard/components/ui/card'
-import { Lock, ShieldCheck, ArrowRight } from 'lucide-react'
 import { API_URL } from '@/dashboard/constants/api-url.cont'
 
 export const Route = createFileRoute('/reset-password')({
@@ -47,7 +47,7 @@ function ResetPasswordComponent() {
         })
 
         const result = await response.json()
-        
+
         if (!response.ok) {
           throw new Error(result.message || 'Gagal mereset password')
         }
@@ -55,9 +55,11 @@ function ResetPasswordComponent() {
         setIsSuccess(true)
         toast.success('Password berhasil diperbarui!')
         setTimeout(() => navigate({ to: '/login' }), 3000)
-      } catch (error) {
+      }
+      catch (error) {
         toast.error((error as Error).message)
-      } finally {
+      }
+      finally {
         setIsLoading(false)
       }
     },
@@ -97,9 +99,11 @@ function ResetPasswordComponent() {
             </CardDescription>
           </CardHeader>
           <CardContent className="flex justify-center">
-             <Link to="/login" className="text-emerald-500 hover:underline flex items-center gap-2">
-               Klik di sini jika tidak beralih otomatis <ArrowRight className="w-4 h-4" />
-             </Link>
+            <Link to="/login" className="text-emerald-500 hover:underline flex items-center gap-2">
+              Klik di sini jika tidak beralih otomatis
+              {' '}
+              <ArrowRight className="w-4 h-4" />
+            </Link>
           </CardContent>
         </Card>
       </div>
@@ -133,14 +137,14 @@ function ResetPasswordComponent() {
                 <Label htmlFor="password">Password Baru</Label>
                 <form.Field
                   name="password"
-                  children={(field) => (
+                  children={field => (
                     <Input
                       id="password"
                       type="password"
                       className="bg-zinc-950 border-zinc-800 text-zinc-100 focus-visible:ring-emerald-500"
                       value={field.state.value}
                       onBlur={field.handleBlur}
-                      onChange={(e) => field.handleChange(e.target.value)}
+                      onChange={e => field.handleChange(e.target.value)}
                       required
                     />
                   )}
@@ -151,22 +155,22 @@ function ResetPasswordComponent() {
                 <Label htmlFor="confirmPassword">Konfirmasi Password Baru</Label>
                 <form.Field
                   name="confirmPassword"
-                  children={(field) => (
+                  children={field => (
                     <Input
                       id="confirmPassword"
                       type="password"
                       className="bg-zinc-950 border-zinc-800 text-zinc-100 focus-visible:ring-emerald-500"
                       value={field.state.value}
                       onBlur={field.handleBlur}
-                      onChange={(e) => field.handleChange(e.target.value)}
+                      onChange={e => field.handleChange(e.target.value)}
                       required
                     />
                   )}
                 />
               </div>
 
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 className="w-full bg-emerald-600 hover:bg-emerald-500"
                 disabled={isLoading}
               >

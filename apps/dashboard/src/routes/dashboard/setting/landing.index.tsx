@@ -18,6 +18,7 @@ import {
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/dashboard/components/ui/button'
+import { PermissionGate } from '@/dashboard/components/permission-gate'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/dashboard/components/ui/card'
 import { Input } from '@/dashboard/components/ui/input'
 import { Label } from '@/dashboard/components/ui/label'
@@ -106,6 +107,8 @@ function LandingSettingPage() {
   const [siteFavicon, setSiteFavicon] = useState('/favicon.ico')
   const [customDomain, setCustomDomain] = useState('')
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
+  const [whatsappNumber, setWhatsappNumber] = useState('')
+  const [buyerPortalLimit, setBuyerPortalLimit] = useState('10')
 
   const handleDisconnectDomain = () => {
     setCustomDomain('')
@@ -178,6 +181,8 @@ function LandingSettingPage() {
       if (settings.LANDING_NAVBAR) setNavbar(JSON.parse(settings.LANDING_NAVBAR))
       if (settings.LANDING_FOOTER) setFooter(JSON.parse(settings.LANDING_FOOTER))
       if (settings.LANDING_THEME_CSS) setThemeCss(settings.LANDING_THEME_CSS)
+      if (settings.whatsapp_number) setWhatsappNumber(settings.whatsapp_number)
+      if (settings.BUYER_PORTAL_DAILY_LIMIT) setBuyerPortalLimit(settings.BUYER_PORTAL_DAILY_LIMIT)
     }
   }, [settings])
 
@@ -194,6 +199,8 @@ function LandingSettingPage() {
 
   const handleSave = () => {
     const payload = {
+      whatsapp_number: whatsappNumber,
+      BUYER_PORTAL_DAILY_LIMIT: buyerPortalLimit,
       CUSTOM_DOMAIN: customDomain.trim().toLowerCase(),
       SITE_TITLE: siteTitle,
       SITE_DESCRIPTION: siteDescription,
@@ -229,13 +236,16 @@ function LandingSettingPage() {
           </div>
           <p className="text-muted-foreground">Sesuaikan tampilan halaman depan website Anda.</p>
         </div>
-        <Button onClick={handleSave} disabled={updateMutation.isPending} size="lg" className="shadow-lg">
-          {updateMutation.isPending ? <Loader2 className="size-4 animate-spin mr-2" /> : <Save className="size-4 mr-2" />}
-          Simpan Semua Perubahan
-        </Button>
+        <PermissionGate permission="landing.edit">
+          <Button onClick={handleSave} disabled={updateMutation.isPending} size="lg" className="shadow-lg">
+            {updateMutation.isPending ? <Loader2 className="size-4 animate-spin mr-2" /> : <Save className="size-4 mr-2" />}
+            Simpan Semua Perubahan
+          </Button>
+        </PermissionGate>
       </div>
 
-      <Tabs defaultValue="general" className="flex flex-col md:flex-row gap-8 w-full" orientation="vertical">
+      <PermissionGate permission="landing.view" fallback={<div className="py-20 text-center text-muted-foreground">Anda tidak memiliki akses ke halaman ini.</div>}>
+        <Tabs defaultValue="general" className="flex flex-col md:flex-row gap-8 w-full" orientation="vertical">
         <TabsList className="flex flex-col w-full md:w-56 shrink-0 gap-2 bg-transparent p-0 h-auto md:sticky md:top-24 md:self-start">
           <TabsTrigger value="general" className="w-full justify-start data-[state=active]:bg-primary data-[state=active]:text-primary-foreground border border-input h-10 px-4">Umum & SEO</TabsTrigger>
           <TabsTrigger value="hero" className="w-full justify-start data-[state=active]:bg-primary data-[state=active]:text-primary-foreground border border-input h-10 px-4">Hero</TabsTrigger>
@@ -738,6 +748,29 @@ function LandingSettingPage() {
                     <Label>Email Support</Label>
                     <Input value={footer.email} onChange={e => setFooter({...footer, email: e.target.value})} />
                   </div>
+                  <div className="space-y-2">
+                    <Label>Nomor WhatsApp (Tanpa + atau 0 di depan, gunakan kode negara: 62812xxx)</Label>
+                    <Input value={whatsappNumber} onChange={e => setWhatsappNumber(e.target.value.replace(/[^0-9]/g, ''))} placeholder="6285189307255" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ShieldCheck className="size-5 text-primary" />
+                  Buyer Portal
+                </CardTitle>
+                <CardDescription>Atur batasan keamanan portal email buyer.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label>Batas Refresh OTP Harian per Akun (Kali/Hari)</Label>
+                    <Input type="number" value={buyerPortalLimit} onChange={e => setBuyerPortalLimit(e.target.value)} placeholder="10" />
+                    <p className="text-xs text-muted-foreground">Batas maksimal me-refresh email OTP dalam satu hari.</p>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -771,6 +804,7 @@ function LandingSettingPage() {
         </TabsContent>
         </div>
       </Tabs>
+      </PermissionGate>
     </div>
   )
 }

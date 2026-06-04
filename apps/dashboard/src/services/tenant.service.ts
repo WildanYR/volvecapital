@@ -1,5 +1,3 @@
-
-
 export function TenantServiceGenerator(baseUrl: string, token: string, tenantId: string) {
   const changePassword = async (payload: any) => {
     const url = new URL(`${baseUrl}/tenant/owner/change-password`)

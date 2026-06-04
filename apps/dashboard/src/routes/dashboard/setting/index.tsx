@@ -10,6 +10,8 @@ import { Label } from '@/dashboard/components/ui/label'
 import { API_URL } from '@/dashboard/constants/api-url.cont'
 import { useAuth } from '@/dashboard/context-providers/auth.provider'
 import { SettingServiceGenerator } from '@/dashboard/services/setting.service'
+import { PermissionGate } from '@/dashboard/components/permission-gate'
+import { usePermission } from '@/dashboard/lib/permission'
 
 export const Route = createFileRoute('/dashboard/setting/')({
   component: RouteComponent,
@@ -18,49 +20,22 @@ export const Route = createFileRoute('/dashboard/setting/')({
 function RouteComponent() {
   const auth = useAuth()
   const queryClient = useQueryClient()
+  const hasSettingEdit = usePermission('setting.edit')
   const settingService = SettingServiceGenerator(
     API_URL,
     auth.tenant!.accessToken,
     auth.tenant!.id,
   )
 
+  const hasSettingView = auth.tenant?.role === 'TENANT_OWNER' || auth.tenant?.permissions?.includes('setting.view')
+
   const { data: settings, isLoading } = useQuery({
     queryKey: ['settings'],
     queryFn: () => settingService.getSettings(),
+    enabled: !!auth.tenant?.accessToken && hasSettingView,
   })
 
-  const [whatsappNumber, setWhatsappNumber] = useState('')
-  const [buyerPortalLimit, setBuyerPortalLimit] = useState('10')
-
-  useEffect(() => {
-    if (settings) {
-      setWhatsappNumber(settings.whatsapp_number || '')
-      setBuyerPortalLimit(settings.BUYER_PORTAL_DAILY_LIMIT || '10')
-    }
-  }, [settings])
-
-  const updateMutation = useMutation({
-    mutationFn: ({ key, value }: { key: string; value: string }) =>
-      settingService.updateSetting(key, value),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['settings'] })
-      toast.success('Pengaturan berhasil disimpan.')
-    },
-    onError: (error) => {
-      toast.error(`Gagal menyimpan pengaturan: ${error.message}`)
-    },
-  })
-
-
-  const handleSaveWhatsapp = (e: React.FormEvent) => {
-    e.preventDefault()
-    updateMutation.mutate({ key: 'whatsapp_number', value: whatsappNumber })
-  }
-
-  const handleSavePortalLimit = (e: React.FormEvent) => {
-    e.preventDefault()
-    updateMutation.mutate({ key: 'BUYER_PORTAL_DAILY_LIMIT', value: buyerPortalLimit })
-  }
+  // settings query is still needed if we want to display anything else, but for now it's just the CMS cards.
 
 
   if (isLoading) {
@@ -79,119 +54,55 @@ function RouteComponent() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="border-primary/50 bg-primary/5 flex flex-col">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-primary">
-              <LayoutTemplate className="size-5" />
-              Landing Page CMS
-            </CardTitle>
-            <CardDescription>Kustomisasi hero, fitur, testimoni, FAQ, navbar, dan footer website Anda.</CardDescription>
-          </CardHeader>
-          <CardContent className="mt-auto">
-            <Button asChild className="w-full">
-              <Link to="/dashboard/setting/landing">Buka Pengaturan Landing Page</Link>
-            </Button>
-          </CardContent>
-        </Card>
+        <PermissionGate permission="landing.view">
+          <Card className="border-primary/50 bg-primary/5 flex flex-col">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-primary">
+                <LayoutTemplate className="size-5" />
+                Landing Page CMS
+              </CardTitle>
+              <CardDescription>Kustomisasi hero, fitur, testimoni, FAQ, navbar, dan footer website Anda.</CardDescription>
+            </CardHeader>
+            <CardContent className="mt-auto">
+              <Button asChild className="w-full">
+                <Link to="/dashboard/setting/landing">Buka Pengaturan Landing Page</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </PermissionGate>
 
-        <Card className="border-primary/50 bg-primary/5 flex flex-col">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-primary">
-              <BookOpen className="size-5" />
-              Tutorial
-            </CardTitle>
-            <CardDescription>Kelola video tutorial dan panduan penggunaan untuk ditampilkan ke user.</CardDescription>
-          </CardHeader>
-          <CardContent className="mt-auto">
-            <Button asChild className="w-full">
-              <Link to="/dashboard/setting/tutorial">Kelola Tutorial</Link>
-            </Button>
-          </CardContent>
-        </Card>
+        <PermissionGate permission="content.view">
+          <Card className="border-primary/50 bg-primary/5 flex flex-col">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-primary">
+                <BookOpen className="size-5" />
+                Tutorial
+              </CardTitle>
+              <CardDescription>Kelola video tutorial dan panduan penggunaan untuk ditampilkan ke user.</CardDescription>
+            </CardHeader>
+            <CardContent className="mt-auto">
+              <Button asChild className="w-full">
+                <Link to="/dashboard/setting/tutorial">Kelola Tutorial</Link>
+              </Button>
+            </CardContent>
+          </Card>
 
-        <Card className="border-primary/50 bg-primary/5 flex flex-col">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-primary">
-              <FileText className="size-5" />
-              Artikel / Blog
-            </CardTitle>
-            <CardDescription>Buat dan kelola artikel atau blog post untuk ditampilkan di landing page.</CardDescription>
-          </CardHeader>
-          <CardContent className="mt-auto">
-            <Button asChild className="w-full">
-              <Link to="/dashboard/setting/article">Kelola Artikel</Link>
-            </Button>
-          </CardContent>
-        </Card>
+          <Card className="border-primary/50 bg-primary/5 flex flex-col">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-primary">
+                <FileText className="size-5" />
+                Artikel / Blog
+              </CardTitle>
+              <CardDescription>Buat dan kelola artikel atau blog post untuk ditampilkan di landing page.</CardDescription>
+            </CardHeader>
+            <CardContent className="mt-auto">
+              <Button asChild className="w-full">
+                <Link to="/dashboard/setting/article">Kelola Artikel</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </PermissionGate>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Buyer Portal</CardTitle>
-          <CardDescription>Atur konfigurasi portal email buyer, termasuk batasan akses OTP per hari.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSavePortalLimit} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="portal_limit">Batas Refresh OTP Harian per Akun (Kali/Hari)</Label>
-              <div className="flex gap-4">
-                <Input
-                  id="portal_limit"
-                  type="number"
-                  placeholder="10"
-                  value={buyerPortalLimit}
-                  onChange={(e) => setBuyerPortalLimit(e.target.value)}
-                  className="max-w-md"
-                />
-              </div>
-              <p className="text-xs text-muted-foreground">Batas maksimal seorang buyer me-refresh atau melihat email baru dalam satu hari.</p>
-            </div>
-
-            <Button disabled={updateMutation.isPending} type="submit" variant="secondary">
-              {updateMutation.isPending ? (
-                <Loader2 className="size-4 animate-spin mr-2" />
-              ) : (
-                <Save className="size-4 mr-2" />
-              )}
-              Simpan Batas Akses
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Kontak & WhatsApp</CardTitle>
-          <CardDescription>Atur nomor WhatsApp yang akan muncul sebagai tombol floating di landing page.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSaveWhatsapp} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="whatsapp">Nomor WhatsApp (Tanpa + atau 0 di depan, gunakan kode negara: 62812xxx)</Label>
-              <div className="flex gap-4">
-                <Input
-                  id="whatsapp"
-                  placeholder="6285189307255"
-                  value={whatsappNumber}
-                  onChange={(e) => setWhatsappNumber(e.target.value.replace(/[^0-9]/g, ''))}
-                  className="max-w-md"
-                />
-              </div>
-              <p className="text-xs text-muted-foreground">Nomor ini akan digunakan untuk link WhatsApp otomatis.</p>
-            </div>
-
-            <Button disabled={updateMutation.isPending} type="submit">
-              {updateMutation.isPending ? (
-                <Loader2 className="size-4 animate-spin mr-2" />
-              ) : (
-                <Save className="size-4 mr-2" />
-              )}
-              Simpan Perubahan
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-
 
     </div>
   )

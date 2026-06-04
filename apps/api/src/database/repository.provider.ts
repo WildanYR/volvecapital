@@ -27,6 +27,10 @@ import {
   PROMO_CODE_REPOSITORY,
   WITHDRAWAL_REQUEST_REPOSITORY,
   TENANT_BANK_ACCOUNT_REPOSITORY,
+  ROLE_REPOSITORY,
+  PERMISSION_REPOSITORY,
+  ROLE_PERMISSION_REPOSITORY,
+  DASHBOARD_USER_REPOSITORY,
 } from 'src/constants/database.const';
 import { AccountProfile } from './models/account-profile.model';
 import { AccountUser } from './models/account-user.model';
@@ -55,6 +59,10 @@ import { TenantOwner } from './models/tenant-owner.model';
 import { PromoCode } from './models/promo-code.model';
 import { WithdrawalRequest } from './models/withdrawal-request.model';
 import { TenantBankAccount } from './models/tenant-bank-account.model';
+import { Role } from './models/role.model';
+import { Permission } from './models/permission.model';
+import { RolePermission } from './models/role-permission.model';
+import { DashboardUser } from './models/dashboard-user.model';
 
 export const RepositoryProvider: Provider[] = [
   { provide: TENANT_REPOSITORY, useValue: Tenant },
@@ -87,4 +95,8 @@ export const RepositoryProvider: Provider[] = [
   { provide: PROMO_CODE_REPOSITORY, useValue: PromoCode },
   { provide: WITHDRAWAL_REQUEST_REPOSITORY, useValue: WithdrawalRequest },
   { provide: TENANT_BANK_ACCOUNT_REPOSITORY, useValue: TenantBankAccount },
+  { provide: ROLE_REPOSITORY, useValue: Role },
+  { provide: PERMISSION_REPOSITORY, useValue: Permission },
+  { provide: ROLE_PERMISSION_REPOSITORY, useValue: RolePermission },
+  { provide: DASHBOARD_USER_REPOSITORY, useValue: DashboardUser },
 ];

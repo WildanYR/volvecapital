@@ -18,6 +18,7 @@ import { toast } from 'sonner'
 import { useDebouncedCallback } from 'use-debounce'
 import { NoData } from '@/dashboard/components/no-data'
 import { Pagination } from '@/dashboard/components/pagination'
+import { PermissionGate } from '@/dashboard/components/permission-gate'
 import { Button } from '@/dashboard/components/ui/button'
 import {
   Card,
@@ -157,15 +158,17 @@ function RouteComponent() {
         <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight text-balance">
           Produk Platform
         </h1>
-        <Button asChild>
-          <Link to="/dashboard/platform-product/create">
-            <span>
-              <Plus />
-            </span>
-            {' '}
-            Buat Produk Platform
-          </Link>
-        </Button>
+        <PermissionGate permission="platform_product.edit">
+          <Button asChild>
+            <Link to="/dashboard/platform-product/create">
+              <span>
+                <Plus />
+              </span>
+              {' '}
+              Buat Produk Platform
+            </Link>
+          </Button>
+        </PermissionGate>
       </div>
       <div className="flex flex-col md:flex-row justify-center items-center gap-4">
         <Input
@@ -214,44 +217,46 @@ function RouteComponent() {
                       <CardTitle>
                         <p>{platformProduct.name}</p>
                       </CardTitle>
-                      <CardAction>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="cursor-pointer"
-                            >
-                              <EllipsisVertical className="size-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="center">
-                            <DropdownMenuItem
-                              onSelect={() =>
-                                navigate({
-                                  to: '/dashboard/platform-product/$id',
-                                  params: { id: platformProduct.id },
-                                })}
-                            >
-                              <span>
-                                <SquarePen />
-                              </span>
-                              {' '}
-                              Update
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onSelect={() =>
-                                handleDeletePlatformProduct(platformProduct)}
-                            >
-                              <span>
-                                <Trash2 />
-                              </span>
-                              {' '}
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </CardAction>
+                      <PermissionGate permission="platform_product.edit">
+                        <CardAction>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="cursor-pointer"
+                              >
+                                <EllipsisVertical className="size-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="center">
+                              <DropdownMenuItem
+                                onSelect={() =>
+                                  navigate({
+                                    to: '/dashboard/platform-product/$id',
+                                    params: { id: platformProduct.id },
+                                  })}
+                              >
+                                <span>
+                                  <SquarePen />
+                                </span>
+                                {' '}
+                                Update
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onSelect={() =>
+                                  handleDeletePlatformProduct(platformProduct)}
+                              >
+                                <span>
+                                  <Trash2 />
+                                </span>
+                                {' '}
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </CardAction>
+                      </PermissionGate>
                     </CardHeader>
                     <CardContent>
                       <div className="flex justify-between items-center text-muted-foreground">

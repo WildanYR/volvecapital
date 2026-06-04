@@ -42,6 +42,9 @@ import { ArticleModule } from './modules/article/article.module';
 import { PromoModule } from './modules/promo/promo.module';
 import { WithdrawalModule } from './modules/withdrawal/withdrawal.module';
 import { BankAccountModule } from './modules/bank-account/bank-account.module';
+import { RoleModule } from './modules/role/role.module';
+import { PermissionModule } from './modules/permission/permission.module';
+import { DashboardUserModule } from './modules/dashboard-user/dashboard-user.module';
 
 @Module({
   imports: [
@@ -92,6 +95,9 @@ import { BankAccountModule } from './modules/bank-account/bank-account.module';
     PromoModule,
     WithdrawalModule,
     BankAccountModule,
+    RoleModule,
+    PermissionModule,
+    DashboardUserModule,
   ],
   controllers: [AppController],
   providers: [{ provide: APP_GUARD, useClass: VcAuthGuard }, AppService],

@@ -19,6 +19,7 @@ import { AccountProfileService } from './account-profile.service';
 import { CreateAccountProfileDto } from './dto/create-account-profile.dto';
 import { GetAllAccountProfileQueryUrlDto } from './dto/get-all-account-profile.dto';
 import { UpdateAccountProfileDto } from './dto/update-account-profile.dto';
+import { RequirePermissions } from 'src/guards/permissions.decorator';
 
 @Controller('account-profile')
 export class AccountProfileController {
@@ -28,6 +29,7 @@ export class AccountProfileController {
   ) {}
 
   @Get()
+  @RequirePermissions('account.view')
   findAll(
     @Query() query: GetAllAccountProfileQueryUrlDto,
     @Request() request: AppRequest,
@@ -42,11 +44,13 @@ export class AccountProfileController {
   }
 
   @Get(':id')
+  @RequirePermissions('account.view')
   findById(@Param('id') id: string, @Request() request: AppRequest) {
     return this.accountProfileService.findOne(request.tenant_id!, id);
   }
 
   @Post()
+  @RequirePermissions('account.edit')
   create(
     @Body() createAccountProfileDto: CreateAccountProfileDto,
     @Request() request: AppRequest,
@@ -59,6 +63,7 @@ export class AccountProfileController {
 
   @Patch(':id')
   @UsePipes(AtLeastOnePropertyPipe)
+  @RequirePermissions('account.edit')
   update(
     @Param('id') accountProfileId: string,
     @Body() updateAccountProfileDto: UpdateAccountProfileDto,
@@ -73,6 +78,7 @@ export class AccountProfileController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @RequirePermissions('account.delete')
   remove(
     @Param('id') accountProfileId: string,
     @Request() request: AppRequest,

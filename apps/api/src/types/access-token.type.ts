@@ -5,4 +5,5 @@ export interface IAccessTokenPayload {
   tenant_id: string;
   role: Roles;
   email?: string;
+  permissions?: string[]; // only for DASHBOARD_USER role
 }

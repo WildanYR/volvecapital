@@ -1,19 +1,20 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
+import { CheckCircle2, Loader2, Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { PermissionGate } from '@/dashboard/components/permission-gate'
+import { Badge } from '@/dashboard/components/ui/badge'
 import { Button } from '@/dashboard/components/ui/button'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/dashboard/components/ui/card'
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/dashboard/components/ui/table'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/dashboard/components/ui/card'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/dashboard/components/ui/dialog'
 import { Input } from '@/dashboard/components/ui/input'
 import { Label } from '@/dashboard/components/ui/label'
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/dashboard/components/ui/select'
-import { Badge } from '@/dashboard/components/ui/badge'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/dashboard/components/ui/dialog'
-import { Loader2, Plus, Trash2, CheckCircle2 } from 'lucide-react'
-import { BankAccountServiceGenerator } from '@/dashboard/services/bank-account.service'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/dashboard/components/ui/select'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/dashboard/components/ui/table'
 import { API_URL } from '@/dashboard/constants/api-url.cont'
 import { useAuth } from '@/dashboard/context-providers/auth.provider'
+import { BankAccountServiceGenerator } from '@/dashboard/services/bank-account.service'
 
 export const Route = createFileRoute('/dashboard/wallet/bank-account/')({
   component: BankAccountPage,
@@ -37,7 +38,7 @@ function BankAccountPage() {
   const queryClient = useQueryClient()
   const [isAddOpen, setIsAddOpen] = useState(false)
   const [step, setStep] = useState<'FORM' | 'OTP'>('FORM')
-  
+
   const bankAccountService = BankAccountServiceGenerator(
     API_URL,
     auth.tenant!.accessToken,
@@ -69,7 +70,7 @@ function BankAccountPage() {
   })
 
   const verifyMutation = useMutation({
-    mutationFn: ({ id, otp }: { id: string; otp: string }) => bankAccountService.verifyOtp(id, otp),
+    mutationFn: ({ id, otp }: { id: string, otp: string }) => bankAccountService.verifyOtp(id, otp),
     onSuccess: () => {
       toast.success('Rekening berhasil diverifikasi')
       queryClient.invalidateQueries({ queryKey: ['bankAccounts'] })
@@ -103,7 +104,8 @@ function BankAccountPage() {
 
   const handleOpenChange = (open: boolean) => {
     setIsAddOpen(open)
-    if (!open) resetForm()
+    if (!open)
+      resetForm()
   }
 
   const handleAddSubmit = (e: React.FormEvent) => {
@@ -137,10 +139,12 @@ function BankAccountPage() {
             Kelola rekening bank Anda untuk keperluan penarikan dana.
           </p>
         </div>
-        <Button onClick={() => setIsAddOpen(true)}>
-          <Plus className="mr-2 size-4" />
-          Tambah Rekening
-        </Button>
+        <PermissionGate permission="wallet.edit">
+          <Button onClick={() => setIsAddOpen(true)}>
+            <Plus className="mr-2 size-4" />
+            Tambah Rekening
+          </Button>
+        </PermissionGate>
       </div>
 
       <Card className="border-primary/50 bg-primary/5">
@@ -160,50 +164,61 @@ function BankAccountPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8">
-                    <Loader2 className="size-6 animate-spin mx-auto text-primary" />
-                  </TableCell>
-                </TableRow>
-              ) : accounts?.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                    Belum ada rekening tersimpan. Silakan tambah rekening baru.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                accounts?.map((acc) => (
-                  <TableRow key={acc.id} className="border-primary/20 hover:bg-primary/10">
-                    <TableCell className="font-medium">{acc.bank_name}</TableCell>
-                    <TableCell>{acc.account_number}</TableCell>
-                    <TableCell>{acc.account_holder}</TableCell>
-                    <TableCell>
-                      {acc.is_verified ? (
-                        <Badge variant="outline" className="border-green-500 text-green-500 bg-green-500/10">
-                          <CheckCircle2 className="mr-1 size-3" /> Terverifikasi
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="border-yellow-500 text-yellow-500 bg-yellow-500/10">
-                          Pending OTP
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button 
-                        variant="destructive" 
-                        size="sm"
-                        onClick={() => {
-                          if(confirm('Hapus rekening ini?')) deleteMutation.mutate(acc.id)
-                        }}
-                        disabled={deleteMutation.isPending}
-                      >
-                        <Trash2 className="size-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
+              {isLoading
+                ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-8">
+                        <Loader2 className="size-6 animate-spin mx-auto text-primary" />
+                      </TableCell>
+                    </TableRow>
+                  )
+                : accounts?.length === 0
+                  ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                          Belum ada rekening tersimpan. Silakan tambah rekening baru.
+                        </TableCell>
+                      </TableRow>
+                    )
+                  : (
+                      accounts?.map(acc => (
+                        <TableRow key={acc.id} className="border-primary/20 hover:bg-primary/10">
+                          <TableCell className="font-medium">{acc.bank_name}</TableCell>
+                          <TableCell>{acc.account_number}</TableCell>
+                          <TableCell>{acc.account_holder}</TableCell>
+                          <TableCell>
+                            {acc.is_verified
+                              ? (
+                                  <Badge variant="outline" className="border-green-500 text-green-500 bg-green-500/10">
+                                    <CheckCircle2 className="mr-1 size-3" />
+                                    {' '}
+                                    Terverifikasi
+                                  </Badge>
+                                )
+                              : (
+                                  <Badge variant="outline" className="border-yellow-500 text-yellow-500 bg-yellow-500/10">
+                                    Pending OTP
+                                  </Badge>
+                                )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <PermissionGate permission="wallet.edit">
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => {
+                                  if (confirm('Hapus rekening ini?'))
+                                    deleteMutation.mutate(acc.id)
+                                }}
+                                disabled={deleteMutation.isPending}
+                              >
+                                <Trash2 className="size-4" />
+                              </Button>
+                            </PermissionGate>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
             </TableBody>
           </Table>
         </CardContent>
@@ -216,81 +231,83 @@ function BankAccountPage() {
               {step === 'FORM' ? 'Tambah Rekening' : 'Verifikasi OTP'}
             </DialogTitle>
             <DialogDescription>
-              {step === 'FORM' 
+              {step === 'FORM'
                 ? 'Pilih bank dan masukkan detail rekening Anda.'
                 : 'Cek email Anda untuk kode OTP 6 digit yang baru saja dikirimkan.'}
             </DialogDescription>
           </DialogHeader>
 
-          {step === 'FORM' ? (
-            <form onSubmit={handleAddSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="bankName">Bank Tujuan</Label>
-                <Select value={bankName} onValueChange={setBankName}>
-                  <SelectTrigger className="border-primary/50">
-                    <SelectValue placeholder="Pilih Bank" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {bankOptions.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="accountNumber">Nomor Rekening</Label>
-                <Input 
-                  id="accountNumber" 
-                  value={accountNumber}
-                  onChange={(e) => setAccountNumber(e.target.value)}
-                  placeholder="Misal: 1234567890"
-                  className="border-primary/50"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="accountHolder">Nama Pemilik Rekening</Label>
-                <Input 
-                  id="accountHolder" 
-                  value={accountHolder}
-                  onChange={(e) => setAccountHolder(e.target.value)}
-                  placeholder="Sesuai buku tabungan"
-                  className="border-primary/50"
-                  required
-                />
-              </div>
-              <div className="pt-4 flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
-                  Batal
-                </Button>
-                <Button type="submit" disabled={addMutation.isPending}>
-                  {addMutation.isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
-                  Selanjutnya
-                </Button>
-              </div>
-            </form>
-          ) : (
-            <form onSubmit={handleOtpSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="otpCode">Kode OTP</Label>
-                <Input 
-                  id="otpCode" 
-                  value={otpCode}
-                  onChange={(e) => setOtpCode(e.target.value)}
-                  placeholder="6 Digit OTP"
-                  className="border-primary/50 text-center tracking-widest text-xl"
-                  maxLength={6}
-                  required
-                />
-              </div>
-              <div className="pt-4 flex justify-end gap-2">
-                <Button type="submit" className="w-full" disabled={verifyMutation.isPending}>
-                  {verifyMutation.isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
-                  Verifikasi Rekening
-                </Button>
-              </div>
-            </form>
-          )}
+          {step === 'FORM'
+            ? (
+                <form onSubmit={handleAddSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="bankName">Bank Tujuan</Label>
+                    <Select value={bankName} onValueChange={setBankName}>
+                      <SelectTrigger className="border-primary/50">
+                        <SelectValue placeholder="Pilih Bank" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {bankOptions.map(opt => (
+                          <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="accountNumber">Nomor Rekening</Label>
+                    <Input
+                      id="accountNumber"
+                      value={accountNumber}
+                      onChange={e => setAccountNumber(e.target.value)}
+                      placeholder="Misal: 1234567890"
+                      className="border-primary/50"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="accountHolder">Nama Pemilik Rekening</Label>
+                    <Input
+                      id="accountHolder"
+                      value={accountHolder}
+                      onChange={e => setAccountHolder(e.target.value)}
+                      placeholder="Sesuai buku tabungan"
+                      className="border-primary/50"
+                      required
+                    />
+                  </div>
+                  <div className="pt-4 flex justify-end gap-2">
+                    <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
+                      Batal
+                    </Button>
+                    <Button type="submit" disabled={addMutation.isPending}>
+                      {addMutation.isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
+                      Selanjutnya
+                    </Button>
+                  </div>
+                </form>
+              )
+            : (
+                <form onSubmit={handleOtpSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="otpCode">Kode OTP</Label>
+                    <Input
+                      id="otpCode"
+                      value={otpCode}
+                      onChange={e => setOtpCode(e.target.value)}
+                      placeholder="6 Digit OTP"
+                      className="border-primary/50 text-center tracking-widest text-xl"
+                      maxLength={6}
+                      required
+                    />
+                  </div>
+                  <div className="pt-4 flex justify-end gap-2">
+                    <Button type="submit" className="w-full" disabled={verifyMutation.isPending}>
+                      {verifyMutation.isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
+                      Verifikasi Rekening
+                    </Button>
+                  </div>
+                </form>
+              )}
         </DialogContent>
       </Dialog>
     </div>

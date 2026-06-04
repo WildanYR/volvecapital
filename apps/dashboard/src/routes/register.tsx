@@ -8,8 +8,8 @@ import {
   CardHeader,
   CardTitle,
 } from '@/dashboard/components/ui/card'
-import { useAppForm } from '@/dashboard/hooks/form.hook'
 import { API_URL } from '@/dashboard/constants/api-url.cont'
+import { useAppForm } from '@/dashboard/hooks/form.hook'
 import logo from '../logo.svg'
 
 const RegisterFormSchema = z.object({
@@ -17,10 +17,10 @@ const RegisterFormSchema = z.object({
   email: z.string().email('Email tidak valid').nonempty('Email harus diisi'),
   password: z.string().min(8, 'Password minimal 8 karakter').nonempty('Password harus diisi'),
   confirm_password: z.string().nonempty('Konfirmasi password harus diisi'),
-}).refine((data) => data.password === data.confirm_password, {
-  message: "Password tidak cocok",
-  path: ["confirm_password"],
-});
+}).refine(data => data.password === data.confirm_password, {
+  message: 'Password tidak cocok',
+  path: ['confirm_password'],
+})
 
 export const Route = createFileRoute('/register')({
   beforeLoad: ({ context }) => {
@@ -135,7 +135,8 @@ function RouteComponent() {
                     <form.SubscribeButton label="Daftar Sekarang" />
                   </div>
                   <div className="mt-4 text-center text-sm text-muted-foreground">
-                    Sudah punya akun?{' '}
+                    Sudah punya akun?
+                    {' '}
                     <a href="/login" className="text-primary hover:underline font-medium">
                       Login Di Sini
                     </a>

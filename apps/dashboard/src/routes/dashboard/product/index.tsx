@@ -29,6 +29,9 @@ import { ProductEditForm } from '@/dashboard/components/forms/product-edit.form'
 import { ProductVariantForm } from '@/dashboard/components/forms/product-variant.form'
 import { NoData } from '@/dashboard/components/no-data'
 import { Pagination } from '@/dashboard/components/pagination'
+import { PermissionGate } from '@/dashboard/components/permission-gate'
+import { ProtectedButton } from '@/dashboard/components/protected-button'
+import { ProtectedMenuItem } from '@/dashboard/components/protected-menu-item'
 import { Button } from '@/dashboard/components/ui/button'
 import {
   Card,
@@ -46,7 +49,6 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/dashboard/components/ui/dropdown-menu'
 import { Input } from '@/dashboard/components/ui/input'
@@ -85,7 +87,6 @@ function RouteComponent() {
     auth.tenant!.accessToken,
     auth.tenant!.id,
   )
-
 
   const tutorialService = TutorialServiceGenerator(
     API_URL,
@@ -328,15 +329,17 @@ function RouteComponent() {
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-balance">
             Produk
           </h1>
-          <Button asChild>
-            <Link to="/dashboard/product/create">
-              <span>
-                <Plus />
-              </span>
-              {' '}
-              Buat Produk
-            </Link>
-          </Button>
+          <PermissionGate permission="product.create">
+            <Button asChild>
+              <Link to="/dashboard/product/create">
+                <span>
+                  <Plus />
+                </span>
+                {' '}
+                Buat Produk
+              </Link>
+            </Button>
+          </PermissionGate>
         </div>
         <div className="flex flex-col md:flex-row justify-center items-center gap-4">
           <Input
@@ -401,7 +404,8 @@ function RouteComponent() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="center">
-                              <DropdownMenuItem
+                              <ProtectedMenuItem
+                                permission="product.edit"
                                 onSelect={() => {
                                   handleProductSelectedEdit(product)
                                 }}
@@ -411,8 +415,9 @@ function RouteComponent() {
                                 </span>
                                 {' '}
                                 Update
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
+                              </ProtectedMenuItem>
+                              <ProtectedMenuItem
+                                permission="product.delete"
                                 onSelect={() => handleDeleteProduct(product)}
                               >
                                 <span>
@@ -420,7 +425,7 @@ function RouteComponent() {
                                 </span>
                                 {' '}
                                 Delete
-                              </DropdownMenuItem>
+                              </ProtectedMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </CardAction>
@@ -428,7 +433,8 @@ function RouteComponent() {
                       <CardContent className="space-y-4">
                         <div className="flex justify-between items-center">
                           <p className="font-medium text-lg">Varian</p>
-                          <Button
+                          <ProtectedButton
+                            permission="product.create"
                             variant="secondary"
                             size="sm"
                             onClick={() => handleCreateProductVariant(product)}
@@ -437,7 +443,7 @@ function RouteComponent() {
                             <Plus className="size-4" />
                             {' '}
                             Tambah Varian
-                          </Button>
+                          </ProtectedButton>
                         </div>
                         {product.variants.map(variant => (
                           <div
@@ -457,7 +463,8 @@ function RouteComponent() {
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="center">
-                                  <DropdownMenuItem
+                                  <ProtectedMenuItem
+                                    permission="product.edit"
                                     onSelect={() => {
                                       handleProductVariantSelectedEdit(variant)
                                     }}
@@ -467,8 +474,9 @@ function RouteComponent() {
                                     </span>
                                     {' '}
                                     Update
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
+                                  </ProtectedMenuItem>
+                                  <ProtectedMenuItem
+                                    permission="product.delete"
                                     onSelect={() => {
                                       handleDeleteProductVariant(
                                         product.name,
@@ -481,7 +489,7 @@ function RouteComponent() {
                                     </span>
                                     {' '}
                                     Delete
-                                  </DropdownMenuItem>
+                                  </ProtectedMenuItem>
                                 </DropdownMenuContent>
                               </DropdownMenu>
                             </div>
@@ -489,11 +497,15 @@ function RouteComponent() {
                               <div className="space-y-1 w-full px-3 border-l-2 border-secondary">
                                 <div className="flex justify-between items-center">
                                   <p className="text-sm font-semibold text-primary">
-                                    Rp {variant.price?.toLocaleString('id-ID') ?? '–'}
+                                    Rp
+                                    {' '}
+                                    {variant.price?.toLocaleString('id-ID') ?? '–'}
                                   </p>
                                   <p className="text-[10px] text-muted-foreground flex items-center gap-1">
                                     <AlertCircle className="size-3" />
-                                    Threshold: {variant.low_stock_threshold ?? 5}
+                                    Threshold:
+                                    {' '}
+                                    {variant.low_stock_threshold ?? 5}
                                   </p>
                                 </div>
                               </div>

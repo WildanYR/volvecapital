@@ -1,11 +1,11 @@
 import type React from 'react'
 import { SearchX } from 'lucide-react'
 
-export function NoData({ 
-  children, 
-  title = "Belum Ada Data", 
-  description = "Silakan tambahkan data baru untuk memulai."
-}: { 
+export function NoData({
+  children,
+  title = 'Belum Ada Data',
+  description = 'Silakan tambahkan data baru untuk memulai.',
+}: {
   children?: React.ReactNode
   title?: string
   description?: string

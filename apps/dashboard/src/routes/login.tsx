@@ -1,6 +1,7 @@
-import { createFileRoute, redirect, Link } from '@tanstack/react-router'
+import { createFileRoute, Link, redirect } from '@tanstack/react-router'
+import { useState } from 'react'
 import { toast } from 'sonner'
-import { z } from 'zod'
+import { Button } from '@/dashboard/components/ui/button'
 import {
   Card,
   CardContent,
@@ -8,16 +9,11 @@ import {
   CardHeader,
   CardTitle,
 } from '@/dashboard/components/ui/card'
-import { Label } from '@/dashboard/components/ui/label'
 import { Input } from '@/dashboard/components/ui/input'
+import { Label } from '@/dashboard/components/ui/label'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/dashboard/components/ui/tabs'
 import { useAuth } from '@/dashboard/context-providers/auth.provider'
-import { useAppForm } from '@/dashboard/hooks/form.hook'
 import logo from '../logo.svg'
-
-const LoginFormSchema = z.object({
-  email: z.string().email('Email tidak valid').nonempty('Email harus diisi'),
-  password: z.string().nonempty('Password harus diisi'),
-})
 
 export const Route = createFileRoute('/login')({
   beforeLoad: ({ context }) => {
@@ -32,98 +28,159 @@ function RouteComponent() {
   const auth = useAuth()
   const navigate = Route.useNavigate()
 
-  const form = useAppForm({
-    validators: {
-      onSubmit: LoginFormSchema,
-    },
-    defaultValues: {
-      email: '',
-      password: '',
-    },
-    onSubmit: async ({ value, formApi }) => {
-      try {
-        await auth.login(value.email, value.password)
-        formApi.reset()
-        navigate({ to: '/dashboard' })
-      }
-      catch (error) {
-        toast.error((error as Error).message)
-      }
-    },
-  })
+  // Owner login state
+  const [ownerEmail, setOwnerEmail] = useState('')
+  const [ownerPassword, setOwnerPassword] = useState('')
+  const [ownerLoading, setOwnerLoading] = useState(false)
+
+  // Staff login state
+  const [staffEmail, setStaffEmail] = useState('')
+  const [staffPassword, setStaffPassword] = useState('')
+  const [staffTenantId, setStaffTenantId] = useState('')
+  const [staffLoading, setStaffLoading] = useState(false)
+
+  const handleOwnerLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setOwnerLoading(true)
+    try {
+      await auth.login(ownerEmail, ownerPassword)
+      navigate({ to: '/dashboard' })
+    }
+    catch (error) {
+      toast.error((error as Error).message)
+    }
+    finally {
+      setOwnerLoading(false)
+    }
+  }
+
+  const handleStaffLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!staffTenantId.trim()) {
+      toast.error('Tenant ID wajib diisi')
+      return
+    }
+    setStaffLoading(true)
+    try {
+      await auth.loginAsStaff(staffEmail, staffPassword, staffTenantId)
+      navigate({ to: '/dashboard' })
+    }
+    catch (error) {
+      toast.error((error as Error).message)
+    }
+    finally {
+      setStaffLoading(false)
+    }
+  }
+
   return (
     <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
       <div className="w-full max-w-sm">
         <div className="flex flex-col gap-6">
-          <Card>
-            <CardHeader>
-              <div className="flex justify-center items-center mb-6">
-                <img src={logo} className="h-12 w-auto object-contain" />
-              </div>
-              <CardTitle>Login ke Dashboard</CardTitle>
-              <CardDescription>
-                Masukkan email dan password Anda untuk masuk
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form.AppForm>
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault()
-                    e.stopPropagation()
-                    form.handleSubmit()
-                  }}
-                >
-                  <div className="flex flex-col gap-6">
-                    <form.AppField
-                      name="email"
-                      children={field => (
-                        <field.TextField
-                          label="Email"
-                          placeholder="admin@example.com"
-                        />
-                      )}
-                    />
-                    <div className="space-y-2">
+          <div className="flex justify-center items-center">
+            <img src={logo} className="h-12 w-auto object-contain" />
+          </div>
+          <Tabs defaultValue="owner">
+            <TabsList className="w-full">
+              <TabsTrigger value="owner" className="flex-1">Owner</TabsTrigger>
+              <TabsTrigger value="staff" className="flex-1">Staff</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="owner">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Login sebagai Owner</CardTitle>
+                  <CardDescription>
+                    Masukkan email dan password akun owner Anda
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleOwnerLogin} className="flex flex-col gap-4">
+                    <div className="space-y-1">
+                      <Label>Email</Label>
+                      <Input
+                        type="email"
+                        value={ownerEmail}
+                        onChange={e => setOwnerEmail(e.target.value)}
+                        placeholder="admin@example.com"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-1">
                       <div className="flex items-center justify-between">
-                        <Label htmlFor="password">Password</Label>
-                        <Link
-                          to="/forgot-password"
-                          className="text-xs text-zinc-400 hover:text-emerald-500 transition-colors"
-                        >
+                        <Label>Password</Label>
+                        <Link to="/forgot-password" className="text-xs text-muted-foreground hover:text-primary transition-colors">
                           Lupa password?
                         </Link>
                       </div>
-                      <form.Field
-                        name="password"
-                        children={(field) => (
-                          <Input
-                            id="password"
-                            type="password"
-                            className="bg-zinc-950 border-zinc-800 text-zinc-100 focus-visible:ring-emerald-500"
-                            value={field.state.value}
-                            onBlur={field.handleBlur}
-                            onChange={(e) => field.handleChange(e.target.value)}
-                            required
-                          />
-                        )}
+                      <Input
+                        type="password"
+                        value={ownerPassword}
+                        onChange={e => setOwnerPassword(e.target.value)}
+                        required
                       />
                     </div>
-                    <form.SubscribeButton label="Login" />
-                  </div>
-                  <div className="mt-4 text-center text-sm text-muted-foreground">
-                    Belum punya akun?{' '}
-                    <Link
-                      to="/register"
-                      className="text-emerald-500 hover:underline"
-                    >
-                      Daftar Sekarang
-                    </Link>
-                  </div>
-                </form>
-              </form.AppForm>
-            </CardContent>
-          </Card>
+                    <Button type="submit" className="w-full" disabled={ownerLoading}>
+                      {ownerLoading ? 'Masuk...' : 'Login'}
+                    </Button>
+                    <div className="text-center text-sm text-muted-foreground">
+                      Belum punya akun?
+                      {' '}
+                      <Link to="/register" className="text-primary hover:underline">
+                        Daftar Sekarang
+                      </Link>
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="staff">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Login sebagai Staff</CardTitle>
+                  <CardDescription>
+                    Masukkan Tenant ID, email, dan password akun staff Anda
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleStaffLogin} className="flex flex-col gap-4">
+                    <div className="space-y-1">
+                      <Label>Tenant ID</Label>
+                      <Input
+                        value={staffTenantId}
+                        onChange={e => setStaffTenantId(e.target.value)}
+                        placeholder="cth: paytronik"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label>Email</Label>
+                      <Input
+                        type="email"
+                        value={staffEmail}
+                        onChange={e => setStaffEmail(e.target.value)}
+                        placeholder="staff@example.com"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label>Password</Label>
+                      <Input
+                        type="password"
+                        value={staffPassword}
+                        onChange={e => setStaffPassword(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <Button type="submit" className="w-full" disabled={staffLoading}>
+                      {staffLoading ? 'Masuk...' : 'Login sebagai Staff'}
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </div>

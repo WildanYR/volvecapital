@@ -20,6 +20,7 @@ import { AppRequest } from 'src/types/app-request.type';
 import { Roles } from 'src/types/roles.type';
 import { PUBLIC_ROUTE } from './public-route.decorator';
 import { ROLES_KEY } from './roles.decorator';
+import { PERMISSIONS_KEY } from './permissions.decorator';
 
 @Injectable()
 export class VcAuthGuard implements CanActivate {
@@ -120,10 +121,36 @@ export class VcAuthGuard implements CanActivate {
       req.tenant_id = tenant_id;
       req.user = payload;
 
+      // TENANT_OWNER bypasses all permission checks
+      if (payload.role === 'TENANT_OWNER') {
+        return true;
+      }
+
+      // For DASHBOARD_USER, validate required permissions
+      if (payload.role === 'DASHBOARD_USER') {
+        const requiredPermissions = this.reflector.getAllAndOverride<string[]>(
+          PERMISSIONS_KEY,
+          [context.getHandler(), context.getClass()],
+        );
+
+        if (requiredPermissions && requiredPermissions.length > 0) {
+          const userPermissions = payload.permissions ?? [];
+          const hasAllPermissions = requiredPermissions.every(p =>
+            userPermissions.includes(p),
+          );
+          if (!hasAllPermissions) {
+            throw new ForbiddenException('Insufficient permissions');
+          }
+        }
+      }
+
       return true;
     }
     catch (e) {
       if (e instanceof NotFoundException) {
+        throw e;
+      }
+      if (e instanceof ForbiddenException) {
         throw e;
       }
       throw new UnauthorizedException('Invalid or expired token');

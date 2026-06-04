@@ -1,16 +1,17 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { toast } from 'sonner'
+import { PermissionGate } from '@/dashboard/components/permission-gate'
 import { Button } from '@/dashboard/components/ui/button'
-import { Card, CardHeader, CardTitle, CardDescription } from '@/dashboard/components/ui/card'
+import { Card, CardDescription, CardHeader, CardTitle } from '@/dashboard/components/ui/card'
+import { Skeleton } from '@/dashboard/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/dashboard/components/ui/table'
 import { API_URL } from '@/dashboard/constants/api-url.cont'
+import { useGlobalAlertDialog } from '@/dashboard/context-providers/alert-dialog.provider'
 import { useAuth } from '@/dashboard/context-providers/auth.provider'
 import { formatRupiah } from '@/dashboard/lib/currency.util'
 import { formatDateIdStandard } from '@/dashboard/lib/time-converter.util'
 import { WithdrawalServiceGenerator } from '@/dashboard/services/withdrawal.service'
-import { useGlobalAlertDialog } from '@/dashboard/context-providers/alert-dialog.provider'
-import { Skeleton } from '@/dashboard/components/ui/skeleton'
 
 export const Route = createFileRoute('/dashboard/admin/withdrawal/')({
   component: AdminWithdrawalPage,
@@ -20,7 +21,7 @@ function AdminWithdrawalPage() {
   const auth = useAuth()
   const queryClient = useQueryClient()
   const { showAlertDialog, hideAlertDialog } = useGlobalAlertDialog()
-  
+
   const withdrawalService = WithdrawalServiceGenerator(
     API_URL,
     auth.tenant!.accessToken,
@@ -34,7 +35,7 @@ function AdminWithdrawalPage() {
   })
 
   const approveMutation = useMutation({
-    mutationFn: ({ tenantId, requestId }: { tenantId: string, requestId: string }) => 
+    mutationFn: ({ tenantId, requestId }: { tenantId: string, requestId: string }) =>
       withdrawalService.approveWithdrawal(tenantId, requestId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-pending-withdrawals'] })
@@ -91,44 +92,56 @@ function AdminWithdrawalPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center py-8">
-                  <Skeleton className="h-4 w-full" />
-                </TableCell>
-              </TableRow>
-            ) : pendingRequests?.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 italic text-muted-foreground">
-                  Tidak ada request penarikan pending
-                </TableCell>
-              </TableRow>
-            ) : (
-              pendingRequests?.map((item) => (
-                <TableRow key={`${item.tenant_id}-${item.id}`}>
-                  <TableCell className="font-bold">{item.tenant_id}</TableCell>
-                  <TableCell className="font-mono text-xs text-muted-foreground">{item.id}</TableCell>
-                  <TableCell>{formatDateIdStandard(new Date(item.created_at))}</TableCell>
-                  <TableCell>
-                    <span className="font-semibold text-primary">{formatRupiah(item.amount)}</span>
-                    <div className="text-xs text-muted-foreground">Fee: {formatRupiah(item.admin_fee)}</div>
-                  </TableCell>
-                  <TableCell>
-                    <span className="font-semibold uppercase">{item.bank_info.bank_name}</span> - {item.bank_info.account_number}
-                    <div className="text-xs text-muted-foreground">{item.bank_info.account_holder}</div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button 
-                      size="sm" 
-                      onClick={() => handleApprove(item.tenant_id, item.id, item.amount)}
-                      disabled={approveMutation.isPending}
-                    >
-                      Approve
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
+            {isLoading
+              ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8">
+                      <Skeleton className="h-4 w-full" />
+                    </TableCell>
+                  </TableRow>
+                )
+              : pendingRequests?.length === 0
+                ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8 italic text-muted-foreground">
+                        Tidak ada request penarikan pending
+                      </TableCell>
+                    </TableRow>
+                  )
+                : (
+                    pendingRequests?.map(item => (
+                      <TableRow key={`${item.tenant_id}-${item.id}`}>
+                        <TableCell className="font-bold">{item.tenant_id}</TableCell>
+                        <TableCell className="font-mono text-xs text-muted-foreground">{item.id}</TableCell>
+                        <TableCell>{formatDateIdStandard(new Date(item.created_at))}</TableCell>
+                        <TableCell>
+                          <span className="font-semibold text-primary">{formatRupiah(item.amount)}</span>
+                          <div className="text-xs text-muted-foreground">
+                            Fee:
+                            {formatRupiah(item.admin_fee)}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <span className="font-semibold uppercase">{item.bank_info.bank_name}</span>
+                          {' '}
+                          -
+                          {item.bank_info.account_number}
+                          <div className="text-xs text-muted-foreground">{item.bank_info.account_holder}</div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <PermissionGate permission="withdrawal.edit">
+                            <Button
+                              size="sm"
+                              onClick={() => handleApprove(item.tenant_id, item.id, item.amount)}
+                              disabled={approveMutation.isPending}
+                            >
+                              Approve
+                            </Button>
+                          </PermissionGate>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
           </TableBody>
         </Table>
       </Card>

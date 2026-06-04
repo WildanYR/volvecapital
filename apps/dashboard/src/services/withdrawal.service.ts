@@ -132,7 +132,7 @@ export function WithdrawalServiceGenerator(apiUrl: string, accessToken: string, 
     }
   }
 
-  const getWalletTransactions = async (params: { type: 'available' | 'pending'; page: number; limit: number }): Promise<WalletTransactionsResponse> => {
+  const getWalletTransactions = async (params: { type: 'available' | 'pending', page: number, limit: number }): Promise<WalletTransactionsResponse> => {
     const response = await generateApiFetch(
       apiUrl,
       accessToken,
@@ -152,7 +152,7 @@ export function WithdrawalServiceGenerator(apiUrl: string, accessToken: string, 
         limit: result.paginationData?.limit || params.limit,
         totalItems: result.paginationData?.totalItems || 0,
         totalPages: result.paginationData?.totalPage || 1,
-      }
+      },
     }
   }
 

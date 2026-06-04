@@ -10,17 +10,20 @@ import {
 } from '@nestjs/common';
 import { ArticleService } from './article.service';
 import { CreateArticleDto, UpdateArticleDto } from './dto/article.dto';
+import { RequirePermissions } from 'src/guards/permissions.decorator';
 
 @Controller('article')
 export class ArticleController {
   constructor(private readonly articleService: ArticleService) {}
 
   @Get()
+  @RequirePermissions('content.view')
   findAll(@Headers('x-tenant-id') tenantId: string) {
     return this.articleService.findAll(tenantId);
   }
 
   @Get(':id')
+  @RequirePermissions('content.view')
   findOne(
     @Headers('x-tenant-id') tenantId: string,
     @Param('id') id: string,
@@ -29,6 +32,7 @@ export class ArticleController {
   }
 
   @Post()
+  @RequirePermissions('content.edit')
   create(
     @Headers('x-tenant-id') tenantId: string,
     @Body() dto: CreateArticleDto,
@@ -37,6 +41,7 @@ export class ArticleController {
   }
 
   @Put(':id')
+  @RequirePermissions('content.edit')
   update(
     @Headers('x-tenant-id') tenantId: string,
     @Param('id') id: string,
@@ -46,6 +51,7 @@ export class ArticleController {
   }
 
   @Delete(':id')
+  @RequirePermissions('content.edit')
   remove(
     @Headers('x-tenant-id') tenantId: string,
     @Param('id') id: string,

@@ -16,6 +16,8 @@ import { useAuth } from '@/dashboard/context-providers/auth.provider'
 import { API_URL } from '@/dashboard/constants/api-url.cont'
 import { TenantServiceGenerator } from '@/dashboard/services/tenant.service'
 
+import { DashboardUserServiceGenerator } from '@/dashboard/services/dashboard-user.service'
+
 export const Route = createFileRoute('/dashboard/accountsetting/')({
   component: RouteComponent,
 })
@@ -27,13 +29,23 @@ function RouteComponent() {
     auth.tenant!.accessToken,
     auth.tenant!.id,
   )
+  const dashboardUserService = DashboardUserServiceGenerator(
+    API_URL,
+    auth.tenant!.accessToken,
+    auth.tenant!.id,
+  )
 
   const [oldPassword, setOldPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
 
   const changePasswordMutation = useMutation({
-    mutationFn: (payload: any) => tenantService.changePassword(payload),
+    mutationFn: (payload: any) => {
+      if (auth.tenant?.role === 'TENANT_OWNER') {
+        return tenantService.changePassword(payload)
+      }
+      return dashboardUserService.changePassword(payload)
+    },
     onSuccess: (data) => {
       toast.success(data.message || 'Password berhasil diperbarui')
       setOldPassword('')
@@ -76,7 +88,7 @@ function RouteComponent() {
         <CardHeader>
           <CardTitle>Keamanan & Password</CardTitle>
           <CardDescription>
-            Ubah password akun tenant owner Anda untuk keamanan yang lebih baik.
+            Ubah password akun {auth.tenant?.role === 'TENANT_OWNER' ? 'tenant owner' : 'staff'} Anda untuk keamanan yang lebih baik.
           </CardDescription>
         </CardHeader>
         <CardContent>

@@ -73,12 +73,12 @@ export function ProductVariantForm({
         value.cooldown_unit as TimeUnit,
         'millisecond',
       )
-      
+
       const payload = {
         name: value.name,
-        duration: duration,
-        interval: interval,
-        cooldown: cooldown,
+        duration,
+        interval,
+        cooldown,
         price: Number.parseInt(value.price),
         copy_template: value.copy_template ? value.copy_template : undefined,
         description: value.description ? value.description : undefined,
@@ -97,7 +97,7 @@ export function ProductVariantForm({
         strike_price: value.strike_price?.trim() ? Number.parseInt(value.strike_price) : undefined,
         reminder_before_hours: value.reminder_before_hours?.trim() ? Number.parseInt(value.reminder_before_hours) : undefined,
       } as any
-      
+
       onSubmit(payload)
     },
   })
@@ -268,7 +268,7 @@ export function ProductVariantForm({
                 placeholder="Pilih tutorial untuk ditampilkan setelah redeem..."
                 selectItems={[
                   { title: '-- Tidak Ada Tutorial --', value: '__none__' },
-                  ...(tutorials || []).map(t => ({ title: t.title, value: t.id }))
+                  ...(tutorials || []).map(t => ({ title: t.title, value: t.id })),
                 ]}
               />
             )}

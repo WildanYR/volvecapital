@@ -8,9 +8,10 @@ function RevenueChart({ data }: { data: RevenueChartData[] }) {
   // 2. HITUNG MANUAL (Menggunakan useMemo agar performa terjaga)
   // Kita cari nilai transaksi tertinggi dari seluruh data yang ada
   const maxTransactionVal = useMemo(() => {
-    if (!data || data.length === 0) return 0
+    if (!data || data.length === 0)
+      return 0
     const max = Math.max(
-      ...data.map((d) => Number(d.transaction_count || 0)),
+      ...data.map(d => Number(d.transaction_count || 0)),
     )
     return max
   }, [data])

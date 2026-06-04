@@ -1,34 +1,13 @@
 import type { EmailMessageFilter } from '@/dashboard/services/email-message.service'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
-import { Copy, Plus, Trash2, ExternalLink } from 'lucide-react'
+import { Copy, ExternalLink, Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { useDebouncedCallback } from 'use-debounce'
 import { NoData } from '@/dashboard/components/no-data'
 import { Pagination } from '@/dashboard/components/pagination'
-import { Button } from '@/dashboard/components/ui/button'
-import { Input } from '@/dashboard/components/ui/input'
-import { Skeleton } from '@/dashboard/components/ui/skeleton'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/dashboard/components/ui/table'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/dashboard/components/ui/dialog'
-import { Label } from '@/dashboard/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/dashboard/components/ui/select'
-import { Switch } from '@/dashboard/components/ui/switch'
+import { PermissionGate } from '@/dashboard/components/permission-gate'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,6 +18,28 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/dashboard/components/ui/alert-dialog'
+import { Button } from '@/dashboard/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/dashboard/components/ui/dialog'
+import { Input } from '@/dashboard/components/ui/input'
+import { Label } from '@/dashboard/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/dashboard/components/ui/select'
+import { Skeleton } from '@/dashboard/components/ui/skeleton'
+import { Switch } from '@/dashboard/components/ui/switch'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/dashboard/components/ui/table'
 import { API_URL } from '@/dashboard/constants/api-url.cont'
 import { useAuth } from '@/dashboard/context-providers/auth.provider'
 import { formatDateIdStandard, formatTimeOnly } from '@/dashboard/lib/time-converter.util'
@@ -55,7 +56,7 @@ function RouteComponent() {
   const navigate = Route.useNavigate()
   const auth = useAuth()
   const queryClient = useQueryClient()
-  
+
   // States for Email Subject Management
   const [isSubjectDialogOpen, setIsSubjectDialogOpen] = useState(false)
   const [subjectToDelete, setSubjectToDelete] = useState<string | null>(null)
@@ -99,7 +100,7 @@ function RouteComponent() {
 
   // Mutations for Subjects
   const createSubjectMutation = useMutation({
-    mutationFn: (data: { context: string; subject: string }) =>
+    mutationFn: (data: { context: string, subject: string }) =>
       emailSubjectService.createEmailSubject(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['email-subjects'] })
@@ -111,7 +112,7 @@ function RouteComponent() {
   })
 
   const updateSubjectMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) =>
+    mutationFn: ({ id, data }: { id: string, data: any }) =>
       emailSubjectService.updateEmailSubject(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['email-subjects'] })
@@ -174,11 +175,15 @@ function RouteComponent() {
         <div className="flex justify-between items-center">
           <h2 className="text-3xl font-extrabold tracking-tight">Email Subject Management</h2>
           <Dialog open={isSubjectDialogOpen} onOpenChange={setIsSubjectDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="cursor-pointer bg-primary hover:bg-primary/90 text-primary-foreground">
-                <Plus className="mr-2 size-4" /> Tambah Subjek
-              </Button>
-            </DialogTrigger>
+            <PermissionGate permission="email.edit">
+              <DialogTrigger asChild>
+                <Button className="cursor-pointer bg-primary hover:bg-primary/90 text-primary-foreground">
+                  <Plus className="mr-2 size-4" />
+                  {' '}
+                  Tambah Subjek
+                </Button>
+              </DialogTrigger>
+            </PermissionGate>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Tambah Subjek Baru</DialogTitle>
@@ -189,7 +194,7 @@ function RouteComponent() {
                   <Label>Context</Label>
                   <Select
                     value={newSubject.context}
-                    onValueChange={(val) => setNewSubject({ ...newSubject, context: val })}
+                    onValueChange={val => setNewSubject({ ...newSubject, context: val })}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -210,7 +215,7 @@ function RouteComponent() {
                   </div>
                   <Switch
                     checked={newSubject.is_public}
-                    onCheckedChange={(val) => setNewSubject({ ...newSubject, is_public: val })}
+                    onCheckedChange={val => setNewSubject({ ...newSubject, is_public: val })}
                   />
                 </div>
                 <div className="grid gap-2">
@@ -218,7 +223,7 @@ function RouteComponent() {
                   <Input
                     placeholder="Contoh: Your Netflix temporary access code"
                     value={newSubject.subject}
-                    onChange={(e) => setNewSubject({ ...newSubject, subject: e.target.value })}
+                    onChange={e => setNewSubject({ ...newSubject, subject: e.target.value })}
                   />
                 </div>
               </div>
@@ -243,46 +248,59 @@ function RouteComponent() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isSubjectsLoading ? (
-                <TableRow><TableCell colSpan={4} className="text-center py-6">Loading...</TableCell></TableRow>
-              ) : subjects?.length === 0 ? (
-                <TableRow><TableCell colSpan={4} className="text-center py-6 text-muted-foreground">No subjects registered.</TableCell></TableRow>
-              ) : (
-                paginatedSubjects?.map((s) => (
-                  <TableRow key={s.id} className="group *:px-2 lg:*:px-4 *:py-4 lg:*:py-6 h-16">
-                    <TableCell>
-                      <span className={`text-[11px] font-bold uppercase px-3 py-1 rounded-md ${
-                        s.context === 'NETFLIX_OTP' ? 'bg-blue-500/20 text-blue-400' :
-                        s.context === 'DISNEY_OTP' ? 'bg-blue-500/20 text-blue-400' :
-                        s.context === 'NETFLIX_REQ_RESET_PASSWORD' ? 'bg-purple-500/20 text-purple-400' :
-                        s.context === 'NETFLIX_HOUSE_CHANGE' ? 'bg-green-500/20 text-green-400' :
-                        'bg-orange-500/20 text-orange-400'
-                      }`}>
-                        {s.context.replace('NETFLIX_', '').replace('_', ' ')}
-                      </span>
-                    </TableCell>
-                    <TableCell className="font-medium text-base hidden lg:table-cell">{s.subject}</TableCell>
-                    <TableCell className="text-center">
-                      <div className="flex justify-center">
-                        <Switch
-                          checked={s.is_public}
-                          onCheckedChange={(val) => updateSubjectMutation.mutate({ id: s.id, data: { is_public: val } })}
-                        />
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
-                        onClick={() => setSubjectToDelete(s.id)}
-                      >
-                        <Trash2 className="size-5" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
+              {isSubjectsLoading
+                ? (
+                    <TableRow><TableCell colSpan={4} className="text-center py-6">Loading...</TableCell></TableRow>
+                  )
+                : subjects?.length === 0
+                  ? (
+                      <TableRow><TableCell colSpan={4} className="text-center py-6 text-muted-foreground">No subjects registered.</TableCell></TableRow>
+                    )
+                  : (
+                      paginatedSubjects?.map(s => (
+                        <TableRow key={s.id} className="group *:px-2 lg:*:px-4 *:py-4 lg:*:py-6 h-16">
+                          <TableCell>
+                            <span className={`text-[11px] font-bold uppercase px-3 py-1 rounded-md ${
+                              s.context === 'NETFLIX_OTP'
+                                ? 'bg-blue-500/20 text-blue-400'
+                                : s.context === 'DISNEY_OTP'
+                                  ? 'bg-blue-500/20 text-blue-400'
+                                  : s.context === 'NETFLIX_REQ_RESET_PASSWORD'
+                                    ? 'bg-purple-500/20 text-purple-400'
+                                    : s.context === 'NETFLIX_HOUSE_CHANGE'
+                                      ? 'bg-green-500/20 text-green-400'
+                                      : 'bg-orange-500/20 text-orange-400'
+                            }`}
+                            >
+                              {s.context.replace('NETFLIX_', '').replace('_', ' ')}
+                            </span>
+                          </TableCell>
+                          <TableCell className="font-medium text-base hidden lg:table-cell">{s.subject}</TableCell>
+                          <TableCell className="text-center">
+                            <div className="flex justify-center">
+                              <PermissionGate permission="email.edit">
+                                <Switch
+                                  checked={s.is_public}
+                                  onCheckedChange={val => updateSubjectMutation.mutate({ id: s.id, data: { is_public: val } })}
+                                />
+                              </PermissionGate>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <PermissionGate permission="email.edit">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
+                                onClick={() => setSubjectToDelete(s.id)}
+                              >
+                                <Trash2 className="size-5" />
+                              </Button>
+                            </PermissionGate>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
             </TableBody>
           </Table>
         </div>
@@ -297,7 +315,7 @@ function RouteComponent() {
         )}
       </div>
 
-      <AlertDialog open={!!subjectToDelete} onOpenChange={(open) => !open && setSubjectToDelete(null)}>
+      <AlertDialog open={!!subjectToDelete} onOpenChange={open => !open && setSubjectToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Hapus Subjek Email?</AlertDialogTitle>
@@ -404,8 +422,7 @@ function RouteComponent() {
                   </Table>
                 </div>
               )
-            : <NoData>Email message tidak ditemukan</NoData>
-        }
+            : <NoData>Email message tidak ditemukan</NoData>}
 
         {!!emailMessages && (
           <div className="flex items-center justify-center">

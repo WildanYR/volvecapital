@@ -20,6 +20,7 @@ import { GetAllPlatformProductByNamesDto } from './dto/get-all-platform-product-
 import { GetAllPlatformProductQueryUrlDto } from './dto/get-all-platform-product.dto';
 import { ResolvePlatformProductDto } from './dto/resolve-platform-product.dto';
 import { UpdatePlatformProductDto } from './dto/update-platform-product.dto';
+import { RequirePermissions } from 'src/guards/permissions.decorator';
 import { PlatformProductService } from './platform-product.service';
 
 @Controller('platform-product')
@@ -30,6 +31,7 @@ export class PlatformProductController {
   ) {}
 
   @Get()
+  @RequirePermissions('platform_product.view')
   findAll(
     @Query() query: GetAllPlatformProductQueryUrlDto,
     @Request() request: AppRequest,
@@ -44,6 +46,7 @@ export class PlatformProductController {
   }
 
   @Get('by-names')
+  @RequirePermissions('platform_product.view')
   findAllByNames(
     @Query() query: GetAllPlatformProductByNamesDto,
     @Request() request: AppRequest,
@@ -55,12 +58,14 @@ export class PlatformProductController {
   }
 
   @Get(':id')
+  @RequirePermissions('platform_product.view')
   findById(@Param('id') id: string, @Request() request: AppRequest) {
     return this.platformProductService.findOne(request.tenant_id!, id);
   }
 
   @Post('resolve')
   @HttpCode(HttpStatus.OK)
+  @RequirePermissions('platform_product.edit')
   resolve(
     @Body() resolvePlatformProductDto: ResolvePlatformProductDto,
     @Request() request: AppRequest,
@@ -72,6 +77,7 @@ export class PlatformProductController {
   }
 
   @Post()
+  @RequirePermissions('platform_product.edit')
   create(
     @Body() createPlatformProductDto: CreatePlatformProductDto,
     @Request() request: AppRequest,
@@ -84,6 +90,7 @@ export class PlatformProductController {
 
   @Patch(':id')
   @UsePipes(AtLeastOnePropertyPipe)
+  @RequirePermissions('platform_product.edit')
   update(
     @Param('id') platformProductId: string,
     @Body() updatePlatformProductDto: UpdatePlatformProductDto,
@@ -98,6 +105,7 @@ export class PlatformProductController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @RequirePermissions('platform_product.edit')
   remove(
     @Param('id') platformProductId: string,
     @Request() request: AppRequest,

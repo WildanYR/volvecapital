@@ -5,8 +5,9 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from '../ui/chart'
 
 export function PeakHourChart({ data }: { data: AllStatistic['charts']['peakHour'] }) {
   const yAxisMax = useMemo(() => {
-    if (!data || data.length === 0) return 10
-    const maxVal = Math.max(...data.map((d) => Number(d.transaction_count || 0)))
+    if (!data || data.length === 0)
+      return 10
+    const maxVal = Math.max(...data.map(d => Number(d.transaction_count || 0)))
     return maxVal > 0 ? Math.round(maxVal * 1.2) : 10
   }, [data])
 
@@ -26,12 +27,12 @@ export function PeakHourChart({ data }: { data: AllStatistic['charts']['peakHour
           tickLine={false}
           tickMargin={10}
           axisLine={false}
-          tickFormatter={(value) => `${value}:00`}
+          tickFormatter={value => `${value}:00`}
         />
         <YAxis tickLine={false} axisLine={false} domain={[0, yAxisMax]} />
         <ChartTooltip
           cursor={false}
-          content={<ChartTooltipContent labelFormatter={(label) => `${label}:00`} />}
+          content={<ChartTooltipContent labelFormatter={label => `${label}:00`} />}
         />
         <Bar
           dataKey="transaction_count"

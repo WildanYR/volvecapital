@@ -72,6 +72,9 @@ import { EmailSelect } from '@/dashboard/components/inputs/select/email.select'
 import { ProductVariantSelect } from '@/dashboard/components/inputs/select/product-variant.select'
 import { NoData } from '@/dashboard/components/no-data'
 import { Pagination } from '@/dashboard/components/pagination'
+import { PasswordText } from '@/dashboard/components/password-text'
+import { PermissionGate } from '@/dashboard/components/permission-gate'
+import { Badge } from '@/dashboard/components/ui/badge'
 import { useSocket } from '@/dashboard/context-providers/socket.provider'
 import { TvPinModal } from '@/dashboard/components/tv-pin-modal'
 import { Button } from '@/dashboard/components/ui/button'
@@ -956,27 +959,29 @@ function RouteComponent() {
               {product?.name || '...'}
             </h1>
           </div>
-          <div className="flex items-center gap-4">
-            <Button
-              onClick={() => {
-                handleOpenAccountUserDialog()
-              }}
-              className="cursor-pointer"
-            >
-              <UserPlus />
-              {' '}
-              Generate User
-            </Button>
-            <Button asChild>
-              <Link to="/dashboard/account/create">
-                <span>
-                   <Plus />
-                </span>
+          <PermissionGate permission="account.edit">
+            <div className="flex items-center gap-4">
+              <Button
+                onClick={() => {
+                  handleOpenAccountUserDialog()
+                }}
+                className="cursor-pointer"
+              >
+                <UserPlus />
                 {' '}
-                Buat Akun
-              </Link>
-            </Button>
-          </div>
+                Generate User
+              </Button>
+              <Button asChild>
+                <Link to="/dashboard/account/create">
+                  <span>
+                     <Plus />
+                  </span>
+                  {' '}
+                  Buat Akun
+                </Link>
+              </Button>
+            </div>
+          </PermissionGate>
         </div>
 
         {/* Variant Tabs */}

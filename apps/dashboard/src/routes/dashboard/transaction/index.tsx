@@ -11,12 +11,12 @@ import {
   Calendar,
   CircleQuestionMark,
   Copy,
+  Globe,
+  LayoutDashboard,
   Plus,
   ShoppingBag,
   SlidersHorizontal,
   Trash2,
-  LayoutDashboard,
-  Globe,
 } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -25,6 +25,7 @@ import { ShopeeLogo } from '@/dashboard/components/icons/shopee-logo'
 import { WhatsappLogo } from '@/dashboard/components/icons/whatsapp-logo'
 import { NoData } from '@/dashboard/components/no-data'
 import { Pagination } from '@/dashboard/components/pagination'
+import { PermissionGate } from '@/dashboard/components/permission-gate'
 import { Button } from '@/dashboard/components/ui/button'
 import { Calendar as CalendarInput } from '@/dashboard/components/ui/calendar'
 import {
@@ -246,15 +247,17 @@ function RouteComponent() {
           <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight text-balance">
             Transaksi
           </h1>
-          <Button asChild>
-            <Link to="/dashboard/transaction/create">
-              <span>
-                <Plus />
-              </span>
-              {' '}
-              Transaksi Baru
-            </Link>
-          </Button>
+          <PermissionGate permission="transaction.create">
+            <Button asChild>
+              <Link to="/dashboard/transaction/create">
+                <span>
+                  <Plus />
+                </span>
+                {' '}
+                Transaksi Baru
+              </Link>
+            </Button>
+          </PermissionGate>
         </div>
         <div className="flex flex-col md:flex-row justify-center items-center gap-4">
           <Input
@@ -431,21 +434,23 @@ function RouteComponent() {
                                 Item
                               </span>
                             </Button>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => {
-                                handleDeleteTransaction(transaction)
-                              }}
-                              className="cursor-pointer"
-                              title="Hapus"
-                            >
-                              <Trash2 className="size-4" />
-                              <span className="hidden lg:inline ml-1">
-                                {' '}
-                                Hapus
-                              </span>
-                            </Button>
+                            <PermissionGate permission="transaction.delete">
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => {
+                                  handleDeleteTransaction(transaction)
+                                }}
+                                className="cursor-pointer"
+                                title="Hapus"
+                              >
+                                <Trash2 className="size-4" />
+                                <span className="hidden lg:inline ml-1">
+                                  {' '}
+                                  Hapus
+                                </span>
+                              </Button>
+                            </PermissionGate>
                           </div>
                         </TableCell>
                       </TableRow>

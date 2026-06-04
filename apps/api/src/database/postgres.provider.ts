@@ -31,6 +31,10 @@ import { TenantOwner } from './models/tenant-owner.model';
 import { PromoCode } from './models/promo-code.model';
 import { WithdrawalRequest } from './models/withdrawal-request.model';
 import { TenantBankAccount } from './models/tenant-bank-account.model';
+import { Role } from './models/role.model';
+import { Permission } from './models/permission.model';
+import { RolePermission } from './models/role-permission.model';
+import { DashboardUser } from './models/dashboard-user.model';
 @Injectable()
 export class PostgresProvider {
   private sequelize?: Sequelize;
@@ -94,6 +98,10 @@ export class PostgresProvider {
         PromoCode,
         WithdrawalRequest,
         TenantBankAccount,
+        Role,
+        Permission,
+        RolePermission,
+        DashboardUser,
       ]);
     }
     else {

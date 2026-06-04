@@ -1,7 +1,7 @@
 import { generateApiFetch, parseApiResponse } from '@/dashboard/lib/api-fetch.util'
 
 export function PromoServiceGenerator(apiUrl: string, accessToken: string, tenantId: string) {
-  const list = async (params: { page?: number; limit?: number; search?: string } = {}) => {
+  const list = async (params: { page?: number, limit?: number, search?: string } = {}) => {
     const response = await generateApiFetch(apiUrl, accessToken, tenantId, '/promo', params)
     if (!response.ok) {
       const errorData = await parseApiResponse(response)

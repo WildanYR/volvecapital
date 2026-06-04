@@ -2,27 +2,29 @@ import { Controller, Get, Post, Delete, Body, Param, UseGuards, Req } from '@nes
 import { BankAccountService } from './bank-account.service';
 import { CreateBankAccountDto } from './dto/create-bank-account.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
-import { VcAuthGuard } from 'src/guards/vc-auth.guard';
+import { RequirePermissions } from 'src/guards/permissions.decorator';
 import { Request } from 'express';
 
 @Controller('bank-accounts')
-@UseGuards(VcAuthGuard)
 export class BankAccountController {
   constructor(private readonly bankAccountService: BankAccountService) {}
 
   @Get()
+  @RequirePermissions('wallet.view')
   async getAll(@Req() req: Request) {
     const tenantId = (req as any).tenant_id;
     return await this.bankAccountService.getAllVerified(tenantId);
   }
 
   @Post()
+  @RequirePermissions('wallet.edit')
   async addAccount(@Req() req: Request, @Body() dto: CreateBankAccountDto) {
     const tenantId = (req as any).tenant_id;
     return await this.bankAccountService.initiateAdd(tenantId, dto);
   }
 
   @Post(':id/verify')
+  @RequirePermissions('wallet.edit')
   async verifyOtp(
     @Req() req: Request,
     @Param('id') id: string,
@@ -33,6 +35,7 @@ export class BankAccountController {
   }
 
   @Delete(':id')
+  @RequirePermissions('wallet.edit')
   async deleteAccount(@Req() req: Request, @Param('id') id: string) {
     const tenantId = (req as any).tenant_id;
     return await this.bankAccountService.delete(tenantId, id);

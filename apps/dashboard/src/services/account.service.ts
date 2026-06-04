@@ -41,7 +41,6 @@ export interface AccountProfile {
   user?: Array<AccountProfileUser>
 }
 
-
 export interface Account {
   id: string
   account_password: string
@@ -97,7 +96,6 @@ export interface CreateAccountProfilePayload {
   metadata?: string
 }
 
-
 export interface CreateAccountPayload {
   account_password: string
   subscription_expiry: Date
@@ -152,7 +150,6 @@ export interface UpdateAccountProfilePayload {
   allow_generate?: boolean
   metadata?: string
 }
-
 
 export interface UpdateAccountPayload {
   account_password?: string
@@ -299,7 +296,7 @@ export function AccountServiceGenerator(apiUrl: string, accessToken: string, ten
 
   const bulkCreateAccount = async (
     payload: BulkCreateAccountPayload,
-  ): Promise<{ success: boolean; message: string; created_accounts: number; created_profiles: number }> => {
+  ): Promise<{ success: boolean, message: string, created_accounts: number, created_profiles: number }> => {
     const response = await generateApiFetch(
       apiUrl,
       accessToken,
@@ -463,7 +460,6 @@ export function AccountServiceGenerator(apiUrl: string, accessToken: string, ten
 
     return response.json()
   }
-
 
   const freezeAccount = async (
     accountId: string,
@@ -747,7 +743,7 @@ export function AccountServiceGenerator(apiUrl: string, accessToken: string, ten
         throw new Error(errorData.message || 'Failed to cancel topup')
       }
     },
-    getPendingTopups: async (): Promise<{ accountId: string; email: string; billing: string; taskId: string }[]> => {
+    getPendingTopups: async (): Promise<{ accountId: string, email: string, billing: string, taskId: string }[]> => {
       const response = await generateApiFetch(
         apiUrl,
         accessToken,

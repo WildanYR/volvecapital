@@ -18,6 +18,7 @@ import { PaginationProvider } from '../utility/pagination.provider';
 import { CreateEmailDto } from './dto/create-email.dto';
 import { GetAllEmailQueryUrlDto } from './dto/get-all-email.dto';
 import { UpdateEmailDto } from './dto/update-email.dto';
+import { RequirePermissions } from 'src/guards/permissions.decorator';
 import { EmailService } from './email.service';
 
 @Controller('email')
@@ -28,6 +29,7 @@ export class EmailController {
   ) {}
 
   @Get()
+  @RequirePermissions('email.view')
   findAll(
     @Query() query: GetAllEmailQueryUrlDto,
     @Request() request: AppRequest,
@@ -38,11 +40,13 @@ export class EmailController {
   }
 
   @Get(':id')
+  @RequirePermissions('email.view')
   findById(@Param('id') id: string, @Request() request: AppRequest) {
     return this.emailService.findOne(request.tenant_id!, id);
   }
 
   @Post()
+  @RequirePermissions('email.edit')
   create(
     @Body() createEmailDto: CreateEmailDto,
     @Request() request: AppRequest,
@@ -52,6 +56,7 @@ export class EmailController {
 
   @Patch(':id')
   @UsePipes(AtLeastOnePropertyPipe)
+  @RequirePermissions('email.edit')
   update(
     @Param('id') emailId: string,
     @Body() updateEmailDto: UpdateEmailDto,
@@ -66,6 +71,7 @@ export class EmailController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @RequirePermissions('email.edit')
   remove(@Param('id') emailId: string, @Request() request: AppRequest) {
     return this.emailService.remove(request.tenant_id!, emailId);
   }

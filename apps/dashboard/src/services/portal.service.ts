@@ -1,20 +1,20 @@
 export interface PortalData {
   account: {
-    email: string;
-    profile_name: string;
-    expired_at: string;
-  };
+    email: string
+    profile_name: string
+    expired_at: string
+  }
   messages: Array<{
-    id: string;
-    subject: string;
-    email_date: string;
-    parsed_context: string;
-    parsed_data: string;
-  }>;
+    id: string
+    subject: string
+    email_date: string
+    parsed_context: string
+    parsed_data: string
+  }>
   limit: {
-    remaining: number;
-    total: number;
-  };
+    remaining: number
+    total: number
+  }
 }
 
 export function PortalServiceGenerator(apiUrl: string, tenantId: string) {
@@ -23,17 +23,17 @@ export function PortalServiceGenerator(apiUrl: string, tenantId: string) {
       headers: {
         'x-tenant-id': tenantId,
       },
-    });
-    
+    })
+
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ message: 'Gagal memuat data portal' }));
-      throw new Error(error.message || 'Gagal memuat data portal');
+      const error = await response.json().catch(() => ({ message: 'Gagal memuat data portal' }))
+      throw new Error(error.message || 'Gagal memuat data portal')
     }
-    
-    return response.json();
-  };
+
+    return response.json()
+  }
 
   return {
     getPortalData,
-  };
+  }
 }

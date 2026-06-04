@@ -7,6 +7,8 @@ import {
 } from '@tanstack/react-router'
 import {
   Blocks,
+  BookOpen,
+  ChevronDown,
   FileText,
   House,
   Inbox,
@@ -14,13 +16,25 @@ import {
   Mail,
   Package,
   Receipt,
+  Settings,
+  ShieldCheck,
   Ticket,
   User,
-  Settings,
-  ChevronDown,
+  Users,
 } from 'lucide-react'
+import { PermissionGate } from '@/dashboard/components/permission-gate'
 import { StockNotification } from '@/dashboard/components/stock-notification'
+import { PendingTopupNotification } from '@/dashboard/components/pending-topup-notification'
+import { can } from '@/dashboard/lib/permission'
 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/dashboard/components/ui/dropdown-menu'
 import {
   Sidebar,
   SidebarContent,
@@ -34,14 +48,6 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from '@/dashboard/components/ui/sidebar'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/dashboard/components/ui/dropdown-menu'
 import { useAuth } from '@/dashboard/context-providers/auth.provider'
 import logo from '@/dashboard/logo.svg'
 
@@ -49,48 +55,57 @@ const navGroups = [
   {
     title: 'Produk',
     items: [
-      { title: 'Produk', url: '/dashboard/product', icon: Package },
+      { title: 'Produk', url: '/dashboard/product', icon: Package, permission: 'product.view' },
       {
         title: 'Produk di Platform',
         url: '/dashboard/platform-product',
         icon: Blocks,
+        permission: 'platform_product.view',
       },
     ],
   },
   {
     title: 'Akun',
     items: [
-      { title: 'Email', url: '/dashboard/email', icon: Mail },
-      { title: 'Akun', url: '/dashboard/account', icon: User },
+      { title: 'Email', url: '/dashboard/email', icon: Mail, permission: 'email.view' },
+      { title: 'Akun', url: '/dashboard/account', icon: User, permission: 'account.view' },
+    ],
+  },
+  {
+    title: 'Settings',
+    items: [
+      { title: 'Pengaturan Aplikasi', url: '/dashboard/setting', icon: Settings, permission: 'landing.view, content.view' },
     ],
   },
   {
     title: 'Transaksi',
     items: [
-      { title: 'Transaksi', url: '/dashboard/transaction', icon: Receipt },
+      { title: 'Transaksi', url: '/dashboard/transaction', icon: Receipt, permission: 'transaction.view' },
       {
         title: 'Voucher Generator',
         url: '/dashboard/voucher-generator',
         icon: Ticket,
+        permission: 'voucher.view',
       },
     ],
   },
   {
     title: 'System',
     items: [
-      { title: 'Email Message', url: '/dashboard/email-message', icon: Inbox },
+      { title: 'Email Message', url: '/dashboard/email-message', icon: Inbox, permission: 'email_message.view' },
     ],
   },
   {
     title: 'Keuangan',
     items: [
-      { title: 'Wallet', url: '/dashboard/wallet', icon: Receipt },
+      { title: 'Wallet', url: '/dashboard/wallet', icon: Receipt, permission: 'wallet.view' },
     ],
   },
   {
-    title: 'Settings',
+    title: 'Manajemen',
     items: [
-      { title: 'Landing Page', url: '/dashboard/setting', icon: House },
+      { title: 'Role & Permission', url: '/dashboard/role', icon: ShieldCheck, permission: 'role.view' },
+      { title: 'Staff', url: '/dashboard/staff', icon: Users, permission: 'user.view' },
     ],
   },
 ]
@@ -99,9 +114,9 @@ const adminGroups = [
   {
     title: 'Admin Panel',
     items: [
-      { title: 'Approval WD', url: '/dashboard/admin/withdrawal', icon: FileText },
+      { title: 'Approval WD', url: '/dashboard/admin/withdrawal', icon: FileText, permission: 'withdrawal.view' },
     ],
-  }
+  },
 ]
 
 export const Route = createFileRoute('/dashboard')({
@@ -151,50 +166,90 @@ function RouteComponent() {
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
-          {navGroups.map((nav, i) => (
-            <SidebarGroup key={`nav=${i}`}>
-              <SidebarGroupLabel>{nav.title}</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {nav.items.map(item => (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton
-                        asChild
-                        isActive={pathname === item.url}
-                      >
-                        <Link to={item.url}>
-                          <item.icon />
-                          <span>{item.title}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          ))}
-          {auth.tenant?.id === 'paytronik' && adminGroups.map((nav, i) => (
-            <SidebarGroup key={`admin-nav=${i}`}>
-              <SidebarGroupLabel>{nav.title}</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {nav.items.map(item => (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton
-                        asChild
-                        isActive={pathname === item.url}
-                      >
-                        <Link to={item.url}>
-                          <item.icon />
-                          <span>{item.title}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          ))}
+          {navGroups.map((nav, i) => {
+            // Filter items based on user permissions
+            const visibleItems = nav.items.filter((item) => {
+              if (!(item as any).permission) return true
+              return can((item as any).permission, auth.tenant)
+            })
+
+            if (visibleItems.length === 0) return null
+
+            return (
+              <SidebarGroup key={`nav=${i}`}>
+                <SidebarGroupLabel>{nav.title}</SidebarGroupLabel>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {visibleItems.map((item) => {
+                      const menuButton = (
+                        <SidebarMenuItem key={item.title}>
+                          <SidebarMenuButton
+                            asChild
+                            isActive={pathname === item.url}
+                          >
+                            <Link to={item.url}>
+                              <item.icon />
+                              <span>{item.title}</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      )
+                      if ((item as any).permission) {
+                        return (
+                          <PermissionGate key={item.title} permission={(item as any).permission}>
+                            {menuButton}
+                          </PermissionGate>
+                        )
+                      }
+                      return menuButton
+                    })}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            )
+          })}
+          {auth.tenant?.id === 'paytronik' && adminGroups.map((nav, i) => {
+            // Filter admin items based on user permissions
+            const visibleItems = nav.items.filter((item) => {
+              if (!(item as any).permission) return true
+              return can((item as any).permission, auth.tenant)
+            })
+
+            if (visibleItems.length === 0) return null
+
+            return (
+              <SidebarGroup key={`admin-nav=${i}`}>
+                <SidebarGroupLabel>{nav.title}</SidebarGroupLabel>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {visibleItems.map((item) => {
+                      const menuButton = (
+                        <SidebarMenuItem key={item.title}>
+                          <SidebarMenuButton
+                            asChild
+                            isActive={pathname === item.url}
+                          >
+                            <Link to={item.url}>
+                              <item.icon />
+                              <span>{item.title}</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      )
+                      if ((item as any).permission) {
+                        return (
+                          <PermissionGate key={item.title} permission={(item as any).permission}>
+                            {menuButton}
+                          </PermissionGate>
+                        )
+                      }
+                      return menuButton
+                    })}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            )
+          })}
         </SidebarContent>
       </Sidebar>
       <main className="flex-1 min-w-0 overflow-x-hidden max-w-full">

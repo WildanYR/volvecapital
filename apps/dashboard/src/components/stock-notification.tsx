@@ -34,12 +34,14 @@ export function StockNotification() {
     refetchInterval: 60000, 
   })
 
+  const hasAccountView = auth.tenant?.role === 'TENANT_OWNER' || auth.tenant?.permissions?.includes('account.view')
+
   // 2. Query Pending Topup (Setiap 5 detik agar responsif)
   const { data: pendingTopups, refetch: refetchTopups } = useQuery({
     queryKey: ['pendingTopups', auth.tenant?.id],
     queryFn: () => accountService.getPendingTopups(),
     refetchInterval: 5000, 
-    enabled: !!auth.tenant?.accessToken,
+    enabled: !!auth.tenant?.accessToken && hasAccountView,
   })
 
   // 3. Mutation Konfirmasi Bayar

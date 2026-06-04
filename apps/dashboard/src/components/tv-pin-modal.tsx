@@ -1,4 +1,6 @@
-import { useState, useEffect } from 'react'
+import { Loader2, Monitor, Send } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Button } from '@/dashboard/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -7,10 +9,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/dashboard/components/ui/dialog'
-import { Button } from '@/dashboard/components/ui/button'
 import { Input } from '@/dashboard/components/ui/input'
 import { Label } from '@/dashboard/components/ui/label'
-import { Monitor, Loader2, Send } from 'lucide-react'
 
 interface TvPinModalProps {
   isOpen: boolean
@@ -61,7 +61,8 @@ export function TvPinModal({ isOpen, onClose, onSendPin, isSending, email, error
           .animate-shake {
             animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
           }
-        ` }} />
+        ` }}
+        />
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-red-600">
             <Monitor className="size-5" />
@@ -80,43 +81,45 @@ export function TvPinModal({ isOpen, onClose, onSendPin, isSending, email, error
           </div>
         )}
 
-        {!isBotReady ? (
-           <div className="flex flex-col items-center justify-center py-10 gap-4">
-             <Loader2 className="size-12 animate-spin text-red-600" />
-             <div className="text-center space-y-1">
-               <p className="font-bold text-lg">Bot Sedang Bekerja...</p>
-               <p className="text-sm text-muted-foreground">{progressMessage || 'Mempersiapkan tugas, mohon tunggu...'}</p>
-             </div>
-           </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-4 py-2">
-            <div className="grid gap-2">
-              <Label htmlFor="pin" className="sr-only">8 Digit PIN</Label>
-              <Input
-                id="pin"
-                placeholder="00000000"
-                value={pin}
-                onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 8))}
-                className={`text-center text-2xl tracking-[0.5em] font-mono h-14 ${errorMessage ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
-                autoFocus
-                autoComplete="off"
-              />
-              <p className="text-[10px] text-muted-foreground text-center">
-                Pastikan PIN sudah benar sebelum mengirim.
-              </p>
-            </div>
-            <DialogFooter>
-              <Button
-                type="submit"
-                disabled={pin.length !== 8 || isSending}
-                className="w-full bg-red-600 hover:bg-red-700 text-white gap-2 h-11"
-              >
-                {isSending ? <Loader2 className="animate-spin size-4" /> : <Send className="size-4" />}
-                Kirim PIN
-              </Button>
-            </DialogFooter>
-          </form>
-        )}
+        {!isBotReady
+          ? (
+              <div className="flex flex-col items-center justify-center py-10 gap-4">
+                <Loader2 className="size-12 animate-spin text-red-600" />
+                <div className="text-center space-y-1">
+                  <p className="font-bold text-lg">Bot Sedang Bekerja...</p>
+                  <p className="text-sm text-muted-foreground">{progressMessage || 'Mempersiapkan tugas, mohon tunggu...'}</p>
+                </div>
+              </div>
+            )
+          : (
+              <form onSubmit={handleSubmit} className="space-y-4 py-2">
+                <div className="grid gap-2">
+                  <Label htmlFor="pin" className="sr-only">8 Digit PIN</Label>
+                  <Input
+                    id="pin"
+                    placeholder="00000000"
+                    value={pin}
+                    onChange={e => setPin(e.target.value.replace(/\D/g, '').slice(0, 8))}
+                    className={`text-center text-2xl tracking-[0.5em] font-mono h-14 ${errorMessage ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                    autoFocus
+                    autoComplete="off"
+                  />
+                  <p className="text-[10px] text-muted-foreground text-center">
+                    Pastikan PIN sudah benar sebelum mengirim.
+                  </p>
+                </div>
+                <DialogFooter>
+                  <Button
+                    type="submit"
+                    disabled={pin.length !== 8 || isSending}
+                    className="w-full bg-red-600 hover:bg-red-700 text-white gap-2 h-11"
+                  >
+                    {isSending ? <Loader2 className="animate-spin size-4" /> : <Send className="size-4" />}
+                    Kirim PIN
+                  </Button>
+                </DialogFooter>
+              </form>
+            )}
       </DialogContent>
     </Dialog>
   )

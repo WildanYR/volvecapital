@@ -1,12 +1,12 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
-import { useState } from 'react'
 import { useForm } from '@tanstack/react-form'
+import { createFileRoute, Link } from '@tanstack/react-router'
+import { ArrowLeft, KeyRound, Mail } from 'lucide-react'
+import { useState } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/dashboard/components/ui/button'
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/dashboard/components/ui/card'
 import { Input } from '@/dashboard/components/ui/input'
 import { Label } from '@/dashboard/components/ui/label'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/dashboard/components/ui/card'
-import { KeyRound, Mail, ArrowLeft } from 'lucide-react'
 import { API_URL } from '@/dashboard/constants/api-url.cont'
 
 export const Route = createFileRoute('/forgot-password')({
@@ -32,16 +32,18 @@ function ForgotPasswordComponent() {
 
         const text = await response.text()
         const result = text ? JSON.parse(text) : {}
-        
+
         if (!response.ok) {
           throw new Error(result.message || 'Gagal mengirim email reset')
         }
 
         setIsSubmitted(true)
         toast.success('Email reset password telah dikirim!')
-      } catch (error) {
+      }
+      catch (error) {
         toast.error((error as Error).message)
-      } finally {
+      }
+      finally {
         setIsLoading(false)
       }
     },
@@ -97,7 +99,7 @@ function ForgotPasswordComponent() {
                 <Label htmlFor="email" className="text-zinc-300">Email Terdaftar</Label>
                 <form.Field
                   name="email"
-                  children={(field) => (
+                  children={field => (
                     <Input
                       id="email"
                       type="email"
@@ -105,15 +107,15 @@ function ForgotPasswordComponent() {
                       className="bg-zinc-950 border-zinc-800 text-zinc-100 focus-visible:ring-emerald-500"
                       value={field.state.value}
                       onBlur={field.handleBlur}
-                      onChange={(e) => field.handleChange(e.target.value)}
+                      onChange={e => field.handleChange(e.target.value)}
                       required
                     />
                   )}
                 />
               </div>
 
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition-all duration-200"
                 disabled={isLoading}
               >
@@ -122,11 +124,13 @@ function ForgotPasswordComponent() {
             </form>
           </CardContent>
           <CardFooter className="flex justify-center border-t border-zinc-800/50 pt-4">
-            <Link 
-              to="/login" 
+            <Link
+              to="/login"
               className="text-sm text-zinc-400 hover:text-emerald-500 flex items-center gap-2 transition-colors"
             >
-              <ArrowLeft className="w-4 h-4" /> Kembali ke Login
+              <ArrowLeft className="w-4 h-4" />
+              {' '}
+              Kembali ke Login
             </Link>
           </CardFooter>
         </Card>

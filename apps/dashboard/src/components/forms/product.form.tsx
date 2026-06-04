@@ -114,9 +114,9 @@ export function ProductForm({
         )
         return {
           name: v.name,
-          duration: duration,
-          interval: interval,
-          cooldown: cooldown,
+          duration,
+          interval,
+          cooldown,
           price: Number.parseInt(v.price),
           copy_template: v.copy_template || undefined,
           description: v.description || undefined,

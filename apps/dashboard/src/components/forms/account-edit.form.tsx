@@ -31,7 +31,7 @@ export function AccountEditForm({
 }) {
   const userCount = initialData?.profile?.reduce(
     (acc, p) => acc + (p.user?.filter(u => u.status === 'active').length || 0),
-    0
+    0,
   ) || 0
 
   const form = useAppForm({

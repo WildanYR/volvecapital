@@ -1,10 +1,10 @@
 import type { z } from 'zod'
 import type { Article } from '@/dashboard/services/article.service'
-import { Plus, Trash2, ArrowUp, ArrowDown, Image as ImageIcon } from 'lucide-react'
+import { ArrowDown, ArrowUp, Image as ImageIcon, Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/dashboard/components/ui/button'
+import { Card, CardContent } from '@/dashboard/components/ui/card'
 import { useAppForm } from '@/dashboard/hooks/form.hook'
 import { ArticleFormSchema } from './common/schemas/article-form.schema'
-import { Card, CardContent } from '@/dashboard/components/ui/card'
 
 export type ArticleFormSubmitData = z.infer<typeof ArticleFormSchema>
 
@@ -68,10 +68,10 @@ export function ArticleForm({
                   />
                   {field.state.value && (
                     <div className="relative aspect-video rounded-lg overflow-hidden border border-white/10 bg-black/20 group">
-                       <img src={field.state.value} alt="Preview" className="w-full h-full object-cover" />
-                       <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
-                         <ImageIcon className="text-white size-8" />
-                       </div>
+                      <img src={field.state.value} alt="Preview" className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <ImageIcon className="text-white size-8" />
+                      </div>
                     </div>
                   )}
                 </div>
@@ -122,7 +122,10 @@ export function ArticleForm({
                       <div className="absolute top-0 left-0 w-1 h-full bg-primary" />
                       <CardContent className="p-6">
                         <div className="flex justify-between items-start mb-6">
-                          <span className="text-xs font-black text-muted-foreground uppercase tracking-widest">Poin {i + 1}</span>
+                          <span className="text-xs font-black text-muted-foreground uppercase tracking-widest">
+                            Poin
+                            {i + 1}
+                          </span>
                           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             <Button
                               type="button"
@@ -177,16 +180,18 @@ export function ArticleForm({
                               children={sub => (
                                 <div className="space-y-2">
                                   <sub.TextField label="URL Gambar (Opsional)" placeholder="Paste link gambar di sini..." />
-                                  {sub.state.value ? (
-                                    <div className="aspect-video rounded-lg overflow-hidden border border-white/10 bg-black/40">
-                                      <img src={sub.state.value} alt="Point Preview" className="w-full h-full object-cover" />
-                                    </div>
-                                  ) : (
-                                    <div className="aspect-video rounded-lg border border-dashed border-white/10 bg-white/5 flex flex-col items-center justify-center text-muted-foreground gap-2">
-                                      <ImageIcon className="size-8 opacity-20" />
-                                      <p className="text-xs">Gambar (opsional)</p>
-                                    </div>
-                                  )}
+                                  {sub.state.value
+                                    ? (
+                                        <div className="aspect-video rounded-lg overflow-hidden border border-white/10 bg-black/40">
+                                          <img src={sub.state.value} alt="Point Preview" className="w-full h-full object-cover" />
+                                        </div>
+                                      )
+                                    : (
+                                        <div className="aspect-video rounded-lg border border-dashed border-white/10 bg-white/5 flex flex-col items-center justify-center text-muted-foreground gap-2">
+                                          <ImageIcon className="size-8 opacity-20" />
+                                          <p className="text-xs">Gambar (opsional)</p>
+                                        </div>
+                                      )}
                                 </div>
                               )}
                             />
