@@ -67,20 +67,20 @@ function RouteComponent() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [logoutAllDevices, setLogoutAllDevices] = useState(false)
 
-  const hasViewAll = auth.tenant?.role === 'TENANT_OWNER' || auth.tenant?.permissions?.includes('device.view')
-  const hasDeleteAll = auth.tenant?.role === 'TENANT_OWNER' || auth.tenant?.permissions?.includes('device.delete')
+  const hasViewAll = auth.tenant?.role !== 'DASHBOARD_USER' || auth.tenant?.permissions?.includes('device.view')
+  const hasDeleteAll = auth.tenant?.role !== 'DASHBOARD_USER' || auth.tenant?.permissions?.includes('device.delete')
 
   const { data: devices, isLoading: isLoadingDevices } = useQuery({
     queryKey: ['device-sessions'],
     queryFn: () => {
       if (hasViewAll) {
-        if (auth.tenant?.role === 'TENANT_OWNER') {
+        if (auth.tenant?.role !== 'DASHBOARD_USER') {
           return tenantService.getAllDeviceSessions()
         }
         return dashboardUserService.getAllDeviceSessions()
       }
 
-      if (auth.tenant?.role === 'TENANT_OWNER') {
+      if (auth.tenant?.role !== 'DASHBOARD_USER') {
         return tenantService.getDeviceSessions()
       }
       return dashboardUserService.getDeviceSessions()
@@ -90,13 +90,13 @@ function RouteComponent() {
   const revokeSessionMutation = useMutation({
     mutationFn: (sessionId: string) => {
       if (hasDeleteAll) {
-        if (auth.tenant?.role === 'TENANT_OWNER') {
+        if (auth.tenant?.role !== 'DASHBOARD_USER') {
           return tenantService.revokeAnyDeviceSession(sessionId)
         }
         return dashboardUserService.revokeAnyDeviceSession(sessionId)
       }
 
-      if (auth.tenant?.role === 'TENANT_OWNER') {
+      if (auth.tenant?.role !== 'DASHBOARD_USER') {
         return tenantService.revokeDeviceSession(sessionId)
       }
       return dashboardUserService.revokeDeviceSession(sessionId)
@@ -112,7 +112,7 @@ function RouteComponent() {
 
   const changePasswordMutation = useMutation({
     mutationFn: (payload: any) => {
-      if (auth.tenant?.role === 'TENANT_OWNER') {
+      if (auth.tenant?.role !== 'DASHBOARD_USER') {
         return tenantService.changePassword(payload)
       }
       return dashboardUserService.changePassword(payload)
@@ -160,7 +160,7 @@ function RouteComponent() {
         <CardHeader>
           <CardTitle>Keamanan & Password</CardTitle>
           <CardDescription>
-            Ubah password akun {auth.tenant?.role === 'TENANT_OWNER' ? 'tenant owner' : 'staff'} Anda untuk keamanan yang lebih baik.
+            Ubah password akun {auth.tenant?.role !== 'DASHBOARD_USER' ? 'tenant owner' : 'staff'} Anda untuk keamanan yang lebih baik.
           </CardDescription>
         </CardHeader>
         <CardContent>
