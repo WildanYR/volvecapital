@@ -69,22 +69,8 @@ export async function getAuthCredentials(
   email: string,
   password: string
 ): Promise<AuthCredentials> {
-  // Check if credentials exist in DB
-  const tenantIdRow = db.get<{ value: string }>(
-    'SELECT value FROM sys_kv_store WHERE key = ?',
-    [KV_AUTH_TENANT_ID]
-  );
-  const tokenRow = db.get<{ value: string }>(
-    'SELECT value FROM sys_kv_store WHERE key = ?',
-    [KV_AUTH_TOKEN]
-  );
-
-  if (tenantIdRow && tokenRow) {
-    return {
-      tenantId: tenantIdRow.value,
-      token: tokenRow.value,
-    };
-  }
+  // Always fetch fresh token on startup to prevent using legacy or expired tokens
+  // We no longer rely on the infinite cache from sys_kv_store
 
   // Fetch from API
   const credentials = await fetchAccessToken(apiBaseUrl, email, password);
