@@ -3,8 +3,12 @@ import { TENANT_REPOSITORY, TUTORIAL_REPOSITORY, TENANT_OWNER_REPOSITORY } from 
 import { Tenant } from 'src/database/models/tenant.model';
 import { TenantOwner } from 'src/database/models/tenant-owner.model';
 import { Tutorial } from 'src/database/models/tutorial.model';
+import { Permission } from 'src/database/models/permission.model';
+import { Role } from 'src/database/models/role.model';
+import { RolePermission } from 'src/database/models/role-permission.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
 import { MigrationProvider } from 'src/database/migration.provider';
+import { ALL_PERMISSIONS, ROLE_PRESETS } from 'src/constants/permissions.const';
 import * as crypto from 'crypto';
 
 @Injectable()
@@ -15,6 +19,9 @@ export class TenantProvisioningService {
     @Inject(TENANT_REPOSITORY) private readonly tenantRepository: typeof Tenant,
     @Inject(TENANT_OWNER_REPOSITORY) private readonly tenantOwnerRepository: typeof TenantOwner,
     @Inject(TUTORIAL_REPOSITORY) private readonly tutorialRepository: typeof Tutorial,
+    @Inject('PERMISSION_REPOSITORY') private readonly permissionRepository: typeof Permission,
+    @Inject('ROLE_REPOSITORY') private readonly roleRepository: typeof Role,
+    @Inject('ROLE_PERMISSION_REPOSITORY') private readonly rolePermissionRepository: typeof RolePermission,
   ) {}
 
   async provision(data: {
@@ -72,6 +79,28 @@ export class TenantProvisioningService {
         is_published: true,
         steps: [],
       }, { transaction });
+
+      // 5. Insert Role and Permissions
+      const permissions = await this.permissionRepository.bulkCreate(ALL_PERMISSIONS, { transaction });
+      
+      const permissionMap: Record<string, string> = {};
+      for (const p of permissions) {
+        permissionMap[p.name] = p.id;
+      }
+
+      for (const preset of ROLE_PRESETS) {
+        const role = await this.roleRepository.create({
+          name: preset.name,
+          description: preset.description,
+        }, { transaction });
+
+        const rolePermissions = preset.permissions.map(pName => ({
+          role_id: role.id,
+          permission_id: permissionMap[pName],
+        }));
+
+        await this.rolePermissionRepository.bulkCreate(rolePermissions, { transaction });
+      }
 
       await transaction.commit();
       return tenant;
