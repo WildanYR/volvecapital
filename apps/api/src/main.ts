@@ -2,15 +2,18 @@ import type { ValidationError } from '@nestjs/common';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpAdapterHost, NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { InvalidDataException } from './exceptions/invalid-data.exception';
 import { ApiExceptionFilter } from './filters/exception.filter';
 import { AppLoggerService } from './modules/logger/logger.service';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     bufferLogs: true,
   });
+  
+  app.set('trust proxy', 1);
 
   app.enableCors({
     origin: true,

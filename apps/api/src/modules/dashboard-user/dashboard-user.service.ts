@@ -25,6 +25,7 @@ import { TenantOwner } from 'src/database/models/tenant-owner.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
 import { IAccessTokenPayload } from 'src/types/access-token.type';
 import { TokenProvider } from '../utility/token.provider';
+import { getLocationFromIp } from 'src/utils/geo.util';
 import {
   CreateDashboardUserDto,
   LoginDashboardUserDto,
@@ -350,12 +351,14 @@ export class DashboardUserService {
       }
 
       await this.postgresProvider.setSchema('master', transaction);
+      const locationIp = await getLocationFromIp(ip);
+
       const session = await this.deviceSessionRepository.create({
         user_id: user.id,
         tenant_id: tenantId,
         user_type: 'DASHBOARD_USER',
         device_info: userAgent,
-        ip_address: ip,
+        ip_address: locationIp,
       }, { transaction });
 
       await transaction.commit();

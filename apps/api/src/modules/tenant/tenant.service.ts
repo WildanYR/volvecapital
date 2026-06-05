@@ -22,6 +22,7 @@ import { CreateTenantDto } from './dto/create-tenant.dto';
 import { LoginDto } from './dto/login.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
 import { ITenantGetFilter } from './filter/tenant-get.filter';
+import { getLocationFromIp } from 'src/utils/geo.util';
 
 @Injectable()
 export class TenantService {
@@ -186,12 +187,14 @@ export class TenantService {
         throw new UnauthorizedException('Tenant tidak ditemukan');
       }
 
+      const locationIp = await getLocationFromIp(ip);
+
       const session = await this.deviceSessionRepository.create({
         user_id: owner.id,
         tenant_id: owner.tenant_id,
         user_type: 'TENANT_OWNER',
         device_info: userAgent,
-        ip_address: ip,
+        ip_address: locationIp,
       }, { transaction });
 
       const token = await this.tokenProvider.signJwt<IAccessTokenPayload>(
