@@ -79,20 +79,22 @@ export class VcAuthGuard implements CanActivate {
           transaction,
         });
 
-        if (tokenPayload.session_id) {
-          const session = await this.deviceSessionRepository.findOne({
-            where: { id: tokenPayload.session_id },
-            transaction,
-          });
+        if (!tokenPayload.session_id) {
+          throw new UnauthorizedException('Session is legacy or invalid');
+        }
 
-          if (!session || session.is_revoked) {
-            throw new UnauthorizedException('Session is revoked or invalid');
-          }
+        const session = await this.deviceSessionRepository.findOne({
+          where: { id: tokenPayload.session_id },
+          transaction,
+        });
 
-          const now = new Date();
-          if (now.getTime() - session.last_active_at.getTime() > 60000) {
-            await session.update({ last_active_at: now }, { transaction });
-          }
+        if (!session || session.is_revoked) {
+          throw new UnauthorizedException('Session is revoked or invalid');
+        }
+
+        const now = new Date();
+        if (now.getTime() - session.last_active_at.getTime() > 60000) {
+          await session.update({ last_active_at: now }, { transaction });
         }
 
         await transaction.commit();
