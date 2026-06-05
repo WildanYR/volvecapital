@@ -101,13 +101,6 @@ const navGroups = [
       { title: 'Wallet', url: '/dashboard/wallet', icon: Receipt, permission: 'wallet.view' },
     ],
   },
-  {
-    title: 'Manajemen',
-    items: [
-      { title: 'Role & Permission', url: '/dashboard/role', icon: ShieldCheck, permission: 'role.view' },
-      { title: 'Staff', url: '/dashboard/staff', icon: Users, permission: 'user.view' },
-    ],
-  },
 ]
 
 const adminGroups = [
@@ -259,7 +252,7 @@ function RouteComponent() {
             <StockNotification />
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center gap-2 hover:bg-muted/50 p-2 rounded-md transition-colors outline-none cursor-pointer">
-                <p className="font-semibold text-sm truncate max-w-[100px] sm:max-w-none">{auth.tenant!.id}</p>
+                <p className="font-semibold text-sm truncate max-w-[100px] sm:max-w-none">{auth.tenant?.id}</p>
                 <ChevronDown className="size-4 text-muted-foreground" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">

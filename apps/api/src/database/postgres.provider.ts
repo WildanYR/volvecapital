@@ -35,6 +35,7 @@ import { Role } from './models/role.model';
 import { Permission } from './models/permission.model';
 import { RolePermission } from './models/role-permission.model';
 import { DashboardUser } from './models/dashboard-user.model';
+import { DeviceSession } from './models/device-session.model';
 @Injectable()
 export class PostgresProvider {
   private sequelize?: Sequelize;
@@ -102,6 +103,7 @@ export class PostgresProvider {
         Permission,
         RolePermission,
         DashboardUser,
+        DeviceSession,
       ]);
     }
     else {

@@ -4,7 +4,7 @@ Based on a code review of `@volvecapital/dashboard`, several potential bugs, unh
 
 ## 1. Unsafe JSON Parsing on API Errors (Potential App Crash)
 **Location:** `src/services/*.service.ts` (e.g., `account.service.ts`)
-**Issue:** 
+**Issue:**
 The API services blindly parse error responses using `await response.json()`.
 ```typescript
 if (!response.ok) {
@@ -21,7 +21,7 @@ const errorData = isJson ? await response.json() : { message: response.statusTex
 
 ## 2. Missing Request Cancellation (Race Conditions)
 **Location:** `src/services/*.service.ts` & Route Query initializations
-**Issue:** 
+**Issue:**
 TanStack Query is integrated, but the `fetch` calls in `api-fetch.util.ts` do not accept or utilize an `AbortSignal`. When users rapidly switch filters, pages, or routes, previous redundant network requests cannot be canceled. This will cause race conditions where an older request resolves last and replaces newer data.
 **Optimization:**
 1. Update `getAllAccount` and other service functions to accept `{ signal ?: AbortSignal }` inside `params` or as an argument.
@@ -36,7 +36,7 @@ useQuery({
 
 ## 3. Form Updating UX (Account Editing)
 **Location:** `src/components/forms/account-edit.form.tsx`
-**Issue:** 
+**Issue:**
 The Zod validation schema requires `account_password: z.string().nonempty()`. While needed when creating an account, requiring a password on *edit* prevents partial updates. Users who only want to update a billing cycle or a label are forced to either resubmit the current password or enter a new one.
 **Optimization:**
 Make the password `z.string().optional()` inside `AccountEditFormSchema` or use `.passthrough()`/`.partial()` if the underlying `PATCH` endpoint accepts omission. If not, only mandate the field on creation via separated schemas (`AccountCreateSchema` vs `AccountUpdateSchema`).
@@ -58,6 +58,6 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 ## 5. Sub-optimal Rendering Dependencies
 **Location:** `src/routes/dashboard/account/index.tsx`
 **Issue:**
-There is a heavy `useEffect` utilizing `JSON.stringify(freshData) !== JSON.stringify(selectedAccount)` running every time `accounts` changes. Serializing large payload objects inside render loops degrades performance. 
+There is a heavy `useEffect` utilizing `JSON.stringify(freshData) !== JSON.stringify(selectedAccount)` running every time `accounts` changes. Serializing large payload objects inside render loops degrades performance.
 **Optimization:**
 Instead of `useEffect`, derive `selectedAccount` directly during render by checking the ID against the newly fetched data, or rely purely on TanStack Query's cache instead of copying React Query state into React `useState` unnecessarily. If a component needs selected data, pass the ID downwards and let `useQuery(..., select: (data) => data.find(x => x.id === selectedId))` handle it.

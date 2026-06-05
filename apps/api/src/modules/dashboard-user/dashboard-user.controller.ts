@@ -28,20 +28,45 @@ export class DashboardUserController {
   @Post('login')
   login(@Body() dto: LoginDashboardUserDto, @Request() req: any) {
     const tenantId = req.headers['x-tenant-id'] as string;
-    return this.dashboardUserService.login(dto, tenantId);
+    const userAgent = req.headers['user-agent'] || 'Unknown';
+    const ip = req.ip || 'Unknown';
+    return this.dashboardUserService.login(dto, tenantId, userAgent, ip);
   }
 
   // All routes below are protected by global VcAuthGuard (APP_GUARD)
   @Get('me')
   getMe(@Request() req: any) {
     // Only dashboard user (staff) has user id in payload. Owner doesn't use this route/module.
-    return this.dashboardUserService.getMe(req.user.id, req.tenant_id);
+    return this.dashboardUserService.getMe(req.user.id, req.tenant_id, req.user.session_id);
   }
 
   @Patch('change-password')
   async changePassword(@Request() req: any, @Body() data: any) {
     const userId = req.user?.id;
-    return await this.dashboardUserService.changePassword(userId, req.tenant_id, data);
+    const currentSessionId = req.user?.session_id;
+    return await this.dashboardUserService.changePassword(userId, req.tenant_id, data, currentSessionId);
+  }
+
+  @Get('device-sessions')
+  getDeviceSessions(@Request() req: any) {
+    return this.dashboardUserService.getDeviceSessions(req.user.id);
+  }
+
+  @Post('device-sessions/:sessionId/revoke')
+  revokeDeviceSession(@Param('sessionId') sessionId: string, @Request() req: any) {
+    return this.dashboardUserService.revokeDeviceSession(req.user.id, sessionId);
+  }
+
+  @RequirePermissions('device.view')
+  @Get('all-device-sessions')
+  async getAllDeviceSessions(@Request() req: any) {
+    return await this.dashboardUserService.getAllDeviceSessions(req.tenant_id);
+  }
+
+  @RequirePermissions('device.delete')
+  @Post('all-device-sessions/:sessionId/revoke')
+  async revokeAnyDeviceSession(@Request() req: any, @Param('sessionId') sessionId: string) {
+    return await this.dashboardUserService.revokeAnyDeviceSession(req.tenant_id, sessionId);
   }
 
   @Get()

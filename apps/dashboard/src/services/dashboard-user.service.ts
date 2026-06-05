@@ -87,5 +87,35 @@ export function DashboardUserServiceGenerator(baseUrl: string, token: string, te
     return response.json()
   }
 
-  return { getAll, create, update, remove, changePassword }
+  const getDeviceSessions = async () => {
+    const response = await fetch(`${baseUrl}/dashboard-user/device-sessions`, { headers })
+    if (!response.ok) throw new Error('Gagal memuat perangkat')
+    return response.json()
+  }
+
+  const revokeDeviceSession = async (sessionId: string) => {
+    const response = await fetch(`${baseUrl}/dashboard-user/device-sessions/${sessionId}/revoke`, {
+      method: 'POST',
+      headers,
+    })
+    if (!response.ok) throw new Error('Gagal mengakhiri sesi')
+    return response.json()
+  }
+
+  const getAllDeviceSessions = async () => {
+    const response = await fetch(`${baseUrl}/dashboard-user/all-device-sessions`, { headers })
+    if (!response.ok) throw new Error('Gagal memuat semua perangkat')
+    return response.json()
+  }
+
+  const revokeAnyDeviceSession = async (sessionId: string) => {
+    const response = await fetch(`${baseUrl}/dashboard-user/all-device-sessions/${sessionId}/revoke`, {
+      method: 'POST',
+      headers,
+    })
+    if (!response.ok) throw new Error('Gagal mengakhiri sesi')
+    return response.json()
+  }
+
+  return { getAll, create, update, remove, changePassword, getDeviceSessions, revokeDeviceSession, getAllDeviceSessions, revokeAnyDeviceSession }
 }

@@ -3,6 +3,8 @@ export interface ITenant {
   accessToken: string
   permissions?: string[]
   role?: 'TENANT_OWNER' | 'DASHBOARD_USER'
+  session_id?: string
+  userId?: string
   staffName?: string
 }
 

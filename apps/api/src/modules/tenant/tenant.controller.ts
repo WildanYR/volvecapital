@@ -66,12 +66,42 @@ export class TenantController {
   @Patch('owner/change-password')
   async changePassword(@Request() req: any, @Body() data: any) {
     const ownerId = req.user?.id;
-    return await this.tenantService.changePassword(ownerId, data);
+    const currentSessionId = req.user?.session_id;
+    return await this.tenantService.changePassword(ownerId, data, currentSessionId);
+  }
+
+  @UseGuards(VcAuthGuard)
+  @Get('owner/device-sessions')
+  getDeviceSessions(@Request() req: any) {
+    return this.tenantService.getDeviceSessions(req.user.id);
+  }
+
+  @UseGuards(VcAuthGuard)
+  @Post('owner/device-sessions/:sessionId/revoke')
+  async revokeDeviceSession(@Request() req: any, @Param('sessionId') sessionId: string) {
+    const ownerId = req.user?.id;
+    return await this.tenantService.revokeDeviceSession(ownerId, sessionId);
+  }
+
+  @UseGuards(VcAuthGuard)
+  @Get('owner/all-device-sessions')
+  async getAllDeviceSessions(@Request() req: any) {
+    const tenantId = req.user?.tenant_id;
+    return await this.tenantService.getAllDeviceSessions(tenantId);
+  }
+
+  @UseGuards(VcAuthGuard)
+  @Post('owner/all-device-sessions/:sessionId/revoke')
+  async revokeAnyDeviceSession(@Request() req: any, @Param('sessionId') sessionId: string) {
+    const tenantId = req.user?.tenant_id;
+    return await this.tenantService.revokeAnyDeviceSession(tenantId, sessionId);
   }
 
   @PublicRoute()
   @Post('login')
-  login(@Body() loginDto: LoginDto) {
-    return this.tenantService.login(loginDto);
+  login(@Body() loginDto: LoginDto, @Request() req: any) {
+    const userAgent = req.headers['user-agent'] || 'Unknown';
+    const ip = req.ip || 'Unknown';
+    return this.tenantService.login(loginDto, userAgent, ip);
   }
 }

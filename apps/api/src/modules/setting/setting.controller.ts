@@ -4,6 +4,7 @@ import {
   Get,
   Patch,
   Request,
+  ForbiddenException,
 } from '@nestjs/common';
 import { AppRequest } from 'src/types/app-request.type';
 import { RequirePermissions } from 'src/guards/permissions.decorator';
@@ -19,7 +20,7 @@ export class SettingController {
     if (user.role === 'DASHBOARD_USER') {
       const perms = user.permissions || [];
       if (!perms.some(p => ['setting.view', 'landing.view', 'content.view'].includes(p))) {
-        throw new import('@nestjs/common').ForbiddenException('Insufficient permissions');
+        throw new ForbiddenException('Insufficient permissions');
       }
     }
     return this.settingService.findAll(request.tenant_id!);
@@ -34,7 +35,7 @@ export class SettingController {
     if (user.role === 'DASHBOARD_USER') {
       const perms = user.permissions || [];
       if (!perms.some(p => ['setting.edit', 'landing.edit', 'content.edit'].includes(p))) {
-        throw new import('@nestjs/common').ForbiddenException('Insufficient permissions');
+        throw new ForbiddenException('Insufficient permissions');
       }
     }
     return this.settingService.update(request.tenant_id!, body.key, body.value);
@@ -49,7 +50,7 @@ export class SettingController {
     if (user.role === 'DASHBOARD_USER') {
       const perms = user.permissions || [];
       if (!perms.some(p => ['setting.edit', 'landing.edit', 'content.edit'].includes(p))) {
-        throw new import('@nestjs/common').ForbiddenException('Insufficient permissions');
+        throw new ForbiddenException('Insufficient permissions');
       }
     }
     return this.settingService.updateBulk(request.tenant_id!, body);

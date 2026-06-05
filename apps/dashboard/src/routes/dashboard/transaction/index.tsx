@@ -155,15 +155,41 @@ function RouteComponent() {
 
   const handleCopyTemplate = (profile: AccountProfile, account: Account) => {
     const template = copyAccountTemplate(profile, account)
-    navigator.clipboard
-      .writeText(template)
-      .then(() => {
-        toast.success('Akun berhasil di copy')
-      })
-      .catch((error) => {
-        console.error(error)
-        toast.error('Akun gagal di copy')
-      })
+    
+    const fallbackCopyTextToClipboard = (text: string) => {
+      const textArea = document.createElement("textarea")
+      textArea.value = text
+      textArea.style.top = "0"
+      textArea.style.left = "0"
+      textArea.style.position = "fixed"
+      document.body.appendChild(textArea)
+      textArea.focus()
+      textArea.select()
+      try {
+        const successful = document.execCommand('copy')
+        if (successful) {
+          toast.success('Akun berhasil di copy')
+        } else {
+          toast.error('Gagal mengcopy (silakan copy manual)')
+        }
+      } catch (err) {
+        console.error('Fallback error', err)
+        toast.error('Gagal mengcopy (silakan copy manual)')
+      }
+      document.body.removeChild(textArea)
+    }
+
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard
+        .writeText(template)
+        .then(() => toast.success('Akun berhasil di copy'))
+        .catch((err) => {
+          console.error(err)
+          fallbackCopyTextToClipboard(template)
+        })
+    } else {
+      fallbackCopyTextToClipboard(template)
+    }
   }
 
   const handleSearchCustomer = useDebouncedCallback((value: string) => {

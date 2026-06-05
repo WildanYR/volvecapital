@@ -31,6 +31,7 @@ import {
   PERMISSION_REPOSITORY,
   ROLE_PERMISSION_REPOSITORY,
   DASHBOARD_USER_REPOSITORY,
+  DEVICE_SESSION_REPOSITORY,
 } from 'src/constants/database.const';
 import { AccountProfile } from './models/account-profile.model';
 import { AccountUser } from './models/account-user.model';
@@ -63,6 +64,7 @@ import { Role } from './models/role.model';
 import { Permission } from './models/permission.model';
 import { RolePermission } from './models/role-permission.model';
 import { DashboardUser } from './models/dashboard-user.model';
+import { DeviceSession } from './models/device-session.model';
 
 export const RepositoryProvider: Provider[] = [
   { provide: TENANT_REPOSITORY, useValue: Tenant },
@@ -99,4 +101,5 @@ export const RepositoryProvider: Provider[] = [
   { provide: PERMISSION_REPOSITORY, useValue: Permission },
   { provide: ROLE_PERMISSION_REPOSITORY, useValue: RolePermission },
   { provide: DASHBOARD_USER_REPOSITORY, useValue: DashboardUser },
+  { provide: DEVICE_SESSION_REPOSITORY, useValue: DeviceSession },
 ];

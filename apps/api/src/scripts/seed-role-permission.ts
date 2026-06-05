@@ -52,6 +52,8 @@ const ALL_PERMISSIONS = [
   { name: 'landing.edit', description: 'Mengelola desain dan konten landing page' },
   { name: 'withdrawal.view', description: 'Melihat pengajuan penarikan dana' },
   { name: 'withdrawal.edit', description: 'Menyetujui atau menolak penarikan dana' },
+  { name: 'device.view', description: 'Melihat daftar perangkat yang terkoneksi ke tenant' },
+  { name: 'device.delete', description: 'Mengeluarkan perangkat dari akun (Force Logout)' },
 ];
 
 const ROLE_PRESETS = [

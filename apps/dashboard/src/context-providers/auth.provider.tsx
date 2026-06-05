@@ -22,6 +22,16 @@ function setStoredTenant(tenant: ITenant | null) {
   }
 }
 
+// Global interceptor for 401 Unauthorized
+const originalFetch = window.fetch
+window.fetch = async (...args) => {
+  const response = await originalFetch(...args)
+  if (response.status === 401) {
+    window.dispatchEvent(new Event('vc-unauthorized'))
+  }
+  return response
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [tenant, setTenant] = React.useState<ITenant | null>(getStoredTenant())
   const isAuthenticated = !!tenant
@@ -49,6 +59,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       id: tenantData.id,
       accessToken: tenantData.token,
       role: 'TENANT_OWNER',
+      session_id: tenantData.session_id,
+      userId: tenantData.id,
     }
     setStoredTenant(tenantStore)
     setTenant(tenantStore)
@@ -75,6 +87,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       role: 'DASHBOARD_USER',
       permissions: data.permissions ?? [],
       staffName: data.name,
+      session_id: data.session_id,
+      userId: data.userId,
     }
     setStoredTenant(tenantStore)
     setTenant(tenantStore)
@@ -98,6 +112,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             accessToken: data.token ?? stored.accessToken,
             permissions: data.permissions ?? [],
             staffName: data.name,
+            session_id: data.session_id ?? stored.session_id,
+            userId: data.userId ?? stored.userId,
           }
           setStoredTenant(updatedTenant)
           setTenant(updatedTenant)
@@ -106,6 +122,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // If the user's session is invalid (e.g. deactivated), log them out
           logout()
         })
+    }
+
+    const handleUnauthorized = () => {
+      logout()
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login'
+      }
+    }
+    
+    window.addEventListener('vc-unauthorized', handleUnauthorized)
+    return () => {
+      window.removeEventListener('vc-unauthorized', handleUnauthorized)
     }
   }, [logout])
 

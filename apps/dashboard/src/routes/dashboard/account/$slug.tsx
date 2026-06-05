@@ -544,17 +544,63 @@ function RouteComponent() {
 
 
 
-  const handleCopyTemplate = (profile: AccountProfile, account: Account) => {
+  const handleCopyTemplate = (profile: AccountProfile, account: Account, isAuto = false) => {
     const template = copyAccountTemplate(profile, account)
-    navigator.clipboard
-      .writeText(template)
-      .then(() => {
-        toast.success('Akun berhasil di copy')
-      })
-      .catch((error) => {
-        console.error(error)
-        toast.error('Akun gagal di copy')
-      })
+    
+    const fallbackCopyTextToClipboard = (text: string) => {
+      const textArea = document.createElement("textarea")
+      textArea.value = text
+      textArea.style.top = "0"
+      textArea.style.left = "0"
+      textArea.style.position = "fixed"
+      document.body.appendChild(textArea)
+      textArea.focus()
+      textArea.select()
+      try {
+        const successful = document.execCommand('copy')
+        if (successful) {
+          toast.success(isAuto ? 'User Akun berhasil dibuat & di copy' : 'Akun berhasil di copy')
+        } else {
+          toast.error('Gagal mengcopy (silakan copy manual)')
+        }
+      } catch (err) {
+        console.error('Fallback error', err)
+        toast.error('Gagal mengcopy (silakan copy manual)')
+      }
+      document.body.removeChild(textArea)
+    }
+
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard
+        .writeText(template)
+        .then(() => toast.success(isAuto ? 'User Akun berhasil dibuat & di copy' : 'Akun berhasil di copy'))
+        .catch((err) => {
+          if (isAuto) {
+            toast.success('User Akun berhasil dibuat.', {
+              action: {
+                label: 'Salin Template',
+                onClick: () => handleCopyTemplate(profile, account, false)
+              },
+              duration: 10000,
+            })
+          } else {
+            console.error(err)
+            fallbackCopyTextToClipboard(template)
+          }
+        })
+    } else {
+      if (isAuto) {
+        toast.success('User Akun berhasil dibuat.', {
+          action: {
+            label: 'Salin Template',
+            onClick: () => handleCopyTemplate(profile, account, false)
+          },
+          duration: 10000,
+        })
+      } else {
+        fallbackCopyTextToClipboard(template)
+      }
+    }
   }
 
   const accountUserCreateMutation = useMutation({
@@ -562,8 +608,7 @@ function RouteComponent() {
       accountService.createNewAccountUser(payload),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['account'] })
-      toast.success('User Akun berhasil dibuat.')
-      handleCopyTemplate(data.profile, data.account)
+      handleCopyTemplate(data.profile, data.account, true)
     },
     onError: (error) => {
       toast.error(`Gagal membuat user akun: ${error.message}`)

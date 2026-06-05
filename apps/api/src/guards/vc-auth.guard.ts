@@ -10,8 +10,9 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
-import { TENANT_REPOSITORY } from 'src/constants/database.const';
+import { TENANT_REPOSITORY, DEVICE_SESSION_REPOSITORY } from 'src/constants/database.const';
 import { Tenant } from 'src/database/models/tenant.model';
+import { DeviceSession } from 'src/database/models/device-session.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
 import { AppLoggerService } from 'src/modules/logger/logger.service';
 import { TokenProvider } from 'src/modules/utility/token.provider';
@@ -31,6 +32,7 @@ export class VcAuthGuard implements CanActivate {
     private tokenProvider: TokenProvider,
     private readonly postgresProvider: PostgresProvider,
     @Inject(TENANT_REPOSITORY) private tenantRepository: typeof Tenant,
+    @Inject(DEVICE_SESSION_REPOSITORY) private deviceSessionRepository: typeof DeviceSession,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -76,6 +78,23 @@ export class VcAuthGuard implements CanActivate {
           where: { id: tokenPayload.tenant_id },
           transaction,
         });
+
+        if (tokenPayload.session_id) {
+          const session = await this.deviceSessionRepository.findOne({
+            where: { id: tokenPayload.session_id },
+            transaction,
+          });
+
+          if (!session || session.is_revoked) {
+            throw new UnauthorizedException('Session is revoked or invalid');
+          }
+
+          const now = new Date();
+          if (now.getTime() - session.last_active_at.getTime() > 60000) {
+            await session.update({ last_active_at: now }, { transaction });
+          }
+        }
+
         await transaction.commit();
       }
       catch (error) {
@@ -85,8 +104,11 @@ export class VcAuthGuard implements CanActivate {
           'VCAuthGuard',
         );
         await transaction.rollback();
+        if (error instanceof UnauthorizedException) {
+          throw error;
+        }
         throw new InternalServerErrorException(
-          'Get tenant from database error',
+          'Get tenant or session from database error',
         );
       }
 
