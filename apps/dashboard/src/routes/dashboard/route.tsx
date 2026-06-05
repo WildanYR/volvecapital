@@ -7,7 +7,7 @@ import {
 } from '@tanstack/react-router'
 import {
   Blocks,
-  BookOpen,
+
   ChevronDown,
   FileText,
   House,
@@ -17,14 +17,14 @@ import {
   Package,
   Receipt,
   Settings,
-  ShieldCheck,
+
   Ticket,
   User,
-  Users,
+
 } from 'lucide-react'
 import { PermissionGate } from '@/dashboard/components/permission-gate'
 import { StockNotification } from '@/dashboard/components/stock-notification'
-import { PendingTopupNotification } from '@/dashboard/components/pending-topup-notification'
+
 import { can } from '@/dashboard/lib/permission'
 
 import {

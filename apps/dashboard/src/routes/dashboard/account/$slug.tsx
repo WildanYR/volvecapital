@@ -72,9 +72,9 @@ import { EmailSelect } from '@/dashboard/components/inputs/select/email.select'
 import { ProductVariantSelect } from '@/dashboard/components/inputs/select/product-variant.select'
 import { NoData } from '@/dashboard/components/no-data'
 import { Pagination } from '@/dashboard/components/pagination'
-import { PasswordText } from '@/dashboard/components/password-text'
+
 import { PermissionGate } from '@/dashboard/components/permission-gate'
-import { Badge } from '@/dashboard/components/ui/badge'
+
 import { useSocket } from '@/dashboard/context-providers/socket.provider'
 import { TvPinModal } from '@/dashboard/components/tv-pin-modal'
 import { Button } from '@/dashboard/components/ui/button'

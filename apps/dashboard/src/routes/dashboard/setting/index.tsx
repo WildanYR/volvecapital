@@ -1,17 +1,17 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { House, LayoutTemplate, Loader2, Save, BookOpen, FileText } from 'lucide-react'
-import { useState, useEffect } from 'react'
-import { toast } from 'sonner'
+import { House, LayoutTemplate, Loader2, BookOpen, FileText } from 'lucide-react'
+
+
 import { Button } from '@/dashboard/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/dashboard/components/ui/card'
-import { Input } from '@/dashboard/components/ui/input'
-import { Label } from '@/dashboard/components/ui/label'
+
+
 import { API_URL } from '@/dashboard/constants/api-url.cont'
 import { useAuth } from '@/dashboard/context-providers/auth.provider'
 import { SettingServiceGenerator } from '@/dashboard/services/setting.service'
 import { PermissionGate } from '@/dashboard/components/permission-gate'
-import { usePermission } from '@/dashboard/lib/permission'
+
 
 export const Route = createFileRoute('/dashboard/setting/')({
   component: RouteComponent,
@@ -19,8 +19,7 @@ export const Route = createFileRoute('/dashboard/setting/')({
 
 function RouteComponent() {
   const auth = useAuth()
-  const queryClient = useQueryClient()
-  const hasSettingEdit = usePermission('setting.edit')
+
   const settingService = SettingServiceGenerator(
     API_URL,
     auth.tenant!.accessToken,
@@ -29,7 +28,7 @@ function RouteComponent() {
 
   const hasSettingView = auth.tenant?.role === 'TENANT_OWNER' || auth.tenant?.permissions?.includes('setting.view')
 
-  const { data: settings, isLoading } = useQuery({
+  const { isLoading } = useQuery({
     queryKey: ['settings'],
     queryFn: () => settingService.getSettings(),
     enabled: !!auth.tenant?.accessToken && hasSettingView,
