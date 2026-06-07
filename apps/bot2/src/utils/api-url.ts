@@ -1,45 +1,44 @@
-const API_BASE_HOST_FORMAT_MESSAGE =
-  '[app.api_base_url] must be a hostname or host:port without protocol, path, query, hash, or slashes. Examples: "api.volve-capital.com", "localhost:3000".';
+/**
+ * API URL Utilities
+ * Validates and normalizes API URLs for HTTP and WebSocket protocols.
+ */
 
-export function normalizeApiBaseHost(apiBaseHost: string): string {
-  const host = apiBaseHost.trim();
-
-  if (!host) {
-    throw new Error('[app.api_base_url] is required');
+export function validateHttpUrl(urlStr: string): string {
+  const trimmed = urlStr.trim();
+  if (!trimmed) {
+    throw new Error('[app.api_http_url] is required');
   }
 
-  if (host.includes('://')) {
-    throw new Error(
-      `[app.api_base_url] must not include a protocol. Use a hostname like "api.volve-capital.com", not "${apiBaseHost}".`
-    );
-  }
-
-  if (host.includes('/') || host.includes('?') || host.includes('#')) {
-    throw new Error(API_BASE_HOST_FORMAT_MESSAGE);
-  }
-
-  if (host.includes('@')) {
-    throw new Error(API_BASE_HOST_FORMAT_MESSAGE);
-  }
-
-  let parsed: URL;
+  let url: URL;
   try {
-    parsed = new URL(`https://${host}`);
+    url = new URL(trimmed);
   } catch {
-    throw new Error(API_BASE_HOST_FORMAT_MESSAGE);
+    throw new Error('[app.api_http_url] must be a valid URL. Example: "https://api.volve-capital.com"');
   }
 
-  if (!parsed.hostname || parsed.username || parsed.password) {
-    throw new Error(API_BASE_HOST_FORMAT_MESSAGE);
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    throw new Error(`[app.api_http_url] protocol must be http:// or https://, but got "${url.protocol}//"`);
   }
 
-  return parsed.host;
+  return url.origin;
 }
 
-export function buildApiBaseUrl(apiBaseHost: string): string {
-  return new URL(`https://${normalizeApiBaseHost(apiBaseHost)}`).origin;
-}
+export function validateWebsocketUrl(urlStr: string): string {
+  const trimmed = urlStr.trim();
+  if (!trimmed) {
+    throw new Error('[app.api_websocket_url] is required');
+  }
 
-export function buildSocketBaseUrl(apiBaseHost: string): string {
-  return new URL(`wss://${normalizeApiBaseHost(apiBaseHost)}`).origin;
+  let url: URL;
+  try {
+    url = new URL(trimmed);
+  } catch {
+    throw new Error('[app.api_websocket_url] must be a valid URL. Example: "wss://api.volve-capital.com"');
+  }
+
+  if (url.protocol !== 'ws:' && url.protocol !== 'wss:') {
+    throw new Error(`[app.api_websocket_url] protocol must be ws:// or wss://, but got "${url.protocol}//"`);
+  }
+
+  return url.origin;
 }

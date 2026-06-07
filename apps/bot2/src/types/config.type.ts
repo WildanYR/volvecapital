@@ -15,7 +15,8 @@ export interface AppConfig {
     task_timeout_ms: number;
     headless?: boolean;
     default_loop_interval?: number;  // default interval untuk loop modules (ms)
-    api_base_url: string;  // API host only, without protocol/path (for example api.volve-capital.com)
+    api_http_url: string;  // HTTP API base URL (for example https://api.volve-capital.com)
+    api_websocket_url: string;  // WebSocket API base URL (for example wss://api.volve-capital.com)
     browser_recycle_interval_minutes?: number;  // interval untuk global browser recycle (menit), default 60
   };
   api: ApiConfig;

@@ -72,7 +72,7 @@ export function PagesAccountIndexDialogEditModifier({ open, selectedAccount, onO
                     modifier: value.modifier.map(mod => ({
                       action: mod.action,
                       modifier_id: mod.modifier_id,
-                      metadata: mod.metadata
+                      metadata: mod.metadata && mod.metadata.length
                         ? convertMetadataObjectToString(mod.metadata)
                         : undefined,
                     })),

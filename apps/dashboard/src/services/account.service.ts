@@ -83,7 +83,7 @@ export interface CreateAccountProfilePayload {
 
 export interface CreateAccountModifierPayload {
   modifier_id: string
-  metadata: string
+  metadata?: string
 }
 
 export interface CreateAccountPayload {
@@ -154,6 +154,14 @@ export interface CountStatusAccount {
   accounts_disabled_or_frozen: number
   profiles_locked_but_has_slot: number
   accounts_expiring_today: number
+}
+
+export interface DispatchTaskPayload {
+  module: string
+  type: string
+  executeAt: string
+  maxRetries: number
+  payload: string
 }
 
 export function AccountServiceGenerator(
@@ -606,6 +614,29 @@ export function AccountServiceGenerator(
     }
   }
 
+  const dispatchTask = async (taskId: string, data: DispatchTaskPayload) => {
+    const response = await generateApiFetch(
+      apiUrl,
+      accessToken,
+      tenantId,
+      '/socket/dispatch-task',
+      undefined,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ taskId, data }),
+      },
+    )
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      const errorMessage = Array.isArray(errorData.message)
+        ? errorData.message[0]
+        : errorData.message
+      throw new Error(errorMessage || 'Failed to dispatch task')
+    }
+  }
+
   return {
     getAllAccount,
     getAccountById,
@@ -622,5 +653,6 @@ export function AccountServiceGenerator(
     deleteAccountProfile,
     countStatusAccount,
     pinAccount,
+    dispatchTask,
   }
 }

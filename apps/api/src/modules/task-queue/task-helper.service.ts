@@ -1,6 +1,5 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { ACCOUNT_REPOSITORY } from 'src/constants/database.const';
-import { NETFLIX_REQ_RESET_PASSWORD } from 'src/constants/email-subject.const';
 import { Account } from 'src/database/models/account.model';
 import { Email } from 'src/database/models/email.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
@@ -8,18 +7,17 @@ import { AppLoggerService } from '../logger/logger.service';
 import { SyslogService } from '../logger/syslog.service';
 import { SocketService } from '../socket/socket.service';
 import { TeleNotifierService } from '../tele-notifier/tele-notifier.service';
-import { EmailParser } from '../utility/email-parser.provider';
 import {
   AccountSubsEndNotifyPayload,
   AccountUnfreezePayload,
   NetflixResetPasswordPayload,
+  SubsEndDisableAccountPayload,
 } from './types/task-context.type';
 
 @Injectable()
 export class TaskHelperService {
   constructor(
     private readonly logger: AppLoggerService,
-    private readonly emailParser: EmailParser,
     private readonly sysLogService: SyslogService,
     private readonly teleNotifierService: TeleNotifierService,
     private readonly socketService: SocketService,
@@ -143,6 +141,25 @@ export class TaskHelperService {
         (error as Error).stack,
         'TaskProcessorNetflixResetPassword',
       );
+    }
+  }
+
+  async subsEndDisableAccount(tenantId: string, payload: SubsEndDisableAccountPayload) {
+    const transaction = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema(tenantId, transaction);
+      const account = await this.accountRepository.findOne({
+        where: { id: payload.accountId },
+        transaction,
+      });
+      if (account) {
+        await account.update({ status: 'disable' }, { transaction });
+      }
+      await transaction.commit();
+    }
+    catch (error) {
+      await transaction.rollback();
+      throw error;
     }
   }
 }

@@ -16,7 +16,7 @@ import { Account, AccountAttributes } from './account.model';
 export interface AccountModifierAttributes {
   id: string;
   modifier_id: string;
-  metadata: string;
+  metadata?: string | null;
   enabled: boolean;
   account_id: string;
   account: AccountAttributes;
@@ -27,7 +27,7 @@ export interface AccountModifierAttributes {
 interface AccountModifierCreationAttributes
   extends Optional<
     AccountModifierAttributes,
-    'id' | 'created_at' | 'updated_at' | 'account'
+    'id' | 'created_at' | 'updated_at' | 'account' | 'metadata'
   > {}
 
 @Table({ tableName: 'account_modifier' })
@@ -45,7 +45,7 @@ export class AccountModifier extends Model<
   declare modifier_id: string;
 
   @Column(DataType.TEXT)
-  declare metadata: string;
+  declare metadata?: string | null;
 
   @AllowNull(false)
   @Default(true)

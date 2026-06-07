@@ -1,4 +1,4 @@
 export interface ModifierTaskData {
   modifierId: string;
-  metadata: string;
+  metadata?: string | null;
 }

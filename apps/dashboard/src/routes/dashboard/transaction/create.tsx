@@ -40,7 +40,7 @@ function RouteComponent() {
       ...values,
       items: values.items.map(item => ({
         product_variant_id: item.product_variant_id,
-        price: item.price ? item.price : undefined,
+        price: item.price ? Number.parseInt(item.price) : undefined,
       })),
     }
     mutation.mutate(payload)

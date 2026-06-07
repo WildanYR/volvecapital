@@ -8,7 +8,7 @@ import { load as parseToml } from 'js-toml';
 import { AppConfig, ModuleConfig, ApiConfig } from '../types/config.type.js';
 import { LogLevel } from '../types/logger.type.js';
 import { getProjectRoot } from '../utils/path.js';
-import { normalizeApiBaseHost } from '../utils/api-url.js';
+import { validateHttpUrl, validateWebsocketUrl } from '../utils/api-url.js';
 
 export class ConfigLoader {
     private config: AppConfig | null = null;
@@ -100,11 +100,8 @@ export class ConfigLoader {
             throw new Error('[app.headless] must be a boolean');
         }
 
-        if (typeof section['api_base_url'] !== 'string' || !section['api_base_url']) {
-            throw new Error('[app.api_base_url] is required');
-        }
-
-        const apiBaseHost = normalizeApiBaseHost(section['api_base_url']);
+        const apiHttpUrl = validateHttpUrl(section['api_http_url'] as string ?? '');
+        const apiWebsocketUrl = validateWebsocketUrl(section['api_websocket_url'] as string ?? '');
 
         return {
             name: section['name'],
@@ -112,7 +109,8 @@ export class ConfigLoader {
             task_timeout_ms: section['task_timeout_ms'],
             headless: section['headless'] as boolean | undefined ?? false,
             default_loop_interval: section['default_loop_interval'] as number | undefined,
-            api_base_url: apiBaseHost,
+            api_http_url: apiHttpUrl,
+            api_websocket_url: apiWebsocketUrl,
             browser_recycle_interval_minutes: section['browser_recycle_interval_minutes'] as number | undefined,
         };
     }

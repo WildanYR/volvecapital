@@ -60,7 +60,7 @@ export interface CreateTransactionResponse {
 
 interface CreateTransactionItemPayload {
   product_variant_id: string
-  price?: string
+  price?: number
 }
 
 export interface CreateTransactionPayload {

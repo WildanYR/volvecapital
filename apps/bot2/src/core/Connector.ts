@@ -17,7 +17,6 @@ import {
   RejectTaskData,
   TaskDoneData,
 } from "../types/connector.type.js";
-import { buildSocketBaseUrl } from "../utils/api-url.js";
 
 interface GetStatusPayload {
   requestId: string;
@@ -43,7 +42,7 @@ export class Connector {
     logger: Logger,
     eventBus: EventBus,
   ) {
-    this.socketBaseUrl = buildSocketBaseUrl(config.app.api_base_url);
+    this.socketBaseUrl = config.app.api_websocket_url;
     this.appName = config.app.name;
     this.config = config.connector;
     this.authCredentials = authCredentials;
@@ -81,12 +80,14 @@ export class Connector {
       this.socket.on("connect", () => {
         this.isConnected = true;
         this.logger.info("Connected to server");
+        this.broadcastSocketStatus();
         resolve();
       });
 
       this.socket.on("disconnect", (reason) => {
         this.isConnected = false;
         this.logger.warn(`Disconnected from server: ${reason}`);
+        this.broadcastSocketStatus();
       });
 
       this.socket.on("connect_error", (error: any) => {
@@ -153,7 +154,7 @@ export class Connector {
     });
 
     // Subscribe ke EventBus untuk task completion events
-    this.subscribeToTaskEvents();
+    this.listenToEventBus();
 
     this.logger.debug("Command handlers registered");
   }
@@ -256,11 +257,19 @@ export class Connector {
     this.logger.debug(`Emitted task-done for ${data.taskId}: ${data.status}`);
   }
 
+  private broadcastSocketStatus(): void {
+    const clientId = this.isConnected && this.socket ? this.socket.id : null;
+    this.eventBus.emit("socket:status", {
+      clientId,
+      isConnected: this.isConnected,
+    });
+  }
+
   /**
    * Subscribe ke EventBus untuk menerima task completion events
    * Hanya task dengan source 'EXTERNAL' yang dikirim ke server
    */
-  private subscribeToTaskEvents(): void {
+  private listenToEventBus(): void {
     // Task completed
     this.eventBus.on<{ taskId: string; source: TaskSource }>(
       "task:completed",
@@ -301,6 +310,10 @@ export class Connector {
           message: "Task timeout",
         });
       }
+    });
+
+    this.eventBus.on("socket:request-status", () => {
+      this.broadcastSocketStatus();
     });
   }
 

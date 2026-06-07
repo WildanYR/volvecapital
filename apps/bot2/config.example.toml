@@ -1,5 +1,6 @@
 [app]
-api_base_url = "api.volve-capital.com" # Host only. Do not include https:// or any path.
+api_http_url = "https://api.volve-capital.com" # Full HTTP/HTTPS API URL.
+api_websocket_url = "wss://api.volve-capital.com" # Full WS/WSS WebSocket URL.
 name = "CHANGE_THIS_TO_YOUR_DESIRED_BOT_NAME"
 max_concurrent_tasks = 3
 task_timeout_ms = 300000
@@ -42,3 +43,11 @@ message_fallback = "MESSAGE TO SEND IF THE APP ERROR AND SUPPORT EMOJI 👍"
 [[modules]]
 module = "netflix"
 name = "netflix"
+# Daftar Algoritma Generate Password yang bisa dipakai:
+# "random" = huruf acak tanpa angka
+# "wordNumber" = huruf diikuti angka
+# "repeatWord" = huruf random yang diulang, misal: dohdoh, fijkfijk
+# "list" = generate berdasarkan list, wajib ada config password_list
+new_password_algorithm = "wordNumber"
+new_password_length = 6
+# password_list = ["password_1", "password_2"]

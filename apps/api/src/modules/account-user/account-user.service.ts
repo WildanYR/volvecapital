@@ -34,7 +34,6 @@ import { TransactionItem } from 'src/database/models/transaction-item.model';
 import { TransactionTS } from 'src/database/models/transaction-ts.model';
 import { Transaction } from 'src/database/models/transaction.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
-import { NetflixResetPasswordMetadata } from '../account/types/netflix-reset-password-metadata.type';
 import { AppLoggerService } from '../logger/logger.service';
 import { TaskQueueService } from '../task-queue/task-queue.service';
 import { NetflixResetPasswordPayload } from '../task-queue/types/task-context.type';
@@ -490,26 +489,6 @@ export class AccountUserService {
         && netflixResetPasswordModifier.metadata
       ) {
         try {
-          const metadata = JSON.parse(
-            netflixResetPasswordModifier.metadata,
-          ) as NetflixResetPasswordMetadata;
-          const passwordList = metadata.password_list
-            ? metadata.password_list
-                .replaceAll(' ', '')
-                .split(',')
-                .filter(
-                  pwd =>
-                    pwd !== accountUser.dataValues.account.account_password,
-                )
-            : [];
-
-          if (!passwordList.length) {
-            throw new Error('List password belum diisi');
-          }
-
-          const randomIndex = Math.floor(Math.random() * passwordList.length);
-          const newPassword = passwordList[randomIndex];
-
           await this.taskQueueService.upsert([
             {
               context: NETFLIX_RESET_PASSWORD,
@@ -522,7 +501,6 @@ export class AccountUserService {
                 accountId: accountUser.dataValues.account.id,
                 email: accountUser.dataValues.account.email.email,
                 password: accountUser.dataValues.account.account_password,
-                newPassword,
               } as NetflixResetPasswordPayload),
             },
           ]);

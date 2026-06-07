@@ -33,9 +33,9 @@ class CreateAccountModifierDto {
   @IsString()
   modifier_id: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  metadata: string;
+  metadata?: string;
 }
 
 export class CreateAccountDto {

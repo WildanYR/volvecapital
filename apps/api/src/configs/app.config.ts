@@ -9,7 +9,6 @@ export function AppConfig() {
     socket: {
       baseUrl: process.env.SOCKET_APP_BASE_URL ?? 'http://localhost:3100',
       internalSecret: process.env.SOCKET_INTERNAL_SECRET,
-      testModuleEnabled: process.env.SOCKET_TEST_MODULE_ENABLED === 'true',
     },
   };
 }

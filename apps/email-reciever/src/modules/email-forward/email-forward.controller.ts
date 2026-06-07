@@ -1,5 +1,5 @@
 import { CacheInterceptor } from '@nestjs/cache-manager';
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Query, UseInterceptors } from '@nestjs/common';
 import { RecieveEmailDto } from './dto/recieve-email.dto';
 import { EmailForwardService } from './email-forward.service';
 

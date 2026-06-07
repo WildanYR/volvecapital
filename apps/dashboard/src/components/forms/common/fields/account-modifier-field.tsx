@@ -1,10 +1,12 @@
 import type { ModifierObject } from '../types/modifier.type'
 import {
   NETFLIX_RESET_PASSWORD,
+  SUBS_END_DISABLE_ACCOUNT,
   SUBSCRIPTION_EXPIRY_NOTIFIER,
 } from '@/dashboard/constants/modifier.consf'
 import { useFieldContext } from '@/dashboard/hooks/form.hook'
 import { NetflixResetPasswordModifier } from '../form-components/netflix-reset-password-modifier'
+import { SubsEndDisableAccountModifier } from '../form-components/subs-end-disable-account-modifier'
 import { SubscriptionExpiryNotifierModifier } from '../form-components/subscription-expiry-notifier'
 
 function getDefaultValue(modifierId: string, modifiers: Array<ModifierObject>) {
@@ -29,6 +31,10 @@ export function AccountModifierField() {
   const defaultValue = {
     NETFLIX_RESET_PASSWORD: getDefaultValue(
       NETFLIX_RESET_PASSWORD,
+      accountModifier,
+    ),
+    SUBS_END_DISABLE_ACCOUNT: getDefaultValue(
+      SUBS_END_DISABLE_ACCOUNT,
       accountModifier,
     ),
     SUBSCRIPTION_EXPIRY_NOTIFIER: getDefaultValue(
@@ -69,6 +75,12 @@ export function AccountModifierField() {
       <div className="border border-gray-800 rounded-md p-4">
         <SubscriptionExpiryNotifierModifier
           defaultValue={defaultValue.SUBSCRIPTION_EXPIRY_NOTIFIER}
+          onChange={handleChange}
+        />
+      </div>
+      <div className="border border-gray-800 rounded-md p-4">
+        <SubsEndDisableAccountModifier
+          defaultValue={defaultValue.SUBS_END_DISABLE_ACCOUNT}
           onChange={handleChange}
         />
       </div>

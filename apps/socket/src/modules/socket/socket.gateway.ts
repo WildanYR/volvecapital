@@ -1,5 +1,5 @@
 import type { Server, Socket } from 'socket.io';
-import { ConnectedSocket, MessageBody, OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
+import { ConnectedSocket, MessageBody, OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage, WebSocketGateway } from '@nestjs/websockets';
 import { SocketService } from './socket.service';
 import { ConnectionSubscribeEventData } from './types/connection-event.type';
 import { ConnectionTaskAcceptData, ConnectionTaskDoneData, ConnectionTaskRejectData } from './types/connection-task.type';
@@ -9,9 +9,6 @@ import { SocketConnectionType } from './types/socket-connection.type';
   cors: { origin: '*' },
 })
 export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit {
-  @WebSocketServer()
-  private server: Server;
-
   constructor(private readonly socketService: SocketService) {}
 
   afterInit(server: Server) {

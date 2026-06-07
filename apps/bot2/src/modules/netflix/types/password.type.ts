@@ -1,0 +1,1 @@
+export type NewPasswordAlgorithm = 'list' | 'random' | 'wordNumber' | 'repeatWord'

@@ -125,24 +125,32 @@ export class SocketService {
       return;
     }
 
-    const transaction = await this.postgresProvider.transaction();
-    try {
-      await this.postgresProvider.setSchema('master', transaction);
-      await this.taskQueueRepository.update(
-        { status: 'DISPATCHED' },
-        { where: { id: taskId }, transaction },
-      );
-      await transaction.commit();
-      conn.inflight += 1;
+    const isDbTask = /^\d+$/.test(taskId);
+    if (isDbTask) {
+      const transaction = await this.postgresProvider.transaction();
+      try {
+        await this.postgresProvider.setSchema('master', transaction);
+        const task = await this.taskQueueRepository.findByPk(taskId, { transaction });
+        if (task) {
+          await this.taskQueueRepository.update(
+            { status: 'DISPATCHED' },
+            { where: { id: taskId }, transaction },
+          );
+        }
+        await transaction.commit();
+      }
+      catch (error) {
+        this.logger.error(
+          `Update task ${taskId} status to DISPATCHED error`,
+          (error as Error).stack,
+          'TaskDispatch',
+        );
+        await transaction.rollback();
+      }
     }
-    catch (error) {
-      this.logger.error(
-        `Update task ${taskId} status to DISPATCHED error`,
-        (error as Error).stack,
-        'TaskDispatch',
-      );
-      await transaction.rollback();
-    }
+
+    conn.inflight += 1;
+    this.sendEvent(`task:status:${taskId}`, { taskId, status: 'DISPATCHED' });
   }
 
   async handleTaskRejected(clientId: string, taskId: string, message: string) {
@@ -151,24 +159,32 @@ export class SocketService {
       return;
     }
 
-    const transaction = await this.postgresProvider.transaction();
-    try {
-      await this.postgresProvider.setSchema('master', transaction);
-      await this.taskQueueRepository.update(
-        { status: 'FAILED', error_message: message },
-        { where: { id: taskId }, transaction },
-      );
-      await transaction.commit();
-      conn.inflight -= conn.inflight === 0 ? 0 : 1;
+    const isDbTask = /^\d+$/.test(taskId);
+    if (isDbTask) {
+      const transaction = await this.postgresProvider.transaction();
+      try {
+        await this.postgresProvider.setSchema('master', transaction);
+        const task = await this.taskQueueRepository.findByPk(taskId, { transaction });
+        if (task) {
+          await this.taskQueueRepository.update(
+            { status: 'FAILED', error_message: message },
+            { where: { id: taskId }, transaction },
+          );
+        }
+        await transaction.commit();
+      }
+      catch (error) {
+        this.logger.error(
+          `Update task ${taskId} status reject error`,
+          (error as Error).stack,
+          'TaskReject',
+        );
+        await transaction.rollback();
+      }
     }
-    catch (error) {
-      this.logger.error(
-        `Update task ${taskId} status reject error`,
-        (error as Error).stack,
-        'TaskReject',
-      );
-      await transaction.rollback();
-    }
+
+    conn.inflight -= conn.inflight === 0 ? 0 : 1;
+    this.sendEvent(`task:status:${taskId}`, { taskId, status: 'FAILED', error_message: message });
   }
 
   async handleTaskDone(clientId: string, data: ConnectionTaskDoneData) {
@@ -177,45 +193,60 @@ export class SocketService {
       return;
     }
 
-    const transaction = await this.postgresProvider.transaction();
-    try {
-      await this.postgresProvider.setSchema('master', transaction);
-      await this.taskQueueRepository.update(
-        { status: data.status, error_message: data.message },
-        { where: { id: data.taskId }, transaction },
-      );
-      await transaction.commit();
-      conn.inflight -= conn.inflight === 0 ? 0 : 1;
+    const isDbTask = /^\d+$/.test(data.taskId);
+    if (isDbTask) {
+      const transaction = await this.postgresProvider.transaction();
+      try {
+        await this.postgresProvider.setSchema('master', transaction);
+        const task = await this.taskQueueRepository.findByPk(data.taskId, { transaction });
+        if (task) {
+          await this.taskQueueRepository.update(
+            { status: data.status, error_message: data.message },
+            { where: { id: data.taskId }, transaction },
+          );
+        }
+        await transaction.commit();
+      }
+      catch (error) {
+        this.logger.error(
+          `Update task ${data.taskId} status done error: ${(error as Error).message}`,
+          (error as Error).stack,
+          'TaskDone',
+        );
+        await transaction.rollback();
+      }
     }
-    catch (error) {
-      this.logger.error(
-        `Update task ${data.taskId} status done error`,
-        (error as Error).stack,
-        'TaskDone',
-      );
-      await transaction.rollback();
-    }
+
+    conn.inflight -= conn.inflight === 0 ? 0 : 1;
+    this.sendEvent(`task:status:${data.taskId}`, { taskId: data.taskId, status: data.status, error_message: data.message });
   }
 
   async dispatchTask(taskId: string, tenantId: string, dispatchTaskData?: Omit<DispatchTaskData, 'taskId'>) {
     const availableBot = this.getAvailableBot(tenantId);
     if (!availableBot) {
-      const transaction = await this.postgresProvider.transaction();
-      try {
-        await this.postgresProvider.setSchema('master', transaction);
-        await this.taskQueueRepository.update(
-          {
-            status: 'FAILED',
-            error_message: 'no bot available to handle the task',
-          },
-          { where: { id: taskId }, transaction },
-        );
-        await transaction.commit();
-      }
-      catch {
-        await transaction.rollback();
+      const isDbTask = /^\d+$/.test(taskId);
+      if (isDbTask) {
+        const transaction = await this.postgresProvider.transaction();
+        try {
+          await this.postgresProvider.setSchema('master', transaction);
+          const task = await this.taskQueueRepository.findByPk(taskId, { transaction });
+          if (task) {
+            await this.taskQueueRepository.update(
+              {
+                status: 'FAILED',
+                error_message: 'no bot available to handle the task',
+              },
+              { where: { id: taskId }, transaction },
+            );
+          }
+          await transaction.commit();
+        }
+        catch {
+          await transaction.rollback();
+        }
       }
 
+      this.sendEvent(`task:status:${taskId}`, { taskId, status: 'FAILED', error_message: 'no bot available to handle the task' });
       return null;
     }
 

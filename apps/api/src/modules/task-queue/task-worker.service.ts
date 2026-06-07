@@ -8,6 +8,7 @@ import { REDIS_CLIENT } from 'src/constants/provider.const';
 import { CONSUMER_GROUP, STREAM_KEY, TASK_REFERENCE_KEY, ZSET_KEY } from 'src/constants/scheduler.const';
 import {
   NETFLIX_RESET_PASSWORD,
+  SUBS_END_DISABLE_ACCOUNT,
   SUBS_END_NOTIFY,
   UNFREEZE_ACCOUNT,
 } from 'src/constants/task.const';
@@ -16,7 +17,7 @@ import { PostgresProvider } from 'src/database/postgres.provider';
 import { UnknownTaskError } from 'src/exceptions/unknown-task.error';
 import { AppLoggerService } from '../logger/logger.service';
 import { TaskHelperService } from './task-helper.service';
-import { AccountSubsEndNotifyPayload, AccountUnfreezePayload, NetflixResetPasswordPayload } from './types/task-context.type';
+import { AccountSubsEndNotifyPayload, AccountUnfreezePayload, NetflixResetPasswordPayload, SubsEndDisableAccountPayload } from './types/task-context.type';
 import { TaskMessage } from './types/task-message.type';
 import { TaskQueueContext } from './types/task-queue-data.type';
 import { TaskQueueUpdate } from './types/task-queue-update.type';
@@ -41,7 +42,7 @@ export class TaskWorkerService {
       await this.redisClient.xgroup('CREATE', STREAM_KEY, CONSUMER_GROUP, '$', 'MKSTREAM');
     }
     catch (err) {
-      if (!err.message.includes('BUSYGROUP'))
+      if (!(err as Error).message.includes('BUSYGROUP'))
         throw err;
     }
 
@@ -74,7 +75,7 @@ export class TaskWorkerService {
         }
       }
       catch (error) {
-        this.logger.error(`Error consuming stream: ${error.message}`, error.stack, 'ConsumeTask');
+        this.logger.error(`Error consuming stream: ${(error as Error).message}`, (error as Error).stack, 'ConsumeTask');
         await new Promise(r => setTimeout(r, 1000));
       }
     }
@@ -124,7 +125,7 @@ export class TaskWorkerService {
       await transaction.commit();
     }
     catch (error) {
-      this.logger.error(error.message, error.stack, 'DispatchTask');
+      this.logger.error((error as Error).message, (error as Error).stack, 'DispatchTask');
       await transaction.rollback();
     }
   }
@@ -155,7 +156,7 @@ export class TaskWorkerService {
       }
     }
     catch (error) {
-      this.logger.error(`Error recovering tasks: ${error.message}`, error.stack, 'RecoverPendingTask');
+      this.logger.error(`Error recovering tasks: ${(error as Error).message}`, (error as Error).stack, 'RecoverPendingTask');
     }
   }
 
@@ -221,6 +222,7 @@ export class TaskWorkerService {
     }
     catch {
       await transaction.rollback();
+      return;
     }
 
     // 3. Eksekusi Task dan ACK
@@ -243,6 +245,9 @@ export class TaskWorkerService {
         else if (tm.taskData.context === UNFREEZE_ACCOUNT) {
           await this.taskHelperService.unfreezeAccount(tm.taskData.tenant_id, tm.taskData.payload as AccountUnfreezePayload);
         }
+        else if (tm.taskData.context === SUBS_END_DISABLE_ACCOUNT) {
+          await this.taskHelperService.subsEndDisableAccount(tm.taskData.tenant_id, tm.taskData.payload as SubsEndDisableAccountPayload);
+        }
         else {
           throw new UnknownTaskError(`Unknown Task: ${tm.taskData.context}`);
         }
@@ -256,7 +261,7 @@ export class TaskWorkerService {
         });
       }
       catch (error) {
-        this.logger.error(`Task ${tm.taskId} Failed. ${error.message}`, error.stack, 'TaskWorker');
+        this.logger.error(`Task ${tm.taskId} Failed. ${(error as Error).message}`, (error as Error).stack, 'TaskWorker');
 
         const isUnknownError = error instanceof UnknownTaskError;
         const isMaxAttemptReached = tm.attempt! > this.maxAttempt;
@@ -305,7 +310,7 @@ export class TaskWorkerService {
           await transaction.commit();
         }
         catch (error) {
-          this.logger.error(`Error update task status: ${error.message}`, error.stack, 'TaskWorker');
+          this.logger.error(`Error update task status: ${(error as Error).message}`, (error as Error).stack, 'TaskWorker');
           await transaction.rollback();
         }
       }

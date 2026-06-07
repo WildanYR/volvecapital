@@ -115,7 +115,7 @@ export class Logger {
         this.log('error', message, context, logToDbOptions);
     }
 
-    private log(level: LogLevel, message: string, context?: LogContext, logToDbOptions?: LogToDbOptions): void {
+    log(level: LogLevel, message: string, context?: LogContext, logToDbOptions?: LogToDbOptions): void {
         const instanceId = context?.instanceId || this.instanceId;
 
         this.winston.log({

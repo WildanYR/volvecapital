@@ -13,6 +13,7 @@ import { AccountCard } from '@/dashboard/components/pages/account-index/account-
 import { PagesAccountIndexCount } from '@/dashboard/components/pages/account-index/account-count'
 import { AccountFilterTab } from '@/dashboard/components/pages/account-index/account-filter-tab'
 import { PagesAccountIndexSearch } from '@/dashboard/components/pages/account-index/account-search'
+import { PagesAccountIndexDialogCommand } from '@/dashboard/components/pages/account-index/dialogs/command-dialog'
 import { PagesAccountIndexDialogEdit } from '@/dashboard/components/pages/account-index/dialogs/edit-account-dialog'
 import { PagesAccountIndexDialogEditModifier } from '@/dashboard/components/pages/account-index/dialogs/edit-account-modifier-dialog'
 import { PagesAccountIndexDialogExpense } from '@/dashboard/components/pages/account-index/dialogs/expense-dialog'
@@ -68,6 +69,7 @@ function RouteComponent() {
   const [dialogFreezeOpen, setDialogFreezeOpen] = useState<boolean>(false)
   const [dialogProfileDetailOpen, setDialogProfileDetailOpen] = useState<boolean>(false)
   const [dialogExpenseOpen, setDialogExpenseOpen] = useState<boolean>(false)
+  const [dialogCommandOpen, setDialogCommandOpen] = useState<boolean>(false)
 
   const { data: accounts, isLoading: isFetchAccountLoading } = useQuery({
     queryKey: ['account', searchParam],
@@ -209,6 +211,10 @@ function RouteComponent() {
                           setSelectedAccountId(account.id)
                           setDialogExpenseOpen(true)
                         }}
+                        onCommandClick={() => {
+                          setSelectedAccountId(account.id)
+                          setDialogCommandOpen(true)
+                        }}
                       />
                     ))}
                   </div>
@@ -272,6 +278,16 @@ function RouteComponent() {
         open={dialogExpenseOpen}
         onOpenChange={(open) => {
           setDialogExpenseOpen(open)
+          if (!open)
+            setSelectedAccountId(undefined)
+        }}
+        selectedAccount={selectedAccount}
+      />
+      {/* Command Dialog */}
+      <PagesAccountIndexDialogCommand
+        open={dialogCommandOpen}
+        onOpenChange={(open) => {
+          setDialogCommandOpen(open)
           if (!open)
             setSelectedAccountId(undefined)
         }}

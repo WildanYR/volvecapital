@@ -29,3 +29,10 @@ export interface EventData {
   eventName: string;
   payload: any;
 }
+
+export interface SocketEmailEventData {
+  from: string,
+  date: string,
+  subject: string,
+  data: string,
+}

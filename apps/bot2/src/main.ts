@@ -14,7 +14,6 @@ import { getModuleFactory, getRegisteredModuleNames } from './modules/index.js';
 import { getAuthCredentials, type AuthCredentials } from './core/auth.js';
 import type { AppConfig } from './types/config.type.js';
 import { configureBrowserLaunchOptions } from './utils/browser.js';
-import { buildApiBaseUrl } from './utils/api-url.js';
 
 class Application {
     private config!: AppConfig;
@@ -34,7 +33,7 @@ class Application {
             this.config = configLoader.load();
             console.log(`Configuration loaded: ${this.config.app.name}`);
             configureBrowserLaunchOptions({ headless: this.config.app.headless });
-            this.apiBaseUrl = buildApiBaseUrl(this.config.app.api_base_url);
+            this.apiBaseUrl = this.config.app.api_http_url;
 
             // 2. Initialize database
             const dbPath = resolve(getProjectRoot(), 'storage', 'database.sqlite');

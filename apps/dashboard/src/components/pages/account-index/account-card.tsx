@@ -1,6 +1,6 @@
 import type { Account } from '@/dashboard/services/account.service'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { BrushCleaning, CalendarClock, CircleQuestionMark, Cog, EllipsisVertical, Info, LockKeyholeOpen, Package, Pin, PinOff, SquarePen, SquareUser, Timer, TimerOff, Trash2, Wallet } from 'lucide-react'
+import { BrushCleaning, CalendarClock, CircleQuestionMark, Cog, EllipsisVertical, Info, LockKeyholeOpen, Package, Pin, PinOff, SquarePen, SquareUser, Terminal, Timer, TimerOff, Trash2, Wallet } from 'lucide-react'
 import { toast } from 'sonner'
 import { API_URL } from '@/dashboard/constants/api-url.cont'
 import { useGlobalAlertDialog } from '@/dashboard/context-providers/alert-dialog.provider'
@@ -19,6 +19,7 @@ export function AccountCard({
   onFreezeClick,
   onProfileClick,
   onExpenseClick,
+  onCommandClick,
 }: {
   account: Account
   onEditClick: () => void
@@ -26,6 +27,7 @@ export function AccountCard({
   onFreezeClick: () => void
   onProfileClick: () => void
   onExpenseClick: () => void
+  onCommandClick: () => void
 }) {
   const auth = useAuth()
   const accountService = AccountServiceGenerator(
@@ -181,6 +183,15 @@ export function AccountCard({
                     <Cog />
                   </span>
                   Modifier
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={onCommandClick}
+                >
+                  <span>
+                    <Terminal />
+                  </span>
+                  {' '}
+                  Command
                 </DropdownMenuItem>
                 {!account.pinned
                   ? (

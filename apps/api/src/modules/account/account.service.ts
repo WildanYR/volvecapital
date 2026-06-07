@@ -13,6 +13,8 @@ import {
 } from 'src/constants/database.const';
 import {
   NETFLIX_RESET_PASSWORD,
+  SUBS_END_DISABLE_ACCOUNT,
+  SUBS_END_NOTIFY,
   UNFREEZE_ACCOUNT,
 } from 'src/constants/task.const';
 import { AccountModifier } from 'src/database/models/account-modifier.model';
@@ -31,6 +33,7 @@ import { TaskQueueService } from '../task-queue/task-queue.service';
 import {
   AccountSubsEndNotifyPayload,
   NetflixResetPasswordPayload,
+  SubsEndDisableAccountPayload,
 } from '../task-queue/types/task-context.type';
 import { DateConverterProvider } from '../utility/date-converter.provider';
 import { PaginationProvider } from '../utility/pagination.provider';
@@ -41,7 +44,6 @@ import { UpdateAccountModifierDto } from './dto/update-account-modifier.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
 import { IAccountGetFilter } from './filter/account-get.filter';
 import { ModifierTaskData } from './types/modifier-task-data.type';
-import { NetflixResetPasswordMetadata } from './types/netflix-reset-password-metadata.type';
 import { SubsEndNotifyMetadata } from './types/subs-end-notify-metadata.type';
 
 @Injectable()
@@ -469,19 +471,19 @@ export class AccountService {
               {
                 account_id: accountId,
                 modifier_id,
-                metadata: metadata!,
+                metadata: metadata ?? null,
                 enabled: true,
               },
               { transaction },
             );
             addModifierToTaskQueue.push({
               modifierId: modifier_id,
-              metadata: metadata!,
+              metadata: metadata ?? null,
             });
           }
 
           if (action === 'UPDATE' && existing) {
-            await existing.update({ metadata, enabled: true }, { transaction });
+            await existing.update({ metadata: metadata ?? null, enabled: true }, { transaction });
             addModifierToTaskQueue.push({
               modifierId: existing.dataValues.modifier_id,
               metadata: existing.dataValues.metadata,
@@ -591,8 +593,8 @@ export class AccountService {
     const taskQueueData: UpsertTaskQueueDto[] = [];
 
     for (const mod of modifiers) {
-      if (mod.modifierId === 'SUBS_END_NOTIFY') {
-        const metadata = JSON.parse(mod.metadata) as SubsEndNotifyMetadata;
+      if (mod.modifierId === SUBS_END_NOTIFY) {
+        const metadata = JSON.parse(mod.metadata || '{}') as SubsEndNotifyMetadata;
         const dday = new Date(account.dataValues.subscription_expiry);
         dday.setHours(7, 0, 0, 0);
 
@@ -606,7 +608,7 @@ export class AccountService {
         );
 
         taskQueueData.push({
-          context: mod.modifierId,
+          context: mod.modifierId as any,
           execute_at: dday,
           subject_id: account.id,
           tenant_id: tenantId,
@@ -618,7 +620,7 @@ export class AccountService {
           } as AccountSubsEndNotifyPayload),
         });
         taskQueueData.push({
-          context: mod.modifierId,
+          context: mod.modifierId as any,
           execute_at: minDDay,
           subject_id: account.id,
           tenant_id: tenantId,
@@ -635,19 +637,8 @@ export class AccountService {
         mod.modifierId === NETFLIX_RESET_PASSWORD
         && account.dataValues.batch_end_date
       ) {
-        const metadata = JSON.parse(
-          mod.metadata,
-        ) as NetflixResetPasswordMetadata;
-        const passwordList = metadata.password_list
-          .replaceAll(' ', '')
-          .split(',')
-          .filter(pwd => pwd !== account.dataValues.account_password);
-
-        const randomIndex = Math.floor(Math.random() * passwordList.length);
-        const newPassword = passwordList[randomIndex];
-
         taskQueueData.push({
-          context: mod.modifierId,
+          context: mod.modifierId as any,
           execute_at: account.dataValues.batch_end_date,
           subject_id: account.id,
           tenant_id: tenantId,
@@ -657,11 +648,42 @@ export class AccountService {
             accountId: account.id,
             email: account.dataValues.email.email,
             password: account.dataValues.account_password,
-            newPassword,
           } as NetflixResetPasswordPayload),
         });
       }
+
+      if (
+        mod.modifierId === SUBS_END_DISABLE_ACCOUNT
+        && account.dataValues.subscription_expiry
+      ) {
+        const metadata = mod.metadata ? JSON.parse(mod.metadata) : { offset: '0', offset_unit: 'day' };
+        const offset = Number.parseInt(metadata.offset || '0', 10);
+        const unit = metadata.offset_unit || 'day';
+        const timeFactors: Record<string, number> = {
+          millisecond: 1,
+          second: 1000,
+          minute: 60 * 1000,
+          hour: 60 * 60 * 1000,
+          day: 24 * 60 * 60 * 1000,
+        };
+        const factor = timeFactors[unit] || 0;
+        const executeAt = new Date(
+          new Date(account.dataValues.subscription_expiry).getTime() - (offset * factor)
+        );
+
+        taskQueueData.push({
+          context: mod.modifierId as any,
+          execute_at: executeAt,
+          subject_id: account.id,
+          tenant_id: tenantId,
+          status: 'QUEUED',
+          payload: JSON.stringify({
+            accountId: account.id,
+          } as SubsEndDisableAccountPayload),
+        });
+      }
     }
+
     await this.taskQueueService.upsert(taskQueueData);
   }
 

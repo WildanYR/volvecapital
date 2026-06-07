@@ -51,7 +51,9 @@ function RouteComponent() {
       modifier: values.modifier.length
         ? values.modifier.map(m => ({
             modifier_id: m.modifier_id,
-            metadata: convertMetadataObjectToString(m.metadata),
+            metadata: m.metadata && m.metadata.length
+              ? convertMetadataObjectToString(m.metadata)
+              : undefined,
           }))
         : undefined,
     }

@@ -3,5 +3,5 @@ import { MetadataFormSchema } from './metadata-form.schema'
 
 export const AccountModifierFormSchema = z.object({
   modifier_id: z.string().nonempty(),
-  metadata: z.array(MetadataFormSchema),
+  metadata: z.array(MetadataFormSchema).optional(),
 })

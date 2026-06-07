@@ -8,7 +8,7 @@ import type { Logger } from './Logger.ts';
 import type { EventBus } from './EventBus.ts';
 import type { TaskManager } from './TaskManager.ts';
 import type { ModuleDependencies } from '../types/module.type.ts';
-import type { AuthCredentials } from './auth.js';
+import { type AuthCredentials, authHeaders } from './auth.js';
 import {
     getGlobalBrowser,
     createContext,
@@ -30,6 +30,9 @@ export abstract class BaseModule {
     readonly instanceId: string;
     readonly config: ModuleConfig;
 
+    protected socketClientId: string | null = null;
+    protected isSocketConnected: boolean = false;
+
     // Browser context management (browser is global singleton)
     private static readonly DEFAULT_CONTEXT_NAME = 'default';
     protected browserContexts: Map<string, BrowserContext> = new Map();
@@ -44,6 +47,15 @@ export abstract class BaseModule {
         this.authCredentials = deps.authCredentials;
         this.instanceId = instanceId;
         this.config = config;
+
+        // Listen for socket status updates
+        this.eventBus.on('socket:status', (data: { clientId: string | null; isConnected: boolean }) => {
+            this.socketClientId = data.clientId;
+            this.isSocketConnected = data.isConnected;
+        });
+
+        // Request initial status in case socket is already connected
+        this.eventBus.emit('socket:request-status');
     }
 
     // ==========================================================================
@@ -269,6 +281,99 @@ export abstract class BaseModule {
             this.eventBus.once(eventName, successHandler);
             this.eventBus.on('task:timeout', timeoutHandler);
         });
+    }
+
+    protected waitForSocketEvent<T>(eventName: string, timeout: number): Promise<T> {
+        return new Promise<T>((resolve, reject) => {
+            // Handlers that will be registered
+            let successHandler: ((data: T) => void) | null = null;
+            let disconnectHandler: ((data: { clientId: string | null; isConnected: boolean }) => void) | null = null;
+
+            // Cleanup function to remove all listeners
+            const cleanup = () => {
+                if (successHandler) {
+                    this.eventBus.off(eventName, successHandler);
+                }
+                if (disconnectHandler) {
+                    this.eventBus.off('socket:status', disconnectHandler);
+                }
+            };
+
+            // Success handler - resolve and cleanup
+            successHandler = (data: T) => {
+                cleanup();
+                resolve(data);
+            };
+
+            disconnectHandler = (status) => {
+                if (!status.isConnected) {
+                    cleanup();
+                    reject(new Error(`Socket disconnected while waiting for event ${eventName}`));
+                }
+            };
+
+            // Register listeners
+            this.eventBus.once(eventName, successHandler);
+            this.eventBus.on('socket:status', disconnectHandler);
+
+            setTimeout(() => {
+                cleanup();
+                reject(new Error(`Wait for event ${eventName} error: timeout`));
+            }, timeout);
+        });
+    }
+
+    protected async subscribeSocketEvent(eventName: string): Promise<void> {
+        if (!this.isSocketConnected || !this.socketClientId) {
+            throw new Error(`Failed to subscribe to ${eventName}: Socket is disconnected.`);
+        }
+
+        const headers = authHeaders(this.authCredentials);
+        const url = `${this.apiBaseUrl}/socket/subscribe`;
+
+        const res = await fetch(url, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ clientId: this.socketClientId, eventName }),
+        });
+
+        if (!res.ok) {
+            let errorMsg = `Failed to subscribe to socket event ${eventName}`;
+            try {
+                const data = await res.json() as { message?: string };
+                if (data.message) {
+                    errorMsg = `${errorMsg}: ${data.message}`;
+                }
+            } catch {}
+            throw new Error(errorMsg);
+        }
+    }
+
+    protected async unsubscribeSocketEvent(eventName: string): Promise<void> {
+        if (!this.isSocketConnected || !this.socketClientId) {
+            this.logger.warn(`Skip unsubscribe for ${eventName}: Socket disconnected.`);
+            return;
+        }
+
+        const headers = authHeaders(this.authCredentials);
+        const url = `${this.apiBaseUrl}/socket/unsubscribe`;
+
+        const res = await fetch(url, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ clientId: this.socketClientId, eventName }),
+        });
+
+        if (!res.ok) {
+            let errorMsg = `Failed to unsubscribe from socket event ${eventName}`;
+            try {
+                const data = await res.json() as { message?: string };
+                if (data.message) {
+                    errorMsg = `${errorMsg}: ${data.message}`;
+                }
+            } catch {}
+            throw new Error(errorMsg);
+        }
     }
 
     // ==========================================================================
