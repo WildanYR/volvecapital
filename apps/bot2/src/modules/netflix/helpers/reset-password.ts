@@ -15,7 +15,7 @@ export function generateNewPassword(
   list: string[] = [],
 ): string {
   
-  const letters: string = 'abcdefghijklmnopqrstuvwxyz';
+  const letters: string = 'abcdefghjkmnpqrstuvwxyz';
   const numbers: string = '0123456789';
   const alphaNumeric: string = letters + numbers;
 
