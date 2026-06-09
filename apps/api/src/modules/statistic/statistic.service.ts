@@ -74,8 +74,8 @@ export class StatisticService {
         
         prevStartWIB = new Date(todayStartWIB);
         prevStartWIB.setUTCDate(prevStartWIB.getUTCDate() - 1);
-        prevEndWIB = new Date(todayStartWIB);
-        prevEndWIB.setUTCMilliseconds(-1);
+        prevEndWIB = new Date(nowWIB);
+        prevEndWIB.setUTCDate(prevEndWIB.getUTCDate() - 1);
         granularity = 'hour';
         break;
       }
@@ -153,7 +153,16 @@ export class StatisticService {
         endWIB = new Date(Date.UTC(yr, mo + 1, 0, 23, 59, 59, 999));
 
         prevStartWIB = new Date(Date.UTC(yr, mo - 1, 1));
-        prevEndWIB = new Date(Date.UTC(yr, mo, 0, 23, 59, 59, 999));
+        
+        if (yr === nowWIB.getUTCFullYear() && mo === nowWIB.getUTCMonth()) {
+          // If filtering current month, limit prevEndWIB to the same date/time in the previous month
+          const prevMonthMaxDays = new Date(Date.UTC(yr, mo, 0)).getUTCDate();
+          const targetDay = Math.min(nowWIB.getUTCDate(), prevMonthMaxDays);
+          prevEndWIB = new Date(Date.UTC(yr, mo - 1, targetDay, nowWIB.getUTCHours(), nowWIB.getUTCMinutes(), nowWIB.getUTCSeconds(), nowWIB.getUTCMilliseconds()));
+        } else {
+          prevEndWIB = new Date(Date.UTC(yr, mo, 0, 23, 59, 59, 999));
+        }
+        
         granularity = 'day';
         break;
       }
@@ -163,7 +172,20 @@ export class StatisticService {
         endWIB = new Date(Date.UTC(yr, 11, 31, 23, 59, 59, 999));
 
         prevStartWIB = new Date(Date.UTC(yr - 1, 0, 1));
-        prevEndWIB = new Date(Date.UTC(yr - 1, 11, 31, 23, 59, 59, 999));
+        
+        if (yr === nowWIB.getUTCFullYear()) {
+          // If filtering current year, limit prevEndWIB to the same date/time in the previous year
+          const isLeapYear = (y: number) => new Date(y, 1, 29).getMonth() === 1;
+          const targetMo = nowWIB.getUTCMonth();
+          let targetDay = nowWIB.getUTCDate();
+          if (targetMo === 1 && targetDay === 29 && !isLeapYear(yr - 1)) {
+            targetDay = 28;
+          }
+          prevEndWIB = new Date(Date.UTC(yr - 1, targetMo, targetDay, nowWIB.getUTCHours(), nowWIB.getUTCMinutes(), nowWIB.getUTCSeconds(), nowWIB.getUTCMilliseconds()));
+        } else {
+          prevEndWIB = new Date(Date.UTC(yr - 1, 11, 31, 23, 59, 59, 999));
+        }
+        
         granularity = 'month';
         break;
       }

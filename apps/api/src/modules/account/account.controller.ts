@@ -76,7 +76,7 @@ export class AccountController {
   }
 
   @Post()
-  @RequirePermissions('account.edit')
+  @RequirePermissions('account.create')
   create(
     @Body() createAccountDto: CreateAccountDto,
     @Request() request: AppRequest,
@@ -85,7 +85,7 @@ export class AccountController {
   }
 
   @Post('bulk')
-  @RequirePermissions('account.edit')
+  @RequirePermissions('account.create')
   bulkCreate(
     @Body() bulkCreateDto: BulkCreateAccountDto,
     @Request() request: AppRequest,
@@ -96,10 +96,10 @@ export class AccountController {
   @Patch('bulk')
   @RequirePermissions('account.edit')
   bulkAction(
-    @Body() body: { ids: string[]; action: any },
+    @Body() body: { ids: string[]; action: any; payload?: any },
     @Request() request: AppRequest,
   ) {
-    return this.accountService.bulkAction(request.tenant_id!, body.ids, body.action);
+    return this.accountService.bulkAction(request.tenant_id!, body.ids, body.action, body.payload);
   }
 
   @Patch(':id')

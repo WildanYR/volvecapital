@@ -1386,6 +1386,7 @@ export class AccountService {
     tenantId: string,
     ids: string[],
     action: string,
+    payload?: any
   ) {
     const transaction = await this.postgresProvider.transaction();
     let isCommitted = false;
@@ -1393,6 +1394,14 @@ export class AccountService {
       await this.postgresProvider.setSchema(tenantId, transaction);
 
       switch (action) {
+        case 'add_modal':
+          if (!payload || !payload.amount) {
+            throw new BadRequestException('Nominal modal (amount) wajib diisi');
+          }
+          for (const id of ids) {
+            await this.addCapital(tenantId, id, { amount: payload.amount, description: payload.note });
+          }
+          break;
         case 'enable':
           await this.accountRepository.update(
             { status: 'ready', freeze_until: null, batch_start_date: null, batch_end_date: null },

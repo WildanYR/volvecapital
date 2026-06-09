@@ -32,7 +32,7 @@ export class ArticleController {
   }
 
   @Post()
-  @RequirePermissions('content.edit')
+  @RequirePermissions('content.create')
   create(
     @Headers('x-tenant-id') tenantId: string,
     @Body() dto: CreateArticleDto,
@@ -51,7 +51,7 @@ export class ArticleController {
   }
 
   @Delete(':id')
-  @RequirePermissions('content.edit')
+  @RequirePermissions('content.delete')
   remove(
     @Headers('x-tenant-id') tenantId: string,
     @Param('id') id: string,

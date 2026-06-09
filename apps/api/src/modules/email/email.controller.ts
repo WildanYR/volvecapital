@@ -46,7 +46,7 @@ export class EmailController {
   }
 
   @Post()
-  @RequirePermissions('email.edit')
+  @RequirePermissions('email.create')
   create(
     @Body() createEmailDto: CreateEmailDto,
     @Request() request: AppRequest,
@@ -71,7 +71,7 @@ export class EmailController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @RequirePermissions('email.edit')
+  @RequirePermissions('email.delete')
   remove(@Param('id') emailId: string, @Request() request: AppRequest) {
     return this.emailService.remove(request.tenant_id!, emailId);
   }

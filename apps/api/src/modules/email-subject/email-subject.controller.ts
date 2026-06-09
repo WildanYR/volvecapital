@@ -13,7 +13,7 @@ export class EmailSubjectController {
   }
 
   @Post()
-  @RequirePermissions('email.edit')
+  @RequirePermissions('email.create')
   create(
     @Headers('x-tenant-id') tenantId: string,
     @Body() data: { context: string; subject: string; is_public?: boolean }
@@ -32,7 +32,7 @@ export class EmailSubjectController {
   }
 
   @Delete(':id')
-  @RequirePermissions('email.edit')
+  @RequirePermissions('email.delete')
   remove(
     @Headers('x-tenant-id') tenantId: string,
     @Param('id') id: string

@@ -48,12 +48,13 @@ export class TaskHelperService {
 
   async netflixResetPassword(taskId: string, tenantId: string, payload: NetflixResetPasswordPayload) {
     const transaction = await this.postgresProvider.transaction();
+    let account: Account | null = null;
     try {
       await this.postgresProvider.setSchema(tenantId, transaction);
 
       // Fetch akun terkini untuk mendapatkan password & variant_name yang up-to-date
       // (payload di task queue mungkin stale jika varian berubah setelah task didaftarkan)
-      const account = await this.accountRepository.findOne({
+      account = await this.accountRepository.findOne({
         include: [
           {
             model: Email,
@@ -73,7 +74,14 @@ export class TaskHelperService {
         throw new NotFoundException(`Account with email: ${payload.email} not found`);
       }
       await transaction.commit();
+    }
+    catch (error) {
+      await transaction.rollback();
+      this.logger.error(error.message, error.stack, 'TaskProcessorNetflixResetPassword');
+      throw error;
+    }
 
+    try {
       // Enrich payload dengan data terkini dari DB
       const enrichedPayload: NetflixResetPasswordPayload = {
         ...payload,
@@ -101,7 +109,6 @@ export class TaskHelperService {
       this.socketGateway.subscribeClientToEvent(clientId, eventName);
     }
     catch (error) {
-      await transaction.rollback();
       this.logger.error(error.message, error.stack, 'TaskProcessorNetflixResetPassword');
       throw error;
     }

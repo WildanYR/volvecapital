@@ -5,6 +5,7 @@ import { MessageCircle } from 'lucide-react'
 import { useSettings } from '@/hooks/use-settings'
 import { useTenant } from '@/hooks/use-tenant'
 import { useState, useEffect } from 'react'
+import { usePathname } from 'next/navigation'
 
 export function WhatsAppFloating() {
   const { tenantId } = useTenant()
@@ -12,8 +13,10 @@ export function WhatsAppFloating() {
   const [isHovered, setIsHovered] = useState(false)
   const [showTooltip, setShowTooltip] = useState(false)
   const [isClient, setIsClient] = useState(false)
+  const pathname = usePathname()
 
   const whatsappNumber = settings?.whatsapp_number || '6285189307255'
+  const isProductPage = pathname?.includes('/product/')
 
   useEffect(() => {
     setIsClient(true)
@@ -48,7 +51,7 @@ export function WhatsAppFloating() {
         setIsHovered(false)
         setShowTooltip(false)
       }}
-      className="fixed bottom-8 right-8 z-[100] w-16 h-16 flex items-center justify-center cursor-grab active:cursor-grabbing"
+      className={`fixed right-8 z-[100] w-16 h-16 flex items-center justify-center cursor-grab active:cursor-grabbing transition-all duration-300 ${isProductPage ? 'bottom-28 lg:bottom-8' : 'bottom-8'}`}
       style={{ touchAction: 'none', transform: 'translateZ(0)' }}
     >
       <AnimatePresence>

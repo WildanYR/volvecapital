@@ -22,7 +22,7 @@ export class TutorialController {
   }
 
   @Post()
-  @RequirePermissions('content.edit')
+  @RequirePermissions('content.create')
   create(@Body() dto: CreateTutorialDto, @Request() request: AppRequest) {
     return this.tutorialService.create(request.tenant_id!, dto);
   }
@@ -38,7 +38,7 @@ export class TutorialController {
   }
 
   @Delete(':id')
-  @RequirePermissions('content.edit')
+  @RequirePermissions('content.delete')
   delete(@Param('id') id: string, @Request() request: AppRequest) {
     return this.tutorialService.delete(request.tenant_id!, id);
   }

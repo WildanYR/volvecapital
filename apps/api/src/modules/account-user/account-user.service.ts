@@ -481,10 +481,10 @@ export class AccountUserService {
     }
 
     if (accountUser) {
-      await this.accountService.registerAutomaticTasks(
+      this.accountService.registerAutomaticTasks(
         tenantId,
         accountUser.account,
-      );
+      ).catch(err => this.logger.error(`Failed to register tasks: ${err.message}`, err.stack, 'AccountUserService'));
     }
 
     return accountUser;
@@ -498,6 +498,7 @@ export class AccountUserService {
     const { account_profile_id, ...accountUserData } = updateAccountUserDto;
 
     const transaction = await this.postgresProvider.transaction();
+    let accountUserUpdate: AccountUser | null = null;
     try {
       await this.postgresProvider.setSchema(tenantId, transaction);
 
@@ -549,7 +550,7 @@ export class AccountUserService {
 
       await this.syncAccountBatchEndDate(accountUser.dataValues.account_id, transaction);
 
-      const accountUserUpdate = await this.accountUserRepository.findOne({
+      accountUserUpdate = await this.accountUserRepository.findOne({
         where: { id: accountUserId },
         include: [
           { model: AccountProfile, as: 'profile' },
@@ -557,6 +558,7 @@ export class AccountUserService {
             model: Account,
             as: 'account',
             include: [
+              { model: Email, as: 'email' },
               {
                 model: ProductVariant,
                 as: 'product_variant',
@@ -569,24 +571,25 @@ export class AccountUserService {
       });
 
       await transaction.commit();
-
-      if (accountUserUpdate) {
-        await this.accountService.registerAutomaticTasks(
-          tenantId,
-          accountUserUpdate.account,
-        );
-      }
-
-      return accountUserUpdate;
     }
     catch (error) {
       await transaction.rollback();
       throw error;
     }
+
+    if (accountUserUpdate) {
+      this.accountService.registerAutomaticTasks(
+        tenantId,
+        accountUserUpdate.account,
+      ).catch(err => this.logger.error(`Failed to register tasks: ${err.message}`, err.stack, 'AccountUserService'));
+    }
+
+    return accountUserUpdate;
   }
 
   async remove(tenantId: string, accountUserId: string) {
     const transaction = await this.postgresProvider.transaction();
+    let accountId: string | null = null;
     try {
       await this.postgresProvider.setSchema(tenantId, transaction);
 
@@ -601,33 +604,35 @@ export class AccountUserService {
         );
       }
 
-      const accountId = accountUser.dataValues.account_id;
+      accountId = accountUser.dataValues.account_id;
       await accountUser.destroy({ transaction });
       await this.syncAccountBatchEndDate(accountId, transaction);
       await transaction.commit();
-
-      const accountUpdate = await this.accountRepository.findOne({
-        where: { id: accountId },
-        include: [
-          { model: Email, as: 'email' },
-          {
-            model: ProductVariant,
-            as: 'product_variant',
-            include: [{ model: Product, as: 'product' }],
-          },
-        ],
-      });
-
-      if (accountUpdate) {
-        await this.accountService.registerAutomaticTasks(
-          tenantId,
-          accountUpdate,
-        );
-      }
     }
     catch (error) {
       await transaction.rollback();
       throw error;
+    }
+
+    if (!accountId) return;
+
+    const accountUpdate = await this.accountRepository.findOne({
+      where: { id: accountId },
+      include: [
+        { model: Email, as: 'email' },
+        {
+          model: ProductVariant,
+          as: 'product_variant',
+          include: [{ model: Product, as: 'product' }],
+        },
+      ],
+    });
+
+    if (accountUpdate) {
+      this.accountService.registerAutomaticTasks(
+        tenantId,
+        accountUpdate,
+      ).catch(err => this.logger.error(`Failed to register tasks: ${err.message}`, err.stack, 'AccountUserService'));
     }
   }
 

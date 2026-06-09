@@ -77,7 +77,7 @@ export class PlatformProductController {
   }
 
   @Post()
-  @RequirePermissions('platform_product.edit')
+  @RequirePermissions('platform_product.create')
   create(
     @Body() createPlatformProductDto: CreatePlatformProductDto,
     @Request() request: AppRequest,
@@ -105,7 +105,7 @@ export class PlatformProductController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @RequirePermissions('platform_product.edit')
+  @RequirePermissions('platform_product.delete')
   remove(
     @Param('id') platformProductId: string,
     @Request() request: AppRequest,

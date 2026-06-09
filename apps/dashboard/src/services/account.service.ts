@@ -755,7 +755,7 @@ export function AccountServiceGenerator(apiUrl: string, accessToken: string, ten
       }
       return await response.json()
     },
-    bulkAction: async (ids: string[], action: string): Promise<void> => {
+    bulkAction: async (ids: string[], action: string, payload?: any): Promise<void> => {
       const response = await generateApiFetch(
         apiUrl,
         accessToken,
@@ -765,7 +765,7 @@ export function AccountServiceGenerator(apiUrl: string, accessToken: string, ten
         {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ids, action }),
+          body: JSON.stringify({ ids, action, payload }),
         },
       )
       if (!response.ok) {

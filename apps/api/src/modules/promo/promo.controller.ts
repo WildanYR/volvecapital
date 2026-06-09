@@ -9,6 +9,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
+import { RequirePermissions } from 'src/guards/permissions.decorator';
 import { BaseGetAllUrlQuery } from '../utility/types/base-get-all-url-query.type';
 import { CreatePromoCodeDto, UpdatePromoCodeDto } from './dto/create-promo-code.dto';
 import { PromoService } from './promo.service';
@@ -18,6 +19,7 @@ export class PromoController {
   constructor(private readonly promoService: PromoService) {}
 
   @Get()
+  @RequirePermissions('voucher.view')
   async findAll(
     @Headers('x-tenant-id') tenantId: string,
     @Query() pagination?: BaseGetAllUrlQuery,
@@ -26,6 +28,7 @@ export class PromoController {
   }
 
   @Get(':id')
+  @RequirePermissions('voucher.view')
   async findOne(
     @Headers('x-tenant-id') tenantId: string,
     @Param('id') id: string,
@@ -34,6 +37,7 @@ export class PromoController {
   }
 
   @Post()
+  @RequirePermissions('voucher.create')
   async create(
     @Headers('x-tenant-id') tenantId: string,
     @Body() dto: CreatePromoCodeDto,
@@ -42,6 +46,7 @@ export class PromoController {
   }
 
   @Patch(':id')
+  @RequirePermissions('voucher.edit')
   async update(
     @Headers('x-tenant-id') tenantId: string,
     @Param('id') id: string,
@@ -51,6 +56,7 @@ export class PromoController {
   }
 
   @Delete(':id')
+  @RequirePermissions('voucher.delete')
   async remove(
     @Headers('x-tenant-id') tenantId: string,
     @Param('id') id: string,

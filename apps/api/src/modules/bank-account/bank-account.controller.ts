@@ -17,7 +17,7 @@ export class BankAccountController {
   }
 
   @Post()
-  @RequirePermissions('wallet.edit')
+  @RequirePermissions('wallet.create')
   async addAccount(@Req() req: Request, @Body() dto: CreateBankAccountDto) {
     const tenantId = (req as any).tenant_id;
     return await this.bankAccountService.initiateAdd(tenantId, dto);
@@ -35,7 +35,7 @@ export class BankAccountController {
   }
 
   @Delete(':id')
-  @RequirePermissions('wallet.edit')
+  @RequirePermissions('wallet.delete')
   async deleteAccount(@Req() req: Request, @Param('id') id: string) {
     const tenantId = (req as any).tenant_id;
     return await this.bankAccountService.delete(tenantId, id);

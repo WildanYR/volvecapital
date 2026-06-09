@@ -180,6 +180,8 @@ function RouteComponent() {
   const [dialogFinancialDetailOpen, setDialogFinancialDetailOpen] = useState<boolean>(false)
   const [dialogBulkConfirmOpen, setDialogBulkConfirmOpen] = useState<boolean>(false)
   const [bulkActionType, setBulkActionType] = useState<string>('')
+  const [bulkModalAmount, setBulkModalAmount] = useState<string>('')
+  const [bulkModalNote, setBulkModalNote] = useState<string>('')
 
   const [selectedAccountState, setSelectedAccount] = useState<Account>()
   const [selectedAccountProfile, setSelectedAccountProfile]
@@ -194,8 +196,8 @@ function RouteComponent() {
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   
   const bulkActionMutation = useMutation({
-    mutationFn: ({ ids, action }: { ids: string[]; action: string }) => 
-      accountService.bulkAction(ids, action),
+    mutationFn: ({ ids, action, payload }: { ids: string[]; action: string; payload?: any }) => 
+      accountService.bulkAction(ids, action, payload),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['account'] })
       queryClient.invalidateQueries({ queryKey: ['countAccount'] })
@@ -342,6 +344,8 @@ function RouteComponent() {
   const handleBulkActionClick = (action: string) => {
     setBulkActionType(action)
     setConfirmInput('')
+    setBulkModalAmount('')
+    setBulkModalNote('')
     setDialogBulkConfirmOpen(true)
   }
 
@@ -350,17 +354,43 @@ function RouteComponent() {
       toast.error('Konfirmasi kata kunci salah.')
       return
     }
-    bulkActionMutation.mutate({ ids: selectedIds, action: bulkActionType })
+
+    let payload = undefined;
+    if (bulkActionType === 'add_modal') {
+      const amount = Number.parseInt(bulkModalAmount);
+      if (Number.isNaN(amount) || amount <= 0) {
+        toast.error('Masukkan nominal modal yang valid');
+        return;
+      }
+      payload = {
+        amount,
+        note: bulkModalNote
+      };
+    }
+
+    bulkActionMutation.mutate({ ids: selectedIds, action: bulkActionType, payload })
     setDialogBulkConfirmOpen(false)
   }
 
   const handleAccountEditSubmit = (value: AccountEditFormSubmitData) => {
-    accountEditMutation.mutate({
-      id: selectedAccount!.id,
-      payload: {
-        ...value,
-        email_id: value.email_id,
-        product_variant_id: value.product_variant_id,
+    showAlertDialog({
+      title: 'Konfirmasi Edit Akun',
+      description: (
+        <>
+          Pastikan data yang diedit sudah benar harap cek tanggal, input modal, dll.
+        </>
+      ),
+      confirmText: 'Simpan Perubahan',
+      isConfirming: accountEditMutation.isPending,
+      onConfirm: () => {
+        accountEditMutation.mutate({
+          id: selectedAccount!.id,
+          payload: {
+            ...value,
+            email_id: value.email_id,
+            product_variant_id: value.product_variant_id,
+          },
+        })
       },
     })
   }
@@ -1295,6 +1325,10 @@ function RouteComponent() {
                         <BrushCleaning className="mr-2 h-4 w-4" />
                         Bulk Clear
                       </DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => handleBulkActionClick('add_modal')}>
+                        <Banknote className="mr-2 h-4 w-4" />
+                        Bulk Tambah Modal
+                      </DropdownMenuItem>
                       <DropdownMenuItem 
                         onSelect={() => handleBulkActionClick('delete')}
                       >
@@ -2029,6 +2063,33 @@ function RouteComponent() {
                   placeholder="Ketik HAPUS di sini..."
                   className="border-red-600/50 focus-visible:ring-red-600"
                 />
+              </div>
+            )}
+
+            {bulkActionType === 'add_modal' && (
+              <div className="grid gap-4 py-4 bg-muted/30 p-4 rounded-md mt-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="bulk-amount" className="text-xs font-bold">Nominal Modal (Per Akun)</Label>
+                  <Input
+                    id="bulk-amount"
+                    type="number"
+                    value={bulkModalAmount}
+                    onChange={(e) => setBulkModalAmount(e.target.value)}
+                    placeholder="Contoh: 54000"
+                  />
+                  <p className="text-[10px] text-muted-foreground">
+                    Nominal ini akan ditambahkan ke {selectedIds.length} akun yang dipilih.
+                  </p>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="bulk-note" className="text-xs font-bold">Catatan (Opsional)</Label>
+                  <Input
+                    id="bulk-note"
+                    value={bulkModalNote}
+                    onChange={(e) => setBulkModalNote(e.target.value)}
+                    placeholder="Catatan penggunaan modal..."
+                  />
+                </div>
               </div>
             )}
             

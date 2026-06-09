@@ -142,7 +142,7 @@ function RouteComponent() {
     return `${protocol}//${hostname}/redeem?code=${voucherCode}`
   }
 
-  const hasSettingView = auth.tenant?.role === 'TENANT_OWNER' || auth.tenant?.permissions?.includes('setting.view')
+  const hasSettingView = auth.tenant?.role === 'TENANT_OWNER' || auth.tenant?.permissions?.some(p => ['setting.view', 'voucher.view'].includes(p))
 
   const { data: settings } = useQuery({
     queryKey: ['settings'],
