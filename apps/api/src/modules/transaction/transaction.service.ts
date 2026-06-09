@@ -3,9 +3,7 @@ import { Op, WhereOptions } from 'sequelize';
 import {
   ACCOUNT_USER_REPOSITORY,
   PRODUCT_VARIANT_REPOSITORY,
-  TRANSACTION_ITEM_REPOSITORY,
   TRANSACTION_ITEM_TS_REPOSITORY,
-  TRANSACTION_REPOSITORY,
   TRANSACTION_TS_REPOSITORY,
 } from 'src/constants/database.const';
 import { AccountProfile } from 'src/database/models/account-profile.model';
@@ -18,15 +16,7 @@ import { Email } from 'src/database/models/email.model';
 import { ProductVariant } from 'src/database/models/product-variant.model';
 import { Product } from 'src/database/models/product.model';
 import { TransactionItemTS, TransactionItemTSCreationAttributes } from 'src/database/models/transaction-item-ts.model';
-import {
-  TransactionItem,
-  TransactionItemCreationAttributes,
-} from 'src/database/models/transaction-item.model';
-import { TransactionTS } from 'src/database/models/transaction-ts.model';
-import {
-  Transaction,
-  TransactionAttributes,
-} from 'src/database/models/transaction.model';
+import { TransactionTS, TransactionTSAttributes } from 'src/database/models/transaction-ts.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
 import { AccountUserService } from '../account-user/account-user.service';
 import { DateConverterProvider } from '../utility/date-converter.provider';
@@ -45,10 +35,6 @@ export class TransactionService {
     private readonly dateConverterProvider: DateConverterProvider,
     private readonly accountUserService: AccountUserService,
     private readonly postgresProvider: PostgresProvider,
-    @Inject(TRANSACTION_REPOSITORY)
-    private readonly transactionRepository: typeof Transaction,
-    @Inject(TRANSACTION_ITEM_REPOSITORY)
-    private readonly transactionItemRepository: typeof TransactionItem,
     @Inject(ACCOUNT_USER_REPOSITORY)
     private readonly accountUserRepository: typeof AccountUser,
     @Inject(PRODUCT_VARIANT_REPOSITORY)
@@ -104,7 +90,7 @@ export class TransactionService {
         };
       }
 
-      const transactions = await this.transactionRepository.findAndCountAll({
+      const transactions = await this.transactionTSRepository.findAndCountAll({
         where: whereOptions,
         order: !pagination?.order_by ? [['created_at', 'DESC']] : order,
         limit,
@@ -112,7 +98,7 @@ export class TransactionService {
         distinct: true,
         include: [
           {
-            model: TransactionItem,
+            model: TransactionItemTS,
             as: 'items',
             include: [
               {
@@ -161,11 +147,11 @@ export class TransactionService {
     try {
       await this.postgresProvider.setSchema(tenantId, tx);
 
-      const transaction = await this.transactionRepository.findOne({
+      const transaction = await this.transactionTSRepository.findOne({
         where: { id: transactionId },
         include: [
           {
-            model: TransactionItem,
+            model: TransactionItemTS,
             as: 'items',
             include: [
               {
@@ -215,7 +201,7 @@ export class TransactionService {
     tenantId: string,
     createTransactionDto: CreateTransactionDto,
   ): Promise<{
-    transaction?: TransactionAttributes;
+    transaction?: TransactionTSAttributes;
     account_user: (
       | AccountUserAttributes
       | {
@@ -236,9 +222,9 @@ export class TransactionService {
 
       // cek jika sudah ada transaksi agar tidak generate duplicate akun
       if (id) {
-        const existingTransaction = await this.transactionRepository.findOne({
+        const existingTransaction = await this.transactionTSRepository.findOne({
           where: { id },
-          include: [{ model: TransactionItem, as: 'items' }],
+          include: [{ model: TransactionItemTS, as: 'items' }],
           transaction: tx,
         });
 
@@ -280,7 +266,6 @@ export class TransactionService {
       }
 
       const transactionId = id || this.snowflakeIdProvider.generateId();
-      const transactionItems: TransactionItemCreationAttributes[] = [];
       const transactionTSItems: TransactionItemTSCreationAttributes[] = [];
       const generatedAccountUser: AccountUserAttributes[] = [];
 
@@ -297,14 +282,7 @@ export class TransactionService {
             tx,
           );
 
-          const itemName = `${accountUser.dataValues.account.product_variant.product.name} ${accountUser.dataValues.account.product_variant.name}`;
           const itemPrice = item.price ? String(item.price) : String(accountUser.dataValues.account.product_variant.base_price);
-
-          transactionItems.push({
-            name: itemName,
-            transaction_id: transactionId,
-            account_user_id: accountUser.id,
-          });
 
           transactionTSItems.push({
             price: itemPrice as any,
@@ -362,29 +340,18 @@ export class TransactionService {
         }
       }
 
-      if (!transactionItems.length) {
+      if (!transactionTSItems.length) {
         throw new NotFoundException('tidak ada item transaksi yang dibuat');
       }
 
       const total_price = transactionTSItems.reduce((v, c) => v + Number.parseInt(c.price), 0);
-      await this.transactionRepository.create(
-        { id: transactionId, ...transactionData, total_price },
-        {
-          transaction: tx,
-        },
-      );
-
       await this.transactionTSRepository.create({ id: transactionId, ...transactionData, total_price }, { transaction: tx });
-
-      await this.transactionItemRepository.bulkCreate(transactionItems, {
-        transaction: tx,
-      });
 
       await this.transactionItemTSRepository.bulkCreate(transactionTSItems, { transaction: tx });
 
-      const newTransaction = await this.transactionRepository.findOne({
+      const newTransaction = await this.transactionTSRepository.findOne({
         where: { id: transactionId },
-        include: [{ model: TransactionItem, as: 'items' }],
+        include: [{ model: TransactionItemTS, as: 'items' }],
         transaction: tx,
       });
 
@@ -422,7 +389,7 @@ export class TransactionService {
     try {
       await this.postgresProvider.setSchema(tenantId, tx);
 
-      const transaction = await this.transactionRepository.findOne({
+      const transaction = await this.transactionTSRepository.findOne({
         where: { id: transactionId },
         transaction: tx,
       });
@@ -451,7 +418,7 @@ export class TransactionService {
     try {
       await this.postgresProvider.setSchema(tenantId, tx);
 
-      const transaction = await this.transactionRepository.findOne({
+      const transaction = await this.transactionTSRepository.findOne({
         where: { id: transactionId },
         transaction: tx,
       });

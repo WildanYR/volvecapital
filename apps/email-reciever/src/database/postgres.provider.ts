@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import * as pg from 'pg';
 import { QueryOptions, Transaction } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
+import { EmailMessageTS } from './models/email-message-ts.model';
 import { EmailMessage } from './models/email-message.model';
 import { EmailSubject } from './models/email-subject.model';
 
@@ -38,7 +39,7 @@ export class PostgresProvider {
         logging: false,
       });
 
-      this.sequelize.addModels([EmailSubject, EmailMessage]);
+      this.sequelize.addModels([EmailSubject, EmailMessage, EmailMessageTS]);
     }
     else {
       this.sequelize.connectionManager.initPools();

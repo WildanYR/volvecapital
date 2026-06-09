@@ -2,7 +2,6 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
-import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AppConfig } from './configs/app.config';
@@ -14,7 +13,6 @@ import { VcAuthGuard } from './guards/vc-auth.guard';
 import { AccountProfileModule } from './modules/account-profile/account-profile.module';
 import { AccountUserModule } from './modules/account-user/account-user.module';
 import { AccountModule } from './modules/account/account.module';
-import { CronModule } from './modules/cron/cron.module';
 import { EmailMessageModule } from './modules/email-message/email-message.module';
 import { EmailSubjectModule } from './modules/email-subject/email-subject.module';
 import { EmailModule } from './modules/email/email.module';
@@ -27,7 +25,6 @@ import { RedisModule } from './modules/redis/redis.module';
 import { SocketModule } from './modules/socket/socket.module';
 import { StatisticModule } from './modules/statistic/statistic.module';
 import { TaskQueueModule } from './modules/task-queue/task-queue.module';
-import { TeleNotifierModule } from './modules/tele-notifier/tele-notifier.module';
 import { TenantModule } from './modules/tenant/tenant.module';
 import { TransactionModule } from './modules/transaction/transaction.module';
 import { UtilityModule } from './modules/utility/utility.module';
@@ -52,9 +49,6 @@ import { UtilityModule } from './modules/utility/utility.module';
       isGlobal: true,
       ttl: 10000,
     }),
-    ScheduleModule.forRoot(),
-    CronModule,
-    TeleNotifierModule,
     TenantModule,
     TaskQueueModule,
     SocketModule,

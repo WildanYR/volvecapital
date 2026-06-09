@@ -1,135 +1,285 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { Op } from 'sequelize';
-import {
-  PEAK_HOUR_STATISTICS_REPOSITORY,
-  PLATFORM_STATISTICS_REPOSITORY,
-  PRODUCT_SALES_STATISTICS_REPOSITORY,
-  PRODUCT_VARIANT_REPOSITORY,
-  REVENUE_STATISTICS_REPOSITORY,
-} from 'src/constants/database.const';
-import { PeakHourStatistics } from 'src/database/models/peak-hour-statistics.model';
-import { PlatformStatistics } from 'src/database/models/platform-statistics.model';
-import { ProductSalesStatistics } from 'src/database/models/product-sales-statistics.model';
-import { ProductVariant } from 'src/database/models/product-variant.model';
-import { Product } from 'src/database/models/product.model';
-import { RevenueStatistics } from 'src/database/models/revenue-statistics.model';
+import { Injectable } from '@nestjs/common';
+import { QueryTypes } from 'sequelize';
 import { PostgresProvider } from 'src/database/postgres.provider';
-import { DateConverterProvider } from '../utility/date-converter.provider';
 
 @Injectable()
 export class StatisticService {
   constructor(
-    private readonly dateConverterProvider: DateConverterProvider,
     private readonly postgresProvider: PostgresProvider,
-    @Inject(REVENUE_STATISTICS_REPOSITORY)
-    private readonly revenueStatisticRepository: typeof RevenueStatistics,
-    @Inject(PRODUCT_SALES_STATISTICS_REPOSITORY)
-    private readonly productSatisticRepository: typeof ProductSalesStatistics,
-    @Inject(PLATFORM_STATISTICS_REPOSITORY)
-    private readonly platformStatisticRepository: typeof PlatformStatistics,
-    @Inject(PEAK_HOUR_STATISTICS_REPOSITORY)
-    private readonly peakHourStatisticRepository: typeof PeakHourStatistics,
-    @Inject(PRODUCT_VARIANT_REPOSITORY)
-    private readonly productVariantRepository: typeof ProductVariant,
   ) {}
 
-  async getAllStatistic(tenantId: string) {
+  private getRangeDetails(range: string): { startDate: Date; isMonthly: boolean } {
+    const now = new Date();
+    const startDate = new Date();
+    let isMonthly = false;
+
+    switch (range) {
+      case 'week': {
+        const day = now.getDay();
+        const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+        startDate.setDate(diff);
+        startDate.setHours(0, 0, 0, 0);
+        break;
+      }
+      case '3months': {
+        startDate.setMonth(now.getMonth() - 3);
+        startDate.setHours(0, 0, 0, 0);
+        isMonthly = true;
+        break;
+      }
+      case '1year': {
+        startDate.setFullYear(now.getFullYear() - 1);
+        startDate.setHours(0, 0, 0, 0);
+        isMonthly = true;
+        break;
+      }
+      case 'month':
+      default: {
+        startDate.setDate(1);
+        startDate.setHours(0, 0, 0, 0);
+        break;
+      }
+    }
+    return { startDate, isMonthly };
+  }
+
+  async getAllStatistic(tenantId: string, range: string) {
     const transaction = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema(tenantId, transaction);
-      const startOfMonth = this.dateConverterProvider.getStartOfTheMonthDate();
-      const endOfMonth = this.dateConverterProvider.getEndOfTheMonthDate();
+      const { startDate, isMonthly } = this.getRangeDetails(range);
 
-      const revenueStatistic = await this.revenueStatisticRepository.findAll({
-        where: { date: { [Op.between]: [startOfMonth, endOfMonth] } },
-        order: [['date', 'DESC']],
-        transaction,
-      });
+      // 1. Query Period Totals
+      const periodTotalSql = isMonthly
+        ? `
+          WITH rev AS (
+            SELECT COALESCE(SUM(revenue), 0) AS total_revenue, COALESCE(SUM(total_transaction), 0) AS total_transaction
+            FROM monthly_platform_stats
+            WHERE bucket_month >= :startDate
+          ),
+          exp AS (
+            SELECT COALESCE(SUM(total_expense_amount), 0) AS total_expense
+            FROM monthly_expense_stats
+            WHERE bucket_month >= :startDate
+          )
+          SELECT 
+            (total_revenue - total_expense)::BIGINT AS net_income,
+            total_expense::BIGINT AS expense,
+            total_transaction::BIGINT AS transaction_count
+          FROM rev, exp;
+        `
+        : `
+          WITH rev AS (
+            SELECT COALESCE(SUM(revenue), 0) AS total_revenue, COALESCE(SUM(total_transaction), 0) AS total_transaction
+            FROM daily_platform_stats
+            WHERE bucket >= :startDate
+          ),
+          exp AS (
+            SELECT COALESCE(SUM(total_expense_amount), 0) AS total_expense
+            FROM daily_expense_stats
+            WHERE bucket >= :startDate
+          )
+          SELECT 
+            (total_revenue - total_expense)::BIGINT AS net_income,
+            total_expense::BIGINT AS expense,
+            total_transaction::BIGINT AS transaction_count
+          FROM rev, exp;
+        `;
 
-      const revenueTodaySum = revenueStatistic.find(
-        item => item.dataValues.type === 'daily',
-      );
-      const revenueMonthSum = revenueStatistic.find(
-        item => item.dataValues.type === 'monthly',
-      );
-      const revenueDaily = revenueStatistic
-        .filter(item => item.dataValues.type === 'daily')
-        .toReversed();
+      const rawPeriodTotal = await this.postgresProvider.rawQuery(periodTotalSql, {
+        replacements: { startDate },
+        type: QueryTypes.SELECT,
+        transaction,
+      }) as any[];
 
-      const productStatistic = await this.productSatisticRepository.findAll({
-        where: { date: { [Op.between]: [startOfMonth, endOfMonth] }, type: 'monthly' },
-        order: [['items_sold', 'DESC']],
-        transaction,
-      });
-      const productVariantIds = [
-        ...new Set(
-          productStatistic.map(item => item.dataValues.product_variant_id),
-        ),
-      ];
-      const productVariants = await this.productVariantRepository.findAll({
-        where: { id: productVariantIds },
-        attributes: ['id', 'name'],
-        include: [
-          { model: Product, as: 'product', attributes: ['id', 'name'] },
-        ],
-        transaction,
-      });
-      const productStatisticData: {
-        date: string;
-        type: string;
-        product_variant_id: string;
-        items_sold: number;
-        product_variant: {
-          id: string;
-          name: string;
-          product: { id: string; name: string };
-        };
-        created_at: Date;
-        updated_at: Date;
-      }[] = [];
-      for (const ps of productStatistic) {
-        for (const pv of productVariants) {
-          if (ps.dataValues.product_variant_id === pv.id) {
-            productStatisticData.push({
-              date: ps.dataValues.date,
-              type: ps.dataValues.type,
-              product_variant_id: ps.dataValues.product_variant_id,
-              items_sold: ps.dataValues.items_sold,
-              product_variant: {
-                id: pv.id,
-                name: pv.dataValues.name,
-                product: {
-                  id: pv.dataValues.product.id,
-                  name: pv.dataValues.product.name,
-                },
-              },
-              created_at: ps.dataValues.created_at,
-              updated_at: ps.dataValues.updated_at,
-            });
-          }
-        }
-      }
+      const periodTotal = rawPeriodTotal[0] || { net_income: 0, expense: 0, transaction_count: 0 };
 
-      const platformStatistic = await this.platformStatisticRepository.findAll({
-        where: { date: { [Op.between]: [startOfMonth, endOfMonth] }, type: 'monthly' },
-        order: [['transaction_count', 'DESC']],
+      // 2. Query Time-Series Breakdown for Chart
+      const breakdownSql = isMonthly
+        ? `
+          WITH rev AS (
+            SELECT 
+              bucket_month,
+              SUM(revenue) AS total_revenue,
+              SUM(total_transaction) AS total_transaction
+            FROM monthly_platform_stats
+            WHERE bucket_month >= :startDate
+            GROUP BY bucket_month
+          ),
+          exp AS (
+            SELECT 
+              bucket_month,
+              SUM(total_expense_amount) AS total_expense
+            FROM monthly_expense_stats
+            WHERE bucket_month >= :startDate
+            GROUP BY bucket_month
+          )
+          SELECT 
+            to_char(COALESCE(rev.bucket_month, exp.bucket_month), 'YYYY-MM') AS date,
+            (COALESCE(rev.total_revenue, 0) - COALESCE(exp.total_expense, 0))::BIGINT AS net_income,
+            COALESCE(exp.total_expense, 0)::BIGINT AS expense,
+            COALESCE(rev.total_transaction, 0)::BIGINT AS transaction_count,
+            COALESCE(rev.bucket_month, exp.bucket_month) AS created_at
+          FROM rev
+          FULL OUTER JOIN exp ON rev.bucket_month = exp.bucket_month
+          ORDER BY COALESCE(rev.bucket_month, exp.bucket_month) ASC;
+        `
+        : `
+          WITH rev AS (
+            SELECT 
+              bucket,
+              SUM(revenue) AS total_revenue,
+              SUM(total_transaction) AS total_transaction
+            FROM daily_platform_stats
+            WHERE bucket >= :startDate
+            GROUP BY bucket
+          ),
+          exp AS (
+            SELECT 
+              bucket,
+              SUM(total_expense_amount) AS total_expense
+            FROM daily_expense_stats
+            WHERE bucket >= :startDate
+            GROUP BY bucket
+          )
+          SELECT 
+            COALESCE(rev.bucket, exp.bucket)::date AS date,
+            (COALESCE(rev.total_revenue, 0) - COALESCE(exp.total_expense, 0))::BIGINT AS net_income,
+            COALESCE(exp.total_expense, 0)::BIGINT AS expense,
+            COALESCE(rev.total_transaction, 0)::BIGINT AS transaction_count,
+            COALESCE(rev.bucket, exp.bucket) AS created_at
+          FROM rev
+          FULL OUTER JOIN exp ON rev.bucket = exp.bucket
+          ORDER BY date ASC;
+        `;
+
+      const rawBreakdown = await this.postgresProvider.rawQuery(breakdownSql, {
+        replacements: { startDate },
+        type: QueryTypes.SELECT,
         transaction,
-      });
-      const peakHourStatistic = await this.peakHourStatisticRepository.findAll({
-        where: { date: { [Op.between]: [startOfMonth, endOfMonth] }, type: 'monthly' },
-        order: [['hour', 'ASC']],
+      }) as any[];
+
+      // 3. Query Product Sales Stats
+      const productSql = isMonthly
+        ? `
+          SELECT 
+            stats.product_variant_id,
+            SUM(stats.total_transaction)::BIGINT AS items_sold,
+            pv.name AS product_variant_name,
+            p.id AS product_id,
+            p.name AS product_name
+          FROM monthly_product_sales_stats stats
+          JOIN product_variant pv ON stats.product_variant_id = pv.id
+          JOIN product p ON stats.product_id = p.id
+          WHERE stats.bucket_month >= :startDate
+          GROUP BY stats.product_variant_id, pv.name, p.id, p.name
+          ORDER BY items_sold DESC;
+        `
+        : `
+          SELECT 
+            stats.product_variant_id,
+            SUM(stats.total_transaction)::BIGINT AS items_sold,
+            pv.name AS product_variant_name,
+            p.id AS product_id,
+            p.name AS product_name
+          FROM daily_product_sales_stats stats
+          JOIN product_variant pv ON stats.product_variant_id = pv.id
+          JOIN product p ON stats.product_id = p.id
+          WHERE stats.bucket >= :startDate
+          GROUP BY stats.product_variant_id, pv.name, p.id, p.name
+          ORDER BY items_sold DESC;
+        `;
+
+      const rawProducts = await this.postgresProvider.rawQuery(productSql, {
+        replacements: { startDate },
+        type: QueryTypes.SELECT,
         transaction,
-      });
+      }) as any[];
+
+      // 4. Query Platform Stats
+      const platformSql = isMonthly
+        ? `
+          SELECT 
+            platform,
+            SUM(total_transaction)::BIGINT AS transaction_count
+          FROM monthly_platform_stats
+          WHERE bucket_month >= :startDate
+          GROUP BY platform
+          ORDER BY transaction_count DESC;
+        `
+        : `
+          SELECT 
+            platform,
+            SUM(total_transaction)::BIGINT AS transaction_count
+          FROM daily_platform_stats
+          WHERE bucket >= :startDate
+          GROUP BY platform
+          ORDER BY transaction_count DESC;
+        `;
+
+      const rawPlatforms = await this.postgresProvider.rawQuery(platformSql, {
+        replacements: { startDate },
+        type: QueryTypes.SELECT,
+        transaction,
+      }) as any[];
+
+      // 5. Query Peak Hour Stats
+      const peakHourSql = `
+        SELECT 
+          EXTRACT(HOUR FROM (bucket AT TIME ZONE 'Asia/Jakarta'))::SMALLINT AS hour,
+          SUM(total_transaction)::BIGINT AS transaction_count
+        FROM peak_hour_stats
+        WHERE bucket >= :startDate
+        GROUP BY hour
+        ORDER BY hour ASC;
+      `;
+
+      const rawPeakHours = await this.postgresProvider.rawQuery(peakHourSql, {
+        replacements: { startDate },
+        type: QueryTypes.SELECT,
+        transaction,
+      }) as any[];
+
       await transaction.commit();
+
       return {
         revenue: {
-          today: revenueTodaySum,
-          month: revenueMonthSum,
-          daily: revenueDaily,
+          period: {
+            net_income: Number(periodTotal.net_income),
+            expense: Number(periodTotal.expense),
+            transaction_count: Number(periodTotal.transaction_count),
+            created_at: new Date(),
+            updated_at: new Date(),
+          },
+          daily: rawBreakdown.map((b: any) => ({
+            date: b.date,
+            net_income: Number(b.net_income),
+            expense: Number(b.expense),
+            transaction_count: Number(b.transaction_count),
+            created_at: new Date(b.created_at),
+            updated_at: new Date(b.created_at),
+          })),
         },
-        product: productStatisticData,
-        platform: platformStatistic,
-        peakHour: peakHourStatistic,
+        product: rawProducts.map((p: any) => ({
+          product_variant_id: p.product_variant_id,
+          items_sold: Number(p.items_sold),
+          product_variant: {
+            id: p.product_variant_id,
+            name: p.product_variant_name,
+            product: {
+              id: p.product_id,
+              name: p.product_name,
+            },
+          },
+        })),
+        platform: rawPlatforms.map((pl: any) => ({
+          platform: pl.platform,
+          transaction_count: Number(pl.transaction_count),
+        })),
+        peakHour: rawPeakHours.map((ph: any) => ({
+          hour: Number(ph.hour),
+          transaction_count: Number(ph.transaction_count),
+        })),
       };
     }
     catch (error) {

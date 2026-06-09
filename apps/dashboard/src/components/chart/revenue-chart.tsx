@@ -5,8 +5,6 @@ import { formatRupiah } from '@/dashboard/lib/currency.util'
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '../ui/chart'
 
 function RevenueChart({ data }: { data: RevenueStatistic }) {
-  // 2. HITUNG MANUAL (Menggunakan useMemo agar performa terjaga)
-  // Kita cari nilai transaksi tertinggi dari seluruh data yang ada
   const maxTransactionVal = useMemo(() => {
     const max = Math.max(
       ...data.daily.map((d: any) => Number(d.transaction_count || 0)),
@@ -14,17 +12,18 @@ function RevenueChart({ data }: { data: RevenueStatistic }) {
     return max
   }, [data])
 
-  // 3. Tentukan batas atas (Ceiling)
-  // Jika max 160, kita set batas atas jadi 240 (1.5x) agar ada ruang napas
-  // Jika datanya 0 semua, kita kasih default 10 agar chart tidak error
   const yAxisMax
     = maxTransactionVal > 0 ? Math.round(maxTransactionVal * 1.5) : 10
   return (
     <ChartContainer
       config={{
-        total_revenue: {
-          label: 'Revenue',
+        net_income: {
+          label: 'Penghasilan Bersih',
           color: 'var(--chart-1)',
+        },
+        expense: {
+          label: 'Pengeluaran',
+          color: 'var(--chart-2)',
         },
         transaction_count: {
           label: 'Transaksi',
@@ -38,13 +37,11 @@ function RevenueChart({ data }: { data: RevenueStatistic }) {
         <YAxis
           yAxisId="axis_revenue"
           orientation="left"
-          // hide
         />
         <YAxis
           yAxisId="axis_trx"
           orientation="right"
           domain={[0, yAxisMax]}
-          // hide
         />
 
         <ChartTooltip
@@ -52,7 +49,10 @@ function RevenueChart({ data }: { data: RevenueStatistic }) {
           content={(
             <ChartTooltipContent
               formatter={(value, _name, item) => {
-                if (item.dataKey === 'total_revenue') {
+                if (item.dataKey === 'net_income') {
+                  return formatRupiah(Number(value))
+                }
+                if (item.dataKey === 'expense') {
                   return formatRupiah(Number(value))
                 }
                 if (item.dataKey === 'transaction_count') {
@@ -64,11 +64,18 @@ function RevenueChart({ data }: { data: RevenueStatistic }) {
           )}
         />
         <Bar
-          dataKey="total_revenue"
+          dataKey="net_income"
           yAxisId="axis_revenue"
-          fill="var(--color-total_revenue)"
+          fill="var(--color-net_income)"
           radius={[4, 4, 0, 0]}
-          barSize={40}
+          barSize={20}
+        />
+        <Bar
+          dataKey="expense"
+          yAxisId="axis_revenue"
+          fill="var(--color-expense)"
+          radius={[4, 4, 0, 0]}
+          barSize={20}
         />
 
         {/* Line: Transaction Count */}

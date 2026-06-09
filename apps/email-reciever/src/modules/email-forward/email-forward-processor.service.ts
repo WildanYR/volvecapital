@@ -1,10 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 import {
-  EMAIL_MESSAGE_REPOSITORY,
+  EMAIL_MESSAGE_TS_REPOSITORY,
   EMAIL_SUBJECT_REPOSITORY,
 } from 'src/constants/database.const';
 import { NETFLIX_URL_EXTRACT, OTP_EXTRACT } from 'src/constants/email-extract-method.const';
-import { EmailMessage } from 'src/database/models/email-message.model';
+import { EmailMessageTS } from 'src/database/models/email-message-ts.model';
 import { EmailSubject } from 'src/database/models/email-subject.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
 import { AppLoggerService } from '../logger/logger.service';
@@ -21,8 +21,8 @@ export class EmailForwardProcessorService {
     private readonly postgresProvider: PostgresProvider,
     @Inject(EMAIL_SUBJECT_REPOSITORY)
     private readonly emailSubjectRepository: typeof EmailSubject,
-    @Inject(EMAIL_MESSAGE_REPOSITORY)
-    private readonly emailMessageRepository: typeof EmailMessage,
+    @Inject(EMAIL_MESSAGE_TS_REPOSITORY)
+    private readonly emailMessageTSRepository: typeof EmailMessageTS,
   ) {}
 
   async processQueuedPayload(payload: RecieveEmailDto) {
@@ -55,7 +55,7 @@ export class EmailForwardProcessorService {
               }
 
               if (data) {
-                await this.emailMessageRepository.create(
+                await this.emailMessageTSRepository.create(
                   {
                     tenant_id: payload.tenant,
                     from_email: e.from,

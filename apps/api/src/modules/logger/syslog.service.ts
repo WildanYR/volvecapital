@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { WhereOptions } from 'sequelize';
-import { SYSLOG_REPOSITORY } from 'src/constants/database.const';
-import { Syslog } from 'src/database/models/syslog.model';
+import { SYSLOG_TS_REPOSITORY } from 'src/constants/database.const';
+import { SyslogTS } from 'src/database/models/syslog-ts.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
 import { PaginationProvider } from '../utility/pagination.provider';
 import { BaseGetAllUrlQuery } from '../utility/types/base-get-all-url-query.type';
@@ -13,7 +13,7 @@ export class SyslogService {
   constructor(
     private readonly paginationProvider: PaginationProvider,
     private readonly postgresProvider: PostgresProvider,
-    @Inject(SYSLOG_REPOSITORY) private readonly syslogRepository: typeof Syslog
+    @Inject(SYSLOG_TS_REPOSITORY) private readonly syslogTSRepository: typeof SyslogTS
   ) {}
 
   async getLogWithPagination(tenantId: string, pagination?: BaseGetAllUrlQuery, filter?: ILogGetFilter) {
@@ -32,7 +32,7 @@ export class SyslogService {
         whereOptions.context = filter.context;
       }
 
-      const logs = await this.syslogRepository.findAndCountAll({
+      const logs = await this.syslogTSRepository.findAndCountAll({
         where: { ...whereOptions, tenant_id: tenantId },
         order: [
           ['created_at', 'DESC'],
@@ -72,7 +72,7 @@ export class SyslogService {
         whereOptions.context = filter.context;
       }
 
-      const logs = await this.syslogRepository.findAndCountAll({
+      const logs = await this.syslogTSRepository.findAndCountAll({
         where: { ...whereOptions, tenant_id: null },
         order: [
           ['created_at', 'DESC'],
@@ -103,7 +103,7 @@ export class SyslogService {
 
       const { created_at, ...logData } = createLogDto;
 
-      await this.syslogRepository.create({
+      await this.syslogTSRepository.create({
         ...logData,
         created_at: created_at || new Date(),
         tenant_id: tenantId,

@@ -19,12 +19,14 @@ import { ProductVariant } from './models/product-variant.model';
 import { Product } from './models/product.model';
 import { RevenueStatistics } from './models/revenue-statistics.model';
 import { Syslog } from './models/syslog.model';
+import { SyslogTS } from './models/syslog-ts.model';
 import { TaskQueue } from './models/task-queue.model';
 import { Tenant } from './models/tenant.model';
 import { TransactionItemTS } from './models/transaction-item-ts.model';
 import { TransactionItem } from './models/transaction-item.model';
 import { TransactionTS } from './models/transaction-ts.model';
 import { Transaction as TransactionModel } from './models/transaction.model';
+import { EmailMessageTS } from './models/email-message-ts.model';
 
 @Injectable()
 export class PostgresProvider {
@@ -81,6 +83,8 @@ export class PostgresProvider {
         TransactionTS,
         TransactionItemTS,
         Expense,
+        SyslogTS,
+        EmailMessageTS,
       ]);
     }
     else {

@@ -16,12 +16,14 @@ import {
   PRODUCT_VARIANT_REPOSITORY,
   REVENUE_STATISTICS_REPOSITORY,
   SYSLOG_REPOSITORY,
+  SYSLOG_TS_REPOSITORY,
   TASK_QUEUE_REPOSITORY,
   TENANT_REPOSITORY,
   TRANSACTION_ITEM_REPOSITORY,
   TRANSACTION_ITEM_TS_REPOSITORY,
   TRANSACTION_REPOSITORY,
   TRANSACTION_TS_REPOSITORY,
+  EMAIL_MESSAGE_TS_REPOSITORY,
 } from 'src/constants/database.const';
 import { AccountModifier } from './models/account-modifier.model';
 import { AccountProfile } from './models/account-profile.model';
@@ -38,6 +40,7 @@ import { ProductSalesStatistics } from './models/product-sales-statistics.model'
 import { ProductVariant } from './models/product-variant.model';
 import { Product } from './models/product.model';
 import { RevenueStatistics } from './models/revenue-statistics.model';
+import { SyslogTS } from './models/syslog-ts.model';
 import { Syslog } from './models/syslog.model';
 import { TaskQueue } from './models/task-queue.model';
 import { Tenant } from './models/tenant.model';
@@ -45,6 +48,7 @@ import { TransactionItemTS } from './models/transaction-item-ts.model';
 import { TransactionItem } from './models/transaction-item.model';
 import { TransactionTS } from './models/transaction-ts.model';
 import { Transaction } from './models/transaction.model';
+import { EmailMessageTS } from './models/email-message-ts.model';
 
 export const RepositoryProvider: Provider[] = [
   { provide: TENANT_REPOSITORY, useValue: Tenant },
@@ -69,7 +73,9 @@ export const RepositoryProvider: Provider[] = [
   { provide: PLATFORM_STATISTICS_REPOSITORY, useValue: PlatformStatistics },
   { provide: EMAIL_SUBJECT_REPOSITORY, useValue: EmailSubject },
   { provide: SYSLOG_REPOSITORY, useValue: Syslog },
+  { provide: SYSLOG_TS_REPOSITORY, useValue: SyslogTS },
   { provide: TRANSACTION_TS_REPOSITORY, useValue: TransactionTS },
   { provide: TRANSACTION_ITEM_TS_REPOSITORY, useValue: TransactionItemTS },
   { provide: EXPENSE_REPOSITORY, useValue: Expense },
+  { provide: EMAIL_MESSAGE_TS_REPOSITORY, useValue: EmailMessageTS },
 ];

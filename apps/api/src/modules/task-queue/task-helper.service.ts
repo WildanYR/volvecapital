@@ -6,7 +6,6 @@ import { PostgresProvider } from 'src/database/postgres.provider';
 import { AppLoggerService } from '../logger/logger.service';
 import { SyslogService } from '../logger/syslog.service';
 import { SocketService } from '../socket/socket.service';
-import { TeleNotifierService } from '../tele-notifier/tele-notifier.service';
 import {
   AccountSubsEndNotifyPayload,
   AccountUnfreezePayload,
@@ -19,7 +18,6 @@ export class TaskHelperService {
   constructor(
     private readonly logger: AppLoggerService,
     private readonly sysLogService: SyslogService,
-    private readonly teleNotifierService: TeleNotifierService,
     private readonly socketService: SocketService,
     private readonly postgresProvider: PostgresProvider,
     @Inject(ACCOUNT_REPOSITORY)
@@ -49,7 +47,6 @@ export class TaskHelperService {
     tenantId: string,
     payload: AccountSubsEndNotifyPayload,
   ) {
-    this.teleNotifierService.sendNotification(tenantId, payload);
     this.sysLogService.logToDb(tenantId, {
       level: 'REMINDER',
       context: 'AccountSubsEnd',

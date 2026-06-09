@@ -2,27 +2,22 @@ import z from 'zod'
 import { generateApiFetch, parseApiResponse } from '@/dashboard/lib/api-fetch.util'
 
 export const AllStatisticFilterSchema = z.object({
-  year: z.string().optional(),
-  month: z.string().optional(),
+  range: z.enum(['week', 'month', '3months', '1year']).optional(),
 })
 
 export type AllStatisticFilter = z.infer<typeof AllStatisticFilterSchema>
 
-interface BaseStatistic {
-  date: string
-  type: string
+interface BaseRevenueStatistic {
+  date?: string
+  net_income: number
+  expense: number
+  transaction_count: number
   created_at: Date
   updated_at: Date
 }
 
-interface BaseRevenueStatistic extends BaseStatistic {
-  total_revenue: number
-  transaction_count: number
-}
-
 export interface RevenueStatistic {
-  today: BaseRevenueStatistic
-  month: BaseRevenueStatistic
+  period: BaseRevenueStatistic
   daily: Array<BaseRevenueStatistic>
 }
 
@@ -63,7 +58,7 @@ export function statisticServiceGenerator(apiUrl: string, accessToken: string, t
       accessToken,
       tenantId,
       '/statistic',
-      { filter, signal },
+      { ...filter, signal },
     )
     if (!response.ok) {
       const errorData = await parseApiResponse(response)
@@ -77,21 +72,17 @@ export function statisticServiceGenerator(apiUrl: string, accessToken: string, t
     return {
       ...data,
       revenue: {
-        today: {
-          ...data.revenue.today,
-          total_revenue: Number.parseInt(data.revenue.today.total_revenue as any),
-          created_at: new Date(data.revenue.today.created_at),
-          updated_at: new Date(data.revenue.today.updated_at),
-        },
-        month: {
-          ...data.revenue.month,
-          total_revenue: Number.parseInt(data.revenue.month.total_revenue as any),
-          created_at: new Date(data.revenue.month.created_at),
-          updated_at: new Date(data.revenue.month.updated_at),
+        period: {
+          ...data.revenue.period,
+          net_income: Number.parseInt(data.revenue.period.net_income as any),
+          expense: Number.parseInt(data.revenue.period.expense as any),
+          created_at: new Date(data.revenue.period.created_at),
+          updated_at: new Date(data.revenue.period.updated_at),
         },
         daily: data.revenue.daily.map(item => ({
           ...item,
-          total_revenue: Number.parseInt(item.total_revenue as any),
+          net_income: Number.parseInt(item.net_income as any),
+          expense: Number.parseInt(item.expense as any),
           created_at: new Date(item.created_at),
           updated_at: new Date(item.updated_at),
         })),

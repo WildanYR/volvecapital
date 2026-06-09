@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Op, WhereOptions } from 'sequelize';
-import { EMAIL_MESSAGE_REPOSITORY } from 'src/constants/database.const';
-import { EmailMessage } from 'src/database/models/email-message.model';
+import { EMAIL_MESSAGE_TS_REPOSITORY } from 'src/constants/database.const';
+import { EmailMessageTS } from 'src/database/models/email-message-ts.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
 import { PaginationProvider } from '../utility/pagination.provider';
 import { BaseGetAllUrlQuery } from '../utility/types/base-get-all-url-query.type';
@@ -12,8 +12,8 @@ export class EmailMessageService {
   constructor(
     private readonly paginationProvider: PaginationProvider,
     private readonly postgresProvider: PostgresProvider,
-    @Inject(EMAIL_MESSAGE_REPOSITORY)
-    private readonly emailMessageRepository: typeof EmailMessage,
+    @Inject(EMAIL_MESSAGE_TS_REPOSITORY)
+    private readonly emailMessageTSRepository: typeof EmailMessageTS,
   ) {}
 
   async findAll(
@@ -34,7 +34,7 @@ export class EmailMessageService {
         whereOptions.from_email = { [Op.iLike]: `%${filter.from_email}%` };
       }
 
-      const emailMessages = await this.emailMessageRepository.findAndCountAll({
+      const emailMessages = await this.emailMessageTSRepository.findAndCountAll({
         where: whereOptions,
         order: [['created_at', 'DESC']],
         limit,

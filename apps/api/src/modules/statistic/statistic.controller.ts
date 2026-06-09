@@ -1,4 +1,4 @@
-import { Controller, Get, Request } from '@nestjs/common';
+import { Controller, Get, Query, Request } from '@nestjs/common';
 import { AppRequest } from 'src/types/app-request.type';
 import { StatisticService } from './statistic.service';
 
@@ -7,7 +7,10 @@ export class StatisticController {
   constructor(private readonly statisticService: StatisticService) {}
 
   @Get()
-  getAllStatistic(@Request() request: AppRequest) {
-    return this.statisticService.getAllStatistic(request.tenant_id!);
+  getAllStatistic(
+    @Request() request: AppRequest,
+    @Query('range') range?: string,
+  ) {
+    return this.statisticService.getAllStatistic(request.tenant_id!, range || 'month');
   }
 }

@@ -1,8 +1,8 @@
 import * as path from 'node:path';
 import { Inject, Injectable, LoggerService as NestLoggerService } from '@nestjs/common';
 import * as root from 'app-root-path';
-import { SYSLOG_REPOSITORY } from 'src/constants/database.const';
-import { Syslog } from 'src/database/models/syslog.model';
+import { SYSLOG_TS_REPOSITORY } from 'src/constants/database.const';
+import { SyslogTS } from 'src/database/models/syslog-ts.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
 import * as winston from 'winston';
 import cliColor from 'yoctocolors';
@@ -12,7 +12,7 @@ import { DateConverterProvider } from '../utility/date-converter.provider';
 export class AppLoggerService implements NestLoggerService {
   private readonly logger: winston.Logger;
 
-  constructor(private readonly dateConverterProvider: DateConverterProvider, private readonly postgresProvider: PostgresProvider, @Inject(SYSLOG_REPOSITORY) private readonly syslogRepository: typeof Syslog) {
+  constructor(private readonly dateConverterProvider: DateConverterProvider, private readonly postgresProvider: PostgresProvider, @Inject(SYSLOG_TS_REPOSITORY) private readonly syslogTSRepository: typeof SyslogTS) {
     this.logger = winston.createLogger({
       level: 'info',
       format: winston.format.combine(
@@ -85,7 +85,7 @@ export class AppLoggerService implements NestLoggerService {
     const transaction = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema('master', transaction);
-      await this.syslogRepository.create({
+      await this.syslogTSRepository.create({
         level,
         context,
         message,
