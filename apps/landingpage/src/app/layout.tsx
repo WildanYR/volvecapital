@@ -30,28 +30,23 @@ export async function generateMetadata(): Promise<Metadata> {
   let description = "Dapatkan akses premium untuk Netflix, Spotify, Disney+, dan layanan streaming lainnya dengan harga terjangkau dan proses instan.";
   let favicon = "/favicon.ico";
 
-  if (tenantId) {
-    try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-      const res = await fetch(`${apiUrl}/public/settings`, {
-        headers: { 'x-tenant-id': tenantId },
-        next: { revalidate: 60 }, // Cache for 60 seconds
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.SITE_TITLE) {
-          title = data.SITE_TITLE;
-        }
-        if (data.SITE_DESCRIPTION) {
-          description = data.SITE_DESCRIPTION;
-        }
-        if (data.SITE_FAVICON) {
-          favicon = data.SITE_FAVICON;
-        }
-      }
-    } catch {
-      // Silently fall back to default metadata
+  try {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    const headersConfig: HeadersInit = {};
+    if (tenantId) headersConfig['x-tenant-id'] = tenantId;
+    
+    const res = await fetch(`${apiUrl}/public/settings`, {
+      headers: headersConfig,
+      next: { revalidate: 60 }, // Cache for 60 seconds
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.SITE_TITLE) title = data.SITE_TITLE;
+      if (data.SITE_DESCRIPTION) description = data.SITE_DESCRIPTION;
+      if (data.SITE_FAVICON) favicon = data.SITE_FAVICON;
     }
+  } catch {
+    // Silently fall back to default metadata
   }
 
   return {
@@ -89,22 +84,23 @@ export default async function RootLayout({
 
   // Fetch theme CSS server-side to eliminate Flash of Unstyled Content (FOUC)
   let serverThemeCss: string | null = null;
-  if (tenantId) {
-    try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-      const res = await fetch(`${apiUrl}/public/settings`, {
-        headers: { 'x-tenant-id': tenantId },
-        next: { revalidate: 60 }, // cache for 60s
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.LANDING_THEME_CSS) {
-          serverThemeCss = data.LANDING_THEME_CSS;
-        }
+  try {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    const headersConfig: HeadersInit = {};
+    if (tenantId) headersConfig['x-tenant-id'] = tenantId;
+
+    const res = await fetch(`${apiUrl}/public/settings`, {
+      headers: headersConfig,
+      next: { revalidate: 60 }, // cache for 60s
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.LANDING_THEME_CSS) {
+        serverThemeCss = data.LANDING_THEME_CSS;
       }
-    } catch {
-      // silently fail — ThemeInjector client component will handle it
     }
+  } catch {
+    // silently fail — ThemeInjector client component will handle it
   }
 
   return (

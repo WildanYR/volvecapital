@@ -2,7 +2,7 @@
 
 import { useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { CheckCircle2, Copy, Home, MessageSquare, ArrowRight, Sparkles, Loader2, Zap } from 'lucide-react'
+import { Copy, Home, MessageSquare, ArrowRight, Loader2, Zap, BadgeCheck } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { Suspense, useState, useEffect } from 'react'
@@ -11,8 +11,20 @@ import { Footer } from '@/components/footer'
 import { api } from '@/lib/api'
 import { AlertCircle } from 'lucide-react'
 import { useNotification } from '@/hooks/use-notification'
+import { useSettings } from '@/hooks/use-settings'
+import { useTenant } from '@/hooks/use-tenant'
 
 function SuccessContent() {
+  const { tenantId } = useTenant()
+  const { data: settings } = useSettings(tenantId || '')
+  const [whatsappNumber, setWhatsappNumber] = useState('6285189307255')
+
+  useEffect(() => {
+    if (settings?.whatsapp_number) {
+      setWhatsappNumber(settings.whatsapp_number)
+    }
+  }, [settings?.whatsapp_number])
+
   const searchParams = useSearchParams()
   const [code, setCode] = useState<string | null>(searchParams.get('voucher') || searchParams.get('code'))
   const orderId = searchParams.get('order_id')
@@ -129,95 +141,83 @@ function SuccessContent() {
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-background p-10 md:p-14 text-center rounded-[48px] border border-border shadow-2xl relative overflow-hidden"
+          className="bg-background p-10 md:p-14 text-center rounded-3xl border border-border shadow-2xl relative overflow-hidden"
         >
-          {/* Subtle Accent */}
-          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10/50 blur-[60px] rounded-full -translate-y-1/2 translate-x-1/2" />
-          
-          <div className="inline-flex p-6 bg-primary/10 rounded-full mb-8 relative">
-            <CheckCircle2 className="size-16 text-primary" />
-            <Sparkles className="absolute -top-1 -right-1 size-8 text-primary animate-pulse" />
+          {/* Simple Verified Badge */}
+          <div className="flex justify-center mb-6">
+            <BadgeCheck className="size-16 text-primary" fill="currentColor" stroke="white" />
           </div>
           
-          <h1 className="text-4xl md:text-5xl font-black mb-6 text-foreground tracking-tight uppercase">Pembayaran Berhasil!</h1>
-          <p className="text-muted-foreground mb-12 leading-relaxed font-medium text-lg">
-            Pesanan Anda telah kami terima. Gunakan kode voucher di bawah ini untuk mengaktifkan layanan premium Anda sekarang juga.
-          </p>
+          <h1 className="text-3xl md:text-4xl font-black mb-8 text-foreground tracking-tight text-center">
+            Pembayaran<br/>Berhasil
+          </h1>
 
-          {/* Primary: Claim directly from this page */}
-          {code && voucherData?.status === 'UNUSED' && (
-            <button
-              onClick={handleClaim}
-              disabled={isClaiming}
-              className="w-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-black py-5 rounded-2xl flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-95 transition-all uppercase tracking-widest text-sm shadow-xl shadow-primary/20 disabled:opacity-60 disabled:scale-100 mb-6"
-            >
-              {isClaiming ? (
-                <><Loader2 className="size-5 animate-spin" /> Memproses Klaim...</>
-              ) : (
-                <><Zap className="size-5" /> Claim Sekarang</>
-              )}
-            </button>
-          )}
+          <hr className="border-border mb-8" />
 
-          <div className="bg-muted/50 border border-border rounded-[32px] p-10 mb-12 relative group shadow-inner">
-            <p className="text-[10px] uppercase tracking-[0.3em] text-slate-400 font-black mb-4">Kode Voucher Eksklusif Anda</p>
-            <div className="flex flex-row items-center justify-center gap-4">
-              <span className="text-xl md:text-3xl lg:text-4xl font-black text-foreground tracking-tight">
+          {/* Voucher Code Section */}
+          <div className="flex flex-col items-center justify-center mb-6">
+            <p className="text-xs uppercase tracking-widest text-slate-500 font-bold mb-2">Kode Voucher</p>
+            <div className="flex items-center gap-3 mb-6">
+              <span className="text-2xl md:text-3xl font-black text-primary tracking-tight">
                 {code || (isChecking ? 'MENGECEK...' : 'VC-XXXXXXXX')}
               </span>
               <button 
                 onClick={copyCode}
-                className="p-3 md:p-5 bg-background hover:bg-muted/50 text-primary rounded-2xl transition-all duration-300 border border-border shadow-sm active:scale-95 shrink-0"
+                className="p-2 text-primary hover:bg-primary/10 rounded-xl transition-all duration-300 active:scale-95 flex items-center justify-center"
+                title="Salin Voucher"
               >
-                <Copy className="size-5 md:size-6" />
+                <Copy className="size-5" />
               </button>
             </div>
+            
+            {/* Primary: Claim directly from this page */}
+            {code && voucherData?.status === 'UNUSED' && (
+              <button
+                onClick={handleClaim}
+                disabled={isClaiming}
+                className="px-8 py-3 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-xl transition-all duration-300 shadow-md active:scale-95 flex items-center justify-center gap-2 text-sm"
+              >
+                {isClaiming ? (
+                  <><Loader2 className="size-4 animate-spin" /> Memproses...</>
+                ) : (
+                  <><Zap className="size-4" /> Claim Sekarang</>
+                )}
+              </button>
+            )}
           </div>
 
+          <p className="text-sm text-slate-500 mb-10 font-medium px-4 text-center">
+            simpan kode voucher ini untuk Akses Akun dan Kode OTP Email
+          </p>
+
           {voucherData?.expired_at && (
-            <motion.div 
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-12 p-6 bg-primary/10 border border-primary/20 rounded-[32px] flex items-center gap-4 text-left"
-            >
-              <div className="p-3 bg-background rounded-2xl shadow-sm border border-border">
-                <AlertCircle className="size-6 text-primary" />
-              </div>
+            <div className="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-xl flex items-start gap-3 text-left">
+              <AlertCircle className="size-5 text-orange-500 shrink-0 mt-0.5" />
               <div>
-                <p className="text-xs font-black text-primary uppercase tracking-widest mb-0.5">Peringatan Penting</p>
-                <p className="text-sm text-muted-foreground font-bold">
-                  Segera klaim voucher Anda sebelum <span className="text-primary font-black">{new Date(voucherData.expired_at).toLocaleString('id-ID', { dateStyle: 'long', timeStyle: 'short' })}</span> agar tidak hangus.
+                <p className="text-xs font-bold text-orange-600 uppercase tracking-widest mb-1">Peringatan Penting</p>
+                <p className="text-xs text-orange-800 font-medium leading-relaxed">
+                  Segera klaim voucher Anda sebelum <span className="font-bold">{new Date(voucherData.expired_at).toLocaleString('id-ID', { dateStyle: 'long', timeStyle: 'short' })}</span> agar tidak hangus.
                 </p>
               </div>
-            </motion.div>
+            </div>
           )}
 
-          <div className="flex flex-col gap-4">
-            {/* Secondary: Go to redeem page manually */}
-            <Link
-              href={code ? `/redeem?code=${code}` : '/redeem'}
-              className="w-full py-5 px-4 bg-muted/50 text-foreground font-black rounded-2xl flex flex-col md:flex-row items-center justify-center gap-2 md:gap-3 hover:bg-muted hover:text-primary transition-all uppercase tracking-widest text-[10px] md:text-sm border border-border text-center"
-            >
-              <span className="leading-relaxed">Aktivasi Manual di Halaman Redeem</span>
-              <ArrowRight className="size-4 shrink-0 hidden md:block" />
-            </Link>
+          <div className="pt-6 border-t border-border flex flex-col items-center justify-center gap-4">
             <Link
               href="/"
-              className="w-full py-5 bg-background text-slate-400 font-black rounded-2xl flex items-center justify-center gap-3 hover:text-foreground transition-all uppercase tracking-widest text-xs"
+              className="text-sm text-slate-400 font-bold hover:text-foreground transition-all flex items-center gap-2"
             >
               <Home className="size-4" />
               Kembali ke Beranda
             </Link>
-          </div>
-
-          <div className="mt-12 pt-8 border-t border-border flex flex-col md:flex-row items-center justify-center gap-2 md:gap-3 text-center">
-            <div className="flex items-center justify-center gap-2 text-[10px] text-slate-400 font-black uppercase tracking-widest">
-              <MessageSquare className="size-4 text-primary shrink-0" />
-              <span>Butuh bantuan? Hubungi</span>
+            
+            <div className="flex items-center gap-2 text-xs text-slate-400 font-medium">
+              <span>Butuh bantuan?</span>
+              <Link href={`https://wa.me/${whatsappNumber}`} className="text-primary font-bold hover:underline flex items-center gap-1">
+                <MessageSquare className="size-3" />
+                Support WhatsApp
+              </Link>
             </div>
-            <Link href="https://wa.me/628123456789" className="text-[10px] text-primary font-black uppercase tracking-widest hover:underline">
-              Support WhatsApp
-            </Link>
           </div>
         </motion.div>
       </div>
