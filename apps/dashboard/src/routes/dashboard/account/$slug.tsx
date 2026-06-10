@@ -1329,12 +1329,14 @@ function RouteComponent() {
                         <Banknote className="mr-2 h-4 w-4" />
                         Bulk Tambah Modal
                       </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        onSelect={() => handleBulkActionClick('delete')}
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Bulk Delete
-                      </DropdownMenuItem>
+                      <PermissionGate permission="account.delete">
+                        <DropdownMenuItem 
+                          onSelect={() => handleBulkActionClick('delete')}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Bulk Delete
+                        </DropdownMenuItem>
+                      </PermissionGate>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 )}
@@ -1452,15 +1454,17 @@ function RouteComponent() {
                                       Unfreeze
                                     </DropdownMenuItem>
                                   )}
-                              <DropdownMenuItem
-                                onSelect={() => handleDeleteAccount(account)}
-                              >
-                                <span>
-                                  <Trash2 />
-                                </span>
-                                {' '}
-                                Delete
-                              </DropdownMenuItem>
+                              <PermissionGate permission="account.delete">
+                                <DropdownMenuItem
+                                  onSelect={() => handleDeleteAccount(account)}
+                                >
+                                  <span>
+                                    <Trash2 />
+                                  </span>
+                                  {' '}
+                                  Delete
+                                </DropdownMenuItem>
+                              </PermissionGate>
                               <DropdownMenuItem
                                 onSelect={() => handleClearAccount(account)}
                               >

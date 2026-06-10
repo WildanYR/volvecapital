@@ -1,0 +1,47 @@
+# Fitur Manajemen Perangkat Seluruh Akun (Tenant-wide Device Management)
+
+Tujuan: Memungkinkan `TENANT_OWNER` dan Staff yang memiliki *permission* khusus untuk melihat dan mengelola (revoke) semua sesi yang aktif di dalam tenant tersebut, baik milik Owner maupun seluruh staff (sub-akun).
+
+## User Review Required
+Saat ini perangkat yang muncul di halaman pengaturan akun hanyalah perangkat milik Anda sendiri. Jika ingin menampilkan **semua perangkat dari seluruh staff**, saya mengusulkan desain berikut:
+
+1. **Permission Baru**: Menambahkan *permission* `device.view` (untuk melihat) dan `device.delete` (untuk meng-kick). Owner secara otomatis memiliki semua akses.
+2. **Endpoint Backend Baru**: Membuat endpoint baru `GET /tenant/all-device-sessions` yang akan menarik semua sesi berdasarkan `tenant_id`, lalu menggabungkannya dengan nama masing-masing staff.
+3. **Perubahan Tampilan di UI**:
+   - Di halaman `accountsetting`, jika user memiliki akses `device.view` atau merupakan Owner, mereka akan melihat **Semua Perangkat yang Login ke Tenant Ini**.
+   - Pada list perangkat, akan ditambahkan label identitas pemilik perangkat, misalnya:
+     - **Google Chrome di Windows** `(Owner)`
+     - **Apple Safari di macOS** `(Staff: Budi)`
+   - Staff biasa (yang tidak diberi *permission*) **hanya** akan melihat perangkat milik mereka sendiri, persis seperti tampilan saat ini.
+
+## Proposed Changes
+
+### Database & Permissions
+#### [MODIFY] packages/shared-types/src/permission.ts (jika ada)
+Menambahkan permission `device.view` dan `device.delete`.
+
+### Backend API
+#### [MODIFY] apps/api/src/modules/tenant/tenant.controller.ts
+- Menambahkan `GET /owner/all-device-sessions` (hanya owner)
+- Menambahkan `POST /owner/all-device-sessions/:sessionId/revoke`
+
+#### [MODIFY] apps/api/src/modules/dashboard-user/dashboard-user.controller.ts
+- Menambahkan `GET /device-sessions/all` dengan *guard* `RequirePermissions('device.view')`.
+- Menambahkan `POST /device-sessions/all/:sessionId/revoke` dengan *guard* `RequirePermissions('device.delete')`.
+
+#### [MODIFY] apps/api/src/modules/tenant/tenant.service.ts & dashboard-user.service.ts
+- Menambahkan *logic* untuk query `findAll` pada `device_session` berdasarkan `tenant_id`.
+- Melakukan pemetaan `user_id` ke nama asli *user* dengan melakukan query ke tabel `DashboardUser` di skema spesifik tenant.
+
+### Frontend
+#### [MODIFY] apps/dashboard/src/services/tenant.service.ts & dashboard-user.service.ts
+- Menambahkan fungsi pemanggilan API untuk list seluruh perangkat tenant.
+
+#### [MODIFY] apps/dashboard/src/routes/dashboard/accountsetting/index.tsx
+- Memodifikasi `useQuery` agar memanggil API *all devices* jika *user* memiliki hak akses.
+- Memodifikasi UI list perangkat agar menampilkan nama pemilik *device*.
+
+## Verification Plan
+1. Owner dapat melihat daftar semua perangkat yang terkoneksi ke tenant miliknya (termasuk milik staff) beserta label identitasnya.
+2. Staff tanpa *permission* hanya melihat perangkatnya sendiri.
+3. Staff dengan *permission* dapat melihat perangkat semua orang dan bisa menendang paksa perangkat asing.

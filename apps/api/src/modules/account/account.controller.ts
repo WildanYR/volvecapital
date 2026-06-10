@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   HttpCode,
   HttpStatus,
@@ -99,6 +100,12 @@ export class AccountController {
     @Body() body: { ids: string[]; action: any; payload?: any },
     @Request() request: AppRequest,
   ) {
+    if (body.action === 'delete') {
+      const user = request.user;
+      if (user?.role === 'DASHBOARD_USER' && !user.permissions?.includes('account.delete')) {
+        throw new ForbiddenException('Aksi ditolak: Anda tidak memiliki akses untuk menghapus akun.');
+      }
+    }
     return this.accountService.bulkAction(request.tenant_id!, body.ids, body.action, body.payload);
   }
 
