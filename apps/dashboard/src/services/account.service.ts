@@ -107,7 +107,7 @@ export interface CreateAccountUserPayload {
   product_variant_id: string
   status?: string
   account_profile_id?: string
-  price?: string
+  price?: number
   transaction?: CreateAccountUserTransaction
   expired_at?: Date
 }

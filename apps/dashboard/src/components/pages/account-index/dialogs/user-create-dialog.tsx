@@ -56,7 +56,7 @@ export function PagesAccountIndexDialogUserCreate({ open, initialFormData, onOpe
               account_profile_id: value.account_profile_id
                 ? value.account_profile_id
                 : undefined,
-              price: value.price ? value.price : undefined,
+              price: value.price ? Number.parseInt(value.price) : undefined,
               transaction: value.transaction
                 ? {
                     platform: value.transaction.platform,
