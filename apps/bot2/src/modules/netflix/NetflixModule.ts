@@ -6,10 +6,10 @@ import { CHANGE_PASSWORD_URL, CLEAR_COOKIE_URL } from "./constants.js";
 import { sanitizeEmail } from "./utils.js";
 import { ResetPasswordPayload } from "./types/payload.type.js";
 import { getPwdCurrentPasswordInput } from "./locators/changePassword.js";
-import { updateNetflixAccountStatus } from "./api.js";
 import { generateNewPassword, handleChangePassword, handleResetPassword } from "./helpers/reset-password.js";
 import { NetflixConfig } from "./types/config.type.js";
 import { getLoginState, handleLoginPwdNetflix, handleNetflixMFA } from "./helpers/auth.js";
+import { sendNewPasswordToServer } from "./helpers/send-new-password.js";
 
 export class NetflixModule extends BaseModule {
   private moduleConfig: NetflixConfig;
@@ -83,8 +83,8 @@ export class NetflixModule extends BaseModule {
     try {
       // 1. Auth Check
       await page.goto(CHANGE_PASSWORD_URL, {waitUntil: 'domcontentloaded'});
-
       this.logger.info("Cek status login Netflix");
+
       const loginState = await getLoginState(page, 10_000, (pg, timeout) => [
         getPwdCurrentPasswordInput(pg)
           .waitFor({ state: "visible", timeout })
@@ -92,82 +92,18 @@ export class NetflixModule extends BaseModule {
       ])
 
       if (loginState === "logout") {
-        // 2.1 Request Reset Password
         this.logger.info("Belum login, melanjutkan login");
-        let isMfaDone = false
         try {
           await handleLoginPwdNetflix(page, {email, password})
-          try {
-            this.logger.info("Login berhasil, melanjutkan ganti password");
-            await handleChangePassword(
-              page,
-              {email, password, newPassword},
-              (level, message, context) => {
-                this.logger.log(level, message, context)
-              }
-            )
-          } catch(error) {
-            this.logger.error("Gagal mengubah password, melanjutkan MFA");
-            isMfaDone = true
-            await handleNetflixMFA(
-              page,
-              {email},
-              (level, message, context) => {
-                this.logger.log(level, message, context)
-              },
-              (eventName) => this.subscribeSocketEvent(eventName),
-              (eventName) => this.unsubscribeSocketEvent(eventName),
-              (eventName) => {
-                return this.waitForSocketEvent(eventName, 300_000)
-              }
-            )
-            this.logger.info("MFA berhasil, mengulangi ubah password");
-            await handleChangePassword(
-              page,
-              {email, password, newPassword},
-              (level, message, context) => {
-                this.logger.log(level, message, context)
-              }
-            )
-          }
         } catch(error) {
-          if (!isMfaDone) {
-            this.logger.error("Gagal login, fallback dengan reset password");
-            await page.goto(CLEAR_COOKIE_URL, {waitUntil: 'domcontentloaded'})
-            await handleResetPassword(
-              page,
-              {
-                email,
-                newPassword
-              },
-              (level, message, context) => {
-                this.logger.log(level, message, context)
-              },
-              (eventName) => this.subscribeSocketEvent(eventName),
-              (eventName) => this.unsubscribeSocketEvent(eventName),
-              (eventName) => {
-                return this.waitForSocketEvent(eventName, 300_000)
-              }
-            )
-          } else {
-            throw error
-          }
-        }
-      } else {
-        this.logger.info("Login berhasil, melanjutkan ganti password");
-        try {
-          await handleChangePassword(
+          this.logger.error("Gagal login, fallback dengan reset password");
+          await page.goto(CLEAR_COOKIE_URL, {waitUntil: 'domcontentloaded'})
+          await handleResetPassword(
             page,
-            {email, password, newPassword},
-            (level, message, context) => {
-              this.logger.log(level, message, context)
-            }
-          )
-        } catch(error) {
-          this.logger.error("Gagal mengubah password, melanjutkan MFA");
-          await handleNetflixMFA(
-            page,
-            {email},
+            {
+              email,
+              newPassword
+            },
             (level, message, context) => {
               this.logger.log(level, message, context)
             },
@@ -177,43 +113,72 @@ export class NetflixModule extends BaseModule {
               return this.waitForSocketEvent(eventName, 300_000)
             }
           )
-          this.logger.info("MFA berhasil, mengulangi ubah password");
-          await handleChangePassword(
-            page,
-            {email, password, newPassword},
-            (level, message, context) => {
-              this.logger.log(level, message, context)
+          return await sendNewPasswordToServer(
+            {
+              apiBaseUrl: this.apiBaseUrl,
+              authCredentials: this.authCredentials,
+              instanceId: this.instanceId
+            },
+            {
+              accountId: payload.accountId,
+              email: email,
+              newPassword
+            },
+            (level, message, context, logToDb) => {
+              this.logger.log(level, message, context, logToDb)
             }
           )
         }
       }
 
-      this.logger.info(`Password Netflix ${email} berhasil diubah: ${newPassword}`);
-
-      // 4. send status to server
+      this.logger.info("Login berhasil, melanjutkan ganti password");
       try {
-        if (!payload.accountId) {
-          throw new Error("Netflix reset payload missing accountId");
-        }
-        await updateNetflixAccountStatus(
-          this.apiBaseUrl,
-          this.authCredentials,
-          payload.accountId,
-          newPassword,
-        );
+        await handleChangePassword(
+          page,
+          {email, password, newPassword},
+          (level, message, context) => {
+            this.logger.log(level, message, context)
+          }
+        )
       } catch (error) {
-        this.logger.error(
-          `Berhasil reset password Netflix pada ${email} tapi gagal update data app: ${error instanceof Error ? error.message : String(error)}`,
-          {
-            instanceId: this.instanceId,
+        this.logger.error("Gagal mengubah password, melanjutkan MFA");
+        await handleNetflixMFA(
+          page,
+          {email},
+          (level, message, context) => {
+            this.logger.log(level, message, context)
           },
-          {
-            level: "NEED_ACTION",
-            context: "ResetNetflixPassword",
-            customMessage: `⚠️ Berhasil reset password netflix\ntapi gagal update data di app [${error instanceof Error ? error.message : String(error)}]\n\nSilahkan clear dan ubah password manual pada email tersebut.\nEmail: ${email}\nPassword baru: ${newPassword}`,
-          },
-        );
+          (eventName) => this.subscribeSocketEvent(eventName),
+          (eventName) => this.unsubscribeSocketEvent(eventName),
+          (eventName) => this.waitForSocketEvent(eventName, 300_000)
+        )
+
+        this.logger.info("MFA berhasil, mengulangi ubah password");
+        await handleChangePassword(
+          page,
+          {email, password, newPassword},
+          (level, message, context) => {
+            this.logger.log(level, message, context)
+          }
+        )
       }
+
+      this.logger.info(`Password Netflix ${email} berhasil diubah: ${newPassword}`);
+      await sendNewPasswordToServer(
+        {
+          apiBaseUrl: this.apiBaseUrl,
+          authCredentials: this.authCredentials,
+          instanceId: this.instanceId
+        },
+        {
+          accountId: payload.accountId,
+          email: email,
+          newPassword
+        },
+        (level, message, context, logToDb) => {
+          this.logger.log(level, message, context, logToDb)
+        }
+      )
     } catch (error) {
       this.logger.error(
         `Failed to reset netflix password for ${email}: ${error instanceof Error ? error.message : String(error)}`,

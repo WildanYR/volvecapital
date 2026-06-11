@@ -119,6 +119,7 @@ export async function handleResetPassword(
   waitEventResponse: <T>(eventName: string) => Promise<T>
 ) {
   const eventName = `${sanitizeEmail(payload.email)}:NETFLIX_REQ_RESET_PASSWORD`;
+  let isResetPasswordSuccess = false
   try {
     await subscribeSocketEvent(eventName);
 
@@ -138,9 +139,9 @@ export async function handleResetPassword(
       const rstPwdAlert = getRstPwdAlert(page)
       const rstPwdValidationError = getRstPwdEmailValidationError(page)
       const resetStatus = await Promise.race([
-        rstPwdAlert.waitFor({state: 'visible', timeout: 15_000}).then(() => 'failed' as const),
-        rstPwdValidationError.waitFor({state: 'visible', timeout: 15_000}).then(() => 'validationError' as const),
-        getRstPwdEmailSentTitle(page).waitFor({state: 'visible', timeout: 15_000}).then(() => 'success' as const),
+        rstPwdAlert.waitFor({state: 'visible', timeout: 16_000}).then(() => 'failed' as const),
+        rstPwdValidationError.waitFor({state: 'visible', timeout: 16_000}).then(() => 'validationError' as const),
+        getRstPwdEmailSentTitle(page).waitFor({state: 'visible', timeout: 16_000}).then(() => 'success' as const),
         sleep(15_000).then(() => 'timeout' as const)
       ])
       if (resetStatus !== 'success') {
@@ -212,6 +213,7 @@ export async function handleResetPassword(
       ])
 
       if (resetPasswordStatus === 'success') {
+        isResetPasswordSuccess = true
         break;
       } else {
         let msg = ''
@@ -226,6 +228,10 @@ export async function handleResetPassword(
         }
         log('warn', `mengulang reset password (${attempt}/3): ${msg}`)
       }
+    }
+
+    if (!isResetPasswordSuccess) {
+      throw new Error("gagal setelah 3 kali percobaan");
     }
   }
   catch (error) {
