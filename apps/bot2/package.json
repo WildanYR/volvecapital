@@ -14,14 +14,15 @@
     "better-sqlite3": "^12.6.2",
     "js-toml": "^1.0.2",
     "playwright": "^1.58.0",
-    "socket.io-client": "^4.8.3",
     "winston": "^3.19.0",
     "winston-daily-rotate-file": "^5.0.0",
+    "ws": "^8.21.0",
     "yoctocolors": "^2.1.2"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^25.0.10",
+    "@types/ws": "^8.18.1",
     "@vercel/ncc": "^0.38.0",
     "@volvecapital/eslint-config": "workspace:^",
     "tsx": "^4.19.0",

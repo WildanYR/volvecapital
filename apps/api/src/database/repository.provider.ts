@@ -5,6 +5,7 @@ import {
   ACCOUNT_REPOSITORY,
   ACCOUNT_USER_REPOSITORY,
   EMAIL_MESSAGE_REPOSITORY,
+  EMAIL_MESSAGE_TS_REPOSITORY,
   EMAIL_REPOSITORY,
   EMAIL_SUBJECT_REPOSITORY,
   EXPENSE_REPOSITORY,
@@ -23,12 +24,12 @@ import {
   TRANSACTION_ITEM_TS_REPOSITORY,
   TRANSACTION_REPOSITORY,
   TRANSACTION_TS_REPOSITORY,
-  EMAIL_MESSAGE_TS_REPOSITORY,
 } from 'src/constants/database.const';
 import { AccountModifier } from './models/account-modifier.model';
 import { AccountProfile } from './models/account-profile.model';
 import { AccountUser } from './models/account-user.model';
 import { Account } from './models/account.model';
+import { EmailMessageTS } from './models/email-message-ts.model';
 import { EmailMessage } from './models/email-message.model';
 import { EmailSubject } from './models/email-subject.model';
 import { Email } from './models/email.model';
@@ -48,7 +49,6 @@ import { TransactionItemTS } from './models/transaction-item-ts.model';
 import { TransactionItem } from './models/transaction-item.model';
 import { TransactionTS } from './models/transaction-ts.model';
 import { Transaction } from './models/transaction.model';
-import { EmailMessageTS } from './models/email-message-ts.model';
 
 export const RepositoryProvider: Provider[] = [
   { provide: TENANT_REPOSITORY, useValue: Tenant },

@@ -1,6 +1,6 @@
-import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
+import { useState } from 'react'
 import { PeakHourChart } from '@/dashboard/components/chart/peak-hour-chart'
 import { PlatformList } from '@/dashboard/components/chart/platform-list'
 import { ProductSales } from '@/dashboard/components/chart/product-sales'
@@ -92,7 +92,10 @@ function RouteComponent() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <Card>
                           <CardHeader>
-                            <CardTitle>Penghasilan Bersih {getRangeLabel(range)}</CardTitle>
+                            <CardTitle>
+                              Penghasilan Bersih
+                              {getRangeLabel(range)}
+                            </CardTitle>
                             <CardDescription>
                               Update data:
                               {' '}
@@ -116,7 +119,10 @@ function RouteComponent() {
                         </Card>
                         <Card>
                           <CardHeader>
-                            <CardTitle>Total Pengeluaran {getRangeLabel(range)}</CardTitle>
+                            <CardTitle>
+                              Total Pengeluaran
+                              {getRangeLabel(range)}
+                            </CardTitle>
                             <CardDescription>
                               Update data:
                               {' '}
@@ -135,7 +141,11 @@ function RouteComponent() {
                         </Card>
                         <Card className="md:col-span-2">
                           <CardHeader>
-                            <CardTitle>Grafik Keuangan ({getRangeLabel(range)})</CardTitle>
+                            <CardTitle>
+                              Grafik Keuangan (
+                              {getRangeLabel(range)}
+                              )
+                            </CardTitle>
                           </CardHeader>
                           <CardContent>
                             <RevenueChart data={allStatistic.revenue} />

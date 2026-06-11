@@ -1,8 +1,8 @@
 /**
- * Connector - Socket.IO client for external server communication
+ * Connector - Standard WebSocket client for external server communication
  */
 
-import { io, type Socket } from "socket.io-client";
+import { WebSocket } from "ws";
 import type { TaskManager } from "./TaskManager.js";
 import type { Logger } from "./Logger.js";
 import type { EventBus } from "./EventBus.js";
@@ -23,6 +23,10 @@ interface GetStatusPayload {
   statusEndpoint: string;
 }
 
+interface CustomWebSocket extends WebSocket {
+  id?: string;
+}
+
 export class Connector {
   private socketBaseUrl: string;
   private appName: string;
@@ -32,8 +36,12 @@ export class Connector {
   private logger: Logger;
   private eventBus: EventBus;
 
-  private socket: Socket | null = null;
+  private socket: CustomWebSocket | null = null;
   private isConnected: boolean = false;
+  private reconnectTimeout: NodeJS.Timeout | null = null;
+  private reconnectDelay = 1000;
+  private maxReconnectDelay = 30000;
+  private intentionalDisconnect = false;
 
   constructor(
     config: AppConfig,
@@ -60,56 +68,97 @@ export class Connector {
       return;
     }
 
+    this.intentionalDisconnect = false;
+
     return new Promise((resolve, reject) => {
       this.logger.info(`Connecting to server: ${this.socketBaseUrl}`);
 
-      this.socket = io(this.socketBaseUrl, {
-        auth: {
-          token: this.authCredentials.token,
-        },
-        query: {
-          connection_name: this.appName,
-          connection_type: "BOT",
-        },
-        reconnection: true,
-        reconnectionDelay: 1000,
-        reconnectionDelayMax: 30000,
+      if (this.reconnectTimeout) {
+        clearTimeout(this.reconnectTimeout);
+        this.reconnectTimeout = null;
+      }
+
+      const wsUrl = new URL(this.socketBaseUrl);
+      wsUrl.pathname = "/socket.io/";
+      wsUrl.searchParams.set("token", this.authCredentials.token);
+      wsUrl.searchParams.set("connection_name", this.appName);
+      wsUrl.searchParams.set("connection_type", "BOT");
+
+      const socket = new WebSocket(wsUrl.toString()) as CustomWebSocket;
+      this.socket = socket;
+
+      let resolved = false;
+
+      socket.on("open", () => {
+        this.logger.info("WebSocket connection opened, waiting for authentication...");
       });
 
-      // Connection events
-      this.socket.on("connect", () => {
-        this.isConnected = true;
-        this.logger.info("Connected to server");
-        this.broadcastSocketStatus();
-        resolve();
-      });
+      socket.on("message", (rawData) => {
+        try {
+          const parsed = JSON.parse(rawData.toString());
+          const { event, data } = parsed;
 
-      this.socket.on("disconnect", (reason) => {
-        this.isConnected = false;
-        this.logger.warn(`Disconnected from server: ${reason}`);
-        this.broadcastSocketStatus();
-      });
+          if (event === "connect_error") {
+            const fatalErrors = [
+              "ValidationError",
+              "InternalServerError",
+              "InvalidTokenError",
+            ];
+            if (data && fatalErrors.includes(data.type)) {
+              this.intentionalDisconnect = true;
+              socket.close();
+              if (!resolved) {
+                resolved = true;
+                reject(new Error(data.message));
+              }
+              return;
+            }
+          }
 
-      this.socket.on("connect_error", (error: any) => {
-        const fatalErrors = [
-          "ValidationError",
-          "InternalServerError",
-          "InvalidTokenError",
-        ];
-        const errorData =
-          (error.data as ConnectorConnectErrorData) || undefined;
+          if (event === "connected") {
+            socket.id = data.id;
+            this.isConnected = true;
+            this.logger.info(`Connected and authenticated with ID: ${data.id}`);
+            this.broadcastSocketStatus();
+            this.reconnectDelay = 1000;
+            this.registerHandlers();
+            if (!resolved) {
+              resolved = true;
+              resolve();
+            }
+            return;
+          }
 
-        if (errorData && fatalErrors.includes(errorData.type)) {
-          this.socket?.disconnect();
-          this.socket?.removeAllListeners();
-          reject(new Error(errorData.message));
+          if (this.isConnected) {
+            switch (event) {
+              case "task-dispatch":
+                this.handleTaskDispatch(data);
+                break;
+              case "event":
+                this.handleEvent(data);
+                break;
+              case "get_status":
+                this.handleGetStatus(data);
+                break;
+            }
+          }
+        } catch (error) {
+          this.logger.error(`Error parsing WS message: ${error instanceof Error ? error.message : String(error)}`);
         }
-
-        this.logger.error(`Connection error: ${error.message}`);
       });
 
-      // Register command handlers
-      this.registerHandlers();
+      socket.on("close", (code, reason) => {
+        const reasonStr = reason.toString() || `code ${code}`;
+        this.handleClose(reasonStr);
+        if (!resolved) {
+          resolved = true;
+          reject(new Error(`WebSocket closed before auth: ${reasonStr}`));
+        }
+      });
+
+      socket.on("error", (error) => {
+        this.logger.error(`Socket error: ${error.message}`);
+      });
     });
   }
 
@@ -117,8 +166,13 @@ export class Connector {
    * Disconnect from the server
    */
   disconnect(): void {
+    this.intentionalDisconnect = true;
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout);
+      this.reconnectTimeout = null;
+    }
     if (this.socket) {
-      this.socket.disconnect();
+      this.socket.close();
       this.socket = null;
       this.isConnected = false;
       this.logger.info("Disconnected from server");
@@ -133,26 +187,31 @@ export class Connector {
   }
 
   /**
+   * Handle close event and schedule reconnection
+   */
+  private handleClose(reason: string): void {
+    this.isConnected = false;
+    this.logger.warn(`Disconnected from server: ${reason}`);
+    this.broadcastSocketStatus();
+
+    if (this.config.enabled && !this.intentionalDisconnect) {
+      if (this.reconnectTimeout) {
+        clearTimeout(this.reconnectTimeout);
+      }
+      this.logger.info(`Reconnecting in ${this.reconnectDelay}ms...`);
+      this.reconnectTimeout = setTimeout(() => {
+        this.reconnectDelay = Math.min(this.reconnectDelay * 2, this.maxReconnectDelay);
+        this.connect().catch((err) => {
+          this.logger.error(`Reconnection attempt failed: ${err.message}`);
+        });
+      }, this.reconnectDelay);
+    }
+  }
+
+  /**
    * Register event handlers for server commands
    */
   private registerHandlers(): void {
-    if (!this.socket) return;
-
-    // Handle unified task-dispatch event
-    this.socket.on("task-dispatch", (payload: DispatchTaskData) => {
-      this.handleTaskDispatch(payload);
-    });
-
-    // Handle event event
-    this.socket.on("event", (payload: EventData) => {
-      this.handleEvent(payload);
-    });
-
-    // Handle get_status command (response via fetch API)
-    this.socket.on("get_status", (payload: GetStatusPayload) => {
-      this.handleGetStatus(payload);
-    });
-
     // Subscribe ke EventBus untuk task completion events
     this.listenToEventBus();
 
@@ -224,7 +283,6 @@ export class Connector {
   private handleEvent(data: EventData): void {
     try {
       this.logger.info(`Received event: ${data.eventName}`);
-      // TODO #send-event
       this.eventBus.emit(data.eventName, data.payload);
     } catch (error) {
       this.logger.error(
@@ -241,7 +299,7 @@ export class Connector {
       this.logger.warn("Cannot emit task-reject: not connected");
       return;
     }
-    this.socket.emit("task-reject", data);
+    this.socket.send(JSON.stringify({ event: "task-reject", data }));
     this.logger.debug(`Emitted task-reject for ${data.taskId}`);
   }
 
@@ -253,7 +311,7 @@ export class Connector {
       this.logger.warn("Cannot emit task-done: not connected");
       return;
     }
-    this.socket.emit("task-done", data);
+    this.socket.send(JSON.stringify({ event: "task-done", data }));
     this.logger.debug(`Emitted task-done for ${data.taskId}: ${data.status}`);
   }
 

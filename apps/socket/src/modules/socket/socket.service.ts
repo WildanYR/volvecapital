@@ -1,4 +1,3 @@
-import type { Socket } from 'socket.io';
 import { Inject, Injectable } from '@nestjs/common';
 import { TASK_QUEUE_REPOSITORY, TENANT_REPOSITORY } from 'src/constants/database.const';
 import { TaskQueue } from 'src/database/models/task-queue.model';
@@ -8,10 +7,11 @@ import { IAccessTokenPayload } from 'src/types/access-token.type';
 import { AppLoggerService } from '../logger/logger.service';
 import { TokenProvider } from '../utility/token.provider';
 import { ConnectionTaskDoneData, DispatchTaskData, EventData } from './types/connection-task.type';
+import { CustomWebSocket } from './types/custom-websocket.type';
 import { SocketAuthContext, SocketConnectionSummary, SocketConnectionType } from './types/socket-connection.type';
 
 interface SocketConnection {
-  socket: Socket;
+  socket: CustomWebSocket;
   name: string;
   tenant_id: string;
   type: SocketConnectionType;
@@ -45,7 +45,6 @@ export class SocketService {
     const tokenPayload = this.tokenProvider.decodeJwt<IAccessTokenPayload>(token);
 
     const transaction = await this.postgresProvider.transaction();
-
     try {
       await this.postgresProvider.setSchema('master', transaction);
       const tenant = await this.tenantRepository.findOne({
@@ -63,8 +62,15 @@ export class SocketService {
       );
 
       await transaction.commit();
+
+      return {
+        tenant_id: tokenPayload.tenant_id,
+        name,
+        type,
+      };
     }
     catch (error) {
+      console.error(error);
       const isJwtError = error instanceof Error
         && ['JsonWebTokenError', 'TokenExpiredError', 'NotBeforeError'].includes(error.name);
 
@@ -92,15 +98,9 @@ export class SocketService {
       };
       throw err;
     }
-
-    return {
-      tenant_id: tokenPayload.tenant_id,
-      name,
-      type,
-    };
   }
 
-  registerConnection(client: Socket, authContext: SocketAuthContext) {
+  registerConnection(client: CustomWebSocket, authContext: SocketAuthContext) {
     this.connections.set(client.id, {
       socket: client,
       name: authContext.name,
@@ -250,7 +250,10 @@ export class SocketService {
       return null;
     }
 
-    availableBot.socket.emit('task-dispatch', { taskId, ...dispatchTaskData } satisfies DispatchTaskData);
+    availableBot.socket.send(JSON.stringify({
+      event: 'task-dispatch',
+      data: { taskId, ...dispatchTaskData } satisfies DispatchTaskData,
+    }));
     return availableBot.socket.id;
   }
 
@@ -266,7 +269,10 @@ export class SocketService {
         return;
       }
 
-      conn.socket.emit('event', { eventName, payload } satisfies EventData);
+      conn.socket.send(JSON.stringify({
+        event: 'event',
+        data: { eventName, payload } satisfies EventData,
+      }));
     });
   }
 
