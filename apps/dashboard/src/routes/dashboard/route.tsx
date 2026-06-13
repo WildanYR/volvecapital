@@ -246,7 +246,7 @@ function RouteComponent() {
         </SidebarContent>
       </Sidebar>
       <main className="flex-1 min-w-0 overflow-x-hidden max-w-full">
-        <div className="flex justify-between items-center p-3 border-b-2 border-border bg-background sticky top-0 z-30">
+        <div className="flex justify-between items-center p-3 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-30">
           <SidebarTrigger className="cursor-pointer" />
           <div className="flex items-center gap-4">
             <StockNotification />
