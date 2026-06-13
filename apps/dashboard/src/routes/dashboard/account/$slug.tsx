@@ -1978,78 +1978,84 @@ function RouteComponent() {
                           </DropdownMenu>
                         </div>
                       </div>
-                      {Array.from({ length: Math.max(profile.max_user, profile.user?.length || 0) }, (_, i) => (
-                        <div
-                          key={`user-${profile.id}-${i}`}
-                          className="flex justify-between items-center bg-secondary px-4 py-2"
-                        >
-                          {profile.user?.length && profile.user[i]?.id
-                            ? (
-                                <>
-                                  <div>
-                                    <p className="font-medium">{profile.user[i].name}</p>
-                                    <p className="text-xs">
-                                      Berakhir:
-                                      {' '}
-                                      {formatDateIdStandard(profile.user[i].expired_at)}
-                                    </p>
-                                  </div>
-                                  <div className="flex gap-4">
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => {
-                                        handleOpenAccountUserUpdateDialog(profile.user![i])
-                                      }}
-                                      className="cursor-pointer text-xs"
-                                    >
-                                      <SquarePen className="size-4" />
-                                      {' '}
-                                      Edit User
-                                    </Button>
-                                    <MoveUserModal 
-                                      user={profile.user![i]} 
-                                      currentAccountId={selectedAccount.id} 
-                                    />
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => {
-                                        handleExpireAccountUser(profile.user![i])
-                                      }}
-                                      className="cursor-pointer text-xs"
-                                    >
-                                      <ClockFading className="size-4" />
-                                      {' '}
-                                      Expire User
-                                    </Button>
-                                  </div>
-                                </>
-                              )
-                            : (
-                                <>
-                                  <p className="text-sm italic">No User</p>
+                      {(() => {
+                        const activeUsers = profile.user || []
+                        const emptySlotsCount = Math.max(0, profile.max_user - activeUsers.length)
+                        return (
+                          <>
+                            {activeUsers.map((user) => (
+                              <div
+                                key={`user-${profile.id}-${user.id}`}
+                                className="flex justify-between items-center bg-secondary px-4 py-2"
+                              >
+                                <div>
+                                  <p className="font-medium">{user.name}</p>
+                                  <p className="text-xs">
+                                    Berakhir:
+                                    {' '}
+                                    {formatDateIdStandard(user.expired_at)}
+                                  </p>
+                                </div>
+                                <div className="flex gap-4">
                                   <Button
-                                    variant="ghost"
+                                    variant="outline"
                                     size="sm"
                                     onClick={() => {
-                                      handleOpenAccountUserDialog({
-                                        product_variant_id:
-                                          selectedAccount.product_variant_id,
-                                        product_variant: selectedAccount.product_variant,
-                                        account_profile_id: profile.id,
-                                      })
+                                      handleOpenAccountUserUpdateDialog(user)
                                     }}
                                     className="cursor-pointer text-xs"
                                   >
-                                    <UserPlus className="size-4" />
+                                    <SquarePen className="size-4" />
                                     {' '}
-                                    Tambah User
+                                    Edit User
                                   </Button>
-                                </>
-                              )}
-                        </div>
-                      ))}
+                                  <MoveUserModal 
+                                    user={user} 
+                                    currentAccountId={selectedAccount.id} 
+                                  />
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      handleExpireAccountUser(user)
+                                    }}
+                                    className="cursor-pointer text-xs"
+                                  >
+                                    <ClockFading className="size-4" />
+                                    {' '}
+                                    Expire User
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                            {Array.from({ length: emptySlotsCount }).map((_, i) => (
+                              <div
+                                key={`empty-${profile.id}-${i}`}
+                                className="flex justify-between items-center bg-secondary px-4 py-2"
+                              >
+                                <p className="text-sm italic">No User</p>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    handleOpenAccountUserDialog({
+                                      product_variant_id:
+                                        selectedAccount.product_variant_id,
+                                      product_variant: selectedAccount.product_variant,
+                                      account_profile_id: profile.id,
+                                    })
+                                  }}
+                                  className="cursor-pointer text-xs"
+                                >
+                                  <UserPlus className="size-4" />
+                                  {' '}
+                                  Tambah User
+                                </Button>
+                              </div>
+                            ))}
+                          </>
+                        )
+                      })()}
                     </div>
                   ))}
                 </ScrollArea>

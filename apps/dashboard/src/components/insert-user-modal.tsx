@@ -88,7 +88,9 @@ export function InsertUserModal({ targetAccountId, targetProfileId }: InsertUser
       toast.success('User berhasil diselipkan!')
       setOpen(false)
       resetForm()
+      queryClient.invalidateQueries({ queryKey: ['accounts'] })
       queryClient.invalidateQueries({ queryKey: ['account'] })
+      queryClient.invalidateQueries({ queryKey: ['countAccount'] })
     },
     onError: (err: any) => {
       toast.error(err.response?.data?.message || err.message || 'Gagal menyelipkan user')

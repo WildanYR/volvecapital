@@ -1751,16 +1751,14 @@ export class AccountService {
         const accounts = await this.accountRepository.findAll({
           where: {
             id: { [Op.ne]: accountUser.account_id },
+            product_variant_id: originalVariant.id,
             batch_end_date: { [Op.gt]: new Date(Date.now() + 5 * 60 * 60 * 1000) },
           },
           include: [
             {
               model: ProductVariant,
               as: 'product_variant',
-              include: [{ model: Product, as: 'product' }],
-              where: {
-                duration: { [Op.lte]: 1 }
-              }
+              include: [{ model: Product, as: 'product' }]
             },
             {
               model: AccountProfile,
