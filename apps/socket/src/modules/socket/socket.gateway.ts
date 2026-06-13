@@ -7,9 +7,7 @@ import { ConnectionTaskAcceptData, ConnectionTaskDoneData, ConnectionTaskRejectD
 import { CustomWebSocket } from './types/custom-websocket.type';
 import { SocketConnectionType } from './types/socket-connection.type';
 
-@WebSocketGateway({
-  path: '/socket.io/',
-})
+@WebSocketGateway()
 export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(private readonly socketService: SocketService) {}
 
