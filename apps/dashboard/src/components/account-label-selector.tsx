@@ -13,7 +13,6 @@ import {
 import { AccountServiceGenerator } from '@/dashboard/services/account.service'
 import type { Account } from '@/dashboard/services/account.service'
 import { LabelServiceGenerator } from '@/dashboard/services/label.service'
-import type { Label } from '@/dashboard/services/label.service'
 import { API_URL } from '@/dashboard/constants/api-url.cont'
 import { useAuth } from '@/dashboard/context-providers/auth.provider'
 import { Link } from '@tanstack/react-router'
@@ -86,7 +85,7 @@ export function AccountLabelSelector({ account }: AccountLabelSelectorProps) {
         >
           <Link 
             to="/dashboard/account/$slug"
-            params={{ slug: account.product_variant.product?.slug || '' }}
+            params={{ slug: (account.product_variant.product as any)?.slug || '' }}
             search={(prev: any) => ({ ...prev, label_ids: label.id, page: 1 })}
             className="hover:underline transition-all"
             style={{ color: label.color || 'inherit' }}

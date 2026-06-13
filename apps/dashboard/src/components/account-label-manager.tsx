@@ -10,7 +10,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/dashboard/components/ui/dialog'
-import { Plus, Trash2, Tag } from 'lucide-react'
+import { Trash2, Tag } from 'lucide-react'
 import { toast } from 'sonner'
 import { LabelServiceGenerator } from '@/dashboard/services/label.service'
 import { API_URL } from '@/dashboard/constants/api-url.cont'
