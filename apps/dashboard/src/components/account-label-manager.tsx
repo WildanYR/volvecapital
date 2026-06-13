@@ -77,7 +77,7 @@ export function AccountLabelManager({ productVariantId, productVariantName }: Ac
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="gap-2 border-primary text-primary hover:bg-primary/10">
+        <Button className="gap-2 cursor-pointer">
           <Tag className="size-4" />
           Kelola Label
         </Button>

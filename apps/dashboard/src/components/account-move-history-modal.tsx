@@ -50,7 +50,7 @@ export function AccountMoveHistoryModal({ productId, productName }: AccountMoveH
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="cursor-pointer">
+        <Button className="cursor-pointer">
           <History className="size-4 mr-2" />
           Riwayat Perpindahan
         </Button>
