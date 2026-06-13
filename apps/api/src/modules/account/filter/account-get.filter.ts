@@ -8,4 +8,5 @@ export interface IAccountGetFilter {
   user?: string;
   billing?: string;
   label_ids?: string;
+  search?: string;
 }

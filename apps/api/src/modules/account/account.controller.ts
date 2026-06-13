@@ -236,6 +236,24 @@ export class AccountController {
     return this.accountService.moveAccountUser(request.tenant_id!, userId, payload);
   }
 
+  @Get(':id/move-history')
+  @RequirePermissions('account.view')
+  getMoveHistory(
+    @Param('id') accountId: string,
+    @Request() request: AppRequest,
+  ) {
+    return this.accountService.getMoveHistory(request.tenant_id!, accountId);
+  }
+
+  @Get('product/:productId/move-history')
+  @RequirePermissions('account.view')
+  getMoveHistoryByProduct(
+    @Param('productId') productId: string,
+    @Request() request: AppRequest,
+  ) {
+    return this.accountService.getMoveHistoryByProduct(request.tenant_id!, productId);
+  }
+
   @Get('users/:userId/move-recommendations')
   @RequirePermissions('account.view')
   getAccountUserMoveRecommendations(

@@ -61,6 +61,8 @@ import { toast } from 'sonner'
 import { useDebouncedCallback } from 'use-debounce'
 import { Checkbox } from '@/dashboard/components/ui/checkbox'
 import { MoveUserModal } from '@/dashboard/components/move-user-modal'
+import { InsertUserModal } from '@/dashboard/components/insert-user-modal'
+import { AccountMoveHistoryModal } from '@/dashboard/components/account-move-history-modal'
 import { AccountStatus } from '@/dashboard/components/account-status'
 import { FinancialDetailDialog } from '@/dashboard/components/financial-detail-dialog'
 import { AccountEditForm } from '@/dashboard/components/forms/account-edit.form'
@@ -1038,7 +1040,10 @@ function RouteComponent() {
             </h1>
           </div>
           <PermissionGate permission="account.edit">
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row w-full md:w-auto items-stretch sm:items-center gap-3 mt-4 md:mt-0">
+              {product && (
+                <AccountMoveHistoryModal productId={product.id} productName={product.name} />
+              )}
               <Button
                 onClick={() => {
                   handleOpenAccountUserDialog()
@@ -1935,6 +1940,7 @@ function RouteComponent() {
                           >
                             <Copy className="size-4" />
                           </Button>
+                          <InsertUserModal targetAccountId={selectedAccount.id} targetProfileId={profile.id} />
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button

@@ -86,6 +86,22 @@ export interface AccountFinancialDetails {
   revenues: Array<AccountRevenueDetail>
 }
 
+export interface AccountMoveHistory {
+  id: string
+  account_user_id: string
+  from_account_id: string
+  from_profile_id: string
+  to_account_id: string
+  to_profile_id: string
+  reason: string
+  created_at: Date
+  account_user?: AccountProfileUser
+  from_account?: Account
+  from_profile?: AccountProfile
+  to_account?: Account
+  to_profile?: AccountProfile
+}
+
 export interface AddAccountCapitalPayload {
   amount: number
   note?: string
@@ -837,6 +853,28 @@ export function AccountServiceGenerator(apiUrl: string, accessToken: string, ten
       )
       const data = await parseApiResponse(response)
       if (!response.ok) throw new Error(data.message || 'Gagal memuat rekomendasi')
+      return data
+    },
+    getAccountMoveHistory: async (accountId: string): Promise<AccountMoveHistory[]> => {
+      const response = await generateApiFetch(
+        apiUrl,
+        accessToken,
+        tenantId,
+        `/account/${accountId}/move-history`,
+      )
+      const data = await parseApiResponse(response)
+      if (!response.ok) throw new Error(data.message || 'Gagal memuat riwayat')
+      return data
+    },
+    getProductMoveHistory: async (productId: string): Promise<AccountMoveHistory[]> => {
+      const response = await generateApiFetch(
+        apiUrl,
+        accessToken,
+        tenantId,
+        `/account/product/${productId}/move-history`,
+      )
+      const data = await parseApiResponse(response)
+      if (!response.ok) throw new Error(data.message || 'Gagal memuat riwayat produk')
       return data
     },
   }

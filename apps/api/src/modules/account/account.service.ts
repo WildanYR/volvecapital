@@ -1819,4 +1819,67 @@ export class AccountService {
       throw error;
     }
   }
+  async getMoveHistory(tenantId: string, accountId: string) {
+    const transaction = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema(tenantId, transaction);
+
+      const history = await this.accountUserMoveHistoryRepository.findAll({
+        where: {
+          [Op.or]: [
+            { from_account_id: accountId },
+            { to_account_id: accountId }
+          ]
+        },
+        include: [
+          { model: AccountUser, as: 'account_user' },
+          { model: Account, as: 'from_account', include: [{ model: Email, as: 'email' }] },
+          { model: AccountProfile, as: 'from_profile' },
+          { model: Account, as: 'to_account', include: [{ model: Email, as: 'email' }] },
+          { model: AccountProfile, as: 'to_profile' }
+        ],
+        order: [['created_at', 'DESC']],
+        transaction,
+      });
+
+      await transaction.commit();
+      return history;
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
+  async getMoveHistoryByProduct(tenantId: string, productId: string) {
+    const transaction = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema(tenantId, transaction);
+
+      const history = await this.accountUserMoveHistoryRepository.findAll({
+        include: [
+          { model: AccountUser, as: 'account_user' },
+          { 
+            model: Account, 
+            as: 'from_account', 
+            include: [
+              { model: Email, as: 'email' },
+              { model: ProductVariant, as: 'product_variant', where: { product_id: productId }, required: true }
+            ],
+            required: true
+          },
+          { model: AccountProfile, as: 'from_profile' },
+          { model: Account, as: 'to_account', include: [{ model: Email, as: 'email' }] },
+          { model: AccountProfile, as: 'to_profile' }
+        ],
+        order: [['created_at', 'DESC']],
+        limit: 100,
+        transaction,
+      });
+
+      await transaction.commit();
+      return history;
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
 }
