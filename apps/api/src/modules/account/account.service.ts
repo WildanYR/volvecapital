@@ -257,7 +257,9 @@ export class AccountService {
             include: [{ 
               model: AccountUser, 
               as: 'user',
-              where: filter?.user ? { name: { [Op.iLike]: `%${filter.user}%` } } : { status: 'active' },
+              where: filter?.user 
+                ? { name: { [Op.iLike]: `%${filter.user}%` }, status: 'active' } 
+                : { status: 'active' },
               required: !!filter?.user
             }],
           },
@@ -1706,6 +1708,32 @@ export class AccountService {
         throw new NotFoundException('Profil tujuan tidak ditemukan');
       }
 
+      if (fromAccountId !== payload.to_account_id) {
+        const targetProfiles = await this.accountProfileRepository.findAll({
+          where: { account_id: payload.to_account_id },
+          include: [{
+            model: AccountUser,
+            as: 'user',
+            where: { status: 'active' },
+            required: false,
+          }],
+          transaction
+        });
+
+        let totalMaxUsers = 0;
+        let totalActiveUsers = 0;
+
+        for (const p of targetProfiles) {
+          totalMaxUsers += p.max_user || 0;
+          totalActiveUsers += p.user?.length || 0;
+        }
+
+        if (totalActiveUsers >= totalMaxUsers + 2) {
+          throw new BadRequestException('Screenlimit Prevention: Akun tujuan sudah mencapai batas maksimal 2 user selipan.');
+        }
+      }
+
+
       await this.accountUserMoveHistoryRepository.create({
         account_user_id: accountUserId,
         from_account_id: fromAccountId,
@@ -1743,16 +1771,29 @@ export class AccountService {
       const originalVariant = accountUser.account?.product_variant;
       if (!originalVariant) throw new BadRequestException('Produk Varian asal tidak ditemukan');
 
-      const isDaily = originalVariant.duration <= 1;
+      const isDaily = originalVariant.name?.toLowerCase().includes('harian') || originalVariant.duration <= 1;
 
       let recommendations: Account[] = [];
+
+      // Helper function to check if account is valid based on max 2 extra users limit
+      const isAccountValid = (acc: Account) => {
+        let totalMaxUsers = 0;
+        let totalActiveUsers = 0;
+        acc.profile?.forEach(p => {
+          totalMaxUsers += p.max_user || 0;
+          const activeUsers = p.user?.filter(u => u.status === 'active') || [];
+          totalActiveUsers += activeUsers.length;
+        });
+        return totalActiveUsers < totalMaxUsers + 2;
+      };
 
       if (isDaily) {
         const accounts = await this.accountRepository.findAll({
           where: {
             id: { [Op.ne]: accountUser.account_id },
-            product_variant_id: originalVariant.id,
-            batch_end_date: { [Op.gt]: new Date(Date.now() + 5 * 60 * 60 * 1000) },
+            product_variant_id: originalVariant.id, // Tidak boleh lintas varian
+            status: { [Op.ne]: 'enable' }, // Tidak muncul jika enable (user kosong)
+            batch_start_date: { [Op.lte]: new Date(Date.now() - 5 * 60 * 60 * 1000) }, // Dipakai minimal 5 jam lalu
           },
           include: [
             {
@@ -1770,13 +1811,7 @@ export class AccountService {
           transaction,
         });
 
-        const validAccounts = accounts.filter(acc => {
-          return acc.profile?.some(p => {
-             const activeUsers = p.user?.filter(u => u.status !== 'expired') || [];
-             return activeUsers.length <= 1;
-          });
-        });
-
+        const validAccounts = accounts.filter(isAccountValid);
         recommendations = validAccounts.slice(0, 5);
       } else {
         const targetDate = accountUser.expired_at || accountUser.account?.batch_end_date;
@@ -1787,6 +1822,7 @@ export class AccountService {
         const accounts = await this.accountRepository.findAll({
           where: {
             id: { [Op.ne]: accountUser.account_id },
+            status: { [Op.ne]: 'enable' }, // Tidak muncul jika enable
           },
           include: [
              { 
@@ -1800,8 +1836,10 @@ export class AccountService {
           transaction,
         });
 
+        const validAccounts = accounts.filter(isAccountValid);
+
         const targetTime = targetDate.getTime();
-        const sorted = accounts.sort((a, b) => {
+        const sorted = validAccounts.sort((a, b) => {
            const timeA = a.batch_end_date ? a.batch_end_date.getTime() : 0;
            const timeB = b.batch_end_date ? b.batch_end_date.getTime() : 0;
            return Math.abs(timeA - targetTime) - Math.abs(timeB - targetTime);
