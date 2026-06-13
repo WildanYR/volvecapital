@@ -7,4 +7,5 @@ export interface IAccountGetFilter {
   email?: string;
   user?: string;
   billing?: string;
+  label_ids?: string;
 }

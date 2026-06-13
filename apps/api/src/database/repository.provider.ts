@@ -32,6 +32,9 @@ import {
   ROLE_PERMISSION_REPOSITORY,
   DASHBOARD_USER_REPOSITORY,
   DEVICE_SESSION_REPOSITORY,
+  LABEL_REPOSITORY,
+  ACCOUNT_LABEL_REPOSITORY,
+  ACCOUNT_USER_MOVE_HISTORY_REPOSITORY,
 } from 'src/constants/database.const';
 import { AccountProfile } from './models/account-profile.model';
 import { AccountUser } from './models/account-user.model';
@@ -65,6 +68,9 @@ import { Permission } from './models/permission.model';
 import { RolePermission } from './models/role-permission.model';
 import { DashboardUser } from './models/dashboard-user.model';
 import { DeviceSession } from './models/device-session.model';
+import { Label } from './models/label.model';
+import { AccountLabel } from './models/account-label.model';
+import { AccountUserMoveHistory } from './models/account-user-move-history.model';
 
 export const RepositoryProvider: Provider[] = [
   { provide: TENANT_REPOSITORY, useValue: Tenant },
@@ -102,4 +108,7 @@ export const RepositoryProvider: Provider[] = [
   { provide: ROLE_PERMISSION_REPOSITORY, useValue: RolePermission },
   { provide: DASHBOARD_USER_REPOSITORY, useValue: DashboardUser },
   { provide: DEVICE_SESSION_REPOSITORY, useValue: DeviceSession },
+  { provide: LABEL_REPOSITORY, useValue: Label },
+  { provide: ACCOUNT_LABEL_REPOSITORY, useValue: AccountLabel },
+  { provide: ACCOUNT_USER_MOVE_HISTORY_REPOSITORY, useValue: AccountUserMoveHistory },
 ];

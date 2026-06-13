@@ -33,4 +33,8 @@ export class GetAllAccountQueryUrlDto extends BaseGetAllUrlQueryDto {
   @IsOptional()
   @IsString()
   billing: string;
+
+  @IsOptional()
+  @IsString()
+  label_ids: string;
 }

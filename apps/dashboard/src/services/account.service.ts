@@ -2,6 +2,7 @@ import type { Email } from './email.service'
 import type { ProductVariant } from './product.service'
 import type { MetadataObject } from '@/dashboard/lib/metadata-converter'
 import type { GetAllServiceFn } from '@/dashboard/types/get-all-service.type'
+import type { Label } from './label.service'
 import { z } from 'zod'
 import { generateApiFetch, parseApiResponse } from '@/dashboard/lib/api-fetch.util'
 import { convertStringToMetadataObject } from '@/dashboard/lib/metadata-converter'
@@ -16,6 +17,7 @@ export const AccountFilterSchema = z.object({
   email: z.string().optional(),
   user: z.string().optional(),
   billing: z.string().optional(),
+  label_ids: z.string().optional(),
 })
 
 export type AccountFilter = z.infer<typeof AccountFilterSchema>
@@ -62,6 +64,7 @@ export interface Account {
   total_revenue?: number
   profit?: number
   roi?: number
+  labels?: Array<Label>
 }
 
 export interface AccountCapital {
@@ -772,6 +775,69 @@ export function AccountServiceGenerator(apiUrl: string, accessToken: string, ten
         const errorData = await parseApiResponse(response)
         throw new Error(errorData.message || 'Failed to perform bulk action')
       }
+    },
+    assignLabel: async (accountId: string, labelId: string): Promise<void> => {
+      const response = await generateApiFetch(
+        apiUrl,
+        accessToken,
+        tenantId,
+        `/account/${accountId}/labels`,
+        undefined,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ label_id: labelId }),
+        },
+      )
+      if (!response.ok) {
+        const errorData = await parseApiResponse(response)
+        throw new Error(errorData.message || 'Failed to assign label')
+      }
+    },
+    unassignLabel: async (accountId: string, labelId: string): Promise<void> => {
+      const response = await generateApiFetch(
+        apiUrl,
+        accessToken,
+        tenantId,
+        `/account/${accountId}/labels/${labelId}`,
+        undefined,
+        {
+          method: 'DELETE',
+        },
+      )
+      if (!response.ok) {
+        const errorData = await parseApiResponse(response)
+        throw new Error(errorData.message || 'Failed to unassign label')
+      }
+    },
+    moveUser: async (userId: string, data: { to_account_id: string; to_profile_id: string; reason: string }): Promise<void> => {
+      const response = await generateApiFetch(
+        apiUrl,
+        accessToken,
+        tenantId,
+        `/account/users/${userId}/move`,
+        undefined,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        },
+      )
+      if (!response.ok) {
+        const errorData = await parseApiResponse(response)
+        throw new Error(errorData.message || 'Gagal memindah pengguna')
+      }
+    },
+    getMoveRecommendations: async (userId: string): Promise<Account[]> => {
+      const response = await generateApiFetch(
+        apiUrl,
+        accessToken,
+        tenantId,
+        `/account/users/${userId}/move-recommendations`,
+      )
+      const data = await parseApiResponse(response)
+      if (!response.ok) throw new Error(data.message || 'Gagal memuat rekomendasi')
+      return data
     },
   }
 }

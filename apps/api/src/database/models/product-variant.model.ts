@@ -18,6 +18,7 @@ import {
 } from './platform-product.model';
 import { Product, ProductAttributes } from './product.model';
 import { Tutorial, TutorialAttributes } from './tutorial.model';
+import { Label, LabelAttributes } from './label.model';
 
 export interface ProductVariantAttributes {
   id: string;
@@ -33,6 +34,7 @@ export interface ProductVariantAttributes {
   product: ProductAttributes;
   platform_product?: PlatformProductAttributes[];
   account?: AccountAttributes[];
+  labels?: LabelAttributes[];
   created_at: Date;
   updated_at: Date;
   redeem_display_config?: any;
@@ -107,6 +109,9 @@ export class ProductVariant extends Model<
 
   @HasMany(() => Account)
   declare account?: Account[];
+
+  @HasMany(() => Label)
+  declare labels?: Label[];
 
   @Column(DataType.JSONB)
   declare redeem_display_config?: any;

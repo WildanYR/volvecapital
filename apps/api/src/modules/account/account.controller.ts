@@ -23,6 +23,7 @@ import { FreezeAccountDto } from './dto/freeze-account.dto';
 import { GetAllAccountQueryUrlDto } from './dto/get-all-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
 import { BulkCreateAccountDto } from './dto/bulk-create-account.dto';
+import { MoveAccountUserDto } from './dto/move-account-user.dto';
 import { RequirePermissions } from 'src/guards/permissions.decorator';
 
 @Controller('account')
@@ -203,5 +204,44 @@ export class AccountController {
     @Request() request: AppRequest,
   ) {
     return this.accountService.registerPendingTopup(request.tenant_id!, id, body);
+  }
+
+  @Post(':id/labels')
+  @RequirePermissions('account.edit')
+  assignLabel(
+    @Param('id') accountId: string,
+    @Body() body: { label_id: string },
+    @Request() request: AppRequest,
+  ) {
+    return this.accountService.assignLabel(request.tenant_id!, accountId, body.label_id);
+  }
+
+  @Delete(':id/labels/:labelId')
+  @RequirePermissions('account.edit')
+  unassignLabel(
+    @Param('id') accountId: string,
+    @Param('labelId') labelId: string,
+    @Request() request: AppRequest,
+  ) {
+    return this.accountService.unassignLabel(request.tenant_id!, accountId, labelId);
+  }
+
+  @Post('users/:userId/move')
+  @RequirePermissions('account.edit')
+  moveAccountUser(
+    @Param('userId') userId: string,
+    @Body() payload: MoveAccountUserDto,
+    @Request() request: AppRequest,
+  ) {
+    return this.accountService.moveAccountUser(request.tenant_id!, userId, payload);
+  }
+
+  @Get('users/:userId/move-recommendations')
+  @RequirePermissions('account.view')
+  getAccountUserMoveRecommendations(
+    @Param('userId') userId: string,
+    @Request() request: AppRequest,
+  ) {
+    return this.accountService.getAccountUserMoveRecommendations(request.tenant_id!, userId);
   }
 }

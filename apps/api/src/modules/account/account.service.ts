@@ -12,6 +12,8 @@ import {
   ACCOUNT_CAPITAL_REPOSITORY,
   PRODUCT_VARIANT_REPOSITORY,
   EMAIL_REPOSITORY,
+  ACCOUNT_LABEL_REPOSITORY,
+  ACCOUNT_USER_MOVE_HISTORY_REPOSITORY,
 } from 'src/constants/database.const';
 import {
   NETFLIX_RESET_PASSWORD,
@@ -31,6 +33,9 @@ import { AccountCapital } from 'src/database/models/account-capital.model';
 import { Email } from 'src/database/models/email.model';
 import { ProductVariant } from 'src/database/models/product-variant.model';
 import { Product } from 'src/database/models/product.model';
+import { Label } from 'src/database/models/label.model';
+import { AccountLabel } from 'src/database/models/account-label.model';
+import { AccountUserMoveHistory } from 'src/database/models/account-user-move-history.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
 import { UpsertTaskQueueDto } from '../task-queue/dto/upsert-task-queue.dto';
 import { TaskQueueService } from '../task-queue/task-queue.service';
@@ -69,6 +74,10 @@ export class AccountService {
     private readonly productVariantRepository: typeof ProductVariant,
     @Inject(EMAIL_REPOSITORY)
     private readonly emailRepository: typeof Email,
+    @Inject(ACCOUNT_LABEL_REPOSITORY)
+    private readonly accountLabelRepository: typeof AccountLabel,
+    @Inject(ACCOUNT_USER_MOVE_HISTORY_REPOSITORY)
+    private readonly accountUserMoveHistoryRepository: typeof AccountUserMoveHistory,
     private readonly logger: AppLoggerService,
   ) {}
 
@@ -252,6 +261,12 @@ export class AccountService {
               required: !!filter?.user
             }],
           },
+          {
+            model: Label,
+            as: 'labels',
+            where: filter?.label_ids ? { id: { [Op.in]: filter.label_ids.split(',') } } : undefined,
+            required: !!filter?.label_ids,
+          },
         ],
         transaction,
       });
@@ -352,6 +367,7 @@ export class AccountService {
               required: false 
             }],
           },
+          { model: Label, as: 'labels' },
         ],
         transaction,
       });
@@ -1332,56 +1348,10 @@ export class AccountService {
     }
   }
 
-  registerPendingTopup(
-    tenantId: string,
-    accountId: string,
-    data: { email: string; billing: string; taskId: string },
-  ) {
-    // Hapus entri lama yang sudah > 15 menit
-    const now = new Date();
-    for (const [key, val] of this.pendingTopupStore.entries()) {
-      const age = now.getTime() - val.createdAt.getTime();
-      if (age > 15 * 60 * 1000) {
-        this.pendingTopupStore.delete(key);
-      }
-    }
-
-    const key = `${tenantId}:${accountId}`;
-    this.pendingTopupStore.set(key, {
-      accountId,
-      email: data.email,
-      billing: data.billing,
-      taskId: data.taskId,
-      tenantId,
-      createdAt: new Date(),
-    });
-
-    return { message: 'Pending topup registered' };
-  }
-
-  getPendingTopups(tenantId: string) {
-    try {
-      if (!tenantId) {
-        return [];
-      }
-      const results: any[] = [];
-      for (const [key, val] of this.pendingTopupStore.entries()) {
-        if (key.startsWith(`${tenantId}:`)) {
-          results.push(val);
-        }
-      }
-      return results;
-    }
-    catch (error) {
-      return [];
-    }
-  }
-
   clearPendingTopup(tenantId: string, accountId: string) {
     const key = `${tenantId}:${accountId}`;
     this.pendingTopupStore.delete(key);
   }
-
   async bulkAction(
     tenantId: string,
     ids: string[],
@@ -1633,6 +1603,219 @@ export class AccountService {
       if (transaction && !isCommitted) {
         await transaction.rollback();
       }
+      throw error;
+    }
+  }
+  async getPendingTopups(tenantId: string) {
+    const now = new Date();
+    const result: any[] = [];
+    for (const [key, val] of this.pendingTopupStore.entries()) {
+      if (val.tenantId !== tenantId) continue;
+      const age = now.getTime() - val.createdAt.getTime();
+      if (age > 15 * 60 * 1000) {
+        this.pendingTopupStore.delete(key);
+      } else {
+        result.push(val);
+      }
+    }
+    return result;
+  }
+
+  async registerPendingTopup(tenantId: string, accountId: string, payload: { email: string; billing: string; taskId: string }) {
+    const now = new Date();
+    for (const [key, val] of this.pendingTopupStore.entries()) {
+      const age = now.getTime() - val.createdAt.getTime();
+      if (age > 15 * 60 * 1000) {
+        this.pendingTopupStore.delete(key);
+      }
+    }
+
+    const key = `${tenantId}:${accountId}`;
+    this.pendingTopupStore.set(key, {
+      ...payload,
+      accountId,
+      tenantId,
+      createdAt: new Date()
+    });
+    return { success: true, message: 'Topup request registered' };
+  }
+
+  async assignLabel(tenantId: string, accountId: string, labelId: string) {
+    const transaction = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema(tenantId, transaction);
+
+      const existing = await this.accountLabelRepository.findOne({
+        where: { account_id: accountId, label_id: labelId },
+        transaction,
+      });
+
+      if (!existing) {
+        await this.accountLabelRepository.create({
+          account_id: accountId,
+          label_id: labelId,
+        }, { transaction });
+      }
+
+      await transaction.commit();
+      return { success: true };
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
+
+  async unassignLabel(tenantId: string, accountId: string, labelId: string) {
+    const transaction = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema(tenantId, transaction);
+
+      await this.accountLabelRepository.destroy({
+        where: { account_id: accountId, label_id: labelId },
+        transaction,
+      });
+
+      await transaction.commit();
+      return { success: true };
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
+
+  async moveAccountUser(tenantId: string, accountUserId: string, payload: { to_account_id: string; to_profile_id: string; reason: string }) {
+    const transaction = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema(tenantId, transaction);
+
+      const accountUser = await this.accountUserRepository.findByPk(accountUserId, { transaction });
+      if (!accountUser) {
+        throw new NotFoundException('Account User tidak ditemukan');
+      }
+
+      const fromAccountId = accountUser.account_id;
+      const fromProfileId = accountUser.account_profile_id;
+
+      const targetAccount = await this.accountRepository.findByPk(payload.to_account_id, { transaction });
+      if (!targetAccount) {
+        throw new NotFoundException('Akun tujuan tidak ditemukan');
+      }
+
+      const targetProfile = await this.accountProfileRepository.findByPk(payload.to_profile_id, { transaction });
+      if (!targetProfile) {
+        throw new NotFoundException('Profil tujuan tidak ditemukan');
+      }
+
+      await this.accountUserMoveHistoryRepository.create({
+        account_user_id: accountUserId,
+        from_account_id: fromAccountId,
+        from_profile_id: fromProfileId,
+        to_account_id: payload.to_account_id,
+        to_profile_id: payload.to_profile_id,
+        reason: payload.reason,
+      }, { transaction });
+
+      await accountUser.update({
+        account_id: payload.to_account_id,
+        account_profile_id: payload.to_profile_id,
+      }, { transaction });
+
+      await transaction.commit();
+      return accountUser;
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
+
+  async getAccountUserMoveRecommendations(tenantId: string, accountUserId: string) {
+    const transaction = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema(tenantId, transaction);
+
+      const accountUser = await this.accountUserRepository.findByPk(accountUserId, { 
+        include: [{ model: Account, as: 'account', include: [{ model: ProductVariant, as: 'product_variant' }] }],
+        transaction 
+      });
+
+      if (!accountUser) throw new NotFoundException('Account User tidak ditemukan');
+
+      const originalVariant = accountUser.account?.product_variant;
+      if (!originalVariant) throw new BadRequestException('Produk Varian asal tidak ditemukan');
+
+      const isDaily = originalVariant.duration <= 1;
+
+      let recommendations: Account[] = [];
+
+      if (isDaily) {
+        const accounts = await this.accountRepository.findAll({
+          where: {
+            id: { [Op.ne]: accountUser.account_id },
+            batch_end_date: { [Op.gt]: new Date(Date.now() + 5 * 60 * 60 * 1000) },
+          },
+          include: [
+            {
+              model: ProductVariant,
+              as: 'product_variant',
+              include: [{ model: Product, as: 'product' }],
+              where: {
+                duration: { [Op.lte]: 1 }
+              }
+            },
+            {
+              model: AccountProfile,
+              as: 'profile',
+              include: [{ model: AccountUser, as: 'user' }]
+            },
+            { model: Email, as: 'email' }
+          ],
+          transaction,
+        });
+
+        const validAccounts = accounts.filter(acc => {
+          return acc.profile?.some(p => {
+             const activeUsers = p.user?.filter(u => u.status !== 'expired') || [];
+             return activeUsers.length <= 1;
+          });
+        });
+
+        recommendations = validAccounts.slice(0, 5);
+      } else {
+        const targetDate = accountUser.expired_at || accountUser.account?.batch_end_date;
+        if (!targetDate) {
+           throw new BadRequestException('Akun asal tidak memiliki tanggal kedaluwarsa yang valid');
+        }
+
+        const accounts = await this.accountRepository.findAll({
+          where: {
+            id: { [Op.ne]: accountUser.account_id },
+          },
+          include: [
+             { 
+               model: ProductVariant, 
+               as: 'product_variant',
+               include: [{ model: Product, as: 'product' }]
+             },
+             { model: AccountProfile, as: 'profile', include: [{ model: AccountUser, as: 'user' }] },
+             { model: Email, as: 'email' }
+          ],
+          transaction,
+        });
+
+        const targetTime = targetDate.getTime();
+        const sorted = accounts.sort((a, b) => {
+           const timeA = a.batch_end_date ? a.batch_end_date.getTime() : 0;
+           const timeB = b.batch_end_date ? b.batch_end_date.getTime() : 0;
+           return Math.abs(timeA - targetTime) - Math.abs(timeB - targetTime);
+        });
+
+        recommendations = sorted.slice(0, 5);
+      }
+
+      await transaction.commit();
+      return recommendations;
+    } catch (error) {
+      await transaction.rollback();
       throw error;
     }
   }

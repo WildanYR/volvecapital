@@ -116,7 +116,7 @@ export async function generateAccountTransaction(
         profile: {
           ...profile,
           metadata: profile.metadata
-            ? convertStringToMetadataObject(profile.metadata as string)
+            ? convertStringToMetadataObject(profile.metadata as string | any[])
             : undefined,
         },
       } as AccountUser;
@@ -165,10 +165,13 @@ export async function generateVoucherTransaction(
  * Convert metadata string to object array
  */
 function convertStringToMetadataObject(
-  metadata: string
+  metadata: string | any[]
 ): { key: string; value: string }[] {
+  if (Array.isArray(metadata)) {
+    return metadata;
+  }
   try {
-    const parsedData = JSON.parse(metadata);
+    const parsedData = JSON.parse(metadata as string);
 
     if (Array.isArray(parsedData)) {
       return parsedData;

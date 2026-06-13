@@ -7,6 +7,7 @@ import {
   DataType,
   ForeignKey,
   HasMany,
+  BelongsToMany,
   Model,
   PrimaryKey,
   Table,
@@ -25,6 +26,8 @@ import {
   ProductVariant,
   ProductVariantAttributes,
 } from './product-variant.model';
+import { Label, LabelAttributes } from './label.model';
+import { AccountLabel } from './account-label.model';
 
 export interface AccountAttributes {
   id: string;
@@ -43,6 +46,7 @@ export interface AccountAttributes {
   user?: AccountUserAttributes[];
   profile?: AccountProfileAttributes[];
   capitals?: AccountCapitalAttributes[];
+  labels?: LabelAttributes[];
   pinned?: boolean;
   capital_price: number;
   created_at: Date;
@@ -129,4 +133,7 @@ export class Account extends Model<
 
   @HasMany(() => AccountCapital)
   declare capitals?: AccountCapital[];
+
+  @BelongsToMany(() => Label, () => AccountLabel)
+  declare labels?: Label[];
 }

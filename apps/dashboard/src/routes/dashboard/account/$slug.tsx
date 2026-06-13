@@ -60,6 +60,7 @@ import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { useDebouncedCallback } from 'use-debounce'
 import { Checkbox } from '@/dashboard/components/ui/checkbox'
+import { MoveUserModal } from '@/dashboard/components/move-user-modal'
 import { AccountStatus } from '@/dashboard/components/account-status'
 import { FinancialDetailDialog } from '@/dashboard/components/financial-detail-dialog'
 import { AccountEditForm } from '@/dashboard/components/forms/account-edit.form'
@@ -72,6 +73,8 @@ import { EmailSelect } from '@/dashboard/components/inputs/select/email.select'
 import { ProductVariantSelect } from '@/dashboard/components/inputs/select/product-variant.select'
 import { NoData } from '@/dashboard/components/no-data'
 import { Pagination } from '@/dashboard/components/pagination'
+import { AccountLabelManager } from '@/dashboard/components/account-label-manager'
+import { AccountLabelSelector } from '@/dashboard/components/account-label-selector'
 
 import { PermissionGate } from '@/dashboard/components/permission-gate'
 
@@ -1086,7 +1089,39 @@ function RouteComponent() {
               {variant.name}
             </Button>
           ))}
+          {searchParam.product_variant_id && (
+            <div className="ml-auto">
+              <AccountLabelManager 
+                productVariantId={searchParam.product_variant_id}
+                productVariantName={product?.variants?.find(v => v.id === searchParam.product_variant_id)?.name || ''}
+              />
+            </div>
+          )}
         </div>
+        {(searchParam as any).label_ids && (
+          <div className="flex items-center gap-2 mb-2">
+            <p className="text-sm text-muted-foreground">Filter by Label:</p>
+            <div className="flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">
+              Aktif
+              <button
+                onClick={() => {
+                  navigate({
+                    search: prev => {
+                      const newSearch = { ...prev };
+                      delete (newSearch as any).label_ids;
+                      newSearch.page = 1;
+                      return newSearch;
+                    },
+                    replace: true,
+                  })
+                }}
+                className="ml-1 hover:text-red-500 transition-colors"
+              >
+                <X className="size-3" />
+              </button>
+            </div>
+          </div>
+        )}
         <div className="flex flex-col md:flex-row justify-end items-center gap-4">
           <Input
             type="text"
@@ -1586,9 +1621,7 @@ function RouteComponent() {
                               {' '}
                               Label
                             </p>
-                            <p className="font-semibold text-sm">
-                              {account.label || '-'}
-                            </p>
+                            <AccountLabelSelector account={account} />
                           </div>
                           
                           <div className="space-y-1 w-full px-3 border-l-2 border-secondary col-span-full bg-card py-3 rounded-r-md mt-2">
@@ -1939,7 +1972,7 @@ function RouteComponent() {
                           </DropdownMenu>
                         </div>
                       </div>
-                      {Array.from({ length: profile.max_user }, (_, i) => (
+                      {Array.from({ length: Math.max(profile.max_user, profile.user?.length || 0) }, (_, i) => (
                         <div
                           key={`user-${profile.id}-${i}`}
                           className="flex justify-between items-center bg-secondary px-4 py-2"
@@ -1968,6 +2001,10 @@ function RouteComponent() {
                                       {' '}
                                       Edit User
                                     </Button>
+                                    <MoveUserModal 
+                                      user={profile.user![i]} 
+                                      currentAccountId={selectedAccount.id} 
+                                    />
                                     <Button
                                       variant="outline"
                                       size="sm"

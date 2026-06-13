@@ -36,6 +36,10 @@ import { Permission } from './models/permission.model';
 import { RolePermission } from './models/role-permission.model';
 import { DashboardUser } from './models/dashboard-user.model';
 import { DeviceSession } from './models/device-session.model';
+import { Label } from './models/label.model';
+import { AccountLabel } from './models/account-label.model';
+import { AccountUserMoveHistory } from './models/account-user-move-history.model';
+
 @Injectable()
 export class PostgresProvider {
   private sequelize?: Sequelize;
@@ -104,6 +108,9 @@ export class PostgresProvider {
         RolePermission,
         DashboardUser,
         DeviceSession,
+        Label,
+        AccountLabel,
+        AccountUserMoveHistory,
       ]);
     }
     else {
