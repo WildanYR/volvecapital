@@ -42,8 +42,8 @@ function RouteComponent() {
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="flex flex-col md:flex-row gap-6 justify-between items-center">
-        <div>
+      <div className="flex flex-col md:flex-row gap-6 justify-between items-start md:items-center">
+        <div className="text-center md:text-left w-full md:w-auto">
           <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight text-balance">
             Pooling Akun
           </h1>
@@ -51,18 +51,20 @@ function RouteComponent() {
             Pilih produk untuk mengelola akun dan stok.
           </p>
         </div>
-        <div className="flex items-center gap-4">
-          <Button asChild>
+        <div className="flex flex-col sm:flex-row w-full md:w-auto items-stretch sm:items-center gap-3">
+          <Button asChild className="w-full sm:w-auto">
             <Link to="/dashboard/product">
               <Package className="size-4 mr-2" />
               Kelola Produk
             </Link>
           </Button>
           <PermissionGate permission="account.edit">
-            <BulkUploadAccountModal />
-            <Button asChild>
+            <div className="w-full sm:w-auto [&>button]:w-full">
+              <BulkUploadAccountModal />
+            </div>
+            <Button asChild className="w-full sm:w-auto">
               <Link to="/dashboard/account/create">
-                <Plus className="size-4" />
+                <Plus className="size-4 mr-2" />
                 Tambah Akun
               </Link>
             </Button>
