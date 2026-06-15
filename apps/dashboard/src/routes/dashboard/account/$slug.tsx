@@ -276,7 +276,7 @@ function RouteComponent() {
     toast.info('PIN terkirim ke bot. Menunggu verifikasi...')
   }
 
-  const { data: accounts, isLoading: isFetchAccountLoading } = useQuery({
+  const { data: accounts, refetch, isLoading: isFetchAccountLoading } = useQuery({
     queryKey: ['account', { ...searchParam, product_slug: slug }],
     queryFn: ({ signal }) => {
       const { page, limit, order_by, order_direction, ...filters } = searchParam
@@ -1940,7 +1940,19 @@ function RouteComponent() {
                           >
                             <Copy className="size-4" />
                           </Button>
-                          <InsertUserModal targetAccountId={selectedAccount.id} targetProfileId={profile.id} />
+                          <InsertUserModal 
+                            targetAccountId={selectedAccount.id} 
+                            targetProfileId={profile.id} 
+                            onSuccess={async () => {
+                              const result = await refetch()
+                              if (result.data?.items) {
+                                const updatedAccount = result.data.items.find((v: Account) => v.id === selectedAccount.id)
+                                if (updatedAccount) {
+                                  setSelectedAccount(updatedAccount)
+                                }
+                              }
+                            }}
+                          />
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button
@@ -1984,19 +1996,30 @@ function RouteComponent() {
                         return (
                           <>
                             {activeUsers.map((user) => (
-                              <div
-                                key={`user-${profile.id}-${user.id}`}
-                                className="flex justify-between items-center bg-secondary px-4 py-2"
-                              >
-                                <div>
-                                  <p className="font-medium">{user.name}</p>
-                                  <p className="text-xs">
-                                    Berakhir:
-                                    {' '}
-                                    {formatDateIdStandard(user.expired_at)}
-                                  </p>
-                                </div>
-                                <div className="flex gap-4">
+                                <div
+                                  key={`user-${profile.id}-${user.id}`}
+                                  className="flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center bg-secondary px-4 py-3 rounded-md"
+                                >
+                                  <div className="w-full sm:w-auto break-words">
+                                    <div>
+                                      {user.name.includes(' | Pindahan dari') ? (
+                                        <>
+                                          <p className="font-medium break-words">{user.name.split(' | Pindahan dari')[0]}</p>
+                                          <p className="text-[10px] text-red-500 font-medium break-words">
+                                            Pindahan dari {user.name.split(' | Pindahan dari ')[1]}
+                                          </p>
+                                        </>
+                                      ) : (
+                                        <p className="font-medium break-words">{user.name}</p>
+                                      )}
+                                    </div>
+                                    <p className="text-xs mt-1">
+                                      Berakhir:
+                                      {' '}
+                                      {formatDateIdStandard(user.expired_at)}
+                                    </p>
+                                  </div>
+                                  <div className="flex flex-wrap gap-2 w-full sm:w-auto">
                                   <Button
                                     variant="outline"
                                     size="sm"
