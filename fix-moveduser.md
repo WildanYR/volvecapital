@@ -21,13 +21,14 @@ where: filter?.user
 Fitur **Smart Rekomendasi** (`getAccountUserMoveRecommendations`) telah dirombak untuk mematuhi semua *business rules* berikut secara mutlak:
 
 ### A. Aturan Global (Berlaku untuk Semua Varian)
+- **Pengecekan Durasi User Asal**: Jika durasi user yang akan dipindahkan sudah habis, maka tidak akan muncul rekomendasi akun tujuan. Sistem hanya akan menampilkan pesan: "durasi {nama user} sudah habis".
 - **Akun Aktif Saja**: Akun dengan status `enable` (akun murni baru yang masih kosong) **tidak akan direkomendasikan**. Aturan `status: { [Op.ne]: 'enable' }` diaktifkan di seluruh cabang.
 - **Limit Maksimal 2 Selipan (Screenlimit Prevention)**: Untuk menghindari risiko terkena *screenlimit* Netflix, akun tujuan hanya dapat menampung maksimal 2 *user* tambahan di luar batas maksimal (`totalMaxUsers`). Jika `totalActiveUsers >= totalMaxUsers + 2`, akun tersebut secara otomatis didiskualifikasi dari daftar rekomendasi.
 
 ### B. Aturan Khusus Varian Harian (isDaily)
 Kriteria akun dikategorikan "Harian" adalah jika namanya mengandung kata `harian` atau `duration <= 1`. Jika ya, aturannya adalah:
 - **Tidak Boleh Lintas Varian**: Rekomendasi akun tujuan wajib memiliki `product_variant_id` yang **sama persis** dengan varian akun asal.
-- **Minimal 5 Jam Terpakai**: Hanya akun yang waktu dimulainya (*batch_start_date*) sudah berjalan minimal 5 jam yang lalu yang akan ditampilkan.
+- **Minimal 5 Jam Terpakai Berdasarkan Transaksi User Asal**: Rekomendasi akun tujuan harus merupakan akun yang mulai aktif (`batch_start_date`) minimal 5 jam **sebelum** waktu transaksi dari user yang ingin dipindahkan. Rekomendasi akan diurutkan secara otomatis dari data transaksi yang paling mendekati batas 5 jam tersebut. Misalnya: Jika user B bertransaksi pada pukul 12:34 WIB, maka hanya akun tujuan yang sudah aktif sejak pukul 07:34 WIB atau sebelumnya yang akan muncul, diurutkan mulai dari jam 07:34 mundur ke belakang (contoh: 07:32, 07:31, dst).
 
 ### C. Aturan Khusus Varian Selain Harian
 - **Boleh Lintas Varian**: Rekomendasi akan mencakup berbagai varian akun (selama masih lolos pengecekan batas batas kuota 2 *user* selipan dan bukan akun `enable`).

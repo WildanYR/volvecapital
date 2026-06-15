@@ -1768,6 +1768,10 @@ export class AccountService {
 
       if (!accountUser) throw new NotFoundException('Account User tidak ditemukan');
 
+      if (accountUser.status === 'expired' || (accountUser.expired_at && new Date(accountUser.expired_at).getTime() < Date.now())) {
+        throw new BadRequestException(`durasi ${accountUser.name} sudah habis`);
+      }
+
       const originalVariant = accountUser.account?.product_variant;
       if (!originalVariant) throw new BadRequestException('Produk Varian asal tidak ditemukan');
 
@@ -1788,12 +1792,17 @@ export class AccountService {
       };
 
       if (isDaily) {
+        // Menggunakan created_at dari accountUser asal (atau fallback ke Date.now jika null)
+        const userCreatedAtTime = accountUser.getDataValue('created_at') || (accountUser as any).createdAt
+          ? new Date(accountUser.getDataValue('created_at') || (accountUser as any).createdAt).getTime() 
+          : Date.now();
+
         const accounts = await this.accountRepository.findAll({
           where: {
             id: { [Op.ne]: accountUser.account_id },
             product_variant_id: originalVariant.id, // Tidak boleh lintas varian
             status: { [Op.ne]: 'enable' }, // Tidak muncul jika enable (user kosong)
-            batch_start_date: { [Op.lte]: new Date(Date.now() - 5 * 60 * 60 * 1000) }, // Dipakai minimal 5 jam lalu
+            batch_start_date: { [Op.lte]: new Date(userCreatedAtTime - 5 * 60 * 60 * 1000) }, // Dipakai minimal 5 jam sebelum transaksi user asal
           },
           include: [
             {
@@ -1809,6 +1818,7 @@ export class AccountService {
             { model: Email, as: 'email' }
           ],
           transaction,
+          order: [['batch_start_date', 'DESC']],
         });
 
         const validAccounts = accounts.filter(isAccountValid);
@@ -1828,6 +1838,7 @@ export class AccountService {
              { 
                model: ProductVariant, 
                as: 'product_variant',
+               where: { product_id: originalVariant.product_id },
                include: [{ model: Product, as: 'product' }]
              },
              { model: AccountProfile, as: 'profile', include: [{ model: AccountUser, as: 'user' }] },
