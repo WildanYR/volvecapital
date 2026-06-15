@@ -23,6 +23,7 @@ interface MoveUserModalProps {
 
 export function MoveUserModal({ user, trigger, onSuccess }: MoveUserModalProps) {
   const [open, setOpen] = useState(false)
+  const [step, setStep] = useState<1 | 2>(1)
   const [selectedAccountId, setSelectedAccountId] = useState<string>('')
   const [selectedProfileId, setSelectedProfileId] = useState<string>('')
   const [reason, setReason] = useState('')
@@ -43,10 +44,11 @@ export function MoveUserModal({ user, trigger, onSuccess }: MoveUserModalProps) 
   }, [searchQuery])
 
   // Get recommendations
-  const { data: recommendations, isLoading: isLoadingRecs } = useQuery({
+  const { data: recommendations, isLoading: isLoadingRecs, error: recError } = useQuery({
     queryKey: ['move-recommendations', user.id],
     queryFn: () => accountService.getMoveRecommendations(user.id),
     enabled: open,
+    retry: false,
   })
 
   // Manual search
@@ -57,14 +59,16 @@ export function MoveUserModal({ user, trigger, onSuccess }: MoveUserModalProps) 
   })
 
   const moveMutation = useMutation({
-    mutationFn: () => accountService.moveUser(user.id, {
+    mutationFn: (allow_old_profile_generate: boolean) => accountService.moveUser(user.id, {
       to_account_id: selectedAccountId,
       to_profile_id: selectedProfileId,
-      reason
+      reason,
+      allow_old_profile_generate
     }),
     onSuccess: () => {
       toast.success('Berhasil memindah pengguna')
       setOpen(false)
+      setStep(1)
       setSelectedAccountId('')
       setSelectedProfileId('')
       setReason('')
@@ -101,11 +105,14 @@ export function MoveUserModal({ user, trigger, onSuccess }: MoveUserModalProps) 
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col gap-0 p-0">
         <DialogHeader className="p-6 pb-4 border-b">
-          <DialogTitle>Pindah Pengguna (Move User)</DialogTitle>
+          <DialogTitle>
+            {step === 1 ? 'Pindah Pengguna (Move User)' : 'Konfirmasi Profil Lama'}
+          </DialogTitle>
         </DialogHeader>
         
         <ScrollArea className="flex-1 overflow-y-auto">
-          <div className="p-6 space-y-6">
+          {step === 1 ? (
+            <div className="p-6 space-y-6">
             <div className="bg-muted/50 p-4 rounded-lg border flex justify-between items-center">
               <div>
                 <p className="font-semibold">{user.name}</p>
@@ -130,6 +137,10 @@ export function MoveUserModal({ user, trigger, onSuccess }: MoveUserModalProps) 
                     <div className="flex items-center justify-center p-8 border rounded-lg border-dashed">
                       <Loader2 className="size-6 animate-spin text-muted-foreground" />
                     </div>
+                  ) : recError ? (
+                    <p className="text-sm text-red-500 font-medium p-4 border border-red-200 rounded-lg bg-red-50 dark:bg-red-950/20 dark:border-red-900">
+                      {(recError as Error).message}
+                    </p>
                   ) : recommendations?.length === 0 ? (
                     <p className="text-sm text-muted-foreground italic p-4 border rounded-lg border-dashed bg-secondary/20">
                       Tidak ada rekomendasi yang ditemukan. Gunakan pencarian di bawah.
@@ -241,20 +252,60 @@ export function MoveUserModal({ user, trigger, onSuccess }: MoveUserModalProps) 
                 required
               />
             </div>
-          </div>
+            </div>
+          ) : (
+            <div className="p-6 space-y-6">
+              <div className="bg-amber-500/10 border border-amber-500/20 p-4 rounded-lg text-center">
+                <h3 className="text-lg font-bold text-amber-500 mb-2">Peringatan Profil Lama</h3>
+                <p className="text-sm">
+                  Pengguna <strong>{user.name}</strong> akan dipindahkan.
+                  Apakah Anda mengizinkan profil di akun lama untuk diisi (digenerate) kembali oleh pengguna baru?
+                </p>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Pilih "Jangan Izinkan" jika Anda ingin membiarkan profil tersebut kosong agar durasi akun tidak bergeser jika dimasuki orang baru.
+                </p>
+              </div>
+            </div>
+          )}
         </ScrollArea>
         
         <div className="p-6 pt-4 border-t bg-muted/20 flex justify-end gap-3">
-          <Button variant="outline" onClick={() => setOpen(false)} disabled={isSubmitting}>
-            Batal
-          </Button>
-          <Button 
-            onClick={() => moveMutation.mutate()} 
-            disabled={!isFormValid || isSubmitting}
-            className="min-w-32"
-          >
-            {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : 'Simpan Kepindahan'}
-          </Button>
+          {step === 1 ? (
+            <>
+              <Button variant="outline" onClick={() => { setOpen(false); setStep(1); }} disabled={isSubmitting}>
+                Batal
+              </Button>
+              <Button 
+                onClick={() => setStep(2)} 
+                disabled={!isFormValid || isSubmitting}
+                className="min-w-32"
+              >
+                Lanjutkan
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button variant="outline" onClick={() => setStep(1)} disabled={isSubmitting}>
+                Kembali
+              </Button>
+              <Button 
+                variant="default"
+                onClick={() => moveMutation.mutate(true)} 
+                disabled={isSubmitting}
+                className="bg-green-600 hover:bg-green-700 text-white min-w-32"
+              >
+                {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : 'Izinkan'}
+              </Button>
+              <Button 
+                variant="destructive"
+                onClick={() => moveMutation.mutate(false)} 
+                disabled={isSubmitting}
+                className="min-w-32"
+              >
+                {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : 'Jangan Izinkan'}
+              </Button>
+            </>
+          )}
         </div>
       </DialogContent>
     </Dialog>

@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, IsUUID } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 
 export class MoveAccountUserDto {
   @IsNotEmpty()
@@ -12,4 +12,8 @@ export class MoveAccountUserDto {
   @IsNotEmpty()
   @IsString()
   reason: string;
+
+  @IsOptional()
+  @IsBoolean()
+  allow_old_profile_generate?: boolean;
 }

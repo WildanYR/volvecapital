@@ -1685,7 +1685,7 @@ export class AccountService {
     }
   }
 
-  async moveAccountUser(tenantId: string, accountUserId: string, payload: { to_account_id: string; to_profile_id: string; reason: string }) {
+  async moveAccountUser(tenantId: string, accountUserId: string, payload: { to_account_id: string; to_profile_id: string; reason: string; allow_old_profile_generate?: boolean }) {
     const transaction = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema(tenantId, transaction);
@@ -1708,6 +1708,8 @@ export class AccountService {
         throw new NotFoundException('Profil tujuan tidak ditemukan');
       }
 
+      let newExpiredAt = accountUser.expired_at;
+
       if (fromAccountId !== payload.to_account_id) {
         const targetProfiles = await this.accountProfileRepository.findAll({
           where: { account_id: payload.to_account_id },
@@ -1722,17 +1724,52 @@ export class AccountService {
 
         let totalMaxUsers = 0;
         let totalActiveUsers = 0;
+        let maxTargetExpiredAt: Date | null = targetAccount.batch_end_date ? new Date(targetAccount.batch_end_date) : null;
 
         for (const p of targetProfiles) {
           totalMaxUsers += p.max_user || 0;
           totalActiveUsers += p.user?.length || 0;
+          
+          if (p.user) {
+            for (const u of p.user) {
+              if (u.expired_at) {
+                const uExp = new Date(u.expired_at);
+                if (!maxTargetExpiredAt || uExp > maxTargetExpiredAt) {
+                  maxTargetExpiredAt = uExp;
+                }
+              }
+            }
+          }
         }
 
         if (totalActiveUsers >= totalMaxUsers + 2) {
           throw new BadRequestException('Screenlimit Prevention: Akun tujuan sudah mencapai batas maksimal 2 user selipan.');
         }
+
+        if (maxTargetExpiredAt && accountUser.expired_at) {
+          const currentExp = new Date(accountUser.expired_at);
+          if (currentExp > maxTargetExpiredAt) {
+            newExpiredAt = maxTargetExpiredAt;
+          }
+        }
       }
 
+      let originalEmailStr = '-';
+      if (fromAccountId) {
+        const fromAccount = await this.accountRepository.findByPk(fromAccountId, { include: ['email'], transaction });
+        if (fromAccount && (fromAccount as any).email) {
+            originalEmailStr = (fromAccount as any).email.email || (fromAccount as any).email_id || '-';
+        } else if (fromAccount) {
+            originalEmailStr = (fromAccount as any).email_id || '-';
+        }
+      }
+
+      const originalExpText = accountUser.expired_at 
+        ? new Intl.DateTimeFormat('id-ID', { timeZone: 'Asia/Jakarta', dateStyle: 'long', timeStyle: 'short' }).format(new Date(accountUser.expired_at)).replace(' pukul', '') + ' WIB'
+        : '-';
+
+      const cleanName = accountUser.name.split(' | Pindahan dari')[0].trim();
+      const newName = `${cleanName} | Pindahan dari ${originalEmailStr} original berakhir ${originalExpText}`;
 
       await this.accountUserMoveHistoryRepository.create({
         account_user_id: accountUserId,
@@ -1746,7 +1783,16 @@ export class AccountService {
       await accountUser.update({
         account_id: payload.to_account_id,
         account_profile_id: payload.to_profile_id,
+        expired_at: newExpiredAt,
+        name: newName,
       }, { transaction });
+
+      // Update old profile's allow_generate flag
+      const allowOldProfileGenerate = payload.allow_old_profile_generate ?? false;
+      await this.accountProfileRepository.update(
+        { allow_generate: allowOldProfileGenerate },
+        { where: { id: fromProfileId }, transaction }
+      );
 
       await transaction.commit();
       return accountUser;

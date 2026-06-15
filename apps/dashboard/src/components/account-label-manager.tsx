@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useNavigate } from '@tanstack/react-router'
 import { Button } from '@/dashboard/components/ui/button'
 import { Input } from '@/dashboard/components/ui/input'
 import { Label as UILabel } from '@/dashboard/components/ui/label'
@@ -15,6 +16,7 @@ import { toast } from 'sonner'
 import { LabelServiceGenerator } from '@/dashboard/services/label.service'
 import { API_URL } from '@/dashboard/constants/api-url.cont'
 import { useAuth } from '@/dashboard/context-providers/auth.provider'
+import { useGlobalAlertDialog } from '@/dashboard/context-providers/alert-dialog.provider'
 
 interface AccountLabelManagerProps {
   productVariantId: string
@@ -27,6 +29,8 @@ export function AccountLabelManager({ productVariantId, productVariantName }: Ac
   const [newLabelColor, setNewLabelColor] = useState('#3b82f6') // default blue
   const queryClient = useQueryClient()
   const auth = useAuth()
+  const navigate = useNavigate()
+  const { showAlertDialog, hideAlertDialog } = useGlobalAlertDialog()
   
   const labelService = LabelServiceGenerator(
     API_URL,
@@ -67,6 +71,24 @@ export function AccountLabelManager({ productVariantId, productVariantName }: Ac
   const handleCreate = () => {
     if (!newLabelName.trim()) return
     createMutation.mutate({ name: newLabelName.trim(), color: newLabelColor })
+  }
+
+  const handleDelete = (labelId: string) => {
+    showAlertDialog({
+      title: 'Hapus Label',
+      description: 'Apakah Anda yakin ingin menghapus label ini? Label akan dihapus dari semua akun yang menggunakannya.',
+      variant: 'destructive',
+      confirmText: 'Ya, Hapus',
+      onConfirm: () => {
+        deleteMutation.mutate(labelId)
+        hideAlertDialog()
+      }
+    })
+  }
+
+  const handleFilter = (labelId: string) => {
+    navigate({ search: (prev: any) => ({ ...prev, label_ids: labelId }) })
+    setOpen(false)
   }
 
   const presetColors = [
@@ -136,18 +158,25 @@ export function AccountLabelManager({ productVariantId, productVariantName }: Ac
               {labels?.map((label) => (
                 <div
                   key={label.id}
-                  className="flex items-center gap-2 border px-3 py-1 rounded-full text-sm"
+                  className="flex items-center gap-2 border px-3 py-1 rounded-full text-sm group"
                   style={{ 
                     backgroundColor: label.color ? `${label.color}20` : 'rgba(255,255,255,0.1)',
                     borderColor: label.color || 'var(--border)',
                     color: label.color || 'inherit'
                   }}
                 >
-                  <span className="font-medium">{label.name}</span>
+                  <span 
+                    className="font-medium cursor-pointer hover:underline transition-all"
+                    onClick={() => handleFilter(label.id)}
+                    title="Klik untuk menyaring akun dengan label ini"
+                  >
+                    {label.name}
+                  </span>
                   <button
-                    onClick={() => deleteMutation.mutate(label.id)}
-                    className="text-muted-foreground hover:text-red-500 transition-colors"
+                    onClick={() => handleDelete(label.id)}
+                    className="text-muted-foreground opacity-50 hover:opacity-100 hover:text-red-500 transition-all ml-1"
                     disabled={deleteMutation.isPending}
+                    title="Hapus Label"
                   >
                     <Trash2 className="size-3" />
                   </button>

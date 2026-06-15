@@ -826,7 +826,7 @@ export function AccountServiceGenerator(apiUrl: string, accessToken: string, ten
         throw new Error(errorData.message || 'Failed to unassign label')
       }
     },
-    moveUser: async (userId: string, data: { to_account_id: string; to_profile_id: string; reason: string }): Promise<void> => {
+    moveUser: async (userId: string, data: { to_account_id: string; to_profile_id: string; reason: string; allow_old_profile_generate?: boolean }): Promise<void> => {
       const response = await generateApiFetch(
         apiUrl,
         accessToken,
