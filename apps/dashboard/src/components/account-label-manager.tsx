@@ -77,7 +77,6 @@ export function AccountLabelManager({ productVariantId, productVariantName }: Ac
     showAlertDialog({
       title: 'Hapus Label',
       description: 'Apakah Anda yakin ingin menghapus label ini? Label akan dihapus dari semua akun yang menggunakannya.',
-      variant: 'destructive',
       confirmText: 'Ya, Hapus',
       onConfirm: () => {
         deleteMutation.mutate(labelId)
@@ -87,7 +86,7 @@ export function AccountLabelManager({ productVariantId, productVariantName }: Ac
   }
 
   const handleFilter = (labelId: string) => {
-    navigate({ search: (prev: any) => ({ ...prev, label_ids: labelId }) })
+    (navigate as any)({ to: '.', search: (prev: any) => ({ ...prev, label_ids: labelId }) })
     setOpen(false)
   }
 
