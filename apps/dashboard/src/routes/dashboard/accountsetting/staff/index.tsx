@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { Plus, Trash2, Users } from 'lucide-react'
+import { Plus, Trash2, Users, ChevronLeft } from 'lucide-react'
 import { toast } from 'sonner'
 import { PermissionGate } from '@/dashboard/components/permission-gate'
 import { ProtectedButton } from '@/dashboard/components/protected-button'
@@ -18,7 +18,7 @@ import { useGlobalAlertDialog } from '@/dashboard/context-providers/alert-dialog
 import { useAuth } from '@/dashboard/context-providers/auth.provider'
 import { DashboardUserServiceGenerator } from '@/dashboard/services/dashboard-user.service'
 
-export const Route = createFileRoute('/dashboard/staff/')({
+export const Route = createFileRoute('/dashboard/accountsetting/staff/')({
   component: RouteComponent,
 })
 
@@ -78,13 +78,20 @@ function RouteComponent() {
   return (
     <div className="flex flex-col gap-8">
       <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
-        <div>
-          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">Manajemen Staff</h1>
-          <p className="text-muted-foreground mt-1">Kelola akun staff yang dapat login ke dashboard</p>
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" asChild>
+            <Link to="/dashboard/accountsetting">
+              <ChevronLeft className="size-5" />
+            </Link>
+          </Button>
+          <div>
+            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">Manajemen Staff</h1>
+            <p className="text-muted-foreground mt-1">Kelola akun staff yang dapat login ke dashboard</p>
+          </div>
         </div>
         <PermissionGate permission="user.create">
           <Button asChild>
-            <Link to="/dashboard/staff/create">
+            <Link to="/dashboard/accountsetting/staff/create">
               <Plus className="size-4" />
               Tambah Staff
             </Link>
@@ -108,7 +115,7 @@ function RouteComponent() {
                     </Badge>
                   </div>
                   <p className="text-sm text-muted-foreground">{user.email}</p>
-                  <Badge variant="outline" className="w-fit">{user.role?.name ?? '-'}</Badge>
+                  <Badge variant="outline" className="w-fit">{user.role?.name ?? "-"}</Badge>
                 </CardHeader>
                 <CardContent className="flex gap-2 pt-2">
                   <PermissionGate permission="user.edit">

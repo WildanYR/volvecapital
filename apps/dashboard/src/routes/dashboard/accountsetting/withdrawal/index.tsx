@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
+import { ChevronLeft } from 'lucide-react'
 import { toast } from 'sonner'
 import { PermissionGate } from '@/dashboard/components/permission-gate'
 import { Button } from '@/dashboard/components/ui/button'
@@ -13,7 +14,7 @@ import { formatRupiah } from '@/dashboard/lib/currency.util'
 import { formatDateIdStandard } from '@/dashboard/lib/time-converter.util'
 import { WithdrawalServiceGenerator } from '@/dashboard/services/withdrawal.service'
 
-export const Route = createFileRoute('/dashboard/admin/withdrawal/')({
+export const Route = createFileRoute('/dashboard/accountsetting/withdrawal/')({
   component: AdminWithdrawalPage,
 })
 
@@ -69,10 +70,18 @@ function AdminWithdrawalPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="flex flex-col md:flex-row gap-6 justify-between items-center">
-        <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight">
-          Admin: Approval Penarikan
-        </h1>
+      <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-end">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" asChild>
+            <Link to="/dashboard/accountsetting">
+              <ChevronLeft className="size-5" />
+            </Link>
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Approval Withdrawal</h1>
+            <p className="text-muted-foreground">Kelola permintaan penarikan dana dari user.</p>
+          </div>
+        </div>
       </div>
 
       <Card>

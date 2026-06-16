@@ -24,7 +24,7 @@ import { useAuth } from '@/dashboard/context-providers/auth.provider'
 import { DashboardUserServiceGenerator } from '@/dashboard/services/dashboard-user.service'
 import { RoleServiceGenerator } from '@/dashboard/services/role.service'
 
-export const Route = createFileRoute('/dashboard/staff/create')({
+export const Route = createFileRoute('/dashboard/accountsetting/staff/create')({
   component: RouteComponent,
 })
 
@@ -58,7 +58,7 @@ function RouteComponent() {
   return (
     <div className="flex flex-col gap-6 max-w-md">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate({ to: '/dashboard/staff' })}>
+        <Button variant="ghost" size="icon" onClick={() => navigate({ to: "/dashboard/staff" })}>
           <ArrowLeft className="size-4" />
         </Button>
         <h1 className="text-3xl font-extrabold tracking-tight">Tambah Staff</h1>

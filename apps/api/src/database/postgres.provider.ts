@@ -39,6 +39,12 @@ import { DeviceSession } from './models/device-session.model';
 import { Label } from './models/label.model';
 import { AccountLabel } from './models/account-label.model';
 import { AccountUserMoveHistory } from './models/account-user-move-history.model';
+import { Shift } from './models/shift.model';
+import { UserShift } from './models/user-shift.model';
+import { Attendance } from './models/attendance.model';
+import { WeeklyOffSchedule } from './models/weekly-off-schedule.model';
+import { WeeklyOffRequest } from './models/weekly-off-request.model';
+import { AttendanceSetting } from './models/attendance-setting.model';
 
 @Injectable()
 export class PostgresProvider {
@@ -111,6 +117,12 @@ export class PostgresProvider {
         Label,
         AccountLabel,
         AccountUserMoveHistory,
+        Shift,
+        UserShift,
+        Attendance,
+        WeeklyOffSchedule,
+        WeeklyOffRequest,
+        AttendanceSetting,
       ]);
     }
     else {

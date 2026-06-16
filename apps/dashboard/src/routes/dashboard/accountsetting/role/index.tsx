@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { ChevronRight, Plus, Shield, SquarePen, Trash2 } from 'lucide-react'
+import { ChevronRight, Plus, Shield, SquarePen, Trash2, ChevronLeft } from 'lucide-react'
 import { toast } from 'sonner'
 import { PermissionGate } from '@/dashboard/components/permission-gate'
 import { ProtectedButton } from '@/dashboard/components/protected-button'
@@ -19,7 +19,7 @@ import { useGlobalAlertDialog } from '@/dashboard/context-providers/alert-dialog
 import { useAuth } from '@/dashboard/context-providers/auth.provider'
 import { RoleServiceGenerator } from '@/dashboard/services/role.service'
 
-export const Route = createFileRoute('/dashboard/role/')({
+export const Route = createFileRoute('/dashboard/accountsetting/role/')({
   component: RouteComponent,
 })
 
@@ -70,13 +70,20 @@ function RouteComponent() {
   return (
     <div className="flex flex-col gap-8">
       <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
-        <div>
-          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">Role & Permission</h1>
-          <p className="text-muted-foreground mt-1">Kelola role dan hak akses staff dashboard</p>
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" asChild>
+            <Link to="/dashboard/accountsetting">
+              <ChevronLeft className="size-5" />
+            </Link>
+          </Button>
+          <div>
+            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">Role & Permission</h1>
+            <p className="text-muted-foreground mt-1">Kelola role dan hak akses staff dashboard</p>
+          </div>
         </div>
         <PermissionGate permission="role.create">
           <Button asChild>
-            <Link to="/dashboard/role/create">
+            <Link to="/dashboard/accountsetting/role/create">
               <Plus className="size-4" />
               Buat Role Baru
             </Link>
@@ -110,7 +117,7 @@ function RouteComponent() {
                 <CardContent className="flex gap-2 mt-auto pt-4">
                   <PermissionGate permission="role.edit">
                     <Button asChild variant="outline" size="sm" className="flex-1">
-                      <Link to="/dashboard/role/$roleId" params={{ roleId: role.id }}>
+                      <Link to="/dashboard/accountsetting/role/$roleId" params={{ roleId: role.id }}>
                         <SquarePen className="size-4" />
                         Edit
                         <ChevronRight className="size-4 ml-auto" />

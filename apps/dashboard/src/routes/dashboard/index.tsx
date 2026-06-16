@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
-import { createFileRoute } from '@tanstack/react-router'
-import { ArrowDownIcon, ArrowUpIcon, CalendarIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, GlobeIcon, LayoutGridIcon, MessageCircleIcon, MinusIcon } from 'lucide-react'
+import { createFileRoute, Link } from '@tanstack/react-router'
+import { ArrowDownIcon, ArrowUpIcon, CalendarIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, GlobeIcon, LayoutGridIcon, MessageCircleIcon, MinusIcon, User as UserIcon } from 'lucide-react'
 import { useState } from 'react'
+import logo from '@/dashboard/logo.svg'
 import { PeakHourChart } from '@/dashboard/components/chart/peak-hour-chart'
 import { PlatformList } from '@/dashboard/components/chart/platform-list'
 import { ProductSales } from '@/dashboard/components/chart/product-sales'
@@ -126,11 +127,7 @@ function RouteComponent() {
   }
 
   return (
-    <PermissionGate permission="dashboard.view" fallback={
-      <div className="flex h-[400px] items-center justify-center">
-        <p className="text-xl font-semibold text-muted-foreground">Anda tidak memiliki izin untuk melihat dashboard statistik.</p>
-      </div>
-    }>
+    <PermissionGate permission="dashboard.view" fallback={<WelcomeScreen />}>
       <div className="flex flex-col gap-8">
         <div className="flex flex-col md:flex-row gap-6 justify-between items-center">
           <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight text-balance">
@@ -668,6 +665,69 @@ function YearPicker({ value, onChange }: { value: string, onChange: (val: string
             </Button>
           )
         })}
+      </div>
+    </div>
+  )
+}
+
+function WelcomeScreen() {
+  const auth = useAuth()
+  
+  const headers = {
+    'Authorization': `VC ${auth.tenant?.accessToken}`,
+    'x-tenant-id': auth.tenant?.id || '',
+    'Content-Type': 'application/json',
+  }
+
+  const { data: today, isLoading: isLoadingToday } = useQuery({
+    queryKey: ['attendance', 'today'],
+    queryFn: async () => {
+      const res = await fetch(`${API_URL}/attendance/me/today`, { headers })
+      if (!res.ok) throw new Error('Failed to fetch today status')
+      return res.json()
+    },
+    enabled: auth.tenant?.role !== 'TENANT_OWNER' && !!auth.tenant?.accessToken,
+  })
+
+  const shiftName = (today?.shift || today?.attendance?.shift)?.name || 'Belum ada shift'
+  const isOff = today?.is_off
+
+  return (
+    <div className="flex flex-col h-[calc(100vh-120px)] items-center justify-center animate-in fade-in zoom-in duration-500">
+      <div className="flex flex-col items-center text-center max-w-md space-y-6">
+        <div className="relative">
+          <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full scale-150" />
+          <img src={logo} alt="Logo" className="h-20 sm:h-24 w-auto object-contain relative z-10" />
+        </div>
+        <div className="space-y-2">
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">Selamat Datang!</h1>
+          <p className="text-muted-foreground text-sm sm:text-base">
+            Halo <span className="font-semibold text-foreground">{auth.tenant?.staffName || auth.tenant?.id || 'Staff'}</span>, senang melihat Anda hari ini. Silakan gunakan navigasi di sebelah kiri untuk mulai bekerja.
+          </p>
+        </div>
+        <div className="grid grid-cols-2 gap-4 w-full pt-4">
+          <Link to="/dashboard/attendance/me" className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border bg-card text-card-foreground shadow-sm hover:border-primary/50 hover:bg-muted/50 transition-all cursor-pointer group">
+            <div className="p-3 bg-primary/10 rounded-full text-primary group-hover:scale-110 transition-transform">
+              <UserIcon className="w-6 h-6" />
+            </div>
+            <p className="text-sm font-medium">Absensi Harian</p>
+          </Link>
+          <div className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border bg-card text-card-foreground shadow-sm">
+            <div className="p-3 bg-primary/10 rounded-full text-primary">
+              <CalendarIcon className="w-6 h-6" />
+            </div>
+            <div className="flex flex-col items-center gap-1">
+              <p className="text-xs text-muted-foreground">Shift Anda Hari Ini</p>
+              {isLoadingToday ? (
+                <div className="h-5 w-24 bg-muted animate-pulse rounded" />
+              ) : (
+                <p className="text-sm font-bold text-foreground">
+                  {isOff ? 'Hari Libur' : shiftName}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )

@@ -19,9 +19,7 @@ import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
 import { Route as DashboardWalletIndexRouteImport } from './routes/dashboard/wallet/index'
 import { Route as DashboardVoucherGeneratorIndexRouteImport } from './routes/dashboard/voucher-generator/index'
 import { Route as DashboardTransactionIndexRouteImport } from './routes/dashboard/transaction/index'
-import { Route as DashboardStaffIndexRouteImport } from './routes/dashboard/staff/index'
 import { Route as DashboardSettingIndexRouteImport } from './routes/dashboard/setting/index'
-import { Route as DashboardRoleIndexRouteImport } from './routes/dashboard/role/index'
 import { Route as DashboardProductIndexRouteImport } from './routes/dashboard/product/index'
 import { Route as DashboardPlatformProductIndexRouteImport } from './routes/dashboard/platform-product/index'
 import { Route as DashboardEmailIndexRouteImport } from './routes/dashboard/email/index'
@@ -29,21 +27,28 @@ import { Route as DashboardEmailMessageIndexRouteImport } from './routes/dashboa
 import { Route as DashboardAccountsettingIndexRouteImport } from './routes/dashboard/accountsetting/index'
 import { Route as DashboardAccountIndexRouteImport } from './routes/dashboard/account/index'
 import { Route as DashboardTransactionCreateRouteImport } from './routes/dashboard/transaction/create'
-import { Route as DashboardStaffCreateRouteImport } from './routes/dashboard/staff/create'
-import { Route as DashboardRoleCreateRouteImport } from './routes/dashboard/role/create'
-import { Route as DashboardRoleRoleIdRouteImport } from './routes/dashboard/role/$roleId'
 import { Route as DashboardProductCreateRouteImport } from './routes/dashboard/product/create'
 import { Route as DashboardPlatformProductCreateRouteImport } from './routes/dashboard/platform-product/create'
 import { Route as DashboardPlatformProductIdRouteImport } from './routes/dashboard/platform-product/$id'
 import { Route as DashboardEmailCreateRouteImport } from './routes/dashboard/email/create'
 import { Route as DashboardEmailIdRouteImport } from './routes/dashboard/email/$id'
+import { Route as DashboardAccountsettingDevicesRouteImport } from './routes/dashboard/accountsetting/devices'
 import { Route as DashboardAccountCreateRouteImport } from './routes/dashboard/account/create'
 import { Route as DashboardAccountSlugRouteImport } from './routes/dashboard/account/$slug'
+import { Route as DashboardAttendanceMeRouteRouteImport } from './routes/dashboard/attendance/me/route'
+import { Route as DashboardAccountsettingShiftRouteRouteImport } from './routes/dashboard/accountsetting/shift/route'
 import { Route as DashboardWalletBankAccountIndexRouteImport } from './routes/dashboard/wallet/bank-account/index'
 import { Route as DashboardSettingTutorialIndexRouteImport } from './routes/dashboard/setting/tutorial.index'
 import { Route as DashboardSettingLandingIndexRouteImport } from './routes/dashboard/setting/landing.index'
 import { Route as DashboardSettingArticleIndexRouteImport } from './routes/dashboard/setting/article.index'
-import { Route as DashboardAdminWithdrawalIndexRouteImport } from './routes/dashboard/admin/withdrawal/index'
+import { Route as DashboardAccountsettingWithdrawalIndexRouteImport } from './routes/dashboard/accountsetting/withdrawal/index'
+import { Route as DashboardAccountsettingStaffIndexRouteImport } from './routes/dashboard/accountsetting/staff/index'
+import { Route as DashboardAccountsettingRoleIndexRouteImport } from './routes/dashboard/accountsetting/role/index'
+import { Route as DashboardAccountsettingAttendanceIndexRouteImport } from './routes/dashboard/accountsetting/attendance/index'
+import { Route as DashboardAccountsettingStaffCreateRouteImport } from './routes/dashboard/accountsetting/staff/create'
+import { Route as DashboardAccountsettingRoleCreateRouteImport } from './routes/dashboard/accountsetting/role/create'
+import { Route as DashboardAccountsettingRoleRoleIdRouteImport } from './routes/dashboard/accountsetting/role/$roleId'
+import { Route as DashboardAccountsettingAttendanceReportRouteRouteImport } from './routes/dashboard/accountsetting/attendance/report/route'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -97,19 +102,9 @@ const DashboardTransactionIndexRoute =
     path: '/transaction/',
     getParentRoute: () => DashboardRouteRoute,
   } as any)
-const DashboardStaffIndexRoute = DashboardStaffIndexRouteImport.update({
-  id: '/staff/',
-  path: '/staff/',
-  getParentRoute: () => DashboardRouteRoute,
-} as any)
 const DashboardSettingIndexRoute = DashboardSettingIndexRouteImport.update({
   id: '/setting/',
   path: '/setting/',
-  getParentRoute: () => DashboardRouteRoute,
-} as any)
-const DashboardRoleIndexRoute = DashboardRoleIndexRouteImport.update({
-  id: '/role/',
-  path: '/role/',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
 const DashboardProductIndexRoute = DashboardProductIndexRouteImport.update({
@@ -151,21 +146,6 @@ const DashboardTransactionCreateRoute =
     path: '/transaction/create',
     getParentRoute: () => DashboardRouteRoute,
   } as any)
-const DashboardStaffCreateRoute = DashboardStaffCreateRouteImport.update({
-  id: '/staff/create',
-  path: '/staff/create',
-  getParentRoute: () => DashboardRouteRoute,
-} as any)
-const DashboardRoleCreateRoute = DashboardRoleCreateRouteImport.update({
-  id: '/role/create',
-  path: '/role/create',
-  getParentRoute: () => DashboardRouteRoute,
-} as any)
-const DashboardRoleRoleIdRoute = DashboardRoleRoleIdRouteImport.update({
-  id: '/role/$roleId',
-  path: '/role/$roleId',
-  getParentRoute: () => DashboardRouteRoute,
-} as any)
 const DashboardProductCreateRoute = DashboardProductCreateRouteImport.update({
   id: '/product/create',
   path: '/product/create',
@@ -193,6 +173,12 @@ const DashboardEmailIdRoute = DashboardEmailIdRouteImport.update({
   path: '/email/$id',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
+const DashboardAccountsettingDevicesRoute =
+  DashboardAccountsettingDevicesRouteImport.update({
+    id: '/accountsetting/devices',
+    path: '/accountsetting/devices',
+    getParentRoute: () => DashboardRouteRoute,
+  } as any)
 const DashboardAccountCreateRoute = DashboardAccountCreateRouteImport.update({
   id: '/account/create',
   path: '/account/create',
@@ -203,6 +189,18 @@ const DashboardAccountSlugRoute = DashboardAccountSlugRouteImport.update({
   path: '/account/$slug',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
+const DashboardAttendanceMeRouteRoute =
+  DashboardAttendanceMeRouteRouteImport.update({
+    id: '/attendance/me',
+    path: '/attendance/me',
+    getParentRoute: () => DashboardRouteRoute,
+  } as any)
+const DashboardAccountsettingShiftRouteRoute =
+  DashboardAccountsettingShiftRouteRouteImport.update({
+    id: '/accountsetting/shift',
+    path: '/accountsetting/shift',
+    getParentRoute: () => DashboardRouteRoute,
+  } as any)
 const DashboardWalletBankAccountIndexRoute =
   DashboardWalletBankAccountIndexRouteImport.update({
     id: '/wallet/bank-account/',
@@ -227,10 +225,52 @@ const DashboardSettingArticleIndexRoute =
     path: '/setting/article/',
     getParentRoute: () => DashboardRouteRoute,
   } as any)
-const DashboardAdminWithdrawalIndexRoute =
-  DashboardAdminWithdrawalIndexRouteImport.update({
-    id: '/admin/withdrawal/',
-    path: '/admin/withdrawal/',
+const DashboardAccountsettingWithdrawalIndexRoute =
+  DashboardAccountsettingWithdrawalIndexRouteImport.update({
+    id: '/accountsetting/withdrawal/',
+    path: '/accountsetting/withdrawal/',
+    getParentRoute: () => DashboardRouteRoute,
+  } as any)
+const DashboardAccountsettingStaffIndexRoute =
+  DashboardAccountsettingStaffIndexRouteImport.update({
+    id: '/accountsetting/staff/',
+    path: '/accountsetting/staff/',
+    getParentRoute: () => DashboardRouteRoute,
+  } as any)
+const DashboardAccountsettingRoleIndexRoute =
+  DashboardAccountsettingRoleIndexRouteImport.update({
+    id: '/accountsetting/role/',
+    path: '/accountsetting/role/',
+    getParentRoute: () => DashboardRouteRoute,
+  } as any)
+const DashboardAccountsettingAttendanceIndexRoute =
+  DashboardAccountsettingAttendanceIndexRouteImport.update({
+    id: '/accountsetting/attendance/',
+    path: '/accountsetting/attendance/',
+    getParentRoute: () => DashboardRouteRoute,
+  } as any)
+const DashboardAccountsettingStaffCreateRoute =
+  DashboardAccountsettingStaffCreateRouteImport.update({
+    id: '/accountsetting/staff/create',
+    path: '/accountsetting/staff/create',
+    getParentRoute: () => DashboardRouteRoute,
+  } as any)
+const DashboardAccountsettingRoleCreateRoute =
+  DashboardAccountsettingRoleCreateRouteImport.update({
+    id: '/accountsetting/role/create',
+    path: '/accountsetting/role/create',
+    getParentRoute: () => DashboardRouteRoute,
+  } as any)
+const DashboardAccountsettingRoleRoleIdRoute =
+  DashboardAccountsettingRoleRoleIdRouteImport.update({
+    id: '/accountsetting/role/$roleId',
+    path: '/accountsetting/role/$roleId',
+    getParentRoute: () => DashboardRouteRoute,
+  } as any)
+const DashboardAccountsettingAttendanceReportRouteRoute =
+  DashboardAccountsettingAttendanceReportRouteRouteImport.update({
+    id: '/accountsetting/attendance/report',
+    path: '/accountsetting/attendance/report',
     getParentRoute: () => DashboardRouteRoute,
   } as any)
 
@@ -242,16 +282,16 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/dashboard/accountsetting/shift': typeof DashboardAccountsettingShiftRouteRoute
+  '/dashboard/attendance/me': typeof DashboardAttendanceMeRouteRoute
   '/dashboard/account/$slug': typeof DashboardAccountSlugRoute
   '/dashboard/account/create': typeof DashboardAccountCreateRoute
+  '/dashboard/accountsetting/devices': typeof DashboardAccountsettingDevicesRoute
   '/dashboard/email/$id': typeof DashboardEmailIdRoute
   '/dashboard/email/create': typeof DashboardEmailCreateRoute
   '/dashboard/platform-product/$id': typeof DashboardPlatformProductIdRoute
   '/dashboard/platform-product/create': typeof DashboardPlatformProductCreateRoute
   '/dashboard/product/create': typeof DashboardProductCreateRoute
-  '/dashboard/role/$roleId': typeof DashboardRoleRoleIdRoute
-  '/dashboard/role/create': typeof DashboardRoleCreateRoute
-  '/dashboard/staff/create': typeof DashboardStaffCreateRoute
   '/dashboard/transaction/create': typeof DashboardTransactionCreateRoute
   '/dashboard/account': typeof DashboardAccountIndexRoute
   '/dashboard/accountsetting': typeof DashboardAccountsettingIndexRoute
@@ -259,13 +299,18 @@ export interface FileRoutesByFullPath {
   '/dashboard/email': typeof DashboardEmailIndexRoute
   '/dashboard/platform-product': typeof DashboardPlatformProductIndexRoute
   '/dashboard/product': typeof DashboardProductIndexRoute
-  '/dashboard/role': typeof DashboardRoleIndexRoute
   '/dashboard/setting': typeof DashboardSettingIndexRoute
-  '/dashboard/staff': typeof DashboardStaffIndexRoute
   '/dashboard/transaction': typeof DashboardTransactionIndexRoute
   '/dashboard/voucher-generator': typeof DashboardVoucherGeneratorIndexRoute
   '/dashboard/wallet': typeof DashboardWalletIndexRoute
-  '/dashboard/admin/withdrawal': typeof DashboardAdminWithdrawalIndexRoute
+  '/dashboard/accountsetting/attendance/report': typeof DashboardAccountsettingAttendanceReportRouteRoute
+  '/dashboard/accountsetting/role/$roleId': typeof DashboardAccountsettingRoleRoleIdRoute
+  '/dashboard/accountsetting/role/create': typeof DashboardAccountsettingRoleCreateRoute
+  '/dashboard/accountsetting/staff/create': typeof DashboardAccountsettingStaffCreateRoute
+  '/dashboard/accountsetting/attendance': typeof DashboardAccountsettingAttendanceIndexRoute
+  '/dashboard/accountsetting/role': typeof DashboardAccountsettingRoleIndexRoute
+  '/dashboard/accountsetting/staff': typeof DashboardAccountsettingStaffIndexRoute
+  '/dashboard/accountsetting/withdrawal': typeof DashboardAccountsettingWithdrawalIndexRoute
   '/dashboard/setting/article': typeof DashboardSettingArticleIndexRoute
   '/dashboard/setting/landing': typeof DashboardSettingLandingIndexRoute
   '/dashboard/setting/tutorial': typeof DashboardSettingTutorialIndexRoute
@@ -278,16 +323,16 @@ export interface FileRoutesByTo {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/dashboard': typeof DashboardIndexRoute
+  '/dashboard/accountsetting/shift': typeof DashboardAccountsettingShiftRouteRoute
+  '/dashboard/attendance/me': typeof DashboardAttendanceMeRouteRoute
   '/dashboard/account/$slug': typeof DashboardAccountSlugRoute
   '/dashboard/account/create': typeof DashboardAccountCreateRoute
+  '/dashboard/accountsetting/devices': typeof DashboardAccountsettingDevicesRoute
   '/dashboard/email/$id': typeof DashboardEmailIdRoute
   '/dashboard/email/create': typeof DashboardEmailCreateRoute
   '/dashboard/platform-product/$id': typeof DashboardPlatformProductIdRoute
   '/dashboard/platform-product/create': typeof DashboardPlatformProductCreateRoute
   '/dashboard/product/create': typeof DashboardProductCreateRoute
-  '/dashboard/role/$roleId': typeof DashboardRoleRoleIdRoute
-  '/dashboard/role/create': typeof DashboardRoleCreateRoute
-  '/dashboard/staff/create': typeof DashboardStaffCreateRoute
   '/dashboard/transaction/create': typeof DashboardTransactionCreateRoute
   '/dashboard/account': typeof DashboardAccountIndexRoute
   '/dashboard/accountsetting': typeof DashboardAccountsettingIndexRoute
@@ -295,13 +340,18 @@ export interface FileRoutesByTo {
   '/dashboard/email': typeof DashboardEmailIndexRoute
   '/dashboard/platform-product': typeof DashboardPlatformProductIndexRoute
   '/dashboard/product': typeof DashboardProductIndexRoute
-  '/dashboard/role': typeof DashboardRoleIndexRoute
   '/dashboard/setting': typeof DashboardSettingIndexRoute
-  '/dashboard/staff': typeof DashboardStaffIndexRoute
   '/dashboard/transaction': typeof DashboardTransactionIndexRoute
   '/dashboard/voucher-generator': typeof DashboardVoucherGeneratorIndexRoute
   '/dashboard/wallet': typeof DashboardWalletIndexRoute
-  '/dashboard/admin/withdrawal': typeof DashboardAdminWithdrawalIndexRoute
+  '/dashboard/accountsetting/attendance/report': typeof DashboardAccountsettingAttendanceReportRouteRoute
+  '/dashboard/accountsetting/role/$roleId': typeof DashboardAccountsettingRoleRoleIdRoute
+  '/dashboard/accountsetting/role/create': typeof DashboardAccountsettingRoleCreateRoute
+  '/dashboard/accountsetting/staff/create': typeof DashboardAccountsettingStaffCreateRoute
+  '/dashboard/accountsetting/attendance': typeof DashboardAccountsettingAttendanceIndexRoute
+  '/dashboard/accountsetting/role': typeof DashboardAccountsettingRoleIndexRoute
+  '/dashboard/accountsetting/staff': typeof DashboardAccountsettingStaffIndexRoute
+  '/dashboard/accountsetting/withdrawal': typeof DashboardAccountsettingWithdrawalIndexRoute
   '/dashboard/setting/article': typeof DashboardSettingArticleIndexRoute
   '/dashboard/setting/landing': typeof DashboardSettingLandingIndexRoute
   '/dashboard/setting/tutorial': typeof DashboardSettingTutorialIndexRoute
@@ -316,16 +366,16 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/dashboard/accountsetting/shift': typeof DashboardAccountsettingShiftRouteRoute
+  '/dashboard/attendance/me': typeof DashboardAttendanceMeRouteRoute
   '/dashboard/account/$slug': typeof DashboardAccountSlugRoute
   '/dashboard/account/create': typeof DashboardAccountCreateRoute
+  '/dashboard/accountsetting/devices': typeof DashboardAccountsettingDevicesRoute
   '/dashboard/email/$id': typeof DashboardEmailIdRoute
   '/dashboard/email/create': typeof DashboardEmailCreateRoute
   '/dashboard/platform-product/$id': typeof DashboardPlatformProductIdRoute
   '/dashboard/platform-product/create': typeof DashboardPlatformProductCreateRoute
   '/dashboard/product/create': typeof DashboardProductCreateRoute
-  '/dashboard/role/$roleId': typeof DashboardRoleRoleIdRoute
-  '/dashboard/role/create': typeof DashboardRoleCreateRoute
-  '/dashboard/staff/create': typeof DashboardStaffCreateRoute
   '/dashboard/transaction/create': typeof DashboardTransactionCreateRoute
   '/dashboard/account/': typeof DashboardAccountIndexRoute
   '/dashboard/accountsetting/': typeof DashboardAccountsettingIndexRoute
@@ -333,13 +383,18 @@ export interface FileRoutesById {
   '/dashboard/email/': typeof DashboardEmailIndexRoute
   '/dashboard/platform-product/': typeof DashboardPlatformProductIndexRoute
   '/dashboard/product/': typeof DashboardProductIndexRoute
-  '/dashboard/role/': typeof DashboardRoleIndexRoute
   '/dashboard/setting/': typeof DashboardSettingIndexRoute
-  '/dashboard/staff/': typeof DashboardStaffIndexRoute
   '/dashboard/transaction/': typeof DashboardTransactionIndexRoute
   '/dashboard/voucher-generator/': typeof DashboardVoucherGeneratorIndexRoute
   '/dashboard/wallet/': typeof DashboardWalletIndexRoute
-  '/dashboard/admin/withdrawal/': typeof DashboardAdminWithdrawalIndexRoute
+  '/dashboard/accountsetting/attendance/report': typeof DashboardAccountsettingAttendanceReportRouteRoute
+  '/dashboard/accountsetting/role/$roleId': typeof DashboardAccountsettingRoleRoleIdRoute
+  '/dashboard/accountsetting/role/create': typeof DashboardAccountsettingRoleCreateRoute
+  '/dashboard/accountsetting/staff/create': typeof DashboardAccountsettingStaffCreateRoute
+  '/dashboard/accountsetting/attendance/': typeof DashboardAccountsettingAttendanceIndexRoute
+  '/dashboard/accountsetting/role/': typeof DashboardAccountsettingRoleIndexRoute
+  '/dashboard/accountsetting/staff/': typeof DashboardAccountsettingStaffIndexRoute
+  '/dashboard/accountsetting/withdrawal/': typeof DashboardAccountsettingWithdrawalIndexRoute
   '/dashboard/setting/article/': typeof DashboardSettingArticleIndexRoute
   '/dashboard/setting/landing/': typeof DashboardSettingLandingIndexRoute
   '/dashboard/setting/tutorial/': typeof DashboardSettingTutorialIndexRoute
@@ -355,16 +410,16 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/dashboard/'
+    | '/dashboard/accountsetting/shift'
+    | '/dashboard/attendance/me'
     | '/dashboard/account/$slug'
     | '/dashboard/account/create'
+    | '/dashboard/accountsetting/devices'
     | '/dashboard/email/$id'
     | '/dashboard/email/create'
     | '/dashboard/platform-product/$id'
     | '/dashboard/platform-product/create'
     | '/dashboard/product/create'
-    | '/dashboard/role/$roleId'
-    | '/dashboard/role/create'
-    | '/dashboard/staff/create'
     | '/dashboard/transaction/create'
     | '/dashboard/account'
     | '/dashboard/accountsetting'
@@ -372,13 +427,18 @@ export interface FileRouteTypes {
     | '/dashboard/email'
     | '/dashboard/platform-product'
     | '/dashboard/product'
-    | '/dashboard/role'
     | '/dashboard/setting'
-    | '/dashboard/staff'
     | '/dashboard/transaction'
     | '/dashboard/voucher-generator'
     | '/dashboard/wallet'
-    | '/dashboard/admin/withdrawal'
+    | '/dashboard/accountsetting/attendance/report'
+    | '/dashboard/accountsetting/role/$roleId'
+    | '/dashboard/accountsetting/role/create'
+    | '/dashboard/accountsetting/staff/create'
+    | '/dashboard/accountsetting/attendance'
+    | '/dashboard/accountsetting/role'
+    | '/dashboard/accountsetting/staff'
+    | '/dashboard/accountsetting/withdrawal'
     | '/dashboard/setting/article'
     | '/dashboard/setting/landing'
     | '/dashboard/setting/tutorial'
@@ -391,16 +451,16 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/dashboard'
+    | '/dashboard/accountsetting/shift'
+    | '/dashboard/attendance/me'
     | '/dashboard/account/$slug'
     | '/dashboard/account/create'
+    | '/dashboard/accountsetting/devices'
     | '/dashboard/email/$id'
     | '/dashboard/email/create'
     | '/dashboard/platform-product/$id'
     | '/dashboard/platform-product/create'
     | '/dashboard/product/create'
-    | '/dashboard/role/$roleId'
-    | '/dashboard/role/create'
-    | '/dashboard/staff/create'
     | '/dashboard/transaction/create'
     | '/dashboard/account'
     | '/dashboard/accountsetting'
@@ -408,13 +468,18 @@ export interface FileRouteTypes {
     | '/dashboard/email'
     | '/dashboard/platform-product'
     | '/dashboard/product'
-    | '/dashboard/role'
     | '/dashboard/setting'
-    | '/dashboard/staff'
     | '/dashboard/transaction'
     | '/dashboard/voucher-generator'
     | '/dashboard/wallet'
-    | '/dashboard/admin/withdrawal'
+    | '/dashboard/accountsetting/attendance/report'
+    | '/dashboard/accountsetting/role/$roleId'
+    | '/dashboard/accountsetting/role/create'
+    | '/dashboard/accountsetting/staff/create'
+    | '/dashboard/accountsetting/attendance'
+    | '/dashboard/accountsetting/role'
+    | '/dashboard/accountsetting/staff'
+    | '/dashboard/accountsetting/withdrawal'
     | '/dashboard/setting/article'
     | '/dashboard/setting/landing'
     | '/dashboard/setting/tutorial'
@@ -428,16 +493,16 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/dashboard/'
+    | '/dashboard/accountsetting/shift'
+    | '/dashboard/attendance/me'
     | '/dashboard/account/$slug'
     | '/dashboard/account/create'
+    | '/dashboard/accountsetting/devices'
     | '/dashboard/email/$id'
     | '/dashboard/email/create'
     | '/dashboard/platform-product/$id'
     | '/dashboard/platform-product/create'
     | '/dashboard/product/create'
-    | '/dashboard/role/$roleId'
-    | '/dashboard/role/create'
-    | '/dashboard/staff/create'
     | '/dashboard/transaction/create'
     | '/dashboard/account/'
     | '/dashboard/accountsetting/'
@@ -445,13 +510,18 @@ export interface FileRouteTypes {
     | '/dashboard/email/'
     | '/dashboard/platform-product/'
     | '/dashboard/product/'
-    | '/dashboard/role/'
     | '/dashboard/setting/'
-    | '/dashboard/staff/'
     | '/dashboard/transaction/'
     | '/dashboard/voucher-generator/'
     | '/dashboard/wallet/'
-    | '/dashboard/admin/withdrawal/'
+    | '/dashboard/accountsetting/attendance/report'
+    | '/dashboard/accountsetting/role/$roleId'
+    | '/dashboard/accountsetting/role/create'
+    | '/dashboard/accountsetting/staff/create'
+    | '/dashboard/accountsetting/attendance/'
+    | '/dashboard/accountsetting/role/'
+    | '/dashboard/accountsetting/staff/'
+    | '/dashboard/accountsetting/withdrawal/'
     | '/dashboard/setting/article/'
     | '/dashboard/setting/landing/'
     | '/dashboard/setting/tutorial/'
@@ -539,25 +609,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardTransactionIndexRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
-    '/dashboard/staff/': {
-      id: '/dashboard/staff/'
-      path: '/staff'
-      fullPath: '/dashboard/staff'
-      preLoaderRoute: typeof DashboardStaffIndexRouteImport
-      parentRoute: typeof DashboardRouteRoute
-    }
     '/dashboard/setting/': {
       id: '/dashboard/setting/'
       path: '/setting'
       fullPath: '/dashboard/setting'
       preLoaderRoute: typeof DashboardSettingIndexRouteImport
-      parentRoute: typeof DashboardRouteRoute
-    }
-    '/dashboard/role/': {
-      id: '/dashboard/role/'
-      path: '/role'
-      fullPath: '/dashboard/role'
-      preLoaderRoute: typeof DashboardRoleIndexRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
     '/dashboard/product/': {
@@ -609,27 +665,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardTransactionCreateRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
-    '/dashboard/staff/create': {
-      id: '/dashboard/staff/create'
-      path: '/staff/create'
-      fullPath: '/dashboard/staff/create'
-      preLoaderRoute: typeof DashboardStaffCreateRouteImport
-      parentRoute: typeof DashboardRouteRoute
-    }
-    '/dashboard/role/create': {
-      id: '/dashboard/role/create'
-      path: '/role/create'
-      fullPath: '/dashboard/role/create'
-      preLoaderRoute: typeof DashboardRoleCreateRouteImport
-      parentRoute: typeof DashboardRouteRoute
-    }
-    '/dashboard/role/$roleId': {
-      id: '/dashboard/role/$roleId'
-      path: '/role/$roleId'
-      fullPath: '/dashboard/role/$roleId'
-      preLoaderRoute: typeof DashboardRoleRoleIdRouteImport
-      parentRoute: typeof DashboardRouteRoute
-    }
     '/dashboard/product/create': {
       id: '/dashboard/product/create'
       path: '/product/create'
@@ -665,6 +700,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardEmailIdRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
+    '/dashboard/accountsetting/devices': {
+      id: '/dashboard/accountsetting/devices'
+      path: '/accountsetting/devices'
+      fullPath: '/dashboard/accountsetting/devices'
+      preLoaderRoute: typeof DashboardAccountsettingDevicesRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
     '/dashboard/account/create': {
       id: '/dashboard/account/create'
       path: '/account/create'
@@ -677,6 +719,20 @@ declare module '@tanstack/react-router' {
       path: '/account/$slug'
       fullPath: '/dashboard/account/$slug'
       preLoaderRoute: typeof DashboardAccountSlugRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/attendance/me': {
+      id: '/dashboard/attendance/me'
+      path: '/attendance/me'
+      fullPath: '/dashboard/attendance/me'
+      preLoaderRoute: typeof DashboardAttendanceMeRouteRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/accountsetting/shift': {
+      id: '/dashboard/accountsetting/shift'
+      path: '/accountsetting/shift'
+      fullPath: '/dashboard/accountsetting/shift'
+      preLoaderRoute: typeof DashboardAccountsettingShiftRouteRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
     '/dashboard/wallet/bank-account/': {
@@ -707,11 +763,60 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardSettingArticleIndexRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
-    '/dashboard/admin/withdrawal/': {
-      id: '/dashboard/admin/withdrawal/'
-      path: '/admin/withdrawal'
-      fullPath: '/dashboard/admin/withdrawal'
-      preLoaderRoute: typeof DashboardAdminWithdrawalIndexRouteImport
+    '/dashboard/accountsetting/withdrawal/': {
+      id: '/dashboard/accountsetting/withdrawal/'
+      path: '/accountsetting/withdrawal'
+      fullPath: '/dashboard/accountsetting/withdrawal'
+      preLoaderRoute: typeof DashboardAccountsettingWithdrawalIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/accountsetting/staff/': {
+      id: '/dashboard/accountsetting/staff/'
+      path: '/accountsetting/staff'
+      fullPath: '/dashboard/accountsetting/staff'
+      preLoaderRoute: typeof DashboardAccountsettingStaffIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/accountsetting/role/': {
+      id: '/dashboard/accountsetting/role/'
+      path: '/accountsetting/role'
+      fullPath: '/dashboard/accountsetting/role'
+      preLoaderRoute: typeof DashboardAccountsettingRoleIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/accountsetting/attendance/': {
+      id: '/dashboard/accountsetting/attendance/'
+      path: '/accountsetting/attendance'
+      fullPath: '/dashboard/accountsetting/attendance'
+      preLoaderRoute: typeof DashboardAccountsettingAttendanceIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/accountsetting/staff/create': {
+      id: '/dashboard/accountsetting/staff/create'
+      path: '/accountsetting/staff/create'
+      fullPath: '/dashboard/accountsetting/staff/create'
+      preLoaderRoute: typeof DashboardAccountsettingStaffCreateRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/accountsetting/role/create': {
+      id: '/dashboard/accountsetting/role/create'
+      path: '/accountsetting/role/create'
+      fullPath: '/dashboard/accountsetting/role/create'
+      preLoaderRoute: typeof DashboardAccountsettingRoleCreateRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/accountsetting/role/$roleId': {
+      id: '/dashboard/accountsetting/role/$roleId'
+      path: '/accountsetting/role/$roleId'
+      fullPath: '/dashboard/accountsetting/role/$roleId'
+      preLoaderRoute: typeof DashboardAccountsettingRoleRoleIdRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/accountsetting/attendance/report': {
+      id: '/dashboard/accountsetting/attendance/report'
+      path: '/accountsetting/attendance/report'
+      fullPath: '/dashboard/accountsetting/attendance/report'
+      preLoaderRoute: typeof DashboardAccountsettingAttendanceReportRouteRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
   }
@@ -719,16 +824,16 @@ declare module '@tanstack/react-router' {
 
 interface DashboardRouteRouteChildren {
   DashboardIndexRoute: typeof DashboardIndexRoute
+  DashboardAccountsettingShiftRouteRoute: typeof DashboardAccountsettingShiftRouteRoute
+  DashboardAttendanceMeRouteRoute: typeof DashboardAttendanceMeRouteRoute
   DashboardAccountSlugRoute: typeof DashboardAccountSlugRoute
   DashboardAccountCreateRoute: typeof DashboardAccountCreateRoute
+  DashboardAccountsettingDevicesRoute: typeof DashboardAccountsettingDevicesRoute
   DashboardEmailIdRoute: typeof DashboardEmailIdRoute
   DashboardEmailCreateRoute: typeof DashboardEmailCreateRoute
   DashboardPlatformProductIdRoute: typeof DashboardPlatformProductIdRoute
   DashboardPlatformProductCreateRoute: typeof DashboardPlatformProductCreateRoute
   DashboardProductCreateRoute: typeof DashboardProductCreateRoute
-  DashboardRoleRoleIdRoute: typeof DashboardRoleRoleIdRoute
-  DashboardRoleCreateRoute: typeof DashboardRoleCreateRoute
-  DashboardStaffCreateRoute: typeof DashboardStaffCreateRoute
   DashboardTransactionCreateRoute: typeof DashboardTransactionCreateRoute
   DashboardAccountIndexRoute: typeof DashboardAccountIndexRoute
   DashboardAccountsettingIndexRoute: typeof DashboardAccountsettingIndexRoute
@@ -736,13 +841,18 @@ interface DashboardRouteRouteChildren {
   DashboardEmailIndexRoute: typeof DashboardEmailIndexRoute
   DashboardPlatformProductIndexRoute: typeof DashboardPlatformProductIndexRoute
   DashboardProductIndexRoute: typeof DashboardProductIndexRoute
-  DashboardRoleIndexRoute: typeof DashboardRoleIndexRoute
   DashboardSettingIndexRoute: typeof DashboardSettingIndexRoute
-  DashboardStaffIndexRoute: typeof DashboardStaffIndexRoute
   DashboardTransactionIndexRoute: typeof DashboardTransactionIndexRoute
   DashboardVoucherGeneratorIndexRoute: typeof DashboardVoucherGeneratorIndexRoute
   DashboardWalletIndexRoute: typeof DashboardWalletIndexRoute
-  DashboardAdminWithdrawalIndexRoute: typeof DashboardAdminWithdrawalIndexRoute
+  DashboardAccountsettingAttendanceReportRouteRoute: typeof DashboardAccountsettingAttendanceReportRouteRoute
+  DashboardAccountsettingRoleRoleIdRoute: typeof DashboardAccountsettingRoleRoleIdRoute
+  DashboardAccountsettingRoleCreateRoute: typeof DashboardAccountsettingRoleCreateRoute
+  DashboardAccountsettingStaffCreateRoute: typeof DashboardAccountsettingStaffCreateRoute
+  DashboardAccountsettingAttendanceIndexRoute: typeof DashboardAccountsettingAttendanceIndexRoute
+  DashboardAccountsettingRoleIndexRoute: typeof DashboardAccountsettingRoleIndexRoute
+  DashboardAccountsettingStaffIndexRoute: typeof DashboardAccountsettingStaffIndexRoute
+  DashboardAccountsettingWithdrawalIndexRoute: typeof DashboardAccountsettingWithdrawalIndexRoute
   DashboardSettingArticleIndexRoute: typeof DashboardSettingArticleIndexRoute
   DashboardSettingLandingIndexRoute: typeof DashboardSettingLandingIndexRoute
   DashboardSettingTutorialIndexRoute: typeof DashboardSettingTutorialIndexRoute
@@ -751,16 +861,17 @@ interface DashboardRouteRouteChildren {
 
 const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardIndexRoute: DashboardIndexRoute,
+  DashboardAccountsettingShiftRouteRoute:
+    DashboardAccountsettingShiftRouteRoute,
+  DashboardAttendanceMeRouteRoute: DashboardAttendanceMeRouteRoute,
   DashboardAccountSlugRoute: DashboardAccountSlugRoute,
   DashboardAccountCreateRoute: DashboardAccountCreateRoute,
+  DashboardAccountsettingDevicesRoute: DashboardAccountsettingDevicesRoute,
   DashboardEmailIdRoute: DashboardEmailIdRoute,
   DashboardEmailCreateRoute: DashboardEmailCreateRoute,
   DashboardPlatformProductIdRoute: DashboardPlatformProductIdRoute,
   DashboardPlatformProductCreateRoute: DashboardPlatformProductCreateRoute,
   DashboardProductCreateRoute: DashboardProductCreateRoute,
-  DashboardRoleRoleIdRoute: DashboardRoleRoleIdRoute,
-  DashboardRoleCreateRoute: DashboardRoleCreateRoute,
-  DashboardStaffCreateRoute: DashboardStaffCreateRoute,
   DashboardTransactionCreateRoute: DashboardTransactionCreateRoute,
   DashboardAccountIndexRoute: DashboardAccountIndexRoute,
   DashboardAccountsettingIndexRoute: DashboardAccountsettingIndexRoute,
@@ -768,13 +879,25 @@ const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardEmailIndexRoute: DashboardEmailIndexRoute,
   DashboardPlatformProductIndexRoute: DashboardPlatformProductIndexRoute,
   DashboardProductIndexRoute: DashboardProductIndexRoute,
-  DashboardRoleIndexRoute: DashboardRoleIndexRoute,
   DashboardSettingIndexRoute: DashboardSettingIndexRoute,
-  DashboardStaffIndexRoute: DashboardStaffIndexRoute,
   DashboardTransactionIndexRoute: DashboardTransactionIndexRoute,
   DashboardVoucherGeneratorIndexRoute: DashboardVoucherGeneratorIndexRoute,
   DashboardWalletIndexRoute: DashboardWalletIndexRoute,
-  DashboardAdminWithdrawalIndexRoute: DashboardAdminWithdrawalIndexRoute,
+  DashboardAccountsettingAttendanceReportRouteRoute:
+    DashboardAccountsettingAttendanceReportRouteRoute,
+  DashboardAccountsettingRoleRoleIdRoute:
+    DashboardAccountsettingRoleRoleIdRoute,
+  DashboardAccountsettingRoleCreateRoute:
+    DashboardAccountsettingRoleCreateRoute,
+  DashboardAccountsettingStaffCreateRoute:
+    DashboardAccountsettingStaffCreateRoute,
+  DashboardAccountsettingAttendanceIndexRoute:
+    DashboardAccountsettingAttendanceIndexRoute,
+  DashboardAccountsettingRoleIndexRoute: DashboardAccountsettingRoleIndexRoute,
+  DashboardAccountsettingStaffIndexRoute:
+    DashboardAccountsettingStaffIndexRoute,
+  DashboardAccountsettingWithdrawalIndexRoute:
+    DashboardAccountsettingWithdrawalIndexRoute,
   DashboardSettingArticleIndexRoute: DashboardSettingArticleIndexRoute,
   DashboardSettingLandingIndexRoute: DashboardSettingLandingIndexRoute,
   DashboardSettingTutorialIndexRoute: DashboardSettingTutorialIndexRoute,

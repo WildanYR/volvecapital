@@ -24,6 +24,7 @@ import {
 } from 'lucide-react'
 import { PermissionGate } from '@/dashboard/components/permission-gate'
 import { StockNotification } from '@/dashboard/components/stock-notification'
+import { AttendanceCheck } from './components/attendance-check'
 
 import { can } from '@/dashboard/lib/permission'
 
@@ -65,7 +66,7 @@ const navGroups = [
     ],
   },
   {
-    title: 'Akun',
+    title: 'Akun & Email',
     items: [
       { title: 'Email', url: '/dashboard/email', icon: Mail, permission: 'email.view' },
       { title: 'Akun', url: '/dashboard/account', icon: User, permission: 'account.view' },
@@ -103,14 +104,7 @@ const navGroups = [
   },
 ]
 
-const adminGroups = [
-  {
-    title: 'Admin Panel',
-    items: [
-      { title: 'Approval WD', url: '/dashboard/admin/withdrawal', icon: FileText, permission: 'withdrawal.view' },
-    ],
-  },
-]
+// adminGroups removed, moved to account setting
 
 export const Route = createFileRoute('/dashboard')({
   beforeLoad: ({ context }) => {
@@ -156,6 +150,19 @@ function RouteComponent() {
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
+                <PermissionGate permission="attendance.view">
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={pathname.startsWith('/dashboard/attendance/me')}
+                    >
+                      <Link to="/dashboard/attendance/me">
+                        <User />
+                        <span>Absensi Saya</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </PermissionGate>
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
@@ -201,54 +208,14 @@ function RouteComponent() {
               </SidebarGroup>
             )
           })}
-          {auth.tenant?.id === 'paytronik' && adminGroups.map((nav, i) => {
-            // Filter admin items based on user permissions
-            const visibleItems = nav.items.filter((item) => {
-              if (!(item as any).permission) return true
-              return can((item as any).permission, auth.tenant)
-            })
-
-            if (visibleItems.length === 0) return null
-
-            return (
-              <SidebarGroup key={`admin-nav=${i}`}>
-                <SidebarGroupLabel>{nav.title}</SidebarGroupLabel>
-                <SidebarGroupContent>
-                  <SidebarMenu>
-                    {visibleItems.map((item) => {
-                      const menuButton = (
-                        <SidebarMenuItem key={item.title}>
-                          <SidebarMenuButton
-                            asChild
-                            isActive={pathname === item.url}
-                          >
-                            <Link to={item.url}>
-                              <item.icon />
-                              <span>{item.title}</span>
-                            </Link>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      )
-                      if ((item as any).permission) {
-                        return (
-                          <PermissionGate key={item.title} permission={(item as any).permission}>
-                            {menuButton}
-                          </PermissionGate>
-                        )
-                      }
-                      return menuButton
-                    })}
-                  </SidebarMenu>
-                </SidebarGroupContent>
-              </SidebarGroup>
-            )
-          })}
+          {/* Admin Groups moved to account settings */}
         </SidebarContent>
       </Sidebar>
       <main className="flex-1 min-w-0 overflow-x-hidden max-w-full">
         <div className="flex justify-between items-center p-3 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-30">
           <SidebarTrigger className="cursor-pointer" />
           <div className="flex items-center gap-4">
+            <AttendanceCheck />
             <StockNotification />
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center gap-2 hover:bg-muted/50 p-2 rounded-md transition-colors outline-none cursor-pointer">

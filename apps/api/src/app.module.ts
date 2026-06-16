@@ -46,6 +46,9 @@ import { RoleModule } from './modules/role/role.module';
 import { PermissionModule } from './modules/permission/permission.module';
 import { DashboardUserModule } from './modules/dashboard-user/dashboard-user.module';
 import { LabelModule } from './modules/label/label.module';
+import { ShiftModule } from './modules/shift/shift.module';
+import { WeeklyOffModule } from './modules/weekly-off/weekly-off.module';
+import { AttendanceModule } from './modules/attendance/attendance.module';
 
 @Module({
   imports: [
@@ -100,6 +103,9 @@ import { LabelModule } from './modules/label/label.module';
     PermissionModule,
     DashboardUserModule,
     LabelModule,
+    ShiftModule,
+    WeeklyOffModule,
+    AttendanceModule,
   ],
   controllers: [AppController],
   providers: [{ provide: APP_GUARD, useClass: VcAuthGuard }, AppService],

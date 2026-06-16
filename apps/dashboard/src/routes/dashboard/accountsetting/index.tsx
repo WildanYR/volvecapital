@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { Loader2, Save, ShieldCheck, Users, Laptop, Smartphone, LogOut, Globe } from 'lucide-react'
+import { Loader2, Save, ShieldCheck, Users, Laptop, Smartphone, LogOut, Globe, Blocks, User, FileText } from 'lucide-react'
 import { Button } from '@/dashboard/components/ui/button'
 import { PermissionGate } from '@/dashboard/components/permission-gate'
 import { can } from '@/dashboard/lib/permission'
@@ -49,7 +49,7 @@ function RouteComponent() {
   const auth = useAuth()
   if (!auth.tenant) return null
 
-  const showManajemen = can('role.view', auth.tenant) || can('user.view', auth.tenant)
+  const showManajemen = can('role.view', auth.tenant) || can('user.view', auth.tenant) || can('shift.manage', auth.tenant) || can('attendance.manage', auth.tenant) || can('withdrawal.view', auth.tenant)
   const tenantService = TenantServiceGenerator(
     API_URL,
     auth.tenant!.accessToken,
@@ -233,66 +233,18 @@ function RouteComponent() {
       {hasViewAll && (
         <Card className="bg-card">
           <CardHeader>
-          <CardTitle>{hasViewAll ? 'Kelola Akses Semua Perangkat' : 'Kelola Akses dan Perangkat'}</CardTitle>
-          <CardDescription>
-            {hasViewAll 
-              ? 'Daftar semua perangkat yang saat ini terhubung ke tenant Anda. Anda dapat mengeluarkan perangkat yang mencurigakan.'
-              : 'Perangkat ini sudah login ke akun Anda. Jika ada perangkat yang tidak Anda kenali, segera keluarkan.'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoadingDevices ? (
-            <div className="flex justify-center p-8"><Loader2 className="size-6 animate-spin text-muted-foreground" /></div>
-          ) : (
-            <div className="flex flex-col gap-4">
-              {devices?.map((device: any) => (
-                <div key={device.id} className="flex items-center justify-between p-4 border rounded-lg bg-background/50">
-                  <div className="flex items-start gap-4">
-                    <div className="p-2 bg-primary/10 rounded-full text-primary">
-                      {device.device_info.toLowerCase().includes('mobile') || device.device_info.toLowerCase().includes('android') || device.device_info.toLowerCase().includes('iphone') ? (
-                        <Smartphone className="size-6" />
-                      ) : (
-                        <Laptop className="size-6" />
-                      )}
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold">{parseUserAgent(device.device_info)}</span>
-                        {device.owner_name && (
-                          <span className="text-xs text-muted-foreground">
-                            ({device.owner_role === 'Owner' ? 'Owner' : `Staff: ${device.owner_name}`})
-                          </span>
-                        )}
-                        {device.id === auth.tenant?.session_id && (
-                          <Badge variant="default" className="text-[10px] h-5">Perangkat Ini</Badge>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <Globe className="size-3" />
-                          <span>{device.ip_address}</span>
-                        </div>
-                        <span>Aktif pada {new Date(device.last_active_at).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })} WIB</span>
-                      </div>
-                    </div>
-                  </div>
-                  {device.id !== auth.tenant?.session_id && (
-                    <Button 
-                      type="button"
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => revokeSessionMutation.mutate(device.id)}
-                      disabled={revokeSessionMutation.isPending || (!hasDeleteAll && device.user_id !== auth.tenant?.userId)}
-                      className="gap-2 text-red-500 hover:text-red-600 hover:bg-red-50 border-red-200 disabled:opacity-50"
-                    >
-                      <LogOut className="size-4" />
-                      Keluar
-                    </Button>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
+            <CardTitle>Perangkat Aktif</CardTitle>
+            <CardDescription>
+              Lihat dan kelola semua perangkat yang sedang login ke sistem.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild variant="outline" className="w-full justify-start gap-3">
+              <Link to="/dashboard/accountsetting/devices">
+                <Laptop className="size-5" />
+                <span className="font-semibold">Kelola Akses Perangkat</span>
+              </Link>
+            </Button>
           </CardContent>
         </Card>
       )}
@@ -307,7 +259,7 @@ function RouteComponent() {
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
             <PermissionGate permission="role.view">
-              <Link to="/dashboard/role">
+              <Link to="/dashboard/accountsetting/role">
                 <Button variant="outline" className="w-full h-32 flex flex-col items-center justify-center gap-3 border-dashed hover:border-primary hover:text-primary transition-colors hover:bg-primary/5">
                   <ShieldCheck className="size-8" />
                   <span className="font-semibold text-base">Role & Permission</span>
@@ -316,10 +268,37 @@ function RouteComponent() {
             </PermissionGate>
             
             <PermissionGate permission="user.view">
-              <Link to="/dashboard/staff">
+              <Link to="/dashboard/accountsetting/staff">
                 <Button variant="outline" className="w-full h-32 flex flex-col items-center justify-center gap-3 border-dashed hover:border-primary hover:text-primary transition-colors hover:bg-primary/5">
                   <Users className="size-8" />
                   <span className="font-semibold text-base">Staff</span>
+                </Button>
+              </Link>
+            </PermissionGate>
+
+            <PermissionGate permission="shift.manage">
+              <Link to="/dashboard/accountsetting/shift">
+                <Button variant="outline" className="w-full h-32 flex flex-col items-center justify-center gap-3 border-dashed hover:border-primary hover:text-primary transition-colors hover:bg-primary/5">
+                  <Blocks className="size-8" />
+                  <span className="font-semibold text-base">Kelola Shift</span>
+                </Button>
+              </Link>
+            </PermissionGate>
+
+            <PermissionGate permission="attendance.manage">
+              <Link to="/dashboard/accountsetting/attendance">
+                <Button variant="outline" className="w-full h-32 flex flex-col items-center justify-center gap-3 border-dashed hover:border-primary hover:text-primary transition-colors hover:bg-primary/5">
+                  <User className="size-8" />
+                  <span className="font-semibold text-base">Kelola Absensi</span>
+                </Button>
+              </Link>
+            </PermissionGate>
+
+            <PermissionGate permission="withdrawal.view">
+              <Link to="/dashboard/accountsetting/withdrawal">
+                <Button variant="outline" className="w-full h-32 flex flex-col items-center justify-center gap-3 border-dashed hover:border-primary hover:text-primary transition-colors hover:bg-primary/5">
+                  <FileText className="size-8" />
+                  <span className="font-semibold text-base">Approval WD</span>
                 </Button>
               </Link>
             </PermissionGate>

@@ -35,6 +35,12 @@ import {
   LABEL_REPOSITORY,
   ACCOUNT_LABEL_REPOSITORY,
   ACCOUNT_USER_MOVE_HISTORY_REPOSITORY,
+  SHIFT_REPOSITORY,
+  USER_SHIFT_REPOSITORY,
+  ATTENDANCE_REPOSITORY,
+  WEEKLY_OFF_SCHEDULE_REPOSITORY,
+  WEEKLY_OFF_REQUEST_REPOSITORY,
+  ATTENDANCE_SETTING_REPOSITORY,
 } from 'src/constants/database.const';
 import { AccountProfile } from './models/account-profile.model';
 import { AccountUser } from './models/account-user.model';
@@ -71,6 +77,12 @@ import { DeviceSession } from './models/device-session.model';
 import { Label } from './models/label.model';
 import { AccountLabel } from './models/account-label.model';
 import { AccountUserMoveHistory } from './models/account-user-move-history.model';
+import { Shift } from './models/shift.model';
+import { UserShift } from './models/user-shift.model';
+import { Attendance } from './models/attendance.model';
+import { WeeklyOffSchedule } from './models/weekly-off-schedule.model';
+import { WeeklyOffRequest } from './models/weekly-off-request.model';
+import { AttendanceSetting } from './models/attendance-setting.model';
 
 export const RepositoryProvider: Provider[] = [
   { provide: TENANT_REPOSITORY, useValue: Tenant },
@@ -111,4 +123,10 @@ export const RepositoryProvider: Provider[] = [
   { provide: LABEL_REPOSITORY, useValue: Label },
   { provide: ACCOUNT_LABEL_REPOSITORY, useValue: AccountLabel },
   { provide: ACCOUNT_USER_MOVE_HISTORY_REPOSITORY, useValue: AccountUserMoveHistory },
+  { provide: SHIFT_REPOSITORY, useValue: Shift },
+  { provide: USER_SHIFT_REPOSITORY, useValue: UserShift },
+  { provide: ATTENDANCE_REPOSITORY, useValue: Attendance },
+  { provide: WEEKLY_OFF_SCHEDULE_REPOSITORY, useValue: WeeklyOffSchedule },
+  { provide: WEEKLY_OFF_REQUEST_REPOSITORY, useValue: WeeklyOffRequest },
+  { provide: ATTENDANCE_SETTING_REPOSITORY, useValue: AttendanceSetting },
 ];

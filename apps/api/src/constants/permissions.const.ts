@@ -49,6 +49,16 @@ export const ALL_PERMISSIONS = [
   { name: 'withdrawal.edit', description: 'Menyetujui atau menolak penarikan dana' },
   { name: 'device.view', description: 'Melihat daftar perangkat yang terkoneksi ke tenant' },
   { name: 'device.delete', description: 'Mengeluarkan perangkat dari akun (Force Logout)' },
+  { name: 'attendance.view', description: 'Melihat absensi sendiri' },
+  { name: 'attendance.start', description: 'Melakukan start shift (check in)' },
+  { name: 'attendance.end', description: 'Melakukan end shift (check out)' },
+  { name: 'attendance.manage', description: 'Mengelola data absensi semua karyawan' },
+  { name: 'attendance.report', description: 'Melihat laporan absensi' },
+  { name: 'shift.view', description: 'Melihat daftar shift' },
+  { name: 'shift.manage', description: 'Mengelola daftar shift dan jam kerja' },
+  { name: 'weeklyoff.view', description: 'Melihat jadwal dan pengajuan libur sendiri' },
+  { name: 'weeklyoff.manage', description: 'Mengelola pengaturan hari libur' },
+  { name: 'weeklyoff.approve', description: 'Menyetujui atau menolak pengajuan libur' },
 ];
 
 export const ROLE_PRESETS = [
@@ -65,7 +75,7 @@ export const ROLE_PRESETS = [
   {
     name: 'Staff CS',
     description: 'Akses dashboard dan transaksi',
-    permissions: ['dashboard.view', 'transaction.view', 'transaction.create', 'voucher.view'],
+    permissions: ['dashboard.view', 'transaction.view', 'transaction.create', 'voucher.view', 'attendance.view', 'attendance.start', 'attendance.end', 'weeklyoff.view'],
   },
   {
     name: 'Viewer',

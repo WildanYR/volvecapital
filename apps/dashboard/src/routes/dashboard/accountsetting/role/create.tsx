@@ -19,7 +19,7 @@ import { useAuth } from '@/dashboard/context-providers/auth.provider'
 import { PermissionServiceGenerator } from '@/dashboard/services/permission.service'
 import { RoleServiceGenerator } from '@/dashboard/services/role.service'
 
-export const Route = createFileRoute('/dashboard/role/create')({
+export const Route = createFileRoute('/dashboard/accountsetting/role/create')({
   component: RouteComponent,
 })
 
@@ -93,7 +93,7 @@ function RouteComponent() {
   return (
     <div className="flex flex-col gap-6 max-w-2xl">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate({ to: '/dashboard/role' })}>
+        <Button variant="ghost" size="icon" onClick={() => navigate({ to: "/dashboard/role" })}>
           <ArrowLeft className="size-4" />
         </Button>
         <h1 className="text-3xl font-extrabold tracking-tight">Buat Role Baru</h1>
@@ -169,7 +169,7 @@ function RouteComponent() {
                           checked={selectedPermissions.has(perm.id)}
                           onCheckedChange={() => togglePermission(perm.id)}
                         />
-                        <span className="text-sm">{perm.name.split('.')[1]}</span>
+                        <span className="text-sm">{perm.name.split(".")[1]}</span>
                       </label>
                     ))}
                   </div>
