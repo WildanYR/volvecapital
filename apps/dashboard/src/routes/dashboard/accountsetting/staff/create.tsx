@@ -48,7 +48,7 @@ function RouteComponent() {
     mutationFn: () => staffService.create({ name, email, password, role_id: roleId }),
     onSuccess: () => {
       toast.success('Staff berhasil dibuat')
-      navigate({ to: '/dashboard/staff' })
+      navigate({ to: '/dashboard/accountsetting/staff' })
     },
     onError: (error: any) => toast.error(`Gagal membuat staff: ${error.message}`),
   })
@@ -58,7 +58,7 @@ function RouteComponent() {
   return (
     <div className="flex flex-col gap-6 max-w-md">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate({ to: "/dashboard/staff" })}>
+        <Button variant="ghost" size="icon" onClick={() => navigate({ to: "/dashboard/accountsetting/staff" })}>
           <ArrowLeft className="size-4" />
         </Button>
         <h1 className="text-3xl font-extrabold tracking-tight">Tambah Staff</h1>

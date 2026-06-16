@@ -9,7 +9,6 @@ import {
   Blocks,
 
   ChevronDown,
-  FileText,
   House,
   Inbox,
   LogOut,

@@ -5,7 +5,7 @@ import { useAuth } from '@/dashboard/context-providers/auth.provider'
 import { API_URL } from '@/dashboard/constants/api-url.cont'
 import { Button } from '@/dashboard/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/dashboard/components/ui/card'
-import { Input } from '@/dashboard/components/ui/input'
+
 import { Badge } from '@/dashboard/components/ui/badge'
 import { Textarea } from '@/dashboard/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/dashboard/components/ui/select'

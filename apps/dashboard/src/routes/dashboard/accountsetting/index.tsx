@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { Loader2, Save, ShieldCheck, Users, Laptop, Smartphone, LogOut, Globe, Blocks, User, FileText } from 'lucide-react'
+import { Loader2, Save, ShieldCheck, Users, Laptop, Blocks, User, FileText } from 'lucide-react'
 import { Button } from '@/dashboard/components/ui/button'
 import { PermissionGate } from '@/dashboard/components/permission-gate'
 import { can } from '@/dashboard/lib/permission'
@@ -15,7 +15,6 @@ import {
 } from '@/dashboard/components/ui/card'
 import { Input } from '@/dashboard/components/ui/input'
 import { Checkbox } from '@/dashboard/components/ui/checkbox'
-import { Badge } from '@/dashboard/components/ui/badge'
 import { useAuth } from '@/dashboard/context-providers/auth.provider'
 import { API_URL } from '@/dashboard/constants/api-url.cont'
 import { TenantServiceGenerator } from '@/dashboard/services/tenant.service'
@@ -26,24 +25,7 @@ export const Route = createFileRoute('/dashboard/accountsetting/')({
   component: RouteComponent,
 })
 
-function parseUserAgent(ua: string) {
-  let browser = 'Unknown Browser'
-  let os = 'Unknown OS'
 
-  if (ua.includes('Edg/')) browser = 'Microsoft Edge'
-  else if (ua.includes('Chrome/')) browser = 'Google Chrome'
-  else if (ua.includes('Firefox/')) browser = 'Mozilla Firefox'
-  else if (ua.includes('Safari/') && !ua.includes('Chrome/')) browser = 'Apple Safari'
-  else if (ua.includes('Opera/') || ua.includes('OPR/')) browser = 'Opera'
-
-  if (ua.includes('Windows')) os = 'Windows'
-  else if (ua.includes('Mac OS')) os = 'macOS'
-  else if (ua.includes('Linux')) os = 'Linux'
-  else if (ua.includes('Android')) os = 'Android'
-  else if (ua.includes('iPhone') || ua.includes('iPad')) os = 'iOS'
-
-  return `${browser} di ${os}`
-}
 
 function RouteComponent() {
   const auth = useAuth()
@@ -61,54 +43,12 @@ function RouteComponent() {
     auth.tenant!.id,
   )
 
-  const queryClient = useQueryClient()
   const [oldPassword, setOldPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [logoutAllDevices, setLogoutAllDevices] = useState(false)
 
   const hasViewAll = auth.tenant?.role !== 'DASHBOARD_USER' || auth.tenant?.permissions?.includes('device.view')
-  const hasDeleteAll = auth.tenant?.role !== 'DASHBOARD_USER' || auth.tenant?.permissions?.includes('device.delete')
-
-  const { data: devices, isLoading: isLoadingDevices } = useQuery({
-    queryKey: ['device-sessions'],
-    queryFn: () => {
-      if (hasViewAll) {
-        if (auth.tenant?.role !== 'DASHBOARD_USER') {
-          return tenantService.getAllDeviceSessions()
-        }
-        return dashboardUserService.getAllDeviceSessions()
-      }
-
-      if (auth.tenant?.role !== 'DASHBOARD_USER') {
-        return tenantService.getDeviceSessions()
-      }
-      return dashboardUserService.getDeviceSessions()
-    },
-  })
-
-  const revokeSessionMutation = useMutation({
-    mutationFn: (sessionId: string) => {
-      if (hasDeleteAll) {
-        if (auth.tenant?.role !== 'DASHBOARD_USER') {
-          return tenantService.revokeAnyDeviceSession(sessionId)
-        }
-        return dashboardUserService.revokeAnyDeviceSession(sessionId)
-      }
-
-      if (auth.tenant?.role !== 'DASHBOARD_USER') {
-        return tenantService.revokeDeviceSession(sessionId)
-      }
-      return dashboardUserService.revokeDeviceSession(sessionId)
-    },
-    onSuccess: () => {
-      toast.success('Sesi berhasil diakhiri')
-      queryClient.invalidateQueries({ queryKey: ['device-sessions'] })
-    },
-    onError: (error: any) => {
-      toast.error(`Gagal mengakhiri sesi: ${error.message}`)
-    },
-  })
 
   const changePasswordMutation = useMutation({
     mutationFn: (payload: any) => {

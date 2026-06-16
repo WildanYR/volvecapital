@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/dashboard/components
 import { Button } from '@/dashboard/components/ui/button'
 import { Input } from '@/dashboard/components/ui/input'
 import { Label } from '@/dashboard/components/ui/label'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/dashboard/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/dashboard/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/dashboard/components/ui/select'
 import { Loader2, Plus, Users, Pencil, ChevronLeft } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
@@ -46,7 +46,7 @@ function AdminShiftPage() {
     },
   })
 
-  const { data: users, isLoading: isLoadingUsers } = useQuery({
+  const { data: users } = useQuery({
     queryKey: ['admin', 'users'],
     queryFn: async () => {
       const res = await fetch(`${API_URL}/dashboard-user`, { headers })
