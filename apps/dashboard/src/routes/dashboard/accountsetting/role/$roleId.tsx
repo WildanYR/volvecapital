@@ -106,7 +106,7 @@ function RouteComponent() {
   return (
     <div className="flex flex-col gap-6 max-w-2xl">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate({ to: "/dashboard/role" })}>
+        <Button variant="ghost" size="icon" onClick={() => navigate({ to: "/dashboard/accountsetting/role" })}>
           <ArrowLeft className="size-4" />
         </Button>
         <h1 className="text-3xl font-extrabold tracking-tight">

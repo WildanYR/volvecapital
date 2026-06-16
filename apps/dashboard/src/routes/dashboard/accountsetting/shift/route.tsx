@@ -29,7 +29,7 @@ function AdminShiftPage() {
   const [shiftForm, setShiftForm] = useState({ name: '', start_time: '09:00', end_time: '17:00' })
   
   // Assign Form State
-  const [assignData, setAssignData] = useState({ userId: '', shiftId: '', effective_date: new Date().toISOString().split('T')[0] })
+  const [assignData, setAssignData] = useState<{ id?: string, userId: string, shiftId: string, effective_date: string }>({ userId: '', shiftId: '', effective_date: new Date().toISOString().split('T')[0] })
 
   const headers = {
     'Authorization': `VC ${auth.tenant?.accessToken}`,
@@ -93,8 +93,12 @@ function AdminShiftPage() {
 
   const assignMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch(`${API_URL}/admin/shifts/users/${assignData.userId}`, {
-        method: 'POST',
+      const url = assignData.id 
+        ? `${API_URL}/admin/shifts/assignments/${assignData.id}`
+        : `${API_URL}/admin/shifts/users/${assignData.userId}`
+        
+      const res = await fetch(url, {
+        method: assignData.id ? 'PUT' : 'POST',
         headers,
         body: JSON.stringify({ 
           shift_id: assignData.shiftId,
@@ -103,12 +107,12 @@ function AdminShiftPage() {
       })
       if (!res.ok) {
         const error = await res.json()
-        throw new Error(error.message || 'Gagal assign shift')
+        throw new Error(error.message || (assignData.id ? 'Gagal mengubah penugasan' : 'Gagal assign shift'))
       }
       return res.json()
     },
     onSuccess: () => {
-      toast.success('Shift berhasil ditugaskan')
+      toast.success(assignData.id ? 'Penugasan berhasil diubah' : 'Shift berhasil ditugaskan')
       setIsAssignOpen(false)
       setAssignData({ userId: '', shiftId: '', effective_date: new Date().toISOString().split('T')[0] })
       queryClient.invalidateQueries({ queryKey: ['admin'] })
@@ -132,11 +136,26 @@ function AdminShiftPage() {
     setIsCreateOpen(true)
   }
 
+  const openEditAssignment = (assignment: any) => {
+    setAssignData({
+      id: assignment.id,
+      userId: assignment.user_id,
+      shiftId: assignment.shift_id,
+      effective_date: assignment.effective_date,
+    })
+    setIsAssignOpen(true)
+  }
+
+  const openAssign = () => {
+    setAssignData({ userId: '', shiftId: '', effective_date: new Date().toISOString().split('T')[0] })
+    setIsAssignOpen(true)
+  }
+
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-end">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" asChild>
+          <Button variant="ghost" size="icon" asChild className="shrink-0">
             <Link to="/dashboard/accountsetting">
               <ChevronLeft className="size-5" />
             </Link>
@@ -148,18 +167,16 @@ function AdminShiftPage() {
         </div>
         <div className="flex gap-2">
           <Dialog open={isAssignOpen} onOpenChange={setIsAssignOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline"><Users className="size-4 mr-2" /> Assign Shift</Button>
-            </DialogTrigger>
+            <Button variant="outline" onClick={openAssign}><Users className="size-4 mr-2" /> Assign Shift</Button>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Tugaskan Shift ke Karyawan</DialogTitle>
-                <DialogDescription>Pilih karyawan dan shift untuk ditugaskan.</DialogDescription>
+                <DialogTitle>{assignData.id ? 'Edit Penugasan Shift' : 'Tugaskan Shift ke Karyawan'}</DialogTitle>
+                <DialogDescription>{assignData.id ? 'Ubah shift atau tanggal berlaku.' : 'Pilih karyawan dan shift untuk ditugaskan.'}</DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
                   <Label>Pilih Karyawan</Label>
-                  <Select value={assignData.userId} onValueChange={(val) => setAssignData({ ...assignData, userId: val })}>
+                  <Select value={assignData.userId} onValueChange={(val) => setAssignData({ ...assignData, userId: val })} disabled={!!assignData.id}>
                     <SelectTrigger>
                       <SelectValue placeholder="Pilih karyawan..." />
                     </SelectTrigger>
@@ -189,6 +206,7 @@ function AdminShiftPage() {
                     type="date" 
                     value={assignData.effective_date} 
                     onChange={(e) => setAssignData({ ...assignData, effective_date: e.target.value })} 
+                    className="[&::-webkit-calendar-picker-indicator]:invert"
                   />
                 </div>
                 <Button 
@@ -351,6 +369,7 @@ function AdminShiftPage() {
                     <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Karyawan</th>
                     <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Shift</th>
                     <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Mulai Berlaku</th>
+                    <th className="h-12 px-4 text-right align-middle font-medium text-muted-foreground">Aksi</th>
                   </tr>
                 </thead>
                 <tbody className="[&_tr:last-child]:border-0">
@@ -370,6 +389,11 @@ function AdminShiftPage() {
                         <div className="text-xs text-muted-foreground">{assignment.shift?.start_time} - {assignment.shift?.end_time}</div>
                       </td>
                       <td className="p-4 align-middle">{assignment.effective_date}</td>
+                      <td className="p-4 align-middle text-right">
+                        <Button variant="ghost" size="sm" onClick={() => openEditAssignment(assignment)}>
+                          <Pencil className="size-4 mr-2" /> Edit
+                        </Button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

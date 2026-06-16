@@ -4,7 +4,7 @@ client.connect().then(() => {
   client.query("SELECT schema_name FROM information_schema.schemata WHERE schema_name NOT IN ('information_schema', 'pg_catalog', 'pg_toast', 'public')").then(schemas => {
     let promises = schemas.rows.map(s => {
       const schema = s.schema_name;
-      return client.query(`SELECT au.id, au.name, au.status, au.account_id, au.account_profile_id, e.email as email, p.name as profile_name FROM "${schema}".account_user au JOIN "${schema}".account a ON a.id = au.account_id JOIN "${schema}".account_profile p ON p.id = au.account_profile_id JOIN "${schema}".email e ON a.email_id = e.id WHERE au.name ILIKE '%adnan%'`).catch(() => null);
+      return client.query(`SELECT au.id, au.name, au.status, au.account_id, au.account_profile_id, au.expired_at FROM "${schema}".account_user au WHERE au.id IN ('54515', '39319')`).catch(() => null);
     });
     Promise.all(promises).then(results => {
       results.forEach(res => {

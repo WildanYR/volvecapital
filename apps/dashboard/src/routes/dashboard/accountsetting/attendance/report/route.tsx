@@ -104,9 +104,9 @@ function AdminAttendanceReportPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" asChild>
+          <Button variant="ghost" size="icon" asChild className="shrink-0">
             <Link to="/dashboard/accountsetting/attendance">
               <ChevronLeft className="size-5" />
             </Link>
@@ -139,11 +139,11 @@ function AdminAttendanceReportPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-2">
               <label className="text-sm font-medium">Tanggal Mulai</label>
-              <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="dark:[color-scheme:dark] dark:[&::-webkit-calendar-picker-indicator]:invert" />
+              <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="[&::-webkit-calendar-picker-indicator]:invert" />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Tanggal Selesai</label>
-              <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="dark:[color-scheme:dark] dark:[&::-webkit-calendar-picker-indicator]:invert" />
+              <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="[&::-webkit-calendar-picker-indicator]:invert" />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Pilih Karyawan</label>

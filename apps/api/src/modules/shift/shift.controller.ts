@@ -61,4 +61,14 @@ export class ShiftController {
   ) {
     return this.shiftService.assignShiftToUser(req.tenant_id!, userId, payload);
   }
+
+  @Put('assignments/:id')
+  @RequirePermissions('shift.manage')
+  async updateAssignment(
+    @Req() req: AppRequest,
+    @Param('id') id: string,
+    @Body() payload: AssignShiftDto,
+  ) {
+    return this.shiftService.updateAssignment(req.tenant_id!, id, payload);
+  }
 }
