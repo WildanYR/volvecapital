@@ -14,6 +14,7 @@ import { DashboardUser } from 'src/database/models/dashboard-user.model';
 import { Tenant } from 'src/database/models/tenant.model';
 import { UserShift } from 'src/database/models/user-shift.model';
 import { WeeklyOffSchedule } from 'src/database/models/weekly-off-schedule.model';
+import { Shift } from 'src/database/models/shift.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
 import { AppLoggerService } from '../logger/logger.service';
 
@@ -47,19 +48,7 @@ export class AttendanceCronService {
       try {
         await this.postgresProvider.setSchema(tenant.id, transaction);
         
-        // 1. Mark Missing Checkout
-        // If status is 'working' and attendance_date is yesterday, it means they forgot to end shift
-        const missingCheckouts = await this.attendanceRepository.findAll({
-          where: { attendance_date: yesterdayStr, status: 'working' },
-          transaction,
-        });
-
-        for (const record of missingCheckouts) {
-          await record.update({ status: 'missing_checkout' }, { transaction });
-          this.logger.log(`Marked missing_checkout for user ${record.user_id} in tenant ${tenant.id}`, 'AttendanceCron');
-        }
-
-        // 2. Mark Absent
+        // 1. Mark Absent (Missing checkout is handled by processAutoCheckout hourly)
         // For all active users, check if they have a shift, if they didn't have weekly off, and if they have no attendance record
         const activeUsers = await this.userRepository.findAll({
           where: { is_active: true },
@@ -104,6 +93,63 @@ export class AttendanceCronService {
       } catch (error) {
         await transaction.rollback();
         this.logger.error(`Error processing attendance cron for tenant ${tenant.id}: ${(error as Error).message}`, (error as Error).stack, 'AttendanceCron');
+      }
+    }
+  }
+
+  @Cron(CronExpression.EVERY_30_MINUTES, {
+    timeZone: 'Asia/Jakarta',
+  })
+  async processAutoCheckout() {
+    this.logger.log('Starting auto checkout check cron...', 'AttendanceCron');
+    
+    const now = moment().tz('Asia/Jakarta');
+
+    const tenants = await this.tenantRepository.findAll();
+
+    for (const tenant of tenants) {
+      const transaction = await this.postgresProvider.transaction();
+      try {
+        await this.postgresProvider.setSchema(tenant.id, transaction);
+        
+        // Find all attendances that are still 'working'
+        const workingAttendances = await this.attendanceRepository.findAll({
+          where: { status: 'working' },
+          include: [{ model: Shift, as: 'shift' }],
+          transaction,
+        });
+
+        for (const record of workingAttendances) {
+          if (!record.shift) continue;
+
+          // Parse shift end time in the shift's timezone
+          const shiftEndTime = moment.tz(`${record.attendance_date} ${record.shift.end_time}`, 'YYYY-MM-DD HH:mm:ss', record.shift.timezone || 'Asia/Jakarta');
+          
+          // Auto checkout if current time is >= 1 hour after shift end time
+          const autoCheckoutTime = shiftEndTime.clone().add(1, 'hour');
+
+          if (now.isSameOrAfter(autoCheckoutTime)) {
+             // Calculate total work minutes based on start_time and shiftEndTime
+             const startMoment = moment(record.start_time);
+             const totalWorkMinutes = shiftEndTime.diff(startMoment, 'minutes');
+
+             // Set end_time to shiftEndTime and status to missing_checkout
+             await record.update({
+               end_time: shiftEndTime.toDate(),
+               status: 'missing_checkout',
+               total_work_minutes: totalWorkMinutes > 0 ? totalWorkMinutes : 0,
+               early_leave_minutes: 0,
+               work_summary: 'Auto-checkout by system (forgot to end shift)',
+             }, { transaction });
+             
+             this.logger.log(`Auto checkout for user ${record.user_id} in tenant ${tenant.id}. End time set to ${shiftEndTime.format('YYYY-MM-DD HH:mm:ss')}`, 'AttendanceCron');
+          }
+        }
+
+        await transaction.commit();
+      } catch (error) {
+        await transaction.rollback();
+        this.logger.error(`Error processing auto checkout cron for tenant ${tenant.id}: ${(error as Error).message}`, (error as Error).stack, 'AttendanceCron');
       }
     }
   }
