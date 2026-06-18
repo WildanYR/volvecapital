@@ -30,7 +30,7 @@ function ManualBookDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="max-w-4xl mx-auto space-y-8 animate-pulse">
+      <div className="w-full space-y-8 animate-pulse">
         <Skeleton className="h-8 w-24" />
         <div className="space-y-4">
           <Skeleton className="h-12 w-3/4" />
@@ -68,7 +68,7 @@ function ManualBookDetailPage() {
   })
 
   return (
-    <div className="max-w-5xl mx-auto">
+    <div className="w-full">
       <Link to="/dashboard/manual-book" className="inline-flex mb-8">
         <Button variant="ghost" className="gap-2 text-muted-foreground hover:text-foreground">
           <ArrowLeft className="size-4" />

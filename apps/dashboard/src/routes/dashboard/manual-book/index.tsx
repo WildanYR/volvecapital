@@ -5,27 +5,21 @@ import {
   CheckCircle2,
   CircleDashed,
   EllipsisVertical,
-  Eye,
   BookOpen,
   Plus,
-  Tag,
   FolderOpen,
   Search,
+  ChevronRight,
+  ChevronDown,
+  FileText
 } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { PermissionGate } from '@/dashboard/components/permission-gate'
 import { Badge } from '@/dashboard/components/ui/badge'
 import { Button } from '@/dashboard/components/ui/button'
 import { Input } from '@/dashboard/components/ui/input'
 import { useDebounce } from '@/dashboard/hooks/use-debounce'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/dashboard/components/ui/card'
 import {
   Dialog,
   DialogContent,
@@ -40,7 +34,6 @@ import {
   DropdownMenuTrigger,
 } from '@/dashboard/components/ui/dropdown-menu'
 import { Skeleton } from '@/dashboard/components/ui/skeleton'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/dashboard/components/ui/tabs'
 import { API_URL } from '@/dashboard/constants/api-url.cont'
 import { useGlobalAlertDialog } from '@/dashboard/context-providers/alert-dialog.provider'
 import { useAuth } from '@/dashboard/context-providers/auth.provider'
@@ -49,6 +42,134 @@ import { ManualBookServiceGenerator } from '@/dashboard/services/manual-book.ser
 export const Route = createFileRoute('/dashboard/manual-book/')({
   component: ManualBookPage,
 })
+
+// Recursive Component for Tree Node
+const CategoryTreeNode = ({ 
+  category, 
+  allCategories, 
+  books, 
+  onEditCat, 
+  onDeleteCat, 
+  onAddSubCat,
+  onDeleteBook,
+  searchActive
+}: any) => {
+  const [isOpen, setIsOpen] = useState(false)
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  
+  // Expand automatically when searching
+  useEffect(() => {
+    if (searchActive) setIsOpen(true)
+  }, [searchActive])
+  
+  const childCategories = allCategories.filter((c: any) => c.parent_id === category.id)
+  const categoryBooks = books.filter((b: any) => b.category_id === category.id)
+  
+  const hasChildren = childCategories.length > 0 || categoryBooks.length > 0
+
+  return (
+    <div className="w-full">
+      <div 
+        className={`group flex items-center justify-between p-3 rounded-lg cursor-pointer border transition-colors ${isDropdownOpen ? 'bg-muted/50 border-border' : 'border-transparent hover:bg-muted/50 hover:border-border'}`}
+        onClick={() => hasChildren && setIsOpen(!isOpen)}
+      >
+        <div className="flex items-center gap-3">
+          <div className="text-muted-foreground w-4 h-4 flex items-center justify-center">
+            {hasChildren && (isOpen ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />)}
+          </div>
+          <FolderOpen className="size-5 text-primary" />
+          <div>
+            <span className="font-semibold text-foreground">{category.name}</span>
+            {category.description && (
+              <p className="text-xs text-muted-foreground line-clamp-1">{category.description}</p>
+            )}
+          </div>
+        </div>
+
+        <PermissionGate permission="manualbook.edit,manualbook.delete">
+          <div className={`transition-opacity ${isDropdownOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`} onClick={e => e.stopPropagation()}>
+            <DropdownMenu onOpenChange={setIsDropdownOpen}>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8"><EllipsisVertical className="size-4" /></Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => onAddSubCat(category)}>Tambah Sub-Kategori</DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/dashboard/manual-book/write" search={{ category_id: category.id } as any} className="w-full cursor-pointer">
+                    Tulis Panduan
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onEditCat(category)}>Edit Kategori</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onDeleteCat(category)} className="text-destructive">Hapus Kategori</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </PermissionGate>
+      </div>
+
+      {isOpen && hasChildren && (
+        <div className="ml-6 pl-4 border-l-2 border-muted mt-1 space-y-1">
+          {/* Render Sub Categories */}
+          {childCategories.map((child: any) => (
+            <CategoryTreeNode 
+              key={`cat-${child.id}`}
+              category={child}
+              allCategories={allCategories}
+              books={books}
+              onEditCat={onEditCat}
+              onDeleteCat={onDeleteCat}
+              onAddSubCat={onAddSubCat}
+              onDeleteBook={onDeleteBook}
+              searchActive={searchActive}
+            />
+          ))}
+
+          {/* Render Books in this Category */}
+          {categoryBooks.map((book: any) => (
+            <BookTreeNode key={`book-${book.id}`} book={book} onDeleteBook={onDeleteBook} />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+const BookTreeNode = ({ book, onDeleteBook }: any) => {
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+
+  return (
+    <div className={`group flex items-center justify-between p-2 rounded-lg border transition-colors ${isDropdownOpen ? 'bg-muted/50 border-border' : 'border-transparent hover:bg-muted/50 hover:border-border'}`}>
+      <Link to="/dashboard/manual-book/$slug" params={{ slug: book.slug }} className="flex items-center gap-3 flex-1">
+        <div className="text-muted-foreground w-4 h-4" /> {/* Spacer */}
+        <FileText className="size-4 text-emerald-500" />
+        <span className="text-sm font-medium hover:text-primary transition-colors">{book.title}</span>
+        <Badge variant="outline" className={`ml-2 text-[10px] h-5 ${book.status === 'PUBLISHED' ? 'text-emerald-500 border-emerald-500/30' : 'text-orange-500 border-orange-500/30'}`}>
+          {book.status}
+        </Badge>
+      </Link>
+      
+      <PermissionGate permission="manualbook.edit,manualbook.delete">
+        <div className={`transition-opacity ${isDropdownOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+          <DropdownMenu onOpenChange={setIsDropdownOpen}>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8"><EllipsisVertical className="size-4" /></Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem asChild>
+                <Link to="/dashboard/manual-book/edit/$id" params={{ id: book.id }} className="w-full cursor-pointer">
+                  Edit Panduan
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onDeleteBook(book)} className="text-destructive">
+                Hapus Panduan
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </PermissionGate>
+    </div>
+  )
+}
 
 function ManualBookPage() {
   const auth = useAuth()
@@ -61,11 +182,8 @@ function ManualBookPage() {
   )
 
   const [catDialogOpen, setCatDialogOpen] = useState(false)
-  
   const [selectedCat, setSelectedCat] = useState<any>(null)
-  
   const [catFormMode, setCatFormMode] = useState<'CREATE' | 'EDIT'>('CREATE')
-  const [activeTab, setActiveTab] = useState('books')
   
   const [search, setSearch] = useState('')
   const debouncedSearch = useDebounce(search, 500)
@@ -80,16 +198,6 @@ function ManualBookPage() {
     queryFn: () => mbService.getAllCategories(),
   })
 
-  const buildCategoryTree = (cats: any[], parentId: string | null = null, depth = 0): any[] => {
-    return cats
-      .filter(c => c.parent_id === parentId || (parentId === null && !c.parent_id))
-      .reduce((acc, cat) => {
-        return [...acc, { ...cat, depth }, ...buildCategoryTree(cats, cat.id, depth + 1)];
-      }, []);
-  };
-
-  const flatCategoriesTree = categories ? buildCategoryTree(categories) : [];
-
   const deleteBookMut = useMutation({
     mutationFn: (id: string) => mbService.deleteManualBook(id),
     onSuccess: () => {
@@ -100,7 +208,6 @@ function ManualBookPage() {
     onError: error => toast.error(`Gagal: ${error.message}`),
   })
 
-  // --- Category Mutations ---
   const createCatMut = useMutation({
     mutationFn: (payload: any) => mbService.createCategory(payload),
     onSuccess: () => {
@@ -132,8 +239,6 @@ function ManualBookPage() {
     onError: error => toast.error(`Gagal: ${error.message}`),
   })
 
-  // --- Handlers ---
-
   const handleCatSubmit = (val: ManualBookCategoryFormSubmitData) => {
     if (catFormMode === 'CREATE') createCatMut.mutate(val)
     else updateCatMut.mutate({ id: selectedCat.id, payload: val })
@@ -159,22 +264,30 @@ function ManualBookPage() {
     })
   }
 
+  const onAddSubCat = (parentCategory: any) => {
+    setCatFormMode('CREATE')
+    setSelectedCat({ parent_id: parentCategory.id })
+    setCatDialogOpen(true)
+  }
+
+  const rootCategories = categories?.filter(c => !c.parent_id) || []
+
   return (
-    <div className="flex flex-col gap-8">
-      <div className="flex flex-col md:flex-row gap-6 justify-between items-center">
-        <div className="space-y-1">
-          <h1 className="text-4xl font-extrabold tracking-tight uppercase italic">Manual Book & SOP</h1>
-          <p className="text-muted-foreground text-sm">Pusat pengetahuan dan panduan operasional perusahaan Anda.</p>
+    <div className="flex flex-col gap-8 w-full">
+      <div className="flex flex-col md:flex-row gap-6 justify-between items-center bg-card p-6 rounded-2xl border border-border shadow-sm">
+        <div className="space-y-2 text-center md:text-left">
+          <h1 className="text-3xl font-extrabold tracking-tight uppercase italic text-primary">Daftar Isi Panduan</h1>
+          <p className="text-muted-foreground text-sm">Pusat pengetahuan dan Standar Operasional Prosedur perusahaan Anda.</p>
         </div>
         <PermissionGate permission="manualbook.create">
-          <div className="flex gap-2">
+          <div className="flex flex-wrap justify-center gap-2">
             <Button variant="outline" onClick={() => {
               setCatFormMode('CREATE'); setSelectedCat(null); setCatDialogOpen(true);
             }}>
               <Plus className="size-4 mr-2" />
               Kategori Baru
             </Button>
-            <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground border-none shadow-lg cursor-pointer">
+            <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground border-none shadow-md cursor-pointer">
               <Link to="/dashboard/manual-book/write" onClick={(e: any) => {
                 if (!categories?.length) {
                   e.preventDefault()
@@ -189,122 +302,47 @@ function ManualBookPage() {
         </PermissionGate>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <div className="flex flex-col sm:flex-row justify-between gap-4 mb-6">
-          <TabsList>
-            <TabsTrigger value="books" className="gap-2"><BookOpen className="size-4" /> Daftar Panduan</TabsTrigger>
-            <TabsTrigger value="categories" className="gap-2"><FolderOpen className="size-4" /> Kategori</TabsTrigger>
-          </TabsList>
-
-          {activeTab === 'books' && (
-            <div className="relative max-w-sm w-full">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-              <Input 
-                placeholder="Cari judul atau isi panduan..." 
-                className="pl-9"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
-          )}
+      <div className="flex justify-between items-center">
+        <div className="relative max-w-md w-full">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+          <Input 
+            placeholder="Cari judul atau konten panduan..." 
+            className="pl-9 bg-card border-border shadow-sm rounded-xl h-11"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
         </div>
+      </div>
 
-        <TabsContent value="books">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {isBooksLoading
-              ? Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-40 rounded-xl" />)
-              : books?.length
-                ? books.map((book) => (
-                    <Card key={book.id} className="group hover:border-primary/50 transition-all overflow-hidden bg-card">
-                      <CardHeader className="space-y-1 pb-2">
-                        <div className="flex justify-between items-start gap-2">
-                          <CardTitle className="text-xl line-clamp-1 group-hover:text-primary transition-colors">
-                            {book.title}
-                          </CardTitle>
-                          <PermissionGate permission="manualbook.edit,manualbook.delete">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 -mt-2 -mr-2">
-                                  <EllipsisVertical className="size-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem asChild>
-                                  <Link to="/dashboard/manual-book/edit/$id" params={{ id: book.id }} className="w-full cursor-pointer">
-                                    Edit Panduan
-                                  </Link>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => confirmDeleteBook(book)} className="text-red-500">
-                                  Hapus
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </PermissionGate>
-                        </div>
-                        <div className="flex gap-2 text-xs">
-                          {book.category && (
-                            <Badge variant="secondary" className="font-normal"><Tag className="size-3 mr-1"/>{book.category.name}</Badge>
-                          )}
-                          <Badge variant="outline" className={book.status === 'PUBLISHED' ? 'text-emerald-500 border-emerald-500/30' : 'text-orange-500 border-orange-500/30'}>
-                            {book.status === 'PUBLISHED' ? <CheckCircle2 className="size-3 mr-1" /> : <CircleDashed className="size-3 mr-1" />}
-                            {book.status}
-                          </Badge>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="pt-4 border-t mt-4 flex items-center justify-between">
-                        <Link to="/dashboard/manual-book/$slug" params={{ slug: book.slug }} className="w-full">
-                          <Button variant="secondary" className="w-full gap-2">
-                            <Eye className="size-4" /> Baca Panduan
-                          </Button>
-                        </Link>
-                      </CardContent>
-                    </Card>
-                  ))
-                : (
-                    <Card className="col-span-full border-dashed bg-transparent py-16">
-                      <CardContent className="flex flex-col items-center text-center">
-                        <BookOpen className="size-10 text-muted-foreground mb-4" />
-                        <p className="text-xl font-bold">Belum Ada Panduan</p>
-                        <p className="text-muted-foreground max-w-xs">Buat panduan operasional pertama Anda.</p>
-                      </CardContent>
-                    </Card>
-                  )}
+      <div className="bg-card border border-border rounded-2xl p-4 sm:p-6 shadow-sm min-h-[400px]">
+        {(isBooksLoading || isCatLoading) ? (
+          <div className="space-y-4">
+            {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-14 w-full rounded-xl" />)}
           </div>
-        </TabsContent>
-
-        <TabsContent value="categories">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {isCatLoading
-              ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)
-              : flatCategoriesTree.map((cat) => (
-                <Card key={cat.id} className="relative group" style={{ marginLeft: `${cat.depth * 1.5}rem` }}>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <FolderOpen className="size-4 text-primary" />
-                      {cat.name}
-                    </CardTitle>
-                    <CardDescription className="text-xs line-clamp-1">{cat.description || '-'}</CardDescription>
-                  </CardHeader>
-                  <PermissionGate permission="manualbook.edit,manualbook.delete">
-                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-6 w-6"><EllipsisVertical className="size-4" /></Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                          <DropdownMenuItem onClick={() => { setCatFormMode('EDIT'); setSelectedCat(cat); setCatDialogOpen(true); }}>Edit</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => confirmDeleteCat(cat)} className="text-red-500">Hapus</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </PermissionGate>
-                </Card>
-              ))}
+        ) : rootCategories.length === 0 ? (
+          <div className="flex flex-col items-center justify-center text-center py-24 h-full">
+            <BookOpen className="size-14 text-muted-foreground/50 mb-6" />
+            <p className="text-2xl font-bold text-foreground">Belum Ada Kategori & Panduan</p>
+            <p className="text-muted-foreground max-w-sm mt-3 leading-relaxed">Buat kategori dan panduan operasional pertama Anda untuk memulainya.</p>
           </div>
-        </TabsContent>
-      </Tabs>
-
-
+        ) : (
+          <div className="space-y-2">
+            {rootCategories.map((cat) => (
+              <CategoryTreeNode 
+                key={`root-${cat.id}`}
+                category={cat}
+                allCategories={categories || []}
+                books={books || []}
+                onEditCat={(cat: any) => { setCatFormMode('EDIT'); setSelectedCat(cat); setCatDialogOpen(true); }}
+                onDeleteCat={confirmDeleteCat}
+                onAddSubCat={onAddSubCat}
+                onDeleteBook={confirmDeleteBook}
+                searchActive={debouncedSearch.length > 0}
+              />
+            ))}
+          </div>
+        )}
+      </div>
 
       <Dialog open={catDialogOpen} onOpenChange={setCatDialogOpen}>
         <DialogContent>
