@@ -1,7 +1,7 @@
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Youtube from '@tiptap/extension-youtube';
-import Image from '@tiptap/extension-image';
+import ImageResize from 'tiptap-extension-resize-image';
 import { Color } from '@tiptap/extension-color';
 import { TextStyle } from '@tiptap/extension-text-style';
 import { Link } from '@tiptap/extension-link';
@@ -298,7 +298,7 @@ const MenuBar = ({ editor }: { editor: any }) => {
 
 const extensions = [
   StarterKit,
-  Image,
+  ImageResize,
   TextStyle,
   Color,
   Underline,
@@ -329,8 +329,65 @@ export function RichTextEditor({ content, onChange, readOnly = false }: RichText
     },
     editorProps: {
       attributes: {
-        class: 'prose dark:prose-invert max-w-none w-full min-h-[300px] p-4 border border-t-0 border-input bg-background rounded-b-md focus:outline-none',
+        class: readOnly 
+          ? 'prose dark:prose-invert max-w-none w-full focus:outline-none'
+          : 'prose dark:prose-invert max-w-none w-full min-h-[300px] p-4 border border-t-0 border-input bg-background rounded-b-md focus:outline-none',
       },
+      handlePaste: (view, event) => {
+        const items = Array.from(event.clipboardData?.items || [])
+        let imagePasted = false
+        
+        for (const item of items) {
+          if (item.type.indexOf('image') === 0) {
+            imagePasted = true
+            const file = item.getAsFile()
+            if (file) {
+              const reader = new FileReader()
+              reader.onload = (e) => {
+                if (e.target?.result) {
+                  const src = e.target.result as string
+                  const { schema } = view.state
+                  const node = schema.nodes.imageResize.create({ src })
+                  const transaction = view.state.tr.replaceSelectionWith(node)
+                  view.dispatch(transaction)
+                }
+              }
+              reader.readAsDataURL(file)
+            }
+          }
+        }
+        
+        return imagePasted
+      },
+      handleDrop: (view, event, _slice, moved) => {
+        if (!moved && event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files.length > 0) {
+          let imageDropped = false
+          const files = Array.from(event.dataTransfer.files)
+          
+          for (const file of files) {
+            if (file.type.indexOf('image') === 0) {
+              imageDropped = true
+              const reader = new FileReader()
+              reader.onload = (e) => {
+                if (e.target?.result) {
+                  const src = e.target.result as string
+                  const { schema } = view.state
+                  const coordinates = view.posAtCoords({ left: event.clientX, top: event.clientY })
+                  if (coordinates) {
+                    const node = schema.nodes.imageResize.create({ src })
+                    const transaction = view.state.tr.insert(coordinates.pos, node)
+                    view.dispatch(transaction)
+                  }
+                }
+              }
+              reader.readAsDataURL(file)
+            }
+          }
+          
+          return imageDropped
+        }
+        return false
+      }
     },
   });
 
