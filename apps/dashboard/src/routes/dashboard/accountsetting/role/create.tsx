@@ -38,6 +38,7 @@ const PERMISSION_GROUPS: Record<string, string> = {
   wallet: 'Keuangan / Wallet',
   landing: 'Landing Page CMS',
   content: 'Artikel & Tutorial',
+  manualbook: 'Manual Book & SOP',
   withdrawal: 'Penarikan Dana',
 }
 
@@ -145,6 +146,7 @@ function RouteComponent() {
                     'wallet',
                     'setting',
                     'content',
+                    'manualbook',
                     'role',
                     'user',
                     'withdrawal',

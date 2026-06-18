@@ -45,6 +45,8 @@ import { Attendance } from './models/attendance.model';
 import { WeeklyOffSchedule } from './models/weekly-off-schedule.model';
 import { WeeklyOffRequest } from './models/weekly-off-request.model';
 import { AttendanceSetting } from './models/attendance-setting.model';
+import { ManualBookCategory } from './models/manual-book-category.model';
+import { ManualBook } from './models/manual-book.model';
 
 @Injectable()
 export class PostgresProvider {
@@ -123,6 +125,8 @@ export class PostgresProvider {
         WeeklyOffSchedule,
         WeeklyOffRequest,
         AttendanceSetting,
+        ManualBookCategory,
+        ManualBook,
       ]);
     }
     else {

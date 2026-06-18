@@ -59,6 +59,10 @@ export const ALL_PERMISSIONS = [
   { name: 'weeklyoff.view', description: 'Melihat jadwal dan pengajuan libur sendiri' },
   { name: 'weeklyoff.manage', description: 'Mengelola pengaturan hari libur' },
   { name: 'weeklyoff.approve', description: 'Menyetujui atau menolak pengajuan libur' },
+  { name: 'manualbook.view', description: 'Melihat manual book dan SOP' },
+  { name: 'manualbook.create', description: 'Membuat manual book dan SOP baru' },
+  { name: 'manualbook.edit', description: 'Mengelola dan mengubah manual book' },
+  { name: 'manualbook.delete', description: 'Menghapus manual book' },
 ];
 
 export const ROLE_PRESETS = [
@@ -75,7 +79,7 @@ export const ROLE_PRESETS = [
   {
     name: 'Staff CS',
     description: 'Akses dashboard dan transaksi',
-    permissions: ['dashboard.view', 'transaction.view', 'transaction.create', 'voucher.view', 'attendance.view', 'attendance.start', 'attendance.end', 'weeklyoff.view'],
+    permissions: ['dashboard.view', 'transaction.view', 'transaction.create', 'voucher.view', 'attendance.view', 'attendance.start', 'attendance.end', 'weeklyoff.view', 'manualbook.view'],
   },
   {
     name: 'Viewer',

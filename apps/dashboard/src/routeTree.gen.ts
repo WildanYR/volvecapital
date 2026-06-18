@@ -22,6 +22,7 @@ import { Route as DashboardTransactionIndexRouteImport } from './routes/dashboar
 import { Route as DashboardSettingIndexRouteImport } from './routes/dashboard/setting/index'
 import { Route as DashboardProductIndexRouteImport } from './routes/dashboard/product/index'
 import { Route as DashboardPlatformProductIndexRouteImport } from './routes/dashboard/platform-product/index'
+import { Route as DashboardManualBookIndexRouteImport } from './routes/dashboard/manual-book/index'
 import { Route as DashboardEmailIndexRouteImport } from './routes/dashboard/email/index'
 import { Route as DashboardEmailMessageIndexRouteImport } from './routes/dashboard/email-message/index'
 import { Route as DashboardAccountsettingIndexRouteImport } from './routes/dashboard/accountsetting/index'
@@ -30,6 +31,8 @@ import { Route as DashboardTransactionCreateRouteImport } from './routes/dashboa
 import { Route as DashboardProductCreateRouteImport } from './routes/dashboard/product/create'
 import { Route as DashboardPlatformProductCreateRouteImport } from './routes/dashboard/platform-product/create'
 import { Route as DashboardPlatformProductIdRouteImport } from './routes/dashboard/platform-product/$id'
+import { Route as DashboardManualBookWriteRouteImport } from './routes/dashboard/manual-book/write'
+import { Route as DashboardManualBookSlugRouteImport } from './routes/dashboard/manual-book/$slug'
 import { Route as DashboardEmailCreateRouteImport } from './routes/dashboard/email/create'
 import { Route as DashboardEmailIdRouteImport } from './routes/dashboard/email/$id'
 import { Route as DashboardAccountsettingDevicesRouteImport } from './routes/dashboard/accountsetting/devices'
@@ -45,6 +48,7 @@ import { Route as DashboardAccountsettingWithdrawalIndexRouteImport } from './ro
 import { Route as DashboardAccountsettingStaffIndexRouteImport } from './routes/dashboard/accountsetting/staff/index'
 import { Route as DashboardAccountsettingRoleIndexRouteImport } from './routes/dashboard/accountsetting/role/index'
 import { Route as DashboardAccountsettingAttendanceIndexRouteImport } from './routes/dashboard/accountsetting/attendance/index'
+import { Route as DashboardManualBookEditIdRouteImport } from './routes/dashboard/manual-book/edit.$id'
 import { Route as DashboardAccountsettingStaffCreateRouteImport } from './routes/dashboard/accountsetting/staff/create'
 import { Route as DashboardAccountsettingRoleCreateRouteImport } from './routes/dashboard/accountsetting/role/create'
 import { Route as DashboardAccountsettingRoleRoleIdRouteImport } from './routes/dashboard/accountsetting/role/$roleId'
@@ -118,6 +122,12 @@ const DashboardPlatformProductIndexRoute =
     path: '/platform-product/',
     getParentRoute: () => DashboardRouteRoute,
   } as any)
+const DashboardManualBookIndexRoute =
+  DashboardManualBookIndexRouteImport.update({
+    id: '/manual-book/',
+    path: '/manual-book/',
+    getParentRoute: () => DashboardRouteRoute,
+  } as any)
 const DashboardEmailIndexRoute = DashboardEmailIndexRouteImport.update({
   id: '/email/',
   path: '/email/',
@@ -163,6 +173,17 @@ const DashboardPlatformProductIdRoute =
     path: '/platform-product/$id',
     getParentRoute: () => DashboardRouteRoute,
   } as any)
+const DashboardManualBookWriteRoute =
+  DashboardManualBookWriteRouteImport.update({
+    id: '/manual-book/write',
+    path: '/manual-book/write',
+    getParentRoute: () => DashboardRouteRoute,
+  } as any)
+const DashboardManualBookSlugRoute = DashboardManualBookSlugRouteImport.update({
+  id: '/manual-book/$slug',
+  path: '/manual-book/$slug',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
 const DashboardEmailCreateRoute = DashboardEmailCreateRouteImport.update({
   id: '/email/create',
   path: '/email/create',
@@ -249,6 +270,12 @@ const DashboardAccountsettingAttendanceIndexRoute =
     path: '/accountsetting/attendance/',
     getParentRoute: () => DashboardRouteRoute,
   } as any)
+const DashboardManualBookEditIdRoute =
+  DashboardManualBookEditIdRouteImport.update({
+    id: '/manual-book/edit/$id',
+    path: '/manual-book/edit/$id',
+    getParentRoute: () => DashboardRouteRoute,
+  } as any)
 const DashboardAccountsettingStaffCreateRoute =
   DashboardAccountsettingStaffCreateRouteImport.update({
     id: '/accountsetting/staff/create',
@@ -289,6 +316,8 @@ export interface FileRoutesByFullPath {
   '/dashboard/accountsetting/devices': typeof DashboardAccountsettingDevicesRoute
   '/dashboard/email/$id': typeof DashboardEmailIdRoute
   '/dashboard/email/create': typeof DashboardEmailCreateRoute
+  '/dashboard/manual-book/$slug': typeof DashboardManualBookSlugRoute
+  '/dashboard/manual-book/write': typeof DashboardManualBookWriteRoute
   '/dashboard/platform-product/$id': typeof DashboardPlatformProductIdRoute
   '/dashboard/platform-product/create': typeof DashboardPlatformProductCreateRoute
   '/dashboard/product/create': typeof DashboardProductCreateRoute
@@ -297,6 +326,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/accountsetting': typeof DashboardAccountsettingIndexRoute
   '/dashboard/email-message': typeof DashboardEmailMessageIndexRoute
   '/dashboard/email': typeof DashboardEmailIndexRoute
+  '/dashboard/manual-book': typeof DashboardManualBookIndexRoute
   '/dashboard/platform-product': typeof DashboardPlatformProductIndexRoute
   '/dashboard/product': typeof DashboardProductIndexRoute
   '/dashboard/setting': typeof DashboardSettingIndexRoute
@@ -307,6 +337,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/accountsetting/role/$roleId': typeof DashboardAccountsettingRoleRoleIdRoute
   '/dashboard/accountsetting/role/create': typeof DashboardAccountsettingRoleCreateRoute
   '/dashboard/accountsetting/staff/create': typeof DashboardAccountsettingStaffCreateRoute
+  '/dashboard/manual-book/edit/$id': typeof DashboardManualBookEditIdRoute
   '/dashboard/accountsetting/attendance': typeof DashboardAccountsettingAttendanceIndexRoute
   '/dashboard/accountsetting/role': typeof DashboardAccountsettingRoleIndexRoute
   '/dashboard/accountsetting/staff': typeof DashboardAccountsettingStaffIndexRoute
@@ -330,6 +361,8 @@ export interface FileRoutesByTo {
   '/dashboard/accountsetting/devices': typeof DashboardAccountsettingDevicesRoute
   '/dashboard/email/$id': typeof DashboardEmailIdRoute
   '/dashboard/email/create': typeof DashboardEmailCreateRoute
+  '/dashboard/manual-book/$slug': typeof DashboardManualBookSlugRoute
+  '/dashboard/manual-book/write': typeof DashboardManualBookWriteRoute
   '/dashboard/platform-product/$id': typeof DashboardPlatformProductIdRoute
   '/dashboard/platform-product/create': typeof DashboardPlatformProductCreateRoute
   '/dashboard/product/create': typeof DashboardProductCreateRoute
@@ -338,6 +371,7 @@ export interface FileRoutesByTo {
   '/dashboard/accountsetting': typeof DashboardAccountsettingIndexRoute
   '/dashboard/email-message': typeof DashboardEmailMessageIndexRoute
   '/dashboard/email': typeof DashboardEmailIndexRoute
+  '/dashboard/manual-book': typeof DashboardManualBookIndexRoute
   '/dashboard/platform-product': typeof DashboardPlatformProductIndexRoute
   '/dashboard/product': typeof DashboardProductIndexRoute
   '/dashboard/setting': typeof DashboardSettingIndexRoute
@@ -348,6 +382,7 @@ export interface FileRoutesByTo {
   '/dashboard/accountsetting/role/$roleId': typeof DashboardAccountsettingRoleRoleIdRoute
   '/dashboard/accountsetting/role/create': typeof DashboardAccountsettingRoleCreateRoute
   '/dashboard/accountsetting/staff/create': typeof DashboardAccountsettingStaffCreateRoute
+  '/dashboard/manual-book/edit/$id': typeof DashboardManualBookEditIdRoute
   '/dashboard/accountsetting/attendance': typeof DashboardAccountsettingAttendanceIndexRoute
   '/dashboard/accountsetting/role': typeof DashboardAccountsettingRoleIndexRoute
   '/dashboard/accountsetting/staff': typeof DashboardAccountsettingStaffIndexRoute
@@ -373,6 +408,8 @@ export interface FileRoutesById {
   '/dashboard/accountsetting/devices': typeof DashboardAccountsettingDevicesRoute
   '/dashboard/email/$id': typeof DashboardEmailIdRoute
   '/dashboard/email/create': typeof DashboardEmailCreateRoute
+  '/dashboard/manual-book/$slug': typeof DashboardManualBookSlugRoute
+  '/dashboard/manual-book/write': typeof DashboardManualBookWriteRoute
   '/dashboard/platform-product/$id': typeof DashboardPlatformProductIdRoute
   '/dashboard/platform-product/create': typeof DashboardPlatformProductCreateRoute
   '/dashboard/product/create': typeof DashboardProductCreateRoute
@@ -381,6 +418,7 @@ export interface FileRoutesById {
   '/dashboard/accountsetting/': typeof DashboardAccountsettingIndexRoute
   '/dashboard/email-message/': typeof DashboardEmailMessageIndexRoute
   '/dashboard/email/': typeof DashboardEmailIndexRoute
+  '/dashboard/manual-book/': typeof DashboardManualBookIndexRoute
   '/dashboard/platform-product/': typeof DashboardPlatformProductIndexRoute
   '/dashboard/product/': typeof DashboardProductIndexRoute
   '/dashboard/setting/': typeof DashboardSettingIndexRoute
@@ -391,6 +429,7 @@ export interface FileRoutesById {
   '/dashboard/accountsetting/role/$roleId': typeof DashboardAccountsettingRoleRoleIdRoute
   '/dashboard/accountsetting/role/create': typeof DashboardAccountsettingRoleCreateRoute
   '/dashboard/accountsetting/staff/create': typeof DashboardAccountsettingStaffCreateRoute
+  '/dashboard/manual-book/edit/$id': typeof DashboardManualBookEditIdRoute
   '/dashboard/accountsetting/attendance/': typeof DashboardAccountsettingAttendanceIndexRoute
   '/dashboard/accountsetting/role/': typeof DashboardAccountsettingRoleIndexRoute
   '/dashboard/accountsetting/staff/': typeof DashboardAccountsettingStaffIndexRoute
@@ -417,6 +456,8 @@ export interface FileRouteTypes {
     | '/dashboard/accountsetting/devices'
     | '/dashboard/email/$id'
     | '/dashboard/email/create'
+    | '/dashboard/manual-book/$slug'
+    | '/dashboard/manual-book/write'
     | '/dashboard/platform-product/$id'
     | '/dashboard/platform-product/create'
     | '/dashboard/product/create'
@@ -425,6 +466,7 @@ export interface FileRouteTypes {
     | '/dashboard/accountsetting'
     | '/dashboard/email-message'
     | '/dashboard/email'
+    | '/dashboard/manual-book'
     | '/dashboard/platform-product'
     | '/dashboard/product'
     | '/dashboard/setting'
@@ -435,6 +477,7 @@ export interface FileRouteTypes {
     | '/dashboard/accountsetting/role/$roleId'
     | '/dashboard/accountsetting/role/create'
     | '/dashboard/accountsetting/staff/create'
+    | '/dashboard/manual-book/edit/$id'
     | '/dashboard/accountsetting/attendance'
     | '/dashboard/accountsetting/role'
     | '/dashboard/accountsetting/staff'
@@ -458,6 +501,8 @@ export interface FileRouteTypes {
     | '/dashboard/accountsetting/devices'
     | '/dashboard/email/$id'
     | '/dashboard/email/create'
+    | '/dashboard/manual-book/$slug'
+    | '/dashboard/manual-book/write'
     | '/dashboard/platform-product/$id'
     | '/dashboard/platform-product/create'
     | '/dashboard/product/create'
@@ -466,6 +511,7 @@ export interface FileRouteTypes {
     | '/dashboard/accountsetting'
     | '/dashboard/email-message'
     | '/dashboard/email'
+    | '/dashboard/manual-book'
     | '/dashboard/platform-product'
     | '/dashboard/product'
     | '/dashboard/setting'
@@ -476,6 +522,7 @@ export interface FileRouteTypes {
     | '/dashboard/accountsetting/role/$roleId'
     | '/dashboard/accountsetting/role/create'
     | '/dashboard/accountsetting/staff/create'
+    | '/dashboard/manual-book/edit/$id'
     | '/dashboard/accountsetting/attendance'
     | '/dashboard/accountsetting/role'
     | '/dashboard/accountsetting/staff'
@@ -500,6 +547,8 @@ export interface FileRouteTypes {
     | '/dashboard/accountsetting/devices'
     | '/dashboard/email/$id'
     | '/dashboard/email/create'
+    | '/dashboard/manual-book/$slug'
+    | '/dashboard/manual-book/write'
     | '/dashboard/platform-product/$id'
     | '/dashboard/platform-product/create'
     | '/dashboard/product/create'
@@ -508,6 +557,7 @@ export interface FileRouteTypes {
     | '/dashboard/accountsetting/'
     | '/dashboard/email-message/'
     | '/dashboard/email/'
+    | '/dashboard/manual-book/'
     | '/dashboard/platform-product/'
     | '/dashboard/product/'
     | '/dashboard/setting/'
@@ -518,6 +568,7 @@ export interface FileRouteTypes {
     | '/dashboard/accountsetting/role/$roleId'
     | '/dashboard/accountsetting/role/create'
     | '/dashboard/accountsetting/staff/create'
+    | '/dashboard/manual-book/edit/$id'
     | '/dashboard/accountsetting/attendance/'
     | '/dashboard/accountsetting/role/'
     | '/dashboard/accountsetting/staff/'
@@ -630,6 +681,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardPlatformProductIndexRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
+    '/dashboard/manual-book/': {
+      id: '/dashboard/manual-book/'
+      path: '/manual-book'
+      fullPath: '/dashboard/manual-book'
+      preLoaderRoute: typeof DashboardManualBookIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
     '/dashboard/email/': {
       id: '/dashboard/email/'
       path: '/email'
@@ -684,6 +742,20 @@ declare module '@tanstack/react-router' {
       path: '/platform-product/$id'
       fullPath: '/dashboard/platform-product/$id'
       preLoaderRoute: typeof DashboardPlatformProductIdRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/manual-book/write': {
+      id: '/dashboard/manual-book/write'
+      path: '/manual-book/write'
+      fullPath: '/dashboard/manual-book/write'
+      preLoaderRoute: typeof DashboardManualBookWriteRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/manual-book/$slug': {
+      id: '/dashboard/manual-book/$slug'
+      path: '/manual-book/$slug'
+      fullPath: '/dashboard/manual-book/$slug'
+      preLoaderRoute: typeof DashboardManualBookSlugRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
     '/dashboard/email/create': {
@@ -791,6 +863,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardAccountsettingAttendanceIndexRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
+    '/dashboard/manual-book/edit/$id': {
+      id: '/dashboard/manual-book/edit/$id'
+      path: '/manual-book/edit/$id'
+      fullPath: '/dashboard/manual-book/edit/$id'
+      preLoaderRoute: typeof DashboardManualBookEditIdRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
     '/dashboard/accountsetting/staff/create': {
       id: '/dashboard/accountsetting/staff/create'
       path: '/accountsetting/staff/create'
@@ -831,6 +910,8 @@ interface DashboardRouteRouteChildren {
   DashboardAccountsettingDevicesRoute: typeof DashboardAccountsettingDevicesRoute
   DashboardEmailIdRoute: typeof DashboardEmailIdRoute
   DashboardEmailCreateRoute: typeof DashboardEmailCreateRoute
+  DashboardManualBookSlugRoute: typeof DashboardManualBookSlugRoute
+  DashboardManualBookWriteRoute: typeof DashboardManualBookWriteRoute
   DashboardPlatformProductIdRoute: typeof DashboardPlatformProductIdRoute
   DashboardPlatformProductCreateRoute: typeof DashboardPlatformProductCreateRoute
   DashboardProductCreateRoute: typeof DashboardProductCreateRoute
@@ -839,6 +920,7 @@ interface DashboardRouteRouteChildren {
   DashboardAccountsettingIndexRoute: typeof DashboardAccountsettingIndexRoute
   DashboardEmailMessageIndexRoute: typeof DashboardEmailMessageIndexRoute
   DashboardEmailIndexRoute: typeof DashboardEmailIndexRoute
+  DashboardManualBookIndexRoute: typeof DashboardManualBookIndexRoute
   DashboardPlatformProductIndexRoute: typeof DashboardPlatformProductIndexRoute
   DashboardProductIndexRoute: typeof DashboardProductIndexRoute
   DashboardSettingIndexRoute: typeof DashboardSettingIndexRoute
@@ -849,6 +931,7 @@ interface DashboardRouteRouteChildren {
   DashboardAccountsettingRoleRoleIdRoute: typeof DashboardAccountsettingRoleRoleIdRoute
   DashboardAccountsettingRoleCreateRoute: typeof DashboardAccountsettingRoleCreateRoute
   DashboardAccountsettingStaffCreateRoute: typeof DashboardAccountsettingStaffCreateRoute
+  DashboardManualBookEditIdRoute: typeof DashboardManualBookEditIdRoute
   DashboardAccountsettingAttendanceIndexRoute: typeof DashboardAccountsettingAttendanceIndexRoute
   DashboardAccountsettingRoleIndexRoute: typeof DashboardAccountsettingRoleIndexRoute
   DashboardAccountsettingStaffIndexRoute: typeof DashboardAccountsettingStaffIndexRoute
@@ -869,6 +952,8 @@ const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardAccountsettingDevicesRoute: DashboardAccountsettingDevicesRoute,
   DashboardEmailIdRoute: DashboardEmailIdRoute,
   DashboardEmailCreateRoute: DashboardEmailCreateRoute,
+  DashboardManualBookSlugRoute: DashboardManualBookSlugRoute,
+  DashboardManualBookWriteRoute: DashboardManualBookWriteRoute,
   DashboardPlatformProductIdRoute: DashboardPlatformProductIdRoute,
   DashboardPlatformProductCreateRoute: DashboardPlatformProductCreateRoute,
   DashboardProductCreateRoute: DashboardProductCreateRoute,
@@ -877,6 +962,7 @@ const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardAccountsettingIndexRoute: DashboardAccountsettingIndexRoute,
   DashboardEmailMessageIndexRoute: DashboardEmailMessageIndexRoute,
   DashboardEmailIndexRoute: DashboardEmailIndexRoute,
+  DashboardManualBookIndexRoute: DashboardManualBookIndexRoute,
   DashboardPlatformProductIndexRoute: DashboardPlatformProductIndexRoute,
   DashboardProductIndexRoute: DashboardProductIndexRoute,
   DashboardSettingIndexRoute: DashboardSettingIndexRoute,
@@ -891,6 +977,7 @@ const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
     DashboardAccountsettingRoleCreateRoute,
   DashboardAccountsettingStaffCreateRoute:
     DashboardAccountsettingStaffCreateRoute,
+  DashboardManualBookEditIdRoute: DashboardManualBookEditIdRoute,
   DashboardAccountsettingAttendanceIndexRoute:
     DashboardAccountsettingAttendanceIndexRoute,
   DashboardAccountsettingRoleIndexRoute: DashboardAccountsettingRoleIndexRoute,

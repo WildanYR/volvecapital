@@ -41,6 +41,8 @@ import {
   WEEKLY_OFF_SCHEDULE_REPOSITORY,
   WEEKLY_OFF_REQUEST_REPOSITORY,
   ATTENDANCE_SETTING_REPOSITORY,
+  MANUAL_BOOK_CATEGORY_REPOSITORY,
+  MANUAL_BOOK_REPOSITORY,
 } from 'src/constants/database.const';
 import { AccountProfile } from './models/account-profile.model';
 import { AccountUser } from './models/account-user.model';
@@ -83,6 +85,8 @@ import { Attendance } from './models/attendance.model';
 import { WeeklyOffSchedule } from './models/weekly-off-schedule.model';
 import { WeeklyOffRequest } from './models/weekly-off-request.model';
 import { AttendanceSetting } from './models/attendance-setting.model';
+import { ManualBookCategory } from './models/manual-book-category.model';
+import { ManualBook } from './models/manual-book.model';
 
 export const RepositoryProvider: Provider[] = [
   { provide: TENANT_REPOSITORY, useValue: Tenant },
@@ -129,4 +133,6 @@ export const RepositoryProvider: Provider[] = [
   { provide: WEEKLY_OFF_SCHEDULE_REPOSITORY, useValue: WeeklyOffSchedule },
   { provide: WEEKLY_OFF_REQUEST_REPOSITORY, useValue: WeeklyOffRequest },
   { provide: ATTENDANCE_SETTING_REPOSITORY, useValue: AttendanceSetting },
+  { provide: MANUAL_BOOK_CATEGORY_REPOSITORY, useValue: ManualBookCategory },
+  { provide: MANUAL_BOOK_REPOSITORY, useValue: ManualBook },
 ];

@@ -49,6 +49,8 @@ import { LabelModule } from './modules/label/label.module';
 import { ShiftModule } from './modules/shift/shift.module';
 import { WeeklyOffModule } from './modules/weekly-off/weekly-off.module';
 import { AttendanceModule } from './modules/attendance/attendance.module';
+import { ManualBookCategoryModule } from './modules/manual-book-category/manual-book-category.module';
+import { ManualBookModule } from './modules/manual-book/manual-book.module';
 
 @Module({
   imports: [
@@ -106,6 +108,8 @@ import { AttendanceModule } from './modules/attendance/attendance.module';
     ShiftModule,
     WeeklyOffModule,
     AttendanceModule,
+    ManualBookCategoryModule,
+    ManualBookModule,
   ],
   controllers: [AppController],
   providers: [{ provide: APP_GUARD, useClass: VcAuthGuard }, AppService],

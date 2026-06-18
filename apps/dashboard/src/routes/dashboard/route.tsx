@@ -16,6 +16,7 @@ import {
   Package,
   Receipt,
   Settings,
+  BookOpen,
 
   Ticket,
   User,
@@ -99,6 +100,12 @@ const navGroups = [
     title: 'Keuangan',
     items: [
       { title: 'Wallet', url: '/dashboard/wallet', icon: Receipt, permission: 'wallet.view' },
+    ],
+  },
+  {
+    title: 'Pengetahuan',
+    items: [
+      { title: 'Manual Book & SOP', url: '/dashboard/manual-book', icon: BookOpen },
     ],
   },
 ]
