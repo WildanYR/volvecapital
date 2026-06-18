@@ -40,7 +40,11 @@ export function ManualBookCategoryForm({
       onChange: categorySchema as any,
     },
     onSubmit: async ({ value }) => {
-      onSubmit(value)
+      const payload = { ...value }
+      if (payload.parent_id === '') {
+        payload.parent_id = undefined
+      }
+      onSubmit(payload)
     },
   })
 
