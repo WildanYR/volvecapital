@@ -42,9 +42,8 @@ export function ManualBookForm({
       content: initialData?.content || '',
       status: initialData?.status || 'DRAFT',
     },
-    validatorAdapter: zodValidator(),
     validators: {
-      onChange: manualBookSchema,
+      onChange: manualBookSchema as any,
     },
     onSubmit: async ({ value }) => {
       onSubmit(value)
@@ -156,7 +155,7 @@ export function ManualBookForm({
       <div className="flex justify-end pt-4 border-t border-border">
         <form.Subscribe
           selector={(state) => [state.canSubmit, state.isSubmitting]}
-          children={([canSubmit]) => (
+          children={([canSubmit, isSubmitting]: [boolean, boolean]) => (
             <Button type="submit" disabled={!canSubmit || isPending}>
               {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {submitButtonText}

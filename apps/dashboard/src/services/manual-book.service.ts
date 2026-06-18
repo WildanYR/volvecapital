@@ -2,7 +2,6 @@ export interface ManualBookCategory {
   id: string;
   name: string;
   slug: string;
-  slug: string;
   parent_id?: string | null;
   description?: string;
   children?: ManualBookCategory[];

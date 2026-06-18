@@ -1,4 +1,3 @@
-import { ManualBookForm, type ManualBookFormSubmitData } from '@/dashboard/components/forms/manual-book.form'
 import { ManualBookCategoryForm, type ManualBookCategoryFormSubmitData } from '@/dashboard/components/forms/manual-book-category.form'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
@@ -6,7 +5,6 @@ import {
   CheckCircle2,
   CircleDashed,
   EllipsisVertical,
-  ExternalLink,
   Eye,
   BookOpen,
   Plus,
@@ -177,7 +175,7 @@ function ManualBookPage() {
               Kategori Baru
             </Button>
             <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground border-none shadow-lg cursor-pointer">
-              <Link to="/dashboard/manual-book/write" onClick={(e) => {
+              <Link to="/dashboard/manual-book/write" onClick={(e: any) => {
                 if (!categories?.length) {
                   e.preventDefault()
                   toast.error('Buat kategori terlebih dahulu')
