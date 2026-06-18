@@ -2,8 +2,6 @@ import { ManualBookCategoryForm, type ManualBookCategoryFormSubmitData } from '@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import {
-  CheckCircle2,
-  CircleDashed,
   EllipsisVertical,
   BookOpen,
   Plus,
