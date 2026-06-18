@@ -2,7 +2,6 @@ import { Button } from '@/dashboard/components/ui/button'
 import { Input } from '@/dashboard/components/ui/input'
 import { Label } from '@/dashboard/components/ui/label'
 import { useForm } from '@tanstack/react-form'
-import { zodValidator } from '@tanstack/zod-form-adapter'
 import { z } from 'zod'
 import { Loader2 } from 'lucide-react'
 
@@ -130,15 +129,14 @@ export function ManualBookCategoryForm({
       </form.Field>
 
       <div className="flex justify-end pt-4 border-t border-border">
-        <form.Subscribe
-          selector={(state) => [state.canSubmit, state.isSubmitting]}
-          children={([canSubmit, isSubmitting]: [boolean, boolean]) => (
-            <Button type="submit" disabled={!canSubmit || isPending}>
+        <form.Subscribe>
+          {(state: any) => (
+            <Button type="submit" disabled={!state.canSubmit || isPending}>
               {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {submitButtonText}
             </Button>
           )}
-        />
+        </form.Subscribe>
       </div>
     </form>
   )
