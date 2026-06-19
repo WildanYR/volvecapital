@@ -271,6 +271,7 @@ const MenuBar = ({ editor }: { editor: any }) => {
         disabled={!editor.isActive('link')}
         className="p-2 rounded hover:bg-muted disabled:opacity-50"
       >
+        <Unlink className="h-4 w-4" />
       </button>
       <div className="w-px h-6 bg-border mx-1 self-center" />
       <button

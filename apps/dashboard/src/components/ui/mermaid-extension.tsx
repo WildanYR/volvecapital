@@ -59,7 +59,9 @@ const MermaidNodeView = ({ node, editor }: any) => {
           "rounded-md bg-muted p-4 font-mono text-sm overflow-x-auto relative",
           language ? `language-${language}` : ''
         )}>
-          <NodeViewContent as="code" className={language ? `language-${language}` : ''} />
+          <code className={language ? `language-${language}` : ''}>
+            <NodeViewContent />
+          </code>
         </pre>
       )}
       
