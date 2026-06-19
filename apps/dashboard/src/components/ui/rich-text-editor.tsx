@@ -7,11 +7,12 @@ import { TextStyle } from '@tiptap/extension-text-style';
 import { Link } from '@tiptap/extension-link';
 import { TextAlign } from '@tiptap/extension-text-align';
 import { Underline } from '@tiptap/extension-underline';
-import { Bold, Italic, Strikethrough, Underline as UnderlineIcon, Heading1, Heading2, List, ListOrdered, AlignLeft, AlignCenter, AlignRight, AlignJustify, Link as LinkIcon, Unlink, Image as ImageIcon, Youtube as YoutubeIcon, Undo, Redo } from 'lucide-react';
+import { Bold, Italic, Strikethrough, Underline as UnderlineIcon, Heading1, Heading2, List, ListOrdered, AlignLeft, AlignCenter, AlignRight, AlignJustify, Link as LinkIcon, Unlink, Image as ImageIcon, Youtube as YoutubeIcon, Undo, Redo, Workflow } from 'lucide-react';
 import { cn } from '@/dashboard/lib/utils';
 import { Button } from '@/dashboard/components/ui/button';
 import { Input } from '@/dashboard/components/ui/input';
 import { useState } from 'react';
+import { MermaidCodeBlock } from './mermaid-extension';
 import {
   Dialog,
   DialogContent,
@@ -270,7 +271,15 @@ const MenuBar = ({ editor }: { editor: any }) => {
         disabled={!editor.isActive('link')}
         className="p-2 rounded hover:bg-muted disabled:opacity-50"
       >
-        <Unlink className="h-4 w-4" />
+      </button>
+      <div className="w-px h-6 bg-border mx-1 self-center" />
+      <button
+        type="button"
+        title="Sisipkan Flowchart (Mermaid)"
+        onClick={() => editor.chain().focus().setCodeBlock({ language: 'mermaid' }).run()}
+        className={cn("p-2 rounded hover:bg-muted text-primary", editor.isActive('codeBlock', { language: 'mermaid' }) ? 'bg-muted' : '')}
+      >
+        <Workflow className="h-4 w-4" />
       </button>
 
       <div className="flex-1" />
@@ -297,7 +306,10 @@ const MenuBar = ({ editor }: { editor: any }) => {
 };
 
 const extensions = [
-  StarterKit,
+  StarterKit.configure({
+    codeBlock: false,
+  }),
+  MermaidCodeBlock,
   ImageResize,
   TextStyle,
   Color,
