@@ -86,7 +86,7 @@ export function ManualBookServiceGenerator(apiUrl: string, accessToken: string, 
       const error = await response.json().catch(() => ({}));
       throw new Error(error.message || 'Gagal menghapus kategori');
     }
-    return response.json();
+    return response.json().catch(() => ({ success: true }));
   };
 
   // --- Manual Book APIs ---
@@ -145,7 +145,7 @@ export function ManualBookServiceGenerator(apiUrl: string, accessToken: string, 
       const error = await response.json().catch(() => ({}));
       throw new Error(error.message || 'Gagal menghapus manual book');
     }
-    return response.json();
+    return response.json().catch(() => ({ success: true }));
   };
 
   return {
