@@ -14,16 +14,16 @@ async function bootstrap() {
     bufferLogs: true,
   });
   
-  app.use(json({ limit: '50mb' }));
-  app.use(urlencoded({ extended: true, limit: '50mb' }));
-  
-  app.set('trust proxy', 1);
-
   app.enableCors({
     origin: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   });
+
+  app.use(json({ limit: '50mb' }));
+  app.use(urlencoded({ extended: true, limit: '50mb' }));
+  
+  app.set('trust proxy', 1);
 
   const configService = app.get(ConfigService);
   const httpAdapterHost = app.get(HttpAdapterHost);
