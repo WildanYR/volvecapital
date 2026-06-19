@@ -70,7 +70,7 @@ function EditManualBookPage() {
   }
 
   return (
-    <div className="flex flex-col gap-8 w-full pb-10">
+    <div className="flex flex-col gap-8 w-full pb-10 max-w-5xl mx-auto">
       <div className="flex items-center gap-4">
         <Link to="/dashboard/manual-book">
           <Button variant="ghost" size="icon" className="rounded-full">

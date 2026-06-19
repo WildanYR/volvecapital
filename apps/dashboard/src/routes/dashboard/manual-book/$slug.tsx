@@ -68,7 +68,7 @@ function ManualBookDetailPage() {
   })
 
   return (
-    <div className="w-full">
+    <div className="w-full max-w-5xl mx-auto pb-10">
       <Link to="/dashboard/manual-book" className="inline-flex mb-8">
         <Button variant="ghost" className="gap-2 text-muted-foreground hover:text-foreground">
           <ArrowLeft className="size-4" />

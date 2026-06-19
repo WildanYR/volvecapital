@@ -67,16 +67,18 @@ const MermaidNodeView = ({ node, editor }: any) => {
       
       {isMermaid && (
         <div className={cn(
-          "mermaid-preview bg-white dark:bg-zinc-950 border p-4 rounded-md overflow-auto min-h-[100px] max-h-[800px] text-center",
+          "mermaid-preview bg-muted/30 border p-4 sm:p-8 rounded-md overflow-auto min-h-[100px] max-h-[800px] text-center",
           editor.isEditable ? 'mt-2' : ''
         )}>
           {error ? (
             <div className="text-red-500 text-sm whitespace-pre-wrap text-left">{error}</div>
           ) : svgContent ? (
-            <div 
-              className="[&>svg]:max-w-none [&>svg]:h-auto transition-transform duration-200 inline-block text-left" 
-              dangerouslySetInnerHTML={{ __html: svgContent }} 
-            />
+            <div className="bg-white dark:bg-zinc-950 inline-block text-left shadow-sm border rounded-sm p-4 sm:p-8 mx-auto w-full max-w-[800px] min-w-[max(100%,_500px)]">
+              <div 
+                className="flex justify-center [&>svg]:max-w-full [&>svg]:w-auto [&>svg]:h-auto transition-transform duration-200" 
+                dangerouslySetInnerHTML={{ __html: svgContent }} 
+              />
+            </div>
           ) : (
             <div className="text-muted-foreground text-sm italic inline-flex items-center justify-center h-full">Flowchart kosong atau sedang di-render...</div>
           )}
