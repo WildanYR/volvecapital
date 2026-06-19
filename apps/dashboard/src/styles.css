@@ -161,8 +161,11 @@
 }
 
 /* Fix Tiptap image alignment within Tailwind Prose */
+.prose img,
 .prose [style*="text-align: center"] > img,
-.prose img[style*="margin-left: auto"][style*="margin-right: auto"] {
+.prose img[data-align="center"],
+.prose img[align="center"] {
+  display: block !important;
   margin-left: auto !important;
   margin-right: auto !important;
 }
@@ -172,12 +175,18 @@
   margin-right: 0 !important;
 }
 
-.prose img[style*="float: right"] {
+.prose img[style*="float: right"],
+.prose img[data-align="right"],
+.prose img[align="right"] {
   float: right !important;
   margin-left: 1.5rem !important;
+  margin-right: 0 !important;
 }
 
-.prose img[style*="float: left"] {
+.prose img[style*="float: left"],
+.prose img[data-align="left"],
+.prose img[align="left"] {
   float: left !important;
   margin-right: 1.5rem !important;
+  margin-left: 0 !important;
 }
