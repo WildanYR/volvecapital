@@ -159,3 +159,25 @@
 .dark input[type="date"]::-webkit-calendar-picker-indicator {
   filter: invert(1);
 }
+
+/* Fix Tiptap image alignment within Tailwind Prose */
+.prose [style*="text-align: center"] > img,
+.prose img[style*="margin-left: auto"][style*="margin-right: auto"] {
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+.prose [style*="text-align: right"] > img {
+  margin-left: auto !important;
+  margin-right: 0 !important;
+}
+
+.prose img[style*="float: right"] {
+  float: right !important;
+  margin-left: 1.5rem !important;
+}
+
+.prose img[style*="float: left"] {
+  float: left !important;
+  margin-right: 1.5rem !important;
+}
