@@ -97,7 +97,7 @@ export function AccountBulkEditForm({
               <form.AppField
                 name="account_password"
                 children={field => (
-                  <field.TextField placeholder="Masukkan password akun baru..." />
+                  <field.TextField label="Password Baru" placeholder="Masukkan password akun baru..." />
                 )}
               />
             )}
@@ -116,7 +116,7 @@ export function AccountBulkEditForm({
               <form.AppField
                 name="subscription_expiry"
                 children={field => (
-                  <field.DatePickerField />
+                  <field.DatePickerField label="Subscription Berakhir" />
                 )}
               />
             )}
@@ -136,6 +136,7 @@ export function AccountBulkEditForm({
                 name="status"
                 children={field => (
                   <field.SelectField
+                    label="Status"
                     placeholder="Pilih Status..."
                     selectItems={AccountStatusSelect}
                   />
@@ -158,6 +159,7 @@ export function AccountBulkEditForm({
                 name="billing"
                 children={field => (
                   <field.TextField
+                    label="Billing"
                     placeholder="Masukkan metode pembayaran..."
                   />
                 )}
@@ -179,6 +181,7 @@ export function AccountBulkEditForm({
                 name="product_variant_id"
                 children={field => (
                   <field.ProductVariantSelectField
+                    label="Varian Produk"
                     productSlug={productSlug}
                   />
                 )}
@@ -200,6 +203,7 @@ export function AccountBulkEditForm({
                 name="capital_price"
                 children={field => (
                   <field.NumberField
+                    label="Harga Modal (HPP)"
                     placeholder="Masukkan harga modal..."
                   />
                 )}
@@ -221,6 +225,7 @@ export function AccountBulkEditForm({
                 name="label_id"
                 children={field => (
                   <field.SelectField
+                    label="Label / Catatan"
                     placeholder="Pilih Label Tersedia..."
                     selectItems={labelOptions}
                   />
