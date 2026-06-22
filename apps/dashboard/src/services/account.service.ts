@@ -105,6 +105,13 @@ export interface AccountMoveHistory {
 export interface AddAccountCapitalPayload {
   amount: number
   note?: string
+  date?: string
+}
+
+export interface EditAccountCapitalPayload {
+  amount?: number
+  note?: string
+  date?: string
 }
 
 export interface CreateAccountProfilePayload {
@@ -666,6 +673,40 @@ export function AccountServiceGenerator(apiUrl: string, accessToken: string, ten
       if (!response.ok) {
         const errorData = await parseApiResponse(response)
         throw new Error(errorData.message || 'Failed to add capital')
+      }
+    },
+    editAccountCapital: async (accountId: string, capitalId: string, payload: EditAccountCapitalPayload): Promise<void> => {
+      const response = await generateApiFetch(
+        apiUrl,
+        accessToken,
+        tenantId,
+        `/account/${accountId}/capital/${capitalId}`,
+        undefined,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        },
+      )
+      if (!response.ok) {
+        const errorData = await parseApiResponse(response)
+        throw new Error(errorData.message || 'Failed to edit capital')
+      }
+    },
+    deleteAccountCapital: async (accountId: string, capitalId: string): Promise<void> => {
+      const response = await generateApiFetch(
+        apiUrl,
+        accessToken,
+        tenantId,
+        `/account/${accountId}/capital/${capitalId}`,
+        undefined,
+        {
+          method: 'DELETE',
+        },
+      )
+      if (!response.ok) {
+        const errorData = await parseApiResponse(response)
+        throw new Error(errorData.message || 'Failed to delete capital')
       }
     },
     triggerReset: async (accountId: string): Promise<void> => {

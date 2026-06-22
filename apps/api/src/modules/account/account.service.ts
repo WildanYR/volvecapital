@@ -1339,11 +1339,76 @@ export class AccountService {
         account_id: accountId,
         amount: dto.amount,
         note: dto.description || 'Manual Add',
-        created_at: new Date(),
+        created_at: dto.date ? new Date(dto.date) : new Date(),
       }, { transaction });
 
       await transaction.commit();
       return capital;
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
+
+  async editCapital(tenantId: string, accountId: string, capitalId: string, dto: any) {
+    const transaction = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema(tenantId, transaction);
+
+      const capital = await this.accountCapitalRepository.findOne({
+        where: { id: capitalId, account_id: accountId },
+        transaction,
+      });
+
+      if (!capital) {
+        throw new NotFoundException(`Capital entry with ID ${capitalId} not found`);
+      }
+
+      let updateSql = `UPDATE account_capital SET amount = :amount, note = :note`;
+      const replacements: any = {
+        amount: dto.amount !== undefined ? dto.amount : capital.amount,
+        note: dto.note !== undefined ? dto.note : capital.note,
+        capitalId
+      };
+
+      if (dto.date) {
+        updateSql += `, created_at = :created_at`;
+        replacements.created_at = new Date(dto.date);
+      }
+      
+      updateSql += ` WHERE id = :capitalId`;
+
+      await this.postgresProvider.rawQuery(updateSql, {
+        replacements,
+        transaction,
+        type: QueryTypes.UPDATE
+      });
+
+      await transaction.commit();
+      return capital;
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
+
+  async deleteCapital(tenantId: string, accountId: string, capitalId: string) {
+    const transaction = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema(tenantId, transaction);
+
+      const capital = await this.accountCapitalRepository.findOne({
+        where: { id: capitalId, account_id: accountId },
+        transaction,
+      });
+
+      if (!capital) {
+        throw new NotFoundException(`Capital entry with ID ${capitalId} not found`);
+      }
+
+      await capital.destroy({ transaction });
+
+      await transaction.commit();
     } catch (error) {
       await transaction.rollback();
       throw error;
@@ -1449,6 +1514,55 @@ export class AccountService {
             { status: 'ready', freeze_until: null, batch_start_date: null, batch_end_date: null },
             { where: { id: { [Op.in]: ids } }, transaction }
           );
+          break;
+        case 'edit':
+          if (payload) {
+            const updatePayload: any = {};
+            if (payload.account_password !== undefined) updatePayload.account_password = payload.account_password;
+            if (payload.subscription_expiry !== undefined) updatePayload.subscription_expiry = payload.subscription_expiry;
+            if (payload.status !== undefined) {
+              updatePayload.status = payload.status;
+              if (payload.status === 'freeze') {
+                const freezeUntil = new Date();
+                freezeUntil.setDate(freezeUntil.getDate() + 7);
+                updatePayload.freeze_until = freezeUntil;
+                updatePayload.batch_start_date = null;
+                updatePayload.batch_end_date = null;
+              } else {
+                updatePayload.freeze_until = null;
+              }
+            }
+            if (payload.billing !== undefined) updatePayload.billing = payload.billing;
+            if (payload.product_variant_id !== undefined) updatePayload.product_variant_id = payload.product_variant_id;
+            if (payload.capital_price !== undefined) updatePayload.capital_price = payload.capital_price;
+
+            if (payload.label_id !== undefined) {
+              const validAccounts = await this.accountRepository.findAll({
+                where: { id: { [Op.in]: ids }, status: { [Op.ne]: 'banned' } },
+                attributes: ['id'],
+                transaction
+              });
+              for (const acc of validAccounts) {
+                const existing = await this.accountLabelRepository.findOne({
+                  where: { account_id: acc.id, label_id: payload.label_id },
+                  transaction
+                });
+                if (!existing) {
+                  await this.accountLabelRepository.create({
+                    account_id: acc.id,
+                    label_id: payload.label_id,
+                  }, { transaction });
+                }
+              }
+            }
+
+            if (Object.keys(updatePayload).length > 0) {
+              await this.accountRepository.update(
+                updatePayload,
+                { where: { id: { [Op.in]: ids }, status: { [Op.ne]: 'banned' } }, transaction }
+              );
+            }
+          }
           break;
         case 'delete':
           await this.accountRepository.destroy({

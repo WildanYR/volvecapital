@@ -1,10 +1,20 @@
 import type { Account, AddAccountCapitalPayload } from '@/dashboard/services/account.service'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Banknote, History, Plus, TrendingUp, User } from 'lucide-react'
+import { Banknote, History, Pencil, Plus, Trash2, TrendingUp, User } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { Pagination } from '@/dashboard/components/pagination'
 import { Button } from '@/dashboard/components/ui/button'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/dashboard/components/ui/alert-dialog'
 import {
   Dialog,
   DialogContent,
@@ -42,9 +52,17 @@ export function FinancialDetailDialog({
 
   const [newCapital, setNewCapital] = useState<string>('')
   const [newNote, setNewNote] = useState<string>('')
+  const [newDate, setNewDate] = useState<string>('')
   const [capitalPage, setCapitalPage] = useState(1)
   const [revenuePage, setRevenuePage] = useState(1)
   const itemsPerPage = 5
+
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editAmount, setEditAmount] = useState<string>('')
+  const [editNote, setEditNote] = useState<string>('')
+  const [editDate, setEditDate] = useState<string>('')
+
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const { data: details, isLoading } = useQuery({
     queryKey: ['account-financial-details', account?.id],
@@ -60,10 +78,38 @@ export function FinancialDetailDialog({
       queryClient.invalidateQueries({ queryKey: ['account'] })
       setNewCapital('')
       setNewNote('')
+      setNewDate('')
       toast.success('Modal berhasil ditambahkan')
     },
     onError: (error: any) => {
       toast.error(error.message || 'Gagal menambahkan modal')
+    },
+  })
+
+  const editCapitalMutation = useMutation({
+    mutationFn: (payload: { id: string, amount: number, note: string, date: string }) =>
+      accountService.editAccountCapital(account!.id, payload.id, { amount: payload.amount, note: payload.note, date: payload.date ? new Date(payload.date).toISOString() : undefined }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['account-financial-details', account?.id] })
+      queryClient.invalidateQueries({ queryKey: ['account'] })
+      setEditingId(null)
+      toast.success('Modal berhasil diubah')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Gagal mengubah modal')
+    },
+  })
+
+  const deleteCapitalMutation = useMutation({
+    mutationFn: (id: string) => accountService.deleteAccountCapital(account!.id, id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['account-financial-details', account?.id] })
+      queryClient.invalidateQueries({ queryKey: ['account'] })
+      setDeletingId(null)
+      toast.success('Modal berhasil dihapus')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Gagal menghapus modal')
     },
   })
 
@@ -76,12 +122,17 @@ export function FinancialDetailDialog({
       toast.error('Masukkan nominal modal yang valid')
       return
     }
-    addCapitalMutation.mutate({ amount, note: newNote })
+    addCapitalMutation.mutate({ 
+      amount, 
+      note: newNote, 
+      date: newDate ? new Date(newDate).toISOString() : undefined 
+    })
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent aria-describedby={undefined} className="md:min-w-[700px] max-h-[90vh] flex flex-col">
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent aria-describedby={undefined} className="md:min-w-[700px] max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <TrendingUp className="size-5 text-primary" />
@@ -126,13 +177,22 @@ export function FinancialDetailDialog({
                   onChange={e => setNewCapital(e.target.value)}
                 />
               </div>
-              <div className="grid gap-1.5 flex-[2]">
+              <div className="grid gap-1.5 flex-[1.5]">
                 <Label htmlFor="note" className="text-xs">Catatan (Opsional)</Label>
                 <Input
                   id="note"
                   placeholder="Catatan penggunaan modal..."
                   value={newNote}
                   onChange={e => setNewNote(e.target.value)}
+                />
+              </div>
+              <div className="grid gap-1.5 flex-1">
+                <Label htmlFor="date" className="text-xs">Tanggal</Label>
+                <Input
+                  id="date"
+                  type="date"
+                  value={newDate}
+                  onChange={e => setNewDate(e.target.value)}
                 />
               </div>
               <Button
@@ -185,14 +245,91 @@ export function FinancialDetailDialog({
                                     </div>
                                   )
                                 : (
-                                    <div key={cap.id} className="flex justify-between items-center p-3 bg-muted/50 rounded-md">
-                                      <div>
-                                        <p className="text-sm font-bold">{formatRupiah(cap.amount)}</p>
-                                        <p className="text-[10px] text-muted-foreground">{cap.note || 'Tidak ada catatan'}</p>
-                                      </div>
-                                      <p className="text-[10px] font-medium opacity-70">
-                                        {formatDateIdStandard(cap.created_at, true)}
-                                      </p>
+                                    <div key={cap.id} className="flex justify-between items-center p-3 bg-muted/50 rounded-md group">
+                                      {editingId === cap.id ? (
+                                        <div className="flex-1 flex gap-2 items-center mr-2">
+                                          <div className="flex-1 grid gap-1">
+                                            <Input
+                                              type="number"
+                                              value={editAmount}
+                                              onChange={e => setEditAmount(e.target.value)}
+                                              className="h-7 text-xs"
+                                            />
+                                            <Input
+                                              value={editNote}
+                                              onChange={e => setEditNote(e.target.value)}
+                                              className="h-7 text-xs"
+                                              placeholder="Catatan..."
+                                            />
+                                            <Input
+                                              type="date"
+                                              value={editDate}
+                                              onChange={e => setEditDate(e.target.value)}
+                                              className="h-7 text-xs"
+                                            />
+                                          </div>
+                                          <div className="flex flex-col gap-1">
+                                            <Button
+                                              size="sm"
+                                              className="h-6 px-2 text-[10px]"
+                                              onClick={() => {
+                                                const amount = Number(editAmount)
+                                                if (Number.isNaN(amount) || amount <= 0) {
+                                                  toast.error('Masukkan nominal modal yang valid')
+                                                  return
+                                                }
+                                                editCapitalMutation.mutate({ id: cap.id, amount, note: editNote, date: editDate })
+                                              }}
+                                              disabled={editCapitalMutation.isPending}
+                                            >
+                                              Simpan
+                                            </Button>
+                                            <Button
+                                              variant="ghost"
+                                              size="sm"
+                                              className="h-6 px-2 text-[10px]"
+                                              onClick={() => setEditingId(null)}
+                                            >
+                                              Batal
+                                            </Button>
+                                          </div>
+                                        </div>
+                                      ) : (
+                                        <>
+                                          <div>
+                                            <p className="text-sm font-bold">{formatRupiah(cap.amount)}</p>
+                                            <p className="text-[10px] text-muted-foreground">{cap.note || 'Tidak ada catatan'}</p>
+                                          </div>
+                                          <div className="flex flex-col items-end gap-1">
+                                            <p className="text-[10px] font-medium opacity-70">
+                                              {formatDateIdStandard(cap.created_at, true)}
+                                            </p>
+                                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                              <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-6 w-6"
+                                                onClick={() => {
+                                                  setEditingId(cap.id)
+                                                  setEditAmount(cap.amount.toString())
+                                                  setEditNote(cap.note || '')
+                                                  setEditDate(cap.created_at ? new Date(cap.created_at).toISOString().split('T')[0] : '')
+                                                }}
+                                              >
+                                                <Pencil className="size-3" />
+                                              </Button>
+                                              <Button
+                                                variant="destructive"
+                                                size="icon"
+                                                className="h-6 w-6"
+                                                onClick={() => setDeletingId(cap.id)}
+                                              >
+                                                <Trash2 className="size-3" />
+                                              </Button>
+                                            </div>
+                                          </div>
+                                        </>
+                                      )}
                                     </div>
                                   )
                             ))}
@@ -288,5 +425,31 @@ export function FinancialDetailDialog({
         </Tabs>
       </DialogContent>
     </Dialog>
+    <AlertDialog open={!!deletingId} onOpenChange={(o) => !o && setDeletingId(null)}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Hapus Riwayat Modal</AlertDialogTitle>
+          <AlertDialogDescription>
+            Apakah Anda yakin ingin menghapus riwayat modal ini? Tindakan ini akan mempengaruhi total modal.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Batal</AlertDialogCancel>
+          <AlertDialogAction
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            disabled={deleteCapitalMutation.isPending}
+            onClick={(e) => {
+              e.preventDefault()
+              if (deletingId) {
+                deleteCapitalMutation.mutate(deletingId)
+              }
+            }}
+          >
+            Hapus
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  </>
   )
 }

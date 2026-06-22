@@ -9,4 +9,8 @@ export class AddAccountCapitalDto {
   @IsOptional()
   @IsString()
   note?: string;
+
+  @IsOptional()
+  @IsString()
+  date?: string;
 }

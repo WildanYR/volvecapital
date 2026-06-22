@@ -18,6 +18,7 @@ import { AppRequest } from 'src/types/app-request.type';
 import { PaginationProvider } from '../utility/pagination.provider';
 import { AccountService } from './account.service';
 import { AddAccountCapitalDto } from './dto/add-account-capital.dto';
+import { UpdateAccountCapitalDto } from './dto/update-account-capital.dto';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { FreezeAccountDto } from './dto/freeze-account.dto';
 import { GetAllAccountQueryUrlDto } from './dto/get-all-account.dto';
@@ -169,6 +170,36 @@ export class AccountController {
       request.tenant_id!,
       id,
       addAccountCapitalDto,
+    );
+  }
+
+  @Patch(':id/capital/:capitalId')
+  @RequirePermissions('account.edit')
+  editCapital(
+    @Param('id') id: string,
+    @Param('capitalId') capitalId: string,
+    @Body() updateAccountCapitalDto: UpdateAccountCapitalDto,
+    @Request() request: AppRequest,
+  ) {
+    return this.accountService.editCapital(
+      request.tenant_id!,
+      id,
+      capitalId,
+      updateAccountCapitalDto,
+    );
+  }
+
+  @Delete(':id/capital/:capitalId')
+  @RequirePermissions('account.edit')
+  deleteCapital(
+    @Param('id') id: string,
+    @Param('capitalId') capitalId: string,
+    @Request() request: AppRequest,
+  ) {
+    return this.accountService.deleteCapital(
+      request.tenant_id!,
+      id,
+      capitalId,
     );
   }
 
