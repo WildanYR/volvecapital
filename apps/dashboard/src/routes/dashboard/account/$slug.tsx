@@ -69,6 +69,7 @@ import { AccountEditForm } from '@/dashboard/components/forms/account-edit.form'
 import { AccountFreezeForm } from '@/dashboard/components/forms/account-freeze.form'
 import { AccountProfileForm } from '@/dashboard/components/forms/account-profile.form'
 import { AccountUserUpdateForm } from '@/dashboard/components/forms/account-user-update-form'
+import { AccountBulkEditForm, type AccountBulkEditFormSubmitData } from '@/dashboard/components/forms/account-bulk-edit.form'
 import { AccountUserForm } from '@/dashboard/components/forms/account-user.form'
 import { SelectInput } from '@/dashboard/components/forms/common/inputs/select-input'
 import { EmailSelect } from '@/dashboard/components/inputs/select/email.select'
@@ -184,6 +185,7 @@ function RouteComponent() {
   const [dialogFreezeOpen, setDialogFreezeOpen] = useState<boolean>(false)
   const [dialogFinancialDetailOpen, setDialogFinancialDetailOpen] = useState<boolean>(false)
   const [dialogBulkConfirmOpen, setDialogBulkConfirmOpen] = useState<boolean>(false)
+  const [dialogBulkEditOpen, setDialogBulkEditOpen] = useState<boolean>(false)
   const [bulkActionType, setBulkActionType] = useState<string>('')
   const [bulkModalAmount, setBulkModalAmount] = useState<string>('')
   const [bulkModalNote, setBulkModalNote] = useState<string>('')
@@ -375,6 +377,23 @@ function RouteComponent() {
 
     bulkActionMutation.mutate({ ids: selectedIds, action: bulkActionType, payload })
     setDialogBulkConfirmOpen(false)
+  }
+
+  const handleBulkEditSubmit = (value: Partial<AccountBulkEditFormSubmitData>) => {
+    showAlertDialog({
+      title: 'Konfirmasi Edit Massal',
+      description: (
+        <>
+          Apakah Anda yakin ingin menyimpan perubahan untuk <span className="font-bold">{selectedIds.length}</span> akun terpilih?
+        </>
+      ),
+      confirmText: 'Simpan Perubahan Massal',
+      isConfirming: bulkActionMutation.isPending,
+      onConfirm: () => {
+        bulkActionMutation.mutate({ ids: selectedIds, action: 'edit', payload: value })
+        setDialogBulkEditOpen(false)
+      },
+    })
   }
 
   const handleAccountEditSubmit = (value: AccountEditFormSubmitData) => {
@@ -1317,6 +1336,10 @@ function RouteComponent() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start" className="w-48">
+                      <DropdownMenuItem onSelect={() => setDialogBulkEditOpen(true)}>
+                        <SquarePen className="mr-2 h-4 w-4" />
+                        Edit Massal
+                      </DropdownMenuItem>
                       <DropdownMenuItem onSelect={() => handleBulkActionClick('enable')}>
                         <Check className="mr-2 h-4 w-4" />
                         Bulk Enable
@@ -2195,6 +2218,23 @@ function RouteComponent() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <Dialog open={dialogBulkEditOpen} onOpenChange={setDialogBulkEditOpen}>
+        <DialogContent className="max-h-[85vh] overflow-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Massal Akun</DialogTitle>
+            <DialogDescription>
+              Perbarui detail informasi untuk {selectedIds.length} akun yang dipilih.
+            </DialogDescription>
+          </DialogHeader>
+          <AccountBulkEditForm
+            productSlug={slug}
+            isPending={bulkActionMutation.isPending}
+            onSubmit={handleBulkEditSubmit}
+            submitButtonText="Simpan Perubahan Massal"
+          />
+        </DialogContent>
+      </Dialog>
+
       <TvPinModal
         isOpen={tvPinModalOpen}
         onClose={() => setTvPinModalOpen(false)}
