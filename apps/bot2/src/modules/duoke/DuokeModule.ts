@@ -184,6 +184,9 @@ export class DuokeModule extends BaseModule {
                 if (await textarea.isVisible()) {
                     let isReadyToShip = false;
                     let isUnpaid = false;
+                    let isShipped = false;
+                    let shippedCategory = '';
+                    let shippedExpired = false;
                     
                     try {
                         const orderTab = locators.getOrderTab(this.loopPage);
@@ -194,13 +197,57 @@ export class DuokeModule extends BaseModule {
                                 await this.sleep(1000);
                             }
                             
+                            // [DEBUG] Tunggu sebentar sampai tag apa pun muncul di pane-order (maksimal 3 detik)
+                            try {
+                                await this.loopPage.waitForSelector('#pane-order .el-tag', { state: 'visible', timeout: 3000 });
+                            } catch (e) {
+                                this.logger.debug('[DEBUG] Timeout: Tidak ada .el-tag yang muncul di #pane-order dalam 3 detik.');
+                            }
+
+                            // [DEBUG] Cetak semua tag yang ditemukan
+                            const allTags = await this.loopPage.locator('#pane-order .el-tag').allInnerTexts();
+                            this.logger.info(`[DEBUG] Tag yang terdeteksi di panel Order untuk ${username}: ${JSON.stringify(allTags)}`);
+                            
                             const readyToShipTag = locators.getReadyToShipTag(this.loopPage);
                             const unpaidTag = locators.getUnpaidTag(this.loopPage);
+                            const shippedTag = locators.getShippedTag(this.loopPage);
                             
                             if (await readyToShipTag.isVisible()) {
                                 isReadyToShip = true;
                             } else if (await unpaidTag.isVisible()) {
                                 isUnpaid = true;
+                            } else if (await shippedTag.isVisible()) {
+                                isShipped = true;
+                                const amountLoc = locators.getPaymentAmount(this.loopPage);
+                                const timeLoc = locators.getPaymentTime(this.loopPage);
+                                
+                                if (await amountLoc.isVisible() && await timeLoc.isVisible()) {
+                                    const amountText = await amountLoc.innerText();
+                                    const timeText = await timeLoc.innerText();
+                                    
+                                    const priceMatch = amountText.replace(/,/g, '').match(/\d+/);
+                                    const price = priceMatch ? parseInt(priceMatch[0], 10) : 0;
+                                    
+                                    if (price < 15000) shippedCategory = 'harian';
+                                    else if (price <= 30000) shippedCategory = 'mingguan';
+                                    else if (price <= 45000) shippedCategory = 'sharing_bulanan';
+                                    else shippedCategory = 'bulanan';
+                                    
+                                    const timeStrMatch = timeText.match(/(\d{4}\/\d{2}\/\d{2} \d{2}:\d{2})/);
+                                    if (timeStrMatch) {
+                                        const orderDateStr = timeStrMatch[1].replace(/\//g, '-').replace(' ', 'T') + ':00+07:00';
+                                        const orderDate = new Date(orderDateStr);
+                                        const now = new Date();
+                                        const diffMs = now.getTime() - orderDate.getTime();
+                                        const diffHours = diffMs / (1000 * 60 * 60);
+                                        const diffDays = diffHours / 24;
+                                        
+                                        if (shippedCategory === 'harian' && diffHours > 22) shippedExpired = true;
+                                        if (shippedCategory === 'mingguan' && diffDays > 7) shippedExpired = true;
+                                        if (shippedCategory === 'sharing_bulanan' && diffDays > 25) shippedExpired = true;
+                                        if (shippedCategory === 'bulanan' && diffDays > 25) shippedExpired = true;
+                                    }
+                                }
                             }
                         }
                     } catch (err) {
@@ -218,8 +265,21 @@ export class DuokeModule extends BaseModule {
                     } else if (isUnpaid) {
                         finalReply = unpaidReply;
                         this.logger.info(`Status "Unpaid" DITEMUKAN untuk ${username}, membalas dengan reply_unpaid`);
+                    } else if (isShipped) {
+                        if (shippedCategory === 'harian') {
+                            finalReply = shippedExpired ? (this.duokeConfig.Shipped_reply_habis_harian || '') : (this.duokeConfig.Shipped_reply_harian || '');
+                        } else if (shippedCategory === 'mingguan') {
+                            finalReply = shippedExpired ? (this.duokeConfig.Shipped_reply_habis_mingguan || '') : (this.duokeConfig.Shipped_reply_mingguan || '');
+                        } else if (shippedCategory === 'sharing_bulanan') {
+                            finalReply = shippedExpired ? (this.duokeConfig.Shipped_reply_habis_sharing_bulanan || '') : (this.duokeConfig.Shipped_reply_sharing_bulanan || '');
+                        } else if (shippedCategory === 'bulanan') {
+                            finalReply = shippedExpired ? (this.duokeConfig.Shipped_reply_habis_bulanan || '') : (this.duokeConfig.Shipped_reply_bulanan || '');
+                        }
+                        
+                        if (!finalReply) finalReply = defaultReply;
+                        this.logger.info(`Status "Shipped" DITEMUKAN untuk ${username} (${shippedCategory}, expired: ${shippedExpired}), membalas dengan custom shipped reply`);
                     } else {
-                        this.logger.info(`Status "Ready to Ship" maupun "Unpaid" TIDAK DITEMUKAN untuk ${username}, membalas dengan reply_lines reguler`);
+                        this.logger.info(`Status khusus TIDAK DITEMUKAN untuk ${username}, membalas dengan reply_lines reguler`);
                     }
 
                     const replyLines = finalReply

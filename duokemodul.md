@@ -35,6 +35,11 @@ Untuk setiap pelanggan yang memiliki pesan belum terbaca:
 3. **Cek Status Pesanan**: Bot akan mengecek panel/tab "Order" di sebelah kanan. 
    - Jika ada status **"Ready to Ship"**, bot akan menggunakan teks balasan khusus (diambil dari `reply_ready_to_ship` di konfigurasi). 
    - Jika ada status **"Unpaid"**, bot akan menggunakan teks balasan khusus (diambil dari `reply_unpaid` di konfigurasi).
+   - Jika ada status **"Shipped"**, bot akan membaca Harga Pesanan dan Waktu Pembayaran untuk menentukan paket berlangganan:
+     - *Harian* (< 15.000): Jika > 22 jam, membalas dengan `Shipped_reply_habis_harian`, selain itu `Shipped_reply_harian`.
+     - *Mingguan* (15.001 - 30.000): Jika > 7 hari, membalas dengan `Shipped_reply_habis_mingguan`, selain itu `Shipped_reply_mingguan`.
+     - *Sharing Bulanan* (30.001 - 45.000): Jika > 25 hari, membalas dengan `Shipped_reply_habis_sharing_bulanan`, selain itu `Shipped_reply_sharing_bulanan`.
+     - *Bulanan Private* (> 45.000): Jika > 25 hari, membalas dengan `Shipped_reply_habis_bulanan`, selain itu `Shipped_reply_bulanan`.
    - Jika tidak ada status khusus tersebut, bot akan menggunakan teks balasan reguler (`reply_lines`).
 4. **Ketik & Kirim**: 
    - Bot menunggu hingga area ketik teks (*textarea*) muncul (maksimal menunggu 8 detik).

@@ -21,6 +21,9 @@ export const getSendButton = (page: Page) => page.locator('i.icon_send_chatbox')
 export const getOrderTab = (page: Page) => page.locator('#tab-order');
 export const getReadyToShipTag = (page: Page) => page.locator('#pane-order .el-tag:has-text("Ready to Ship")');
 export const getUnpaidTag = (page: Page) => page.locator('#pane-order .el-tag:has-text("Unpaid")');
+export const getShippedTag = (page: Page) => page.locator('#pane-order .el-tag:has-text("Shipped")');
+export const getPaymentAmount = (page: Page) => page.locator('.order_item_buyer .fw_700').first();
+export const getPaymentTime = (page: Page) => page.locator('.order_item_time').first();
 
 // Helper to find valid chat items (has VISIBLE specific badge AND buyer name)
 export const getChatItem = (page: Page) => 

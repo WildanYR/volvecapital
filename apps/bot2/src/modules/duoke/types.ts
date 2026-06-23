@@ -9,6 +9,14 @@ export interface DuokeConfig {
   reply_lines?: string;
   reply_ready_to_ship?: string;
   reply_unpaid?: string;
+  Shipped_reply_harian?: string;
+  Shipped_reply_habis_harian?: string;
+  Shipped_reply_mingguan?: string;
+  Shipped_reply_habis_mingguan?: string;
+  Shipped_reply_sharing_bulanan?: string;
+  Shipped_reply_habis_sharing_bulanan?: string;
+  Shipped_reply_bulanan?: string;
+  Shipped_reply_habis_bulanan?: string;
   check_interval?: number;
 }
 
