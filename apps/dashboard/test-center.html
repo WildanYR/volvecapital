@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Test Center</title>
+  <style>
+    .prose {
+      width: 100%;
+      border: 1px solid black;
+    }
+    
+    .prose div:has(img[containerstyle]) {
+      width: max-content !important;
+      max-width: 100% !important;
+      background: red; /* to see it */
+    }
+  </style>
+</head>
+<body>
+  <div class="prose">
+    <p>rthrth</p>
+    <div style="margin: 0px auto;" contenteditable="false" draggable="true">
+      <img src="data:image/png;base64,iVBORw0" containerstyle="margin: 0px auto;" wrapperstyle="display: flex; margin: 0px;" width="100" height="100" />
+    </div>
+    <p>after</p>
+  </div>
+</body>
+</html>

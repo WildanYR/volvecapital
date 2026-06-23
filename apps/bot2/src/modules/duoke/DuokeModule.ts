@@ -107,6 +107,28 @@ export class DuokeModule extends BaseModule {
         // Ambil daftar user yang sudah dibalas hari ini dari DB
         const repliedUsers = this.getRepliedUsers();
 
+        // Tutup popup jika muncul
+        try {
+            const closeBtn = locators.getClosePopupButton(this.loopPage);
+            if (await closeBtn.isVisible()) {
+                await closeBtn.click();
+                await this.sleep(1000); // Tunggu animasi tutup popup
+            }
+        } catch (e) {
+            this.logger.debug('Gagal tutup popup atau tidak ada popup: ' + e);
+        }
+
+        // Pindah ke tab unanswered sebelum scan
+        try {
+            const unansweredTab = locators.getUnansweredTab(this.loopPage);
+            if (await unansweredTab.isVisible()) {
+                await unansweredTab.click();
+                await this.sleep(2000); // Tunggu filter diterapkan
+            }
+        } catch (e) {
+            this.logger.debug('Gagal klik tab unanswered: ' + e);
+        }
+
         // Cari semua kontainer chat yang punya badge unread DAN nama pembeli
         const chatItems = await locators.getChatItem(this.loopPage).all();
         
@@ -160,17 +182,81 @@ export class DuokeModule extends BaseModule {
                 }
 
                 if (await textarea.isVisible()) {
-                    const replyLines = (process.env.REPLY_LINES || this.duokeConfig.reply_lines || 'Ready kak Silahkan Order')
+                    let isReadyToShip = false;
+                    let isUnpaid = false;
+                    
+                    try {
+                        const orderTab = locators.getOrderTab(this.loopPage);
+                        if (await orderTab.isVisible()) {
+                            const isTabActive = await orderTab.evaluate(el => el.classList.contains('is-active'));
+                            if (!isTabActive) {
+                                await orderTab.click();
+                                await this.sleep(1000);
+                            }
+                            
+                            const readyToShipTag = locators.getReadyToShipTag(this.loopPage);
+                            const unpaidTag = locators.getUnpaidTag(this.loopPage);
+                            
+                            if (await readyToShipTag.isVisible()) {
+                                isReadyToShip = true;
+                            } else if (await unpaidTag.isVisible()) {
+                                isUnpaid = true;
+                            }
+                        }
+                    } catch (err) {
+                        this.logger.debug('Gagal cek status order: ' + err);
+                    }
+
+                    const defaultReply = process.env.REPLY_LINES || this.duokeConfig.reply_lines || 'Ready kak Silahkan Order';
+                    const readyToShipReply = process.env.REPLY_READY_TO_SHIP || this.duokeConfig.reply_ready_to_ship || 'Pesanan kakak sudah kami terima dan sedang kami proses. Mohon ditunggu sebentar ya';
+                    const unpaidReply = process.env.REPLY_UNPAID || this.duokeConfig.reply_unpaid || 'Segara selesaikan payment dan akan kami proses secepatnya kak 😊';
+                    
+                    let finalReply = defaultReply;
+                    if (isReadyToShip) {
+                        finalReply = readyToShipReply;
+                        this.logger.info(`Status "Ready to Ship" DITEMUKAN untuk ${username}, membalas dengan reply_ready_to_ship`);
+                    } else if (isUnpaid) {
+                        finalReply = unpaidReply;
+                        this.logger.info(`Status "Unpaid" DITEMUKAN untuk ${username}, membalas dengan reply_unpaid`);
+                    } else {
+                        this.logger.info(`Status "Ready to Ship" maupun "Unpaid" TIDAK DITEMUKAN untuk ${username}, membalas dengan reply_lines reguler`);
+                    }
+
+                    const replyLines = finalReply
                         .split('||')
                         .map(s => s.trim());
 
-                    for (const line of replyLines) {
-                        await textarea.fill(line);
-                        await this.loopPage.keyboard.press('Enter');
-                        await this.sleep(500); // Reduced from 1000ms
-                    }
+                    // Mencoba mencari kolom input yang BENAR-BENAR terlihat di layar
+                    // Bisa jadi textarea biasa, atau contenteditable div
+                    const inputBox = this.loopPage.locator('textarea:visible, [contenteditable="true"]:visible, [placeholder*="quick reply"]').first();
+                    
+                    if (await inputBox.isVisible()) {
+                        // 1. Klik kolom input agar fokus
+                        await inputBox.click({ force: true });
+                        await this.sleep(300);
 
-                    try {
+                        for (const line of replyLines) {
+                            // 2. Ketik langsung menggunakan keyboard global
+                            await this.loopPage.keyboard.type(line, { delay: 15 });
+                            await this.sleep(300);
+                            
+                            // 3. Tekan Enter untuk jaga-jaga
+                            await this.loopPage.keyboard.press('Enter');
+                            await this.sleep(500);
+                        }
+
+                        // 4. Klik tombol Send berwarna biru (Kirim) jika Enter tidak berfungsi
+                        try {
+                            const sendBtn = locators.getSendButton(this.loopPage);
+                            if (await sendBtn.isVisible()) {
+                                await sendBtn.click();
+                                await this.sleep(500);
+                            }
+                        } catch (e) {
+                            this.logger.debug('Tidak dapat mengeklik tombol Send biru: ' + e);
+                        }
+
+                        try {
                         this.saveRepliedUser(username);
                         repliedUsers.push(username); 
                         this.logger.info(`Successfully replied to ${username}`);
@@ -179,7 +265,8 @@ export class DuokeModule extends BaseModule {
                     }
                     
                     // Removed 3s sleep to be more responsive
-                }
+                    } // Menutup if (await inputBox.isVisible())
+                } // Menutup if (await textarea.isVisible())
 
             } catch (error) {
                 this.logger.error(`Failed to process ${username}: ${error instanceof Error ? error.message : String(error)}`);

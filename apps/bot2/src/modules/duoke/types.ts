@@ -7,6 +7,8 @@ export interface DuokeConfig {
   name: string;
   loop_interval?: number;
   reply_lines?: string;
+  reply_ready_to_ship?: string;
+  reply_unpaid?: string;
   check_interval?: number;
 }
 
