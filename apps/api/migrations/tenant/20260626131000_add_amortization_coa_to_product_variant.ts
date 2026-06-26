@@ -1,28 +1,42 @@
 import { DataTypes } from 'sequelize';
+import type { MigrationContext } from 'migrations/migrator';
+import type { MigrationFn } from 'umzug';
 
-export const up = async ({ context: sequelize }: { context: any }) => {
-  const queryInterface = sequelize.getQueryInterface();
+export const up: MigrationFn<MigrationContext> = async ({ context }) => {
+  const { queryInterface, schema } = context;
 
-  await queryInterface.addColumn('product_variant', 'inventory_coa_id', {
-    type: DataTypes.BIGINT,
-    allowNull: true,
-  });
+  try {
+    await queryInterface.addColumn({ tableName: 'product_variant', schema }, 'inventory_coa_id', {
+      type: DataTypes.BIGINT,
+      allowNull: true,
+    });
+  } catch (e: any) {
+    if (e.message && !e.message.includes('already exists')) throw e;
+  }
 
-  await queryInterface.addColumn('product_variant', 'deferred_revenue_coa_id', {
-    type: DataTypes.BIGINT,
-    allowNull: true,
-  });
+  try {
+    await queryInterface.addColumn({ tableName: 'product_variant', schema }, 'deferred_revenue_coa_id', {
+      type: DataTypes.BIGINT,
+      allowNull: true,
+    });
+  } catch (e: any) {
+    if (e.message && !e.message.includes('already exists')) throw e;
+  }
 
-  await queryInterface.addColumn('product_variant', 'revenue_coa_id', {
-    type: DataTypes.BIGINT,
-    allowNull: true,
-  });
+  try {
+    await queryInterface.addColumn({ tableName: 'product_variant', schema }, 'revenue_coa_id', {
+      type: DataTypes.BIGINT,
+      allowNull: true,
+    });
+  } catch (e: any) {
+    if (e.message && !e.message.includes('already exists')) throw e;
+  }
 };
 
-export const down = async ({ context: sequelize }: { context: any }) => {
-  const queryInterface = sequelize.getQueryInterface();
+export const down: MigrationFn<MigrationContext> = async ({ context }) => {
+  const { queryInterface, schema } = context;
 
-  await queryInterface.removeColumn('product_variant', 'inventory_coa_id');
-  await queryInterface.removeColumn('product_variant', 'deferred_revenue_coa_id');
-  await queryInterface.removeColumn('product_variant', 'revenue_coa_id');
+  await queryInterface.removeColumn({ tableName: 'product_variant', schema }, 'inventory_coa_id');
+  await queryInterface.removeColumn({ tableName: 'product_variant', schema }, 'deferred_revenue_coa_id');
+  await queryInterface.removeColumn({ tableName: 'product_variant', schema }, 'revenue_coa_id');
 };

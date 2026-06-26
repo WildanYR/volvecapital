@@ -6,14 +6,20 @@ import {
   JOURNAL_LINE_REPOSITORY,
   ACCOUNTING_PERIOD_REPOSITORY,
   PLATFORM_ACCOUNTING_SETTING_REPOSITORY,
+  JOURNAL_TEMPLATE_REPOSITORY,
+  JOURNAL_TEMPLATE_ITEM_REPOSITORY,
 } from 'src/constants/database.const';
 import { Coa } from 'src/database/models/coa.model';
 import { JournalEntry } from 'src/database/models/journal-entry.model';
 import { JournalLine } from 'src/database/models/journal-line.model';
 import { AccountingPeriod } from 'src/database/models/accounting-period.model';
 import { PlatformAccountingSetting } from 'src/database/models/platform-accounting-setting.model';
+import { JournalTemplate } from 'src/database/models/journal-template.model';
+import { JournalTemplateItem } from 'src/database/models/journal-template-item.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
 import { Transaction as TransactionModel } from 'src/database/models/transaction.model';
+import { CreateJournalTemplateDto } from './dto/create-journal-template.dto';
+import { UpdateJournalTemplateDto } from './dto/update-journal-template.dto';
 
 export interface CreateJournalEntryDto {
   date: Date;
@@ -39,6 +45,8 @@ export class AccountingService {
     @Inject(JOURNAL_LINE_REPOSITORY) private readonly journalLineRepository: typeof JournalLine,
     @Inject(ACCOUNTING_PERIOD_REPOSITORY) private readonly accountingPeriodRepository: typeof AccountingPeriod,
     @Inject(PLATFORM_ACCOUNTING_SETTING_REPOSITORY) private readonly platformAccountingSettingRepository: typeof PlatformAccountingSetting,
+    @Inject(JOURNAL_TEMPLATE_REPOSITORY) private readonly journalTemplateRepository: typeof JournalTemplate,
+    @Inject(JOURNAL_TEMPLATE_ITEM_REPOSITORY) private readonly journalTemplateItemRepository: typeof JournalTemplateItem,
   ) {}
 
   async getCoaList(tenantId: string) {
@@ -817,6 +825,100 @@ export class AccountingService {
         throw new NotFoundException('Pengaturan platform tidak ditemukan.');
       }
       await setting.destroy({ transaction: tx });
+      await tx.commit();
+      return { success: true };
+    } catch (error) {
+      await tx.rollback();
+      throw error;
+    }
+  }
+
+  // --- Journal Templates ---
+
+  async getJournalTemplates(tenantId: string) {
+    const tx = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema(tenantId, tx);
+      const templates = await this.journalTemplateRepository.findAll({
+        include: [{ model: JournalTemplateItem, as: 'items', include: [{ model: Coa, as: 'coa', attributes: ['id', 'code', 'name'] }] }],
+        order: [['name', 'ASC'], [{ model: JournalTemplateItem, as: 'items' }, 'position', 'DESC']],
+        transaction: tx
+      });
+      await tx.commit();
+      return templates;
+    } catch (error) {
+      await tx.rollback();
+      throw error;
+    }
+  }
+
+  async createJournalTemplate(tenantId: string, payload: CreateJournalTemplateDto) {
+    const tx = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema(tenantId, tx);
+      const template = await this.journalTemplateRepository.create({
+        tenant_id: tenantId,
+        name: payload.name,
+        description: payload.description,
+      } as any, { transaction: tx });
+
+      if (payload.items && payload.items.length > 0) {
+        for (const item of payload.items) {
+          await this.journalTemplateItemRepository.create({
+            journal_template_id: template.id,
+            coa_id: item.coa_id || null,
+            position: item.position,
+          } as any, { transaction: tx });
+        }
+      }
+
+      await tx.commit();
+      return template;
+    } catch (error) {
+      await tx.rollback();
+      throw error;
+    }
+  }
+
+  async updateJournalTemplate(tenantId: string, id: string, payload: UpdateJournalTemplateDto) {
+    const tx = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema(tenantId, tx);
+      const template = await this.journalTemplateRepository.findByPk(id, { transaction: tx });
+      if (!template) throw new NotFoundException('Template tidak ditemukan.');
+
+      await template.update({
+        name: payload.name !== undefined ? payload.name : template.name,
+        description: payload.description !== undefined ? payload.description : template.description,
+      }, { transaction: tx });
+
+      if (payload.items !== undefined) {
+        await this.journalTemplateItemRepository.destroy({ where: { journal_template_id: id }, transaction: tx });
+        for (const item of payload.items) {
+          await this.journalTemplateItemRepository.create({
+            journal_template_id: template.id,
+            coa_id: item.coa_id || null,
+            position: item.position,
+          } as any, { transaction: tx });
+        }
+      }
+
+      await tx.commit();
+      return template;
+    } catch (error) {
+      await tx.rollback();
+      throw error;
+    }
+  }
+
+  async deleteJournalTemplate(tenantId: string, id: string) {
+    const tx = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema(tenantId, tx);
+      const template = await this.journalTemplateRepository.findByPk(id, { transaction: tx });
+      if (!template) throw new NotFoundException('Template tidak ditemukan.');
+
+      await template.destroy({ transaction: tx });
       await tx.commit();
       return { success: true };
     } catch (error) {

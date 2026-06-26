@@ -13,6 +13,7 @@ const accountingTabs = [
   { title: 'Laba Rugi', url: '/dashboard/accounting/income-statement', icon: LineChart },
   { title: 'Neraca Keuangan', url: '/dashboard/accounting/balance-sheet', icon: PieChart },
   { title: 'Tutup Buku', url: '/dashboard/accounting/periods', icon: Lock },
+  { title: 'Template Jurnal', url: '/dashboard/accounting/templates', icon: LibraryBig },
   { title: 'Pengaturan', url: '/dashboard/accounting/settings', icon: Settings },
 ]
 

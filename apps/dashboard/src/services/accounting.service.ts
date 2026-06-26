@@ -158,6 +158,50 @@ export function AccountingServiceGenerator(
         throw new Error(errorData.message || 'Failed to delete platform setting')
       }
       return parseApiResponse(response)
+    },
+    
+    // --- Journal Templates ---
+    getJournalTemplates: async (params?: { signal?: AbortSignal }) => {
+      const response = await generateApiFetch(apiUrl, accessToken, tenantId, '/accounting/templates', params)
+      if (!response.ok) throw new Error('Failed to fetch templates')
+      return parseApiResponse(response)
+    },
+
+    createJournalTemplate: async (payload: any, params?: { signal?: AbortSignal }) => {
+      const response = await generateApiFetch(apiUrl, accessToken, tenantId, '/accounting/templates', params, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      if (!response.ok) {
+        const errorData = await parseApiResponse(response)
+        throw new Error(errorData.message || 'Failed to create template')
+      }
+      return parseApiResponse(response)
+    },
+
+    updateJournalTemplate: async (id: string, payload: any, params?: { signal?: AbortSignal }) => {
+      const response = await generateApiFetch(apiUrl, accessToken, tenantId, `/accounting/templates/${id}`, params, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      if (!response.ok) {
+        const errorData = await parseApiResponse(response)
+        throw new Error(errorData.message || 'Failed to update template')
+      }
+      return parseApiResponse(response)
+    },
+
+    deleteJournalTemplate: async (id: string, params?: { signal?: AbortSignal }) => {
+      const response = await generateApiFetch(apiUrl, accessToken, tenantId, `/accounting/templates/${id}`, params, {
+        method: 'DELETE'
+      })
+      if (!response.ok) {
+        const errorData = await parseApiResponse(response)
+        throw new Error(errorData.message || 'Failed to delete template')
+      }
+      return parseApiResponse(response)
     }
   }
 }

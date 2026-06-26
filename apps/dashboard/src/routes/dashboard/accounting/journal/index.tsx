@@ -130,7 +130,15 @@ function JournalList() {
                 </TableRow>
               ) : (
                 journalEntries?.map((entry: any) => {
-                  const lines = entry.journal_lines || entry.lines || [];
+                  const rawLines = entry.journal_lines || entry.lines || [];
+                  // Sort lines so that debits (debit > 0) always appear before credits
+                  const lines = [...rawLines].sort((a, b) => {
+                    const aIsDebit = Number(a.debit) > 0;
+                    const bIsDebit = Number(b.debit) > 0;
+                    if (aIsDebit && !bIsDebit) return -1;
+                    if (!aIsDebit && bIsDebit) return 1;
+                    return 0;
+                  });
                   const totalDebit = lines.reduce((acc: number, line: any) => acc + Number(line.debit), 0);
                   const totalCredit = lines.reduce((acc: number, line: any) => acc + Number(line.credit), 0);
 

@@ -23,6 +23,8 @@ import { EmailSubject } from './models/email-subject.model';
 import { Email } from './models/email.model';
 import { JournalEntry } from './models/journal-entry.model';
 import { JournalLine } from './models/journal-line.model';
+import { JournalTemplate } from './models/journal-template.model';
+import { JournalTemplateItem } from './models/journal-template-item.model';
 import { Label } from './models/label.model';
 import { ManualBookCategory } from './models/manual-book-category.model';
 import { ManualBook } from './models/manual-book.model';
@@ -137,6 +139,8 @@ export class PostgresProvider {
         AccountingPeriod,
         JournalEntry,
         JournalLine,
+        JournalTemplate,
+        JournalTemplateItem,
         PlatformAccountingSetting,
       ]);
     }

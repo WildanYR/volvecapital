@@ -1,5 +1,7 @@
 import { Controller, Get, Req, UseGuards, Post, Put, Delete, Body, Query, Param } from '@nestjs/common';
 import { AccountingService } from './accounting.service';
+import { CreateJournalTemplateDto } from './dto/create-journal-template.dto';
+import { UpdateJournalTemplateDto } from './dto/update-journal-template.dto';
 
 // Akan ditambahkan Guards nantinya
 @Controller('accounting')
@@ -117,5 +119,31 @@ export class AccountingController {
   async deletePlatformSetting(@Req() req: any, @Param('id') id: string) {
     const tenantId = req.headers['x-tenant-id'] || 'master';
     return this.accountingService.deletePlatformSetting(tenantId, id);
+  }
+
+  // --- Journal Templates ---
+
+  @Get('templates')
+  async getJournalTemplates(@Req() req: any) {
+    const tenantId = req.headers['x-tenant-id'] || 'master';
+    return this.accountingService.getJournalTemplates(tenantId);
+  }
+
+  @Post('templates')
+  async createJournalTemplate(@Req() req: any, @Body() body: CreateJournalTemplateDto) {
+    const tenantId = req.headers['x-tenant-id'] || 'master';
+    return this.accountingService.createJournalTemplate(tenantId, body);
+  }
+
+  @Put('templates/:id')
+  async updateJournalTemplate(@Req() req: any, @Param('id') id: string, @Body() body: UpdateJournalTemplateDto) {
+    const tenantId = req.headers['x-tenant-id'] || 'master';
+    return this.accountingService.updateJournalTemplate(tenantId, id, body);
+  }
+
+  @Delete('templates/:id')
+  async deleteJournalTemplate(@Req() req: any, @Param('id') id: string) {
+    const tenantId = req.headers['x-tenant-id'] || 'master';
+    return this.accountingService.deleteJournalTemplate(tenantId, id);
   }
 }

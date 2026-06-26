@@ -18,6 +18,8 @@ import {
   EMAIL_SUBJECT_REPOSITORY,
   JOURNAL_ENTRY_REPOSITORY,
   JOURNAL_LINE_REPOSITORY,
+  JOURNAL_TEMPLATE_REPOSITORY,
+  JOURNAL_TEMPLATE_ITEM_REPOSITORY,
   LABEL_REPOSITORY,
   MANUAL_BOOK_CATEGORY_REPOSITORY,
   MANUAL_BOOK_REPOSITORY,
@@ -68,6 +70,8 @@ import { EmailSubject } from './models/email-subject.model';
 import { Email } from './models/email.model';
 import { JournalEntry } from './models/journal-entry.model';
 import { JournalLine } from './models/journal-line.model';
+import { JournalTemplate } from './models/journal-template.model';
+import { JournalTemplateItem } from './models/journal-template-item.model';
 import { PlatformAccountingSetting } from './models/platform-accounting-setting.model';
 import { Label } from './models/label.model';
 import { ManualBookCategory } from './models/manual-book-category.model';
@@ -150,5 +154,16 @@ export const RepositoryProvider: Provider[] = [
   { provide: ACCOUNTING_PERIOD_REPOSITORY, useValue: AccountingPeriod },
   { provide: JOURNAL_ENTRY_REPOSITORY, useValue: JournalEntry },
   { provide: JOURNAL_LINE_REPOSITORY, useValue: JournalLine },
-  { provide: PLATFORM_ACCOUNTING_SETTING_REPOSITORY, useValue: PlatformAccountingSetting },
+  {
+    provide: PLATFORM_ACCOUNTING_SETTING_REPOSITORY,
+    useValue: PlatformAccountingSetting,
+  },
+  {
+    provide: JOURNAL_TEMPLATE_REPOSITORY,
+    useValue: JournalTemplate,
+  },
+  {
+    provide: JOURNAL_TEMPLATE_ITEM_REPOSITORY,
+    useValue: JournalTemplateItem,
+  },
 ];

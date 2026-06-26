@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { API_URL } from '@/dashboard/constants/api-url.cont'
 import { useAuth } from '@/dashboard/context-providers/auth.provider'
@@ -34,6 +34,36 @@ function CreateJournal() {
     queryFn: ({ signal }) => accountingService.getCoaList({ signal }),
   })
 
+  const { data: templates } = useQuery({
+    queryKey: ['accounting', 'templates'],
+    queryFn: ({ signal }) => accountingService.getJournalTemplates({ signal }),
+  })
+
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>('none')
+  const [templateNominal, setTemplateNominal] = useState<string>('')
+
+  useEffect(() => {
+    if (selectedTemplateId === 'none') return;
+    const template = templates?.find((t: any) => t.id === selectedTemplateId)
+    if (!template) return;
+    
+    const nominal = Number(templateNominal) || 0;
+    const newLines = template.items.map((item: any, i: number) => ({
+      id: Date.now() + i,
+      coa_code: item.coa?.code || '',
+      debit: item.position === 'DEBIT' ? nominal : 0,
+      credit: item.position === 'CREDIT' ? nominal : 0,
+      memo: ''
+    }))
+    
+    if (newLines.length > 0) {
+      setLines(newLines)
+      if (template.name) {
+        setDescription(template.name)
+      }
+    }
+  }, [selectedTemplateId, templateNominal])
+
   const createMutation = useMutation({
     mutationFn: (data: any) => accountingService.createJournalEntry(data),
     onSuccess: () => {
@@ -54,7 +84,23 @@ function CreateJournal() {
   }
 
   const handleLineChange = (id: number, field: string, value: any) => {
-    setLines(lines.map(l => l.id === id ? { ...l, [field]: value } : l))
+    let updated = lines.map(l => l.id === id ? { ...l, [field]: value } : l)
+    
+    // Auto-balance if exactly 2 lines
+    if (lines.length === 2 && (field === 'debit' || field === 'credit')) {
+      const changedIdx = lines.findIndex(l => l.id === id)
+      const otherIdx = changedIdx === 0 ? 1 : 0
+      
+      if (field === 'debit') {
+        updated[otherIdx] = { ...updated[otherIdx], credit: value, debit: 0 }
+        updated[changedIdx] = { ...updated[changedIdx], credit: 0 }
+      } else {
+        updated[otherIdx] = { ...updated[otherIdx], debit: value, credit: 0 }
+        updated[changedIdx] = { ...updated[changedIdx], debit: 0 }
+      }
+    }
+    
+    setLines(updated)
   }
 
   const totalDebit = lines.reduce((acc, l) => acc + (Number(l.debit) || 0), 0)
@@ -96,7 +142,44 @@ function CreateJournal() {
           <CardTitle>Buat Jurnal Manual</CardTitle>
         </CardHeader>
         <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
+            {/* TEMPLATE QUICK ACTION */}
+            <div className="bg-primary/5 p-4 rounded-lg border border-primary/20 space-y-4">
+              <h3 className="font-semibold text-primary flex items-center">
+                <Plus className="w-4 h-4 mr-2" />
+                Gunakan Template (Opsional)
+              </h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Pilih Template Jurnal</Label>
+                  <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
+                    <SelectTrigger className="bg-background">
+                      <SelectValue placeholder="Pilih Template" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">-- Tanpa Template (Manual) --</SelectItem>
+                      {templates?.map((t: any) => (
+                        <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {selectedTemplateId !== 'none' && (
+                  <div className="space-y-2">
+                    <Label>Nominal Pengeluaran/Pemasukan</Label>
+                    <Input 
+                      type="number" 
+                      className="bg-background"
+                      placeholder="Ketik nominal di sini..." 
+                      value={templateNominal} 
+                      onChange={e => setTemplateNominal(e.target.value)} 
+                    />
+                    <p className="text-xs text-muted-foreground">Otomatis mengisi debit dan kredit di bawah</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Tanggal Transaksi</Label>

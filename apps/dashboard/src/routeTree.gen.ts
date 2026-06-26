@@ -51,6 +51,7 @@ import { Route as DashboardAccountsettingStaffIndexRouteImport } from './routes/
 import { Route as DashboardAccountsettingRoleIndexRouteImport } from './routes/dashboard/accountsetting/role/index'
 import { Route as DashboardAccountsettingAttendanceIndexRouteImport } from './routes/dashboard/accountsetting/attendance/index'
 import { Route as DashboardAccountingTrialBalanceIndexRouteImport } from './routes/dashboard/accounting/trial-balance/index'
+import { Route as DashboardAccountingTemplatesIndexRouteImport } from './routes/dashboard/accounting/templates/index'
 import { Route as DashboardAccountingSettingsIndexRouteImport } from './routes/dashboard/accounting/settings/index'
 import { Route as DashboardAccountingPeriodsIndexRouteImport } from './routes/dashboard/accounting/periods/index'
 import { Route as DashboardAccountingLedgerIndexRouteImport } from './routes/dashboard/accounting/ledger/index'
@@ -299,6 +300,12 @@ const DashboardAccountingTrialBalanceIndexRoute =
     path: '/trial-balance/',
     getParentRoute: () => DashboardAccountingRouteRoute,
   } as any)
+const DashboardAccountingTemplatesIndexRoute =
+  DashboardAccountingTemplatesIndexRouteImport.update({
+    id: '/templates/',
+    path: '/templates/',
+    getParentRoute: () => DashboardAccountingRouteRoute,
+  } as any)
 const DashboardAccountingSettingsIndexRoute =
   DashboardAccountingSettingsIndexRouteImport.update({
     id: '/settings/',
@@ -425,6 +432,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/accounting/ledger': typeof DashboardAccountingLedgerIndexRoute
   '/dashboard/accounting/periods': typeof DashboardAccountingPeriodsIndexRoute
   '/dashboard/accounting/settings': typeof DashboardAccountingSettingsIndexRoute
+  '/dashboard/accounting/templates': typeof DashboardAccountingTemplatesIndexRoute
   '/dashboard/accounting/trial-balance': typeof DashboardAccountingTrialBalanceIndexRoute
   '/dashboard/accountsetting/attendance': typeof DashboardAccountsettingAttendanceIndexRoute
   '/dashboard/accountsetting/role': typeof DashboardAccountsettingRoleIndexRoute
@@ -480,6 +488,7 @@ export interface FileRoutesByTo {
   '/dashboard/accounting/ledger': typeof DashboardAccountingLedgerIndexRoute
   '/dashboard/accounting/periods': typeof DashboardAccountingPeriodsIndexRoute
   '/dashboard/accounting/settings': typeof DashboardAccountingSettingsIndexRoute
+  '/dashboard/accounting/templates': typeof DashboardAccountingTemplatesIndexRoute
   '/dashboard/accounting/trial-balance': typeof DashboardAccountingTrialBalanceIndexRoute
   '/dashboard/accountsetting/attendance': typeof DashboardAccountsettingAttendanceIndexRoute
   '/dashboard/accountsetting/role': typeof DashboardAccountsettingRoleIndexRoute
@@ -538,6 +547,7 @@ export interface FileRoutesById {
   '/dashboard/accounting/ledger/': typeof DashboardAccountingLedgerIndexRoute
   '/dashboard/accounting/periods/': typeof DashboardAccountingPeriodsIndexRoute
   '/dashboard/accounting/settings/': typeof DashboardAccountingSettingsIndexRoute
+  '/dashboard/accounting/templates/': typeof DashboardAccountingTemplatesIndexRoute
   '/dashboard/accounting/trial-balance/': typeof DashboardAccountingTrialBalanceIndexRoute
   '/dashboard/accountsetting/attendance/': typeof DashboardAccountsettingAttendanceIndexRoute
   '/dashboard/accountsetting/role/': typeof DashboardAccountsettingRoleIndexRoute
@@ -597,6 +607,7 @@ export interface FileRouteTypes {
     | '/dashboard/accounting/ledger'
     | '/dashboard/accounting/periods'
     | '/dashboard/accounting/settings'
+    | '/dashboard/accounting/templates'
     | '/dashboard/accounting/trial-balance'
     | '/dashboard/accountsetting/attendance'
     | '/dashboard/accountsetting/role'
@@ -652,6 +663,7 @@ export interface FileRouteTypes {
     | '/dashboard/accounting/ledger'
     | '/dashboard/accounting/periods'
     | '/dashboard/accounting/settings'
+    | '/dashboard/accounting/templates'
     | '/dashboard/accounting/trial-balance'
     | '/dashboard/accountsetting/attendance'
     | '/dashboard/accountsetting/role'
@@ -709,6 +721,7 @@ export interface FileRouteTypes {
     | '/dashboard/accounting/ledger/'
     | '/dashboard/accounting/periods/'
     | '/dashboard/accounting/settings/'
+    | '/dashboard/accounting/templates/'
     | '/dashboard/accounting/trial-balance/'
     | '/dashboard/accountsetting/attendance/'
     | '/dashboard/accountsetting/role/'
@@ -1025,6 +1038,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardAccountingTrialBalanceIndexRouteImport
       parentRoute: typeof DashboardAccountingRouteRoute
     }
+    '/dashboard/accounting/templates/': {
+      id: '/dashboard/accounting/templates/'
+      path: '/templates'
+      fullPath: '/dashboard/accounting/templates'
+      preLoaderRoute: typeof DashboardAccountingTemplatesIndexRouteImport
+      parentRoute: typeof DashboardAccountingRouteRoute
+    }
     '/dashboard/accounting/settings/': {
       id: '/dashboard/accounting/settings/'
       path: '/settings'
@@ -1129,6 +1149,7 @@ interface DashboardAccountingRouteRouteChildren {
   DashboardAccountingLedgerIndexRoute: typeof DashboardAccountingLedgerIndexRoute
   DashboardAccountingPeriodsIndexRoute: typeof DashboardAccountingPeriodsIndexRoute
   DashboardAccountingSettingsIndexRoute: typeof DashboardAccountingSettingsIndexRoute
+  DashboardAccountingTemplatesIndexRoute: typeof DashboardAccountingTemplatesIndexRoute
   DashboardAccountingTrialBalanceIndexRoute: typeof DashboardAccountingTrialBalanceIndexRoute
 }
 
@@ -1147,6 +1168,8 @@ const DashboardAccountingRouteRouteChildren: DashboardAccountingRouteRouteChildr
     DashboardAccountingPeriodsIndexRoute: DashboardAccountingPeriodsIndexRoute,
     DashboardAccountingSettingsIndexRoute:
       DashboardAccountingSettingsIndexRoute,
+    DashboardAccountingTemplatesIndexRoute:
+      DashboardAccountingTemplatesIndexRoute,
     DashboardAccountingTrialBalanceIndexRoute:
       DashboardAccountingTrialBalanceIndexRoute,
   }
