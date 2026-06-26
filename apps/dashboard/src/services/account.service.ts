@@ -149,7 +149,6 @@ export interface BulkAccountItemPayload {
   label?: string
   product_variant_id: string
   profile?: Array<CreateAccountProfilePayload>
-  capital_price?: number
   payment_coa_id?: string
   expense_coa_id?: string
 }

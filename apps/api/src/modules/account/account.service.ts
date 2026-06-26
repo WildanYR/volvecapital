@@ -1337,12 +1337,24 @@ export class AccountService {
     try {
       await this.postgresProvider.setSchema(tenantId, transaction);
 
+      let expense_coa_id = dto.expense_coa_id;
+      if (!expense_coa_id) {
+        const accForCoa = await this.accountRepository.findOne({
+          where: { id: accountId },
+          include: [{ model: ProductVariant, as: 'product_variant' }],
+          transaction
+        });
+        if (accForCoa?.product_variant) {
+          expense_coa_id = (accForCoa.product_variant as any).inventory_coa_id || (accForCoa.product_variant as any).expense_coa_id;
+        }
+      }
+
       const capital = await this.accountCapitalRepository.create({
         account_id: accountId,
         amount: dto.amount,
         note: dto.description || dto.note || 'Manual Add',
         payment_coa_id: dto.payment_coa_id,
-        expense_coa_id: dto.expense_coa_id,
+        expense_coa_id: expense_coa_id,
         created_at: dto.date ? new Date(dto.date) : new Date(),
       }, { transaction });
 
@@ -1460,11 +1472,15 @@ export class AccountService {
 
       switch (action) {
         case 'add_modal':
-          if (!payload || !payload.amount) {
-            throw new BadRequestException('Nominal modal (amount) wajib diisi');
-          }
           for (const id of ids) {
-            await this.addCapital(tenantId, id, { amount: payload.amount, description: payload.note });
+            const payment_coa_id = payload.payment_coas?.[id];
+            const amount = payload.amounts?.[id] || payload.amount;
+            if (!amount) throw new BadRequestException('Nominal modal (amount) wajib diisi untuk semua akun');
+            await this.addCapital(tenantId, id, { 
+              amount: amount, 
+              description: payload.note, 
+              payment_coa_id 
+            });
           }
           break;
         case 'enable':
@@ -1562,7 +1578,6 @@ export class AccountService {
             }
             if (payload.billing !== undefined) updatePayload.billing = payload.billing;
             if (payload.product_variant_id !== undefined) updatePayload.product_variant_id = payload.product_variant_id;
-            if (payload.capital_price !== undefined) updatePayload.capital_price = payload.capital_price;
 
             if (payload.label_id !== undefined) {
               const validAccounts = await this.accountRepository.findAll({

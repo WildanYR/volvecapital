@@ -206,8 +206,8 @@ function RouteComponent() {
   const [bulkActionType, setBulkActionType] = useState<string>('')
   const [bulkModalAmount, setBulkModalAmount] = useState<string>('')
   const [bulkModalNote, setBulkModalNote] = useState<string>('')
-  const [bulkModalPaymentCoaId, setBulkModalPaymentCoaId] = useState<string>('')
-  const [bulkModalExpenseCoaId, setBulkModalExpenseCoaId] = useState<string>('')
+  const [bulkPaymentCoas, setBulkPaymentCoas] = useState<Record<string, string>>({})
+  const [bulkAmounts, setBulkAmounts] = useState<Record<string, string>>({})
 
   const [selectedAccountState, setSelectedAccount] = useState<Account>()
   const [selectedAccountProfile, setSelectedAccountProfile]
@@ -372,8 +372,8 @@ function RouteComponent() {
     setConfirmInput('')
     setBulkModalAmount('')
     setBulkModalNote('')
-    setBulkModalPaymentCoaId('')
-    setBulkModalExpenseCoaId('')
+    setBulkPaymentCoas({})
+    setBulkAmounts({})
     setDialogBulkConfirmOpen(true)
   }
 
@@ -385,16 +385,20 @@ function RouteComponent() {
 
     let payload = undefined;
     if (bulkActionType === 'add_modal') {
-      const amount = Number.parseInt(bulkModalAmount);
-      if (Number.isNaN(amount) || amount <= 0) {
-        toast.error('Masukkan nominal modal yang valid');
-        return;
+      const amounts: Record<string, number> = {};
+      for (const id of selectedIds) {
+        const amtStr = bulkAmounts[id] || bulkModalAmount;
+        const amt = Number.parseInt(amtStr);
+        if (Number.isNaN(amt) || amt <= 0) {
+          toast.error('Pastikan semua akun memiliki nominal modal yang valid');
+          return;
+        }
+        amounts[id] = amt;
       }
       payload = {
-        amount,
+        amounts,
         note: bulkModalNote,
-        payment_coa_id: bulkModalPaymentCoaId || undefined,
-        expense_coa_id: bulkModalExpenseCoaId || undefined
+        payment_coas: bulkPaymentCoas
       };
     }
 
@@ -2191,16 +2195,16 @@ function RouteComponent() {
             {bulkActionType === 'add_modal' && (
               <div className="grid gap-4 py-4 bg-muted/30 p-4 rounded-md mt-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="bulk-amount" className="text-xs font-bold">Nominal Modal (Per Akun)</Label>
+                  <Label htmlFor="bulk-amount" className="text-xs font-bold">Nominal Modal Global (Opsional)</Label>
                   <Input
                     id="bulk-amount"
                     type="number"
                     value={bulkModalAmount}
                     onChange={(e) => setBulkModalAmount(e.target.value)}
-                    placeholder="Contoh: 54000"
+                    placeholder="Contoh: 54000 (Berlaku jika tidak diisi per akun)"
                   />
                   <p className="text-[10px] text-muted-foreground">
-                    Nominal ini akan ditambahkan ke {selectedIds.length} akun yang dipilih.
+                    Gunakan nominal ini jika kamu ingin menyamakan seluruh akun yang dipilih.
                   </p>
                 </div>
                 <div className="grid gap-2">
@@ -2212,33 +2216,45 @@ function RouteComponent() {
                     placeholder="Catatan penggunaan modal..."
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="grid gap-2">
-                    <Label className="text-xs font-bold">Dibayar dari Kas/Bank</Label>
-                    <Select value={bulkModalPaymentCoaId} onValueChange={setBulkModalPaymentCoaId}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Pilih Kas/Bank..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {coaList?.filter((c: any) => c.type === 'ASET').map((c: any) => (
-                          <SelectItem key={c.id} value={c.id}>{c.code} - {c.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                <div className="grid gap-2 mt-2">
+                  <Label className="text-xs font-bold">Dibayar dari Kas/Bank (Per Akun)</Label>
+                  <div className="max-h-[250px] overflow-y-auto space-y-2 border rounded-md p-2 bg-background">
+                    {accounts?.items.filter(a => selectedIds.includes(a.id)).map(account => (
+                      <div key={account.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2 bg-muted/20 rounded border">
+                        <div className="min-w-0 flex-1">
+                          <p className="font-semibold text-xs truncate">{account.email.email}</p>
+                          <p className="text-[10px] text-muted-foreground truncate">{account.product_variant.name}</p>
+                        </div>
+                        <div className="w-full sm:w-[120px] flex-shrink-0">
+                          <Input
+                            type="number"
+                            placeholder={bulkModalAmount || "Nominal..."}
+                            className="h-8 text-xs"
+                            value={bulkAmounts[account.id] || ''}
+                            onChange={(e) => setBulkAmounts(prev => ({...prev, [account.id]: e.target.value}))}
+                          />
+                        </div>
+                        <div className="w-full sm:w-[180px] flex-shrink-0">
+                          <Select 
+                            value={bulkPaymentCoas[account.id] || ''} 
+                            onValueChange={(val) => setBulkPaymentCoas(prev => ({...prev, [account.id]: val}))}
+                          >
+                            <SelectTrigger className="h-8 text-xs">
+                              <SelectValue placeholder="Pilih Kas/Bank..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {coaList?.filter((c: any) => c.type === 'ASET').map((c: any) => (
+                                <SelectItem key={c.id} value={c.id} className="text-xs">{c.code} - {c.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  <div className="grid gap-2">
-                    <Label className="text-xs font-bold">Kategori Beban/HPP</Label>
-                    <Select value={bulkModalExpenseCoaId} onValueChange={setBulkModalExpenseCoaId}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Pilih Akun Beban/HPP..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {coaList?.filter((c: any) => c.type === 'BEBAN' || c.type === 'HPP' || c.type === 'ASET').map((c: any) => (
-                          <SelectItem key={c.id} value={c.id}>{c.code} - {c.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <p className="text-[10px] text-muted-foreground">
+                    Kategori Beban/HPP akan diatur secara otomatis mengikuti pengaturan Varian Produk masing-masing akun.
+                  </p>
                 </div>
               </div>
             )}

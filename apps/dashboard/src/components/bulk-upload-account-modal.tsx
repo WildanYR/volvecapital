@@ -27,7 +27,6 @@ interface CSVRow {
   'Subscription Berakhir'?: string
   'status'?: string
   'Billing'?: string
-  'Harga Modal (HPP) '?: string
   'Varian Produk'?: string
   'label/ Catatan'?: string
   'Nama Profil'?: string
@@ -212,7 +211,6 @@ export function BulkUploadAccountModal() {
                 subscription_expiry: new Date(row['Subscription Berakhir'] || new Date()),
                 status: statusResult.value,
                 billing: row.Billing,
-                capital_price: Number(row['Harga Modal (HPP) ']) || 0,
                 product_variant_id: variantId,
                 label: row['label/ Catatan'],
                 profile: [],

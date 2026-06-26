@@ -42,9 +42,9 @@ function GeneralLedger() {
   return (
     <div className="p-6">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-col items-start gap-4">
           <CardTitle>Buku Besar (General Ledger)</CardTitle>
-          <div className="w-[300px]">
+          <div className="w-full max-w-md">
             <Select value={selectedCoaId} onValueChange={setSelectedCoaId}>
               <SelectTrigger>
                 <SelectValue placeholder="Pilih Akun" />

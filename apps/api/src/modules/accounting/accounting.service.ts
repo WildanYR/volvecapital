@@ -334,6 +334,7 @@ export class AccountingService {
       await this.postgresProvider.setSchema(tenantId, tx);
       const coas = await this.coaRepository.findAll({
         include: [{ model: JournalLine }],
+        order: [['code', 'ASC']],
         transaction: tx,
       });
       

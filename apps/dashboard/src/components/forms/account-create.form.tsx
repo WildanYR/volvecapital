@@ -13,9 +13,8 @@ export const AccountFormSchema = z.object({
   subscription_expiry: z.date().optional(),
   status: z.string(),
   billing: z.string(),
-  label: z.string(),
+  label: z.string().optional(),
   product_variant_id: z.string().nonempty(),
-  capital_price: z.number().min(0).optional(),
   profile: z.array(AccountProfileFormSchema).min(1),
 })
 
@@ -40,7 +39,6 @@ export function AccountCreateForm({
       billing: '',
       label: '',
       product_variant_id: '',
-      capital_price: 0,
       profile: [
         {
           name: '',
@@ -100,15 +98,6 @@ export function AccountCreateForm({
               <field.TextField
                 label="Billing (opsional)"
                 placeholder="Masukkan metode pembayaran untuk akun..."
-              />
-            )}
-          />
-          <form.AppField
-            name="capital_price"
-            children={field => (
-              <field.NumberField
-                label="Harga Modal (HPP)"
-                placeholder="Masukkan harga modal akun..."
               />
             )}
           />

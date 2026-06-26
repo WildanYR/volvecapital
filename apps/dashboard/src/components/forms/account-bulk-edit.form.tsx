@@ -16,7 +16,6 @@ export const AccountBulkEditFormSchema = z.object({
   billing: z.string().optional(),
   label_id: z.string().optional(),
   product_variant_id: z.string().optional(),
-  capital_price: z.number().min(0).optional(),
 })
 
 export type AccountBulkEditFormSubmitData = z.infer<typeof AccountBulkEditFormSchema>
@@ -57,7 +56,6 @@ export function AccountBulkEditForm({
       billing: '',
       label_id: '',
       product_variant_id: '',
-      capital_price: 0,
     } as AccountBulkEditFormSubmitData,
     onSubmit: ({ value }) => {
       // Filter only enabled fields
@@ -68,7 +66,6 @@ export function AccountBulkEditForm({
       if (enabledFields['billing']) payload.billing = value.billing
       if (enabledFields['label_id']) payload.label_id = value.label_id
       if (enabledFields['product_variant_id']) payload.product_variant_id = value.product_variant_id
-      if (enabledFields['capital_price']) payload.capital_price = value.capital_price
 
       onSubmit(payload)
     },
@@ -189,27 +186,7 @@ export function AccountBulkEditForm({
             )}
           </div>
 
-          <div className="flex flex-col gap-2 border p-4 rounded-md">
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="toggle-capital_price" 
-                checked={!!enabledFields['capital_price']} 
-                onCheckedChange={() => toggleField('capital_price')} 
-              />
-              <Label htmlFor="toggle-capital_price" className="font-semibold cursor-pointer">Edit Harga Modal (HPP)</Label>
-            </div>
-            {enabledFields['capital_price'] && (
-              <form.AppField
-                name="capital_price"
-                children={field => (
-                  <field.NumberField
-                    label="Harga Modal (HPP)"
-                    placeholder="Masukkan harga modal..."
-                  />
-                )}
-              />
-            )}
-          </div>
+
 
           <div className="flex flex-col gap-2 border p-4 rounded-md">
             <div className="flex items-center space-x-2">

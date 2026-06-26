@@ -23,6 +23,16 @@ import {
   DialogTrigger,
   DialogFooter,
 } from '@/dashboard/components/ui/dialog'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/dashboard/components/ui/alert-dialog'
 import { Input } from '@/dashboard/components/ui/input'
 import { Label } from '@/dashboard/components/ui/label'
 import { Lock, Plus } from 'lucide-react'
@@ -39,6 +49,7 @@ function AccountingPeriods() {
   const accountingService = AccountingServiceGenerator(API_URL, auth.tenant!.accessToken, auth.tenant!.id)
   
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false)
   
   const currentYear = new Date().getFullYear()
   const currentMonthStr = String(new Date().getMonth() + 1).padStart(2, '0')
@@ -68,9 +79,12 @@ function AccountingPeriods() {
 
   const handleClosePeriod = (e: React.FormEvent) => {
     e.preventDefault()
-    if (confirm(`Apakah Anda yakin ingin MENGUNCI periode "${periodName}"? Transaksi pada tanggal tersebut tidak akan bisa diubah atau dibatalkan.`)) {
-      closeMutation.mutate({ periodName, startDate, endDate })
-    }
+    setIsConfirmOpen(true)
+  }
+
+  const confirmClosePeriod = () => {
+    closeMutation.mutate({ periodName, startDate, endDate })
+    setIsConfirmOpen(false)
   }
 
   return (
@@ -153,7 +167,7 @@ function AccountingPeriods() {
                   <TableRow key={period.id}>
                     <TableCell className="font-medium">{period.period_name}</TableCell>
                     <TableCell>
-                      {format(new Date(period.start_date), 'dd MMM yyyy')} - {format(new Date(period.end_date), 'dd MMM yyyy')}
+                      {period.start_date ? format(new Date(period.start_date), 'dd MMM yyyy') : '-'} - {period.end_date ? format(new Date(period.end_date), 'dd MMM yyyy') : '-'}
                     </TableCell>
                     <TableCell>
                       <Badge variant={period.is_closed ? 'default' : 'secondary'}>
@@ -161,7 +175,7 @@ function AccountingPeriods() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {format(new Date(period.createdAt), 'dd MMM yyyy HH:mm')}
+                      {(period.createdAt || period.created_at) ? format(new Date(period.createdAt || period.created_at), 'dd MMM yyyy HH:mm') : '-'}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -170,6 +184,24 @@ function AccountingPeriods() {
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Konfirmasi Tutup Buku</AlertDialogTitle>
+            <AlertDialogDescription>
+              Apakah Anda yakin ingin MENGUNCI periode <strong>"{periodName}"</strong>?<br/><br/>
+              Transaksi pada tanggal tersebut tidak akan bisa diubah atau dibatalkan (VOID).
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmClosePeriod} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Ya, Kunci Sekarang
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
