@@ -27,4 +27,9 @@ export const ProductVariantFormSchema = z.object({
   tutorial_id: z.string().optional().default('__none__'),
   strike_price: z.string().optional().default('').refine(v => !v || (!Number.isNaN(Number(v)) && Number(v) >= 0), 'Harus berupa angka positif'),
   reminder_before_hours: z.string().default('').refine(v => !v || (!Number.isNaN(Number(v)) && Number(v) >= 0), 'Harus berupa angka positif'),
+  income_coa_id: z.string().optional().default(''),
+  expense_coa_id: z.string().optional().default(''),
+  inventory_coa_id: z.string().optional().default(''),
+  deferred_revenue_coa_id: z.string().optional().default(''),
+  revenue_coa_id: z.string().optional().default(''),
 })

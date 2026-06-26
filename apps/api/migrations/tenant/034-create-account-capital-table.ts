@@ -1,11 +1,12 @@
+import type { MigrationFn } from 'umzug';
+import type { MigrationContext } from '../migrator';
 import { DataTypes, NOW } from 'sequelize';
-import { MigrationFn } from 'umzug';
-import { MigrationContext } from '../migrator';
 
 export const up: MigrationFn<MigrationContext> = async ({ context }) => {
   const { queryInterface, schema } = context;
 
-  if (['public', 'master', 'information_schema', 'pg_catalog'].includes(schema)) return;
+  if (['public', 'master', 'information_schema', 'pg_catalog'].includes(schema))
+    return;
 
   await queryInterface.createTable(
     { tableName: 'account_capital', schema },
@@ -56,7 +57,8 @@ export const up: MigrationFn<MigrationContext> = async ({ context }) => {
 export const down: MigrationFn<MigrationContext> = async ({ context }) => {
   const { queryInterface, schema } = context;
 
-  if (['public', 'master', 'information_schema', 'pg_catalog'].includes(schema)) return;
+  if (['public', 'master', 'information_schema', 'pg_catalog'].includes(schema))
+    return;
 
   await queryInterface.dropTable({ tableName: 'account_capital', schema });
 };

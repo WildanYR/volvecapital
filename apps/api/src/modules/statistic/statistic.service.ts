@@ -2,26 +2,26 @@ import { Injectable } from '@nestjs/common';
 import { QueryTypes } from 'sequelize';
 import { PostgresProvider } from 'src/database/postgres.provider';
 
-export type StatisticFilterType =
-  | 'realtime'
-  | 'today'
-  | 'yesterday'
-  | 'last_7_days'
-  | 'last_30_days'
-  | 'custom_day'
-  | 'custom_week'
-  | 'custom_month'
-  | 'custom_year';
+export type StatisticFilterType
+  = | 'realtime'
+    | 'today'
+    | 'yesterday'
+    | 'last_7_days'
+    | 'last_30_days'
+    | 'custom_day'
+    | 'custom_week'
+    | 'custom_month'
+    | 'custom_year';
 
 export type ChartGranularity = 'hour' | 'day' | 'month';
 
 export interface StatisticParams {
   filter?: StatisticFilterType;
-  date?: string;        // YYYY-MM-DD  — for custom_day
-  start_date?: string;  // YYYY-MM-DD  — for custom_week start
-  end_date?: string;    // YYYY-MM-DD  — for custom_week end
-  year?: string;        // YYYY        — for custom_year / custom_month
-  month?: string;       // MM (1-12)   — for custom_month
+  date?: string; // YYYY-MM-DD  — for custom_day
+  start_date?: string; // YYYY-MM-DD  — for custom_week start
+  end_date?: string; // YYYY-MM-DD  — for custom_week end
+  year?: string; // YYYY        — for custom_year / custom_month
+  month?: string; // MM (1-12)   — for custom_month
   product_variant_id?: string;
   platform?: string;
 }
@@ -54,7 +54,7 @@ export class StatisticService {
   private resolveDateRange(params: StatisticParams): DateRange {
     const now = new Date();
     const nowWIB = this.toWIBDate(now);
-    
+
     const todayStartWIB = new Date(Date.UTC(
       nowWIB.getUTCFullYear(),
       nowWIB.getUTCMonth(),
@@ -63,7 +63,7 @@ export class StatisticService {
 
     const filter: StatisticFilterType = params.filter ?? 'today';
 
-    let startWIB: Date, endWIB: Date, prevStartWIB: Date | null = null, prevEndWIB: Date | null = null;
+    let startWIB: Date; let endWIB: Date; let prevStartWIB: Date | null = null; let prevEndWIB: Date | null = null;
     let granularity: ChartGranularity = 'hour';
 
     switch (filter) {
@@ -71,7 +71,7 @@ export class StatisticService {
       case 'today': {
         startWIB = new Date(todayStartWIB);
         endWIB = nowWIB;
-        
+
         prevStartWIB = new Date(todayStartWIB);
         prevStartWIB.setUTCDate(prevStartWIB.getUTCDate() - 1);
         prevEndWIB = new Date(nowWIB);
@@ -119,8 +119,9 @@ export class StatisticService {
       case 'custom_day': {
         if (params.date) {
           const [y, m, d] = params.date.split('-');
-          startWIB = new Date(Date.UTC(parseInt(y), parseInt(m) - 1, parseInt(d)));
-        } else {
+          startWIB = new Date(Date.UTC(Number.parseInt(y), Number.parseInt(m) - 1, Number.parseInt(d)));
+        }
+        else {
           startWIB = new Date(todayStartWIB);
         }
         endWIB = new Date(startWIB);
@@ -135,9 +136,9 @@ export class StatisticService {
         break;
       }
       case 'custom_week': {
-        startWIB = params.start_date ? new Date(params.start_date + 'T00:00:00.000Z') : new Date(todayStartWIB);
-        endWIB = params.end_date ? new Date(params.end_date + 'T23:59:59.999Z') : new Date(nowWIB);
-        
+        startWIB = params.start_date ? new Date(`${params.start_date}T00:00:00.000Z`) : new Date(todayStartWIB);
+        endWIB = params.end_date ? new Date(`${params.end_date}T23:59:59.999Z`) : new Date(nowWIB);
+
         const diffDays = Math.round((endWIB.getTime() - startWIB.getTime()) / (1000 * 60 * 60 * 24));
         prevStartWIB = new Date(startWIB);
         prevStartWIB.setUTCDate(prevStartWIB.getUTCDate() - diffDays);
@@ -147,32 +148,33 @@ export class StatisticService {
         break;
       }
       case 'custom_month': {
-        const yr = params.year ? parseInt(params.year, 10) : nowWIB.getUTCFullYear();
-        const mo = params.month ? parseInt(params.month, 10) - 1 : nowWIB.getUTCMonth();
+        const yr = params.year ? Number.parseInt(params.year, 10) : nowWIB.getUTCFullYear();
+        const mo = params.month ? Number.parseInt(params.month, 10) - 1 : nowWIB.getUTCMonth();
         startWIB = new Date(Date.UTC(yr, mo, 1));
         endWIB = new Date(Date.UTC(yr, mo + 1, 0, 23, 59, 59, 999));
 
         prevStartWIB = new Date(Date.UTC(yr, mo - 1, 1));
-        
+
         if (yr === nowWIB.getUTCFullYear() && mo === nowWIB.getUTCMonth()) {
           // If filtering current month, limit prevEndWIB to the same date/time in the previous month
           const prevMonthMaxDays = new Date(Date.UTC(yr, mo, 0)).getUTCDate();
           const targetDay = Math.min(nowWIB.getUTCDate(), prevMonthMaxDays);
           prevEndWIB = new Date(Date.UTC(yr, mo - 1, targetDay, nowWIB.getUTCHours(), nowWIB.getUTCMinutes(), nowWIB.getUTCSeconds(), nowWIB.getUTCMilliseconds()));
-        } else {
+        }
+        else {
           prevEndWIB = new Date(Date.UTC(yr, mo, 0, 23, 59, 59, 999));
         }
-        
+
         granularity = 'day';
         break;
       }
       case 'custom_year': {
-        const yr = params.year ? parseInt(params.year, 10) : nowWIB.getUTCFullYear();
+        const yr = params.year ? Number.parseInt(params.year, 10) : nowWIB.getUTCFullYear();
         startWIB = new Date(Date.UTC(yr, 0, 1));
         endWIB = new Date(Date.UTC(yr, 11, 31, 23, 59, 59, 999));
 
         prevStartWIB = new Date(Date.UTC(yr - 1, 0, 1));
-        
+
         if (yr === nowWIB.getUTCFullYear()) {
           // If filtering current year, limit prevEndWIB to the same date/time in the previous year
           const isLeapYear = (y: number) => new Date(y, 1, 29).getMonth() === 1;
@@ -182,10 +184,11 @@ export class StatisticService {
             targetDay = 28;
           }
           prevEndWIB = new Date(Date.UTC(yr - 1, targetMo, targetDay, nowWIB.getUTCHours(), nowWIB.getUTCMinutes(), nowWIB.getUTCSeconds(), nowWIB.getUTCMilliseconds()));
-        } else {
+        }
+        else {
           prevEndWIB = new Date(Date.UTC(yr - 1, 11, 31, 23, 59, 59, 999));
         }
-        
+
         granularity = 'month';
         break;
       }
@@ -236,7 +239,8 @@ export class StatisticService {
           (SELECT COALESCE(SUM(capital_price), 0) FROM "account" WHERE product_variant_id = :product_variant_id AND created_at >= :start AND created_at <= :end) +
           (SELECT COALESCE(SUM(ac.amount), 0) FROM "account_capital" ac JOIN "account" acc ON acc.id = ac.account_id WHERE acc.product_variant_id = :product_variant_id AND ac.created_at >= :start AND ac.created_at <= :end)
         `;
-      } else {
+      }
+      else {
         capitalQuery = `
           (SELECT COALESCE(SUM(capital_price), 0) FROM "account" WHERE created_at >= :start AND created_at <= :end) +
           (SELECT COALESCE(SUM(amount), 0) FROM "account_capital" WHERE created_at >= :start AND created_at <= :end)
@@ -245,7 +249,7 @@ export class StatisticService {
 
       const repl = {
         start: start.toISOString(),
-        end:   end.toISOString(),
+        end: end.toISOString(),
         granularity,
         product_variant_id: params.product_variant_id ?? null,
         platform: params.platform ?? null,
@@ -273,7 +277,7 @@ export class StatisticService {
       if (prevStart && prevEnd) {
         const prevRepl = {
           start: prevStart.toISOString(),
-          end:   prevEnd.toISOString(),
+          end: prevEnd.toISOString(),
           product_variant_id: params.product_variant_id ?? null,
           platform: params.platform ?? null,
         };
@@ -392,7 +396,8 @@ export class StatisticService {
           
           ORDER BY date DESC
         `;
-      } else {
+      }
+      else {
         capitalDetailsQuery = `
           SELECT 
             e.email,
@@ -468,15 +473,19 @@ export class StatisticService {
         // Which means Postgres returns the timestamp without timezone at the WIB local time.
         // E.g., '2026-05-22 00:00:00'. When passed to new Date(raw), JS interprets it in UTC since we use `toISOString` later, or local.
         // It's safest to treat `d` as UTC because of Postgres driver behavior with "timestamp without time zone".
-        if (granularity === 'hour')  return `${String(d.getUTCHours()).padStart(2, '0')}:00`;
-        if (granularity === 'month') return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+        if (granularity === 'hour')
+          return `${String(d.getUTCHours()).padStart(2, '0')}:00`;
+        if (granularity === 'month')
+          return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
         // day: YYYY-MM-DD
         return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
       };
 
       const calcPercentage = (current: number, prev: number) => {
-        if (prev === 0 && current === 0) return 0;
-        if (prev === 0) return 100;
+        if (prev === 0 && current === 0)
+          return 0;
+        if (prev === 0)
+          return 100;
         return ((current - prev) / Math.abs(prev)) * 100;
       };
 
@@ -489,57 +498,57 @@ export class StatisticService {
 
       return {
         summary: {
-          total_revenue:        curRevenue,
-          revenue_percentage:   calcPercentage(curRevenue, prevRevenue),
-          total_capital_price:  Number(summary.total_capital_price  ?? 0),
-          gross_profit:         curProfit,
-          profit_percentage:    calcPercentage(curProfit, prevProfit),
-          transaction_count:    curTrx,
+          total_revenue: curRevenue,
+          revenue_percentage: calcPercentage(curRevenue, prevRevenue),
+          total_capital_price: Number(summary.total_capital_price ?? 0),
+          gross_profit: curProfit,
+          profit_percentage: calcPercentage(curProfit, prevProfit),
+          transaction_count: curTrx,
           transaction_percentage: calcPercentage(curTrx, prevTrx),
         },
         charts: {
           revenue: revenueChart.map(r => ({
-            bucket:            fmtBucket(r.bucket),
-            total_revenue:     Number(r.total_revenue),
+            bucket: fmtBucket(r.bucket),
+            total_revenue: Number(r.total_revenue),
             transaction_count: Number(r.transaction_count),
           })),
           peakHour: peakHour.map(p => ({
-            hour:              Number(p.hour),
+            hour: Number(p.hour),
             transaction_count: Number(p.transaction_count),
           })),
           platform: platform.map(p => ({
-            platform:          p.platform as string,
+            platform: p.platform as string,
             transaction_count: Number(p.transaction_count),
-            total_revenue:     Number(p.total_revenue),
+            total_revenue: Number(p.total_revenue),
           })),
           products: products.map(p => ({
             product_variant_id: String(p.product_variant_id),
-            product_name:       p.product_name as string,
-            variant_name:       p.variant_name as string,
-            items_sold:         Number(p.items_sold),
+            product_name: p.product_name as string,
+            variant_name: p.variant_name as string,
+            items_sold: Number(p.items_sold),
           })),
           capital_details: capitalDetails.map(c => ({
-            email:   c.email as string,
+            email: c.email as string,
             variant_name: c.variant_name as string,
-            date:    new Date(c.date).toISOString(),
+            date: new Date(c.date).toISOString(),
             nominal: Number(c.nominal),
-            type:    c.type as string,
+            type: c.type as string,
           })),
           revenue_details: revenueDetails.map(r => ({
-            id:           r.id as string,
-            date:         new Date(r.date).toISOString(),
-            email:        r.email as string,
+            id: r.id as string,
+            date: new Date(r.date).toISOString(),
+            email: r.email as string,
             variant_name: r.variant_name as string,
-            customer:     r.customer as string,
-            platform:     r.platform as string,
-            nominal:      Number(r.nominal),
+            customer: r.customer as string,
+            platform: r.platform as string,
+            nominal: Number(r.nominal),
           })),
         },
         meta: {
-          filter:      params.filter ?? 'today',
+          filter: params.filter ?? 'today',
           granularity,
-          start:       start.toISOString(),
-          end:         end.toISOString(),
+          start: start.toISOString(),
+          end: end.toISOString(),
         },
       };
     }

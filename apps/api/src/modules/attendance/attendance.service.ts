@@ -4,8 +4,8 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Op } from 'sequelize';
 import * as moment from 'moment-timezone';
+import { Op } from 'sequelize';
 import {
   ATTENDANCE_REPOSITORY,
   ATTENDANCE_SETTING_REPOSITORY,
@@ -14,14 +14,14 @@ import {
 } from 'src/constants/database.const';
 import { AttendanceSetting } from 'src/database/models/attendance-setting.model';
 import { Attendance } from 'src/database/models/attendance.model';
+import { DashboardUser } from 'src/database/models/dashboard-user.model';
+import { Role } from 'src/database/models/role.model';
 import { Shift } from 'src/database/models/shift.model';
 import { UserShift } from 'src/database/models/user-shift.model';
 import { WeeklyOffSchedule } from 'src/database/models/weekly-off-schedule.model';
-import { DashboardUser } from 'src/database/models/dashboard-user.model';
-import { Role } from 'src/database/models/role.model';
-import { AppLoggerService } from '../logger/logger.service';
 import { PostgresProvider } from 'src/database/postgres.provider';
-import { EndAttendanceDto, AttendanceReportFilterDto, UpdateAttendanceSettingDto } from './dto/attendance.dto';
+import { AppLoggerService } from '../logger/logger.service';
+import { AttendanceReportFilterDto, EndAttendanceDto, UpdateAttendanceSettingDto } from './dto/attendance.dto';
 
 @Injectable()
 export class AttendanceService {
@@ -38,7 +38,7 @@ export class AttendanceService {
     const transaction = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema(tenantSchema, transaction);
-      
+
       const today = moment().tz('Asia/Jakarta');
       const todayStr = today.format('YYYY-MM-DD');
       const dayName = today.format('dddd');
@@ -101,7 +101,8 @@ export class AttendanceService {
         date: todayStr,
         attendance,
       };
-    } catch (error) {
+    }
+    catch (error) {
       await transaction.rollback();
       throw error;
     }
@@ -168,10 +169,10 @@ export class AttendanceService {
         // Calculate Late
         const setting = await this.attendanceSettingRepository.findOne({ transaction });
         const tolerance = setting ? setting.late_tolerance_minutes : 10;
-        
+
         const shiftStartTime = moment.tz(`${todayStr} ${userShift.shift.start_time}`, 'YYYY-MM-DD HH:mm:ss', userShift.shift.timezone || 'Asia/Jakarta');
         const shiftStartTimeWithTolerance = shiftStartTime.clone().add(tolerance, 'minutes');
-        
+
         if (today.isAfter(shiftStartTimeWithTolerance)) {
           lateMinutes = today.diff(shiftStartTime, 'minutes');
         }
@@ -188,7 +189,8 @@ export class AttendanceService {
 
       await transaction.commit();
       return attendance;
-    } catch (error) {
+    }
+    catch (error) {
       await transaction.rollback();
       throw error;
     }
@@ -221,7 +223,7 @@ export class AttendanceService {
       let earlyLeaveMinutes = 0;
       if (attendance.shift) {
         const shiftEndTime = moment.tz(`${todayStr} ${attendance.shift.end_time}`, 'YYYY-MM-DD HH:mm:ss', attendance.shift.timezone || 'Asia/Jakarta');
-        
+
         if (today.isBefore(shiftEndTime)) {
           earlyLeaveMinutes = shiftEndTime.diff(today, 'minutes');
         }
@@ -235,9 +237,11 @@ export class AttendanceService {
       let finalStatus = 'completed';
       if (attendance.late_minutes > 0 && earlyLeaveMinutes > 0) {
         finalStatus = 'late_and_early_leave';
-      } else if (attendance.late_minutes > 0) {
+      }
+      else if (attendance.late_minutes > 0) {
         finalStatus = 'late';
-      } else if (earlyLeaveMinutes > 0) {
+      }
+      else if (earlyLeaveMinutes > 0) {
         finalStatus = 'early_leave';
       }
 
@@ -251,7 +255,8 @@ export class AttendanceService {
 
       await transaction.commit();
       return attendance;
-    } catch (error) {
+    }
+    catch (error) {
       await transaction.rollback();
       throw error;
     }
@@ -295,7 +300,8 @@ export class AttendanceService {
         total_late: totalLate,
         total_work_hours: Math.floor(totalWorkMinutes / 60),
       };
-    } catch (error) {
+    }
+    catch (error) {
       await transaction.rollback();
       throw error;
     }
@@ -305,17 +311,20 @@ export class AttendanceService {
     const transaction = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema(tenantSchema, transaction);
-      
+
       let dateFilter = {};
       const today = moment().tz('Asia/Jakarta');
-      
+
       if (filter === 'day') {
         dateFilter = { attendance_date: today.format('YYYY-MM-DD') };
-      } else if (filter === 'week') {
+      }
+      else if (filter === 'week') {
         dateFilter = { attendance_date: { [Op.gte]: today.startOf('isoWeek').format('YYYY-MM-DD') } };
-      } else if (filter === 'month') {
+      }
+      else if (filter === 'month') {
         dateFilter = { attendance_date: { [Op.gte]: today.startOf('month').format('YYYY-MM-DD') } };
-      } else {
+      }
+      else {
         // default 30 days
         dateFilter = { attendance_date: { [Op.gte]: today.subtract(30, 'days').format('YYYY-MM-DD') } };
       }
@@ -329,7 +338,8 @@ export class AttendanceService {
       });
       await transaction.commit();
       return history;
-    } catch (error) {
+    }
+    catch (error) {
       await transaction.rollback();
       throw error;
     }
@@ -345,13 +355,14 @@ export class AttendanceService {
         where: { attendance_date: todayStr },
         include: [
           { model: DashboardUser, as: 'user', attributes: ['id', 'name', 'email'] },
-          { model: Shift, as: 'shift' }
+          { model: Shift, as: 'shift' },
         ],
         transaction,
       });
       await transaction.commit();
       return attendances;
-    } catch (error) {
+    }
+    catch (error) {
       await transaction.rollback();
       throw error;
     }
@@ -381,10 +392,14 @@ export class AttendanceService {
       let missingCheckout = 0;
 
       for (const att of attendances) {
-        if (att.status === 'working') working++;
-        if (att.status === 'weekly_off') weeklyOff++;
-        if (att.status === 'missing_checkout') missingCheckout++;
-        if (att.late_minutes > 0) late++;
+        if (att.status === 'working')
+          working++;
+        if (att.status === 'weekly_off')
+          weeklyOff++;
+        if (att.status === 'missing_checkout')
+          missingCheckout++;
+        if (att.late_minutes > 0)
+          late++;
       }
 
       const notStarted = activeUsersCount - attendances.length;
@@ -396,7 +411,8 @@ export class AttendanceService {
         weekly_off: weeklyOff,
         missing_checkout: missingCheckout,
       };
-    } catch (error) {
+    }
+    catch (error) {
       await transaction.rollback();
       throw error;
     }
@@ -412,7 +428,7 @@ export class AttendanceService {
       const endDate = query.end_date || moment().tz('Asia/Jakarta').endOf('month').format('YYYY-MM-DD');
 
       const whereClause: any = {
-        attendance_date: { [Op.between]: [startDate, endDate] }
+        attendance_date: { [Op.between]: [startDate, endDate] },
       };
 
       if (query.user_id) {
@@ -426,7 +442,7 @@ export class AttendanceService {
         where: whereClause,
         include: [
           { model: DashboardUser, as: 'user', attributes: ['id', 'name'] },
-          { model: Shift, as: 'shift', attributes: ['id', 'name'] }
+          { model: Shift, as: 'shift', attributes: ['id', 'name'] },
         ],
         transaction,
       });
@@ -437,7 +453,8 @@ export class AttendanceService {
       const userMap = new Map<string, any>();
 
       for (const att of attendances) {
-        if (!att.user) continue;
+        if (!att.user)
+          continue;
 
         if (!userMap.has(att.user_id)) {
           userMap.set(att.user_id, {
@@ -459,17 +476,22 @@ export class AttendanceService {
 
         if (att.status === 'weekly_off') {
           stats.off_days++;
-        } else if (att.status === 'absent') {
+        }
+        else if (att.status === 'absent') {
           stats.absent++;
-        } else if (att.status === 'missing_checkout') {
+        }
+        else if (att.status === 'missing_checkout') {
           stats.missing_checkout++;
           stats.present++;
-        } else if (att.status !== 'not_started') {
+        }
+        else if (att.status !== 'not_started') {
           stats.present++;
         }
 
-        if (att.late_minutes > 0) stats.late++;
-        if (att.early_leave_minutes > 0) stats.early_leave++;
+        if (att.late_minutes > 0)
+          stats.late++;
+        if (att.early_leave_minutes > 0)
+          stats.early_leave++;
         if (att.total_work_minutes > 0) {
           stats.total_work_hours += (att.total_work_minutes / 60);
         }
@@ -478,11 +500,12 @@ export class AttendanceService {
       // Format work hours to 1 decimal place
       const report = Array.from(userMap.values()).map(r => ({
         ...r,
-        total_work_hours: Math.round(r.total_work_hours * 10) / 10
+        total_work_hours: Math.round(r.total_work_hours * 10) / 10,
       }));
 
       return report;
-    } catch (error) {
+    }
+    catch (error) {
       await transaction.rollback();
       throw error;
     }
@@ -503,7 +526,8 @@ export class AttendanceService {
 
       await transaction.commit();
       return setting;
-    } catch (error) {
+    }
+    catch (error) {
       await transaction.rollback();
       throw error;
     }
@@ -517,13 +541,15 @@ export class AttendanceService {
       let setting = await this.attendanceSettingRepository.findOne({ transaction });
       if (!setting) {
         setting = await this.attendanceSettingRepository.create(payload as any, { transaction });
-      } else {
+      }
+      else {
         await setting.update(payload, { transaction });
       }
 
       await transaction.commit();
       return setting;
-    } catch (error) {
+    }
+    catch (error) {
       await transaction.rollback();
       throw error;
     }

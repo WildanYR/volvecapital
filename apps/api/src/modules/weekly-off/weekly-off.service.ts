@@ -10,12 +10,12 @@ import {
   WEEKLY_OFF_SCHEDULE_REPOSITORY,
 } from 'src/constants/database.const';
 import { AttendanceSetting } from 'src/database/models/attendance-setting.model';
+import { DashboardUser } from 'src/database/models/dashboard-user.model';
 import { WeeklyOffRequest } from 'src/database/models/weekly-off-request.model';
 import { WeeklyOffSchedule } from 'src/database/models/weekly-off-schedule.model';
-import { AppLoggerService } from '../logger/logger.service';
 import { PostgresProvider } from 'src/database/postgres.provider';
-import { RequestWeeklyOffDto, RejectWeeklyOffDto } from './dto/weekly-off.dto';
-import { DashboardUser } from 'src/database/models/dashboard-user.model';
+import { AppLoggerService } from '../logger/logger.service';
+import { RejectWeeklyOffDto, RequestWeeklyOffDto } from './dto/weekly-off.dto';
 
 @Injectable()
 export class WeeklyOffService {
@@ -42,7 +42,8 @@ export class WeeklyOffService {
       });
       await transaction.commit();
       return { schedule, requests };
-    } catch (error) {
+    }
+    catch (error) {
       await transaction.rollback();
       throw error;
     }
@@ -59,7 +60,8 @@ export class WeeklyOffService {
       });
       await transaction.commit();
       return requests;
-    } catch (error) {
+    }
+    catch (error) {
       await transaction.rollback();
       throw error;
     }
@@ -69,7 +71,7 @@ export class WeeklyOffService {
     const transaction = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema(tenantSchema, transaction);
-      
+
       const day = payload.requested_off_day.toLowerCase();
       if (['friday', 'saturday', 'sunday', 'jumat', 'sabtu', 'minggu'].includes(day)) {
         throw new BadRequestException('Cannot select weekend for weekly off');
@@ -91,7 +93,8 @@ export class WeeklyOffService {
 
       await transaction.commit();
       return request;
-    } catch (error) {
+    }
+    catch (error) {
       await transaction.rollback();
       throw error;
     }
@@ -101,7 +104,7 @@ export class WeeklyOffService {
     const transaction = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema(tenantSchema, transaction);
-      
+
       const request = await this.requestRepository.findByPk(requestId, { transaction });
       if (!request || request.status !== 'pending') {
         throw new NotFoundException('Pending request not found');
@@ -144,7 +147,8 @@ export class WeeklyOffService {
 
       await transaction.commit();
       return request;
-    } catch (error) {
+    }
+    catch (error) {
       await transaction.rollback();
       throw error;
     }
@@ -154,7 +158,7 @@ export class WeeklyOffService {
     const transaction = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema(tenantSchema, transaction);
-      
+
       const request = await this.requestRepository.findByPk(requestId, { transaction });
       if (!request || request.status !== 'pending') {
         throw new NotFoundException('Pending request not found');
@@ -169,7 +173,8 @@ export class WeeklyOffService {
 
       await transaction.commit();
       return request;
-    } catch (error) {
+    }
+    catch (error) {
       await transaction.rollback();
       throw error;
     }

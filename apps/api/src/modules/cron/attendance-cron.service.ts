@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { Op } from 'sequelize';
 import * as moment from 'moment-timezone';
+import { Op } from 'sequelize';
 import {
   ATTENDANCE_REPOSITORY,
   DASHBOARD_USER_REPOSITORY,
@@ -11,10 +11,10 @@ import {
 } from 'src/constants/database.const';
 import { Attendance } from 'src/database/models/attendance.model';
 import { DashboardUser } from 'src/database/models/dashboard-user.model';
+import { Shift } from 'src/database/models/shift.model';
 import { Tenant } from 'src/database/models/tenant.model';
 import { UserShift } from 'src/database/models/user-shift.model';
 import { WeeklyOffSchedule } from 'src/database/models/weekly-off-schedule.model';
-import { Shift } from 'src/database/models/shift.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
 import { AppLoggerService } from '../logger/logger.service';
 
@@ -35,7 +35,7 @@ export class AttendanceCronService {
   })
   async processMissingCheckoutAndAbsent() {
     this.logger.log('Starting daily attendance check cron...', 'AttendanceCron');
-    
+
     // Using yesterday's date because it runs at 00:00 for the previous day
     const yesterday = moment().tz('Asia/Jakarta').subtract(1, 'day');
     const yesterdayStr = yesterday.format('YYYY-MM-DD');
@@ -47,7 +47,7 @@ export class AttendanceCronService {
       const transaction = await this.postgresProvider.transaction();
       try {
         await this.postgresProvider.setSchema(tenant.id, transaction);
-        
+
         // 1. Mark Absent (Missing checkout is handled by processAutoCheckout hourly)
         // For all active users, check if they have a shift, if they didn't have weekly off, and if they have no attendance record
         const activeUsers = await this.userRepository.findAll({
@@ -62,7 +62,8 @@ export class AttendanceCronService {
             transaction,
           });
 
-          if (isOff) continue;
+          if (isOff)
+            continue;
 
           // Check if user has shift
           const userShift = await this.userShiftRepository.findOne({
@@ -70,7 +71,8 @@ export class AttendanceCronService {
             transaction,
           });
 
-          if (!userShift) continue;
+          if (!userShift)
+            continue;
 
           // Check if attendance exists
           const attendance = await this.attendanceRepository.findOne({
@@ -90,7 +92,8 @@ export class AttendanceCronService {
         }
 
         await transaction.commit();
-      } catch (error) {
+      }
+      catch (error) {
         await transaction.rollback();
         this.logger.error(`Error processing attendance cron for tenant ${tenant.id}: ${(error as Error).message}`, (error as Error).stack, 'AttendanceCron');
       }
@@ -102,7 +105,7 @@ export class AttendanceCronService {
   })
   async processAutoCheckout() {
     this.logger.log('Starting auto checkout check cron...', 'AttendanceCron');
-    
+
     const now = moment().tz('Asia/Jakarta');
 
     const tenants = await this.tenantRepository.findAll();
@@ -111,7 +114,7 @@ export class AttendanceCronService {
       const transaction = await this.postgresProvider.transaction();
       try {
         await this.postgresProvider.setSchema(tenant.id, transaction);
-        
+
         // Find all attendances that are still 'working'
         const workingAttendances = await this.attendanceRepository.findAll({
           where: { status: 'working' },
@@ -120,34 +123,36 @@ export class AttendanceCronService {
         });
 
         for (const record of workingAttendances) {
-          if (!record.shift) continue;
+          if (!record.shift)
+            continue;
 
           // Parse shift end time in the shift's timezone
           const shiftEndTime = moment.tz(`${record.attendance_date} ${record.shift.end_time}`, 'YYYY-MM-DD HH:mm:ss', record.shift.timezone || 'Asia/Jakarta');
-          
+
           // Auto checkout if current time is >= 1 hour after shift end time
           const autoCheckoutTime = shiftEndTime.clone().add(1, 'hour');
 
           if (now.isSameOrAfter(autoCheckoutTime)) {
-             // Calculate total work minutes based on start_time and shiftEndTime
-             const startMoment = moment(record.start_time);
-             const totalWorkMinutes = shiftEndTime.diff(startMoment, 'minutes');
+            // Calculate total work minutes based on start_time and shiftEndTime
+            const startMoment = moment(record.start_time);
+            const totalWorkMinutes = shiftEndTime.diff(startMoment, 'minutes');
 
-             // Set end_time to shiftEndTime and status to missing_checkout
-             await record.update({
-               end_time: shiftEndTime.toDate(),
-               status: 'missing_checkout',
-               total_work_minutes: totalWorkMinutes > 0 ? totalWorkMinutes : 0,
-               early_leave_minutes: 0,
-               work_summary: 'Auto-checkout by system (forgot to end shift)',
-             }, { transaction });
-             
-             this.logger.log(`Auto checkout for user ${record.user_id} in tenant ${tenant.id}. End time set to ${shiftEndTime.format('YYYY-MM-DD HH:mm:ss')}`, 'AttendanceCron');
+            // Set end_time to shiftEndTime and status to missing_checkout
+            await record.update({
+              end_time: shiftEndTime.toDate(),
+              status: 'missing_checkout',
+              total_work_minutes: totalWorkMinutes > 0 ? totalWorkMinutes : 0,
+              early_leave_minutes: 0,
+              work_summary: 'Auto-checkout by system (forgot to end shift)',
+            }, { transaction });
+
+            this.logger.log(`Auto checkout for user ${record.user_id} in tenant ${tenant.id}. End time set to ${shiftEndTime.format('YYYY-MM-DD HH:mm:ss')}`, 'AttendanceCron');
           }
         }
 
         await transaction.commit();
-      } catch (error) {
+      }
+      catch (error) {
         await transaction.rollback();
         this.logger.error(`Error processing auto checkout cron for tenant ${tenant.id}: ${(error as Error).message}`, (error as Error).stack, 'AttendanceCron');
       }

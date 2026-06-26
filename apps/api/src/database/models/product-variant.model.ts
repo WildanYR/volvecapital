@@ -35,6 +35,12 @@ export interface ProductVariantAttributes {
   platform_product?: PlatformProductAttributes[];
   account?: AccountAttributes[];
   labels?: LabelAttributes[];
+  sort_order: number;
+  income_coa_id: string | null;
+  expense_coa_id: string | null;
+  inventory_coa_id: string | null;
+  deferred_revenue_coa_id: string | null;
+  revenue_coa_id: string | null;
   created_at: Date;
   updated_at: Date;
   redeem_display_config?: any;
@@ -49,6 +55,12 @@ interface ProductVariantCreationAttributes
   extends Optional<
     ProductVariantAttributes,
     | 'id'
+    | 'sort_order'
+    | 'income_coa_id'
+    | 'expense_coa_id'
+    | 'inventory_coa_id'
+    | 'deferred_revenue_coa_id'
+    | 'revenue_coa_id'
     | 'created_at'
     | 'updated_at'
     | 'product'
@@ -112,6 +124,29 @@ export class ProductVariant extends Model<
 
   @HasMany(() => Label)
   declare labels?: Label[];
+
+  @Column(DataType.INTEGER)
+  declare sort_order: number;
+
+  @AllowNull(true)
+  @Column(DataType.BIGINT)
+  declare income_coa_id: string | null;
+
+  @AllowNull(true)
+  @Column(DataType.BIGINT)
+  declare expense_coa_id: string | null;
+
+  @AllowNull(true)
+  @Column(DataType.BIGINT)
+  declare inventory_coa_id: string | null;
+
+  @AllowNull(true)
+  @Column(DataType.BIGINT)
+  declare deferred_revenue_coa_id: string | null;
+
+  @AllowNull(true)
+  @Column(DataType.BIGINT)
+  declare revenue_coa_id: string | null;
 
   @Column(DataType.JSONB)
   declare redeem_display_config?: any;

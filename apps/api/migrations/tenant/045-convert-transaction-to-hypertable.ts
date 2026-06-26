@@ -20,8 +20,8 @@ export async function up({ queryInterface, schema }: MigrationContext) {
   }
   catch (e) {
     console.warn(
-      `⚠️  Could not convert ${schema}.transaction to hypertable. ` +
-      'Is the TimescaleDB extension installed? Error:',
+      `⚠️  Could not convert ${schema}.transaction to hypertable. `
+      + 'Is the TimescaleDB extension installed? Error:',
       (e as Error).message,
     );
   }
@@ -32,4 +32,3 @@ export async function down({ queryInterface: _q, schema: _s }: MigrationContext)
   // not straightforward. This migration is intentionally non-reversible.
   console.warn('⚠️  down() for hypertable conversion is a no-op. Revert manually if needed.');
 }
-

@@ -70,7 +70,7 @@ export const down: MigrationFn<MigrationContext> = async ({ context }) => {
   const { queryInterface, schema } = context;
 
   await queryInterface.dropTable({ tableName: 'tenant_owner', schema });
-  
+
   await queryInterface.removeColumn({ tableName: 'tenant', schema }, 'status');
   await queryInterface.removeColumn({ tableName: 'tenant', schema }, 'name');
   await queryInterface.addColumn({ tableName: 'tenant', schema }, 'secret', {

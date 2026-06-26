@@ -48,7 +48,7 @@ async function run() {
           name VARCHAR(255) PRIMARY KEY
         );
       `);
-      
+
       await sequelize.query(`
         INSERT INTO "${schema_name}"."SequelizeMeta_${schema_name}" (name) 
         VALUES ('048-create-label-tables.ts')
@@ -60,7 +60,8 @@ async function run() {
 
     console.log('All done!');
     process.exit(0);
-  } catch (err) {
+  }
+  catch (err) {
     console.error(err);
     process.exit(1);
   }

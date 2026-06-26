@@ -1,6 +1,6 @@
-const { Sequelize, QueryTypes } = require('sequelize');
+const path = require('node:path');
 const dotenv = require('dotenv');
-const path = require('path');
+const { Sequelize, QueryTypes } = require('sequelize');
 
 // Load .env from apps/api/.env
 dotenv.config({ path: path.join(__dirname, '../../.env') });
@@ -34,7 +34,8 @@ async function run() {
       // Also remove from migration metadata to prevent issues if we ever re-create it
       await sequelize.query(`DELETE FROM "${schema}"."SequelizeMeta_${schema}" WHERE name = '008-create-account-modifier-table.ts'`).catch(() => {});
       console.log(`Successfully dropped table in schema: ${schema}`);
-    } catch (error) {
+    }
+    catch (error) {
       console.error(`Failed to drop table in schema: ${schema}`, error.message);
     }
   }

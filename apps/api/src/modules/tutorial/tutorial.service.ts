@@ -1,7 +1,7 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { TUTORIAL_REPOSITORY } from 'src/constants/database.const';
-import { PostgresProvider } from 'src/database/postgres.provider';
 import { Tutorial } from 'src/database/models/tutorial.model';
+import { PostgresProvider } from 'src/database/postgres.provider';
 import { CreateTutorialDto } from './dto/create-tutorial.dto';
 import { UpdateTutorialDto } from './dto/update-tutorial.dto';
 
@@ -20,7 +20,7 @@ export class TutorialService {
       .trim()
       .replace(/\s+/g, '-')
       .replace(/[^\w-]+/g, '')
-      .replace(/--+/g, '-');
+      .replace(/-{2,}/g, '-');
   }
 
   async findAll(tenantId: string) {
@@ -33,7 +33,8 @@ export class TutorialService {
       });
       await transaction.commit();
       return tutorials;
-    } catch (error) {
+    }
+    catch (error) {
       await transaction.rollback();
       throw error;
     }
@@ -44,10 +45,12 @@ export class TutorialService {
     try {
       await this.postgresProvider.setSchema(tenantId, transaction);
       const tutorial = await this.tutorialRepository.findByPk(id, { transaction });
-      if (!tutorial) throw new NotFoundException('Tutorial tidak ditemukan');
+      if (!tutorial)
+        throw new NotFoundException('Tutorial tidak ditemukan');
       await transaction.commit();
       return tutorial;
-    } catch (error) {
+    }
+    catch (error) {
       await transaction.rollback();
       throw error;
     }
@@ -57,7 +60,7 @@ export class TutorialService {
     const transaction = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema(tenantId, transaction);
-      
+
       let slug = this.slugify(dto.title);
       // Check if slug exists
       const existing = await this.tutorialRepository.findOne({
@@ -77,7 +80,8 @@ export class TutorialService {
       );
       await transaction.commit();
       return tutorial;
-    } catch (error) {
+    }
+    catch (error) {
       await transaction.rollback();
       throw error;
     }
@@ -88,7 +92,8 @@ export class TutorialService {
     try {
       await this.postgresProvider.setSchema(tenantId, transaction);
       const tutorial = await this.tutorialRepository.findByPk(id, { transaction });
-      if (!tutorial) throw new NotFoundException('Tutorial tidak ditemukan');
+      if (!tutorial)
+        throw new NotFoundException('Tutorial tidak ditemukan');
 
       const updateData: any = { ...dto };
       if (dto.title && dto.title !== tutorial.title) {
@@ -106,7 +111,8 @@ export class TutorialService {
       await tutorial.update(updateData, { transaction });
       await transaction.commit();
       return tutorial;
-    } catch (error) {
+    }
+    catch (error) {
       await transaction.rollback();
       throw error;
     }
@@ -117,11 +123,13 @@ export class TutorialService {
     try {
       await this.postgresProvider.setSchema(tenantId, transaction);
       const tutorial = await this.tutorialRepository.findByPk(id, { transaction });
-      if (!tutorial) throw new NotFoundException('Tutorial tidak ditemukan');
+      if (!tutorial)
+        throw new NotFoundException('Tutorial tidak ditemukan');
       await tutorial.destroy({ transaction });
       await transaction.commit();
       return { success: true };
-    } catch (error) {
+    }
+    catch (error) {
       await transaction.rollback();
       throw error;
     }

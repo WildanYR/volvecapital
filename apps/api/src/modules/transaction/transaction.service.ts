@@ -3,9 +3,9 @@ import { Op, WhereOptions } from 'sequelize';
 import {
   ACCOUNT_USER_REPOSITORY,
   PRODUCT_VARIANT_REPOSITORY,
+  TENANT_SETTING_REPOSITORY,
   TRANSACTION_ITEM_REPOSITORY,
   TRANSACTION_REPOSITORY,
-  TENANT_SETTING_REPOSITORY,
 } from 'src/constants/database.const';
 import { AccountProfile } from 'src/database/models/account-profile.model';
 import {
@@ -27,6 +27,7 @@ import {
 } from 'src/database/models/transaction.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
 import { AccountUserService } from '../account-user/account-user.service';
+import { AccountingService } from '../accounting/accounting.service';
 import { DateConverterProvider } from '../utility/date-converter.provider';
 import { PaginationProvider } from '../utility/pagination.provider';
 import { SnowflakeIdProvider } from '../utility/snowflake-id.provider';
@@ -53,6 +54,7 @@ export class TransactionService {
     private readonly productVariantRepository: typeof ProductVariant,
     @Inject(TENANT_SETTING_REPOSITORY)
     private readonly tenantSettingRepository: typeof TenantSetting,
+    private readonly accountingService: AccountingService,
   ) {}
 
   async findAll(
@@ -351,27 +353,43 @@ export class TransactionService {
       }
 
       // Hitung fee dan net_profit
-      const settings = await this.tenantSettingRepository.findAll({
-        where: { key: ['doku_mdr', 'platform_fee'] },
-        transaction: tx,
-      });
-      let mdr_fee = 4500; // default 4500
-      let platform_fee = 500; // default 500
+      let mdr_fee = 0;
+      let platform_fee = 0;
 
-      for (const setting of settings) {
-        if (setting.key === 'doku_mdr' && !isNaN(Number(setting.value))) {
-          mdr_fee = Number(setting.value);
+      // Cek apakah ada konfigurasi di platform accounting setting
+      const platformSetting = await this.accountingService.getPlatformSettingByPlatform(tenantId, transactionData.platform, tx);
+      if (platformSetting && Number(platformSetting.fee_amount) > 0) {
+        if (platformSetting.fee_type === 'PERCENTAGE') {
+          // Asumsi fee_amount adalah persentase, contoh 5 untuk 5%
+          mdr_fee = (transactionData.total_price * Number(platformSetting.fee_amount)) / 100;
+        } else {
+          mdr_fee = Number(platformSetting.fee_amount);
         }
-        if (setting.key === 'platform_fee' && !isNaN(Number(setting.value))) {
-          platform_fee = Number(setting.value);
+      } else if (transactionData.platform.toUpperCase() === 'LANDING_PAGE') {
+        // Fallback untuk LANDING_PAGE menggunakan tenant setting Doku
+        const settings = await this.tenantSettingRepository.findAll({
+          where: { key: ['doku_mdr', 'platform_fee'] },
+          transaction: tx,
+        });
+        
+        mdr_fee = 4500; // default 4500
+        platform_fee = 500; // default 500
+
+        for (const setting of settings) {
+          if (setting.key === 'doku_mdr' && !isNaN(Number(setting.value))) {
+            mdr_fee = Number(setting.value);
+          }
+          if (setting.key === 'platform_fee' && !isNaN(Number(setting.value))) {
+            platform_fee = Number(setting.value);
+          }
         }
       }
 
       const net_profit = transactionData.total_price - mdr_fee - platform_fee;
 
       await this.transactionRepository.create(
-        { 
-          id: transactionId, 
+        {
+          id: transactionId,
           ...transactionData,
           mdr_fee,
           platform_fee,
@@ -396,6 +414,14 @@ export class TransactionService {
         throw new NotFoundException(
           `transaction dengan id: ${transactionId} tidak ditemukan`,
         );
+      }
+
+      // Auto-Journal (semua platform jika dikonfigurasi)
+      try {
+        await this.accountingService.autoJournalTransaction(tenantId, transactionId, tx);
+      } catch (err) {
+        // Log error but don't fail the transaction if accounting mapping is incomplete
+        console.error(`Gagal membuat auto-jurnal untuk transaksi ${transactionId}:`, err);
       }
 
       await tx.commit();

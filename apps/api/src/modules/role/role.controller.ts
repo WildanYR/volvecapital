@@ -12,9 +12,9 @@ import {
   Request,
 } from '@nestjs/common';
 import { RequirePermissions } from 'src/guards/permissions.decorator';
-import { RoleService } from './role.service';
 import { CreateRoleDto } from './dto/create-role.dto';
-import { UpdateRoleDto, SetRolePermissionsDto } from './dto/update-role.dto';
+import { SetRolePermissionsDto, UpdateRoleDto } from './dto/update-role.dto';
+import { RoleService } from './role.service';
 
 @Controller('role')
 export class RoleController {

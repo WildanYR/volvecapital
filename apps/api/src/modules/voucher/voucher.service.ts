@@ -1,24 +1,25 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Op, QueryTypes } from 'sequelize';
 import {
-  TENANT_REPOSITORY,
-  VOUCHER_REPOSITORY,
   PRODUCT_VARIANT_REPOSITORY,
-  TRANSACTION_REPOSITORY,
+  TENANT_REPOSITORY,
   TRANSACTION_ITEM_REPOSITORY,
+  TRANSACTION_REPOSITORY,
+  VOUCHER_REPOSITORY,
 } from 'src/constants/database.const';
+import { AccountProfile } from 'src/database/models/account-profile.model';
+import { AccountUser } from 'src/database/models/account-user.model';
+import { Account } from 'src/database/models/account.model';
+import { Email } from 'src/database/models/email.model';
 import { ProductVariant } from 'src/database/models/product-variant.model';
 import { Product } from 'src/database/models/product.model';
+import { Tenant } from 'src/database/models/tenant.model';
 import { TransactionItem } from 'src/database/models/transaction-item.model';
 import { Transaction } from 'src/database/models/transaction.model';
 import { Voucher } from 'src/database/models/voucher.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
-import { Tenant } from 'src/database/models/tenant.model';
-import { AccountUser } from 'src/database/models/account-user.model';
-import { Account } from 'src/database/models/account.model';
-import { AccountProfile } from 'src/database/models/account-profile.model';
-import { Email } from 'src/database/models/email.model';
-import { Op, QueryTypes } from 'sequelize';
+import { AccountingService } from '../accounting/accounting.service';
 
 @Injectable()
 export class VoucherService {
@@ -35,6 +36,7 @@ export class VoucherService {
     private readonly voucherRepository: typeof Voucher,
     @Inject(TENANT_REPOSITORY)
     private readonly tenantRepository: typeof Tenant,
+    private readonly accountingService: AccountingService,
   ) {}
 
   private generateVoucherCode(prefix: string = 'MNL-'): string {
@@ -57,7 +59,8 @@ export class VoucherService {
         attributes: ['id', 'name', 'price', 'voucher_expiry_hours', 'duration'],
         transaction,
       });
-      if (!variant) throw new NotFoundException('Varian produk tidak ditemukan');
+      if (!variant)
+        throw new NotFoundException('Varian produk tidak ditemukan');
 
       const voucherCode = this.generateVoucherCode(dto.prefix || 'MNL-');
       const expiryHours = variant.voucher_expiry_hours ?? this.configService.get<number>('voucher.expiryHours') ?? 168; // fallback to config or 7 days
@@ -106,9 +109,18 @@ export class VoucherService {
         { transaction },
       );
 
+      // 4. Auto-Journal (jika platform-nya dikonfigurasi)
+      try {
+        await this.accountingService.autoJournalTransaction(tenantId, txn.id, transaction);
+      } catch (err) {
+        // Log error but don't fail the voucher generation if accounting mapping is incomplete
+        console.error(`Gagal membuat auto-jurnal untuk transaksi voucher ${txn.id}:`, err);
+      }
+
       await transaction.commit();
       return voucher;
-    } catch (error) {
+    }
+    catch (error) {
       await transaction.rollback();
       throw error;
     }
@@ -118,14 +130,14 @@ export class VoucherService {
     const transaction = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema(tenantId, transaction);
-      
+
       const { limit = 10, offset = 0, search, status } = options;
       const where: any = {};
-      
+
       if (status && status !== 'ALL') {
         where.status = status;
       }
-      
+
       if (search) {
         where[Op.or] = [
           { id: { [Op.iLike]: `%${search}%` } },
@@ -173,7 +185,8 @@ export class VoucherService {
 
       await transaction.commit();
       return { items, total };
-    } catch (error) {
+    }
+    catch (error) {
       await transaction.rollback();
       throw error;
     }
@@ -183,7 +196,7 @@ export class VoucherService {
     const transaction = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema(tenantId, transaction);
-      
+
       const [stats]: any = await this.postgresProvider.rawQuery(`
         SELECT 
           COUNT(*)::INT as "totalGenerated",
@@ -193,9 +206,9 @@ export class VoucherService {
           COUNT(*) FILTER (WHERE status = 'PENDING')::INT as "totalPending",
           COUNT(*) FILTER (WHERE status = 'UNUSED' AND expired_at <= NOW())::INT as "totalKadaluarsa"
         FROM "voucher"
-      `, { 
+      `, {
         transaction,
-        type: QueryTypes.SELECT 
+        type: QueryTypes.SELECT,
       });
 
       // Untuk totalAktif (USED aktif + UNUSED belum expired)
@@ -208,9 +221,9 @@ export class VoucherService {
           (v.status = 'USED' AND (au.expired_at > NOW() OR au.expired_at IS NULL))
           OR 
           (v.status = 'UNUSED' AND v.expired_at > NOW())
-      `, { 
+      `, {
         transaction,
-        type: QueryTypes.SELECT 
+        type: QueryTypes.SELECT,
       });
 
       await transaction.commit();
@@ -229,7 +242,8 @@ export class VoucherService {
 
       console.log(`[VoucherStats] ${tenantId} result:`, result);
       return result;
-    } catch (error) {
+    }
+    catch (error) {
       await transaction.rollback();
       console.error(`[VoucherStats] Error for ${tenantId}:`, error);
       throw error;
@@ -250,7 +264,7 @@ export class VoucherService {
         const transaction = await this.postgresProvider.transaction();
         try {
           await this.postgresProvider.setSchema(tenant.id, transaction);
-          
+
           const [updatedCount] = await this.voucherRepository.update(
             { status: 'EXPIRED' },
             {
@@ -267,12 +281,14 @@ export class VoucherService {
           }
 
           await transaction.commit();
-        } catch (error) {
+        }
+        catch (error) {
           await transaction.rollback();
           console.error(`[VoucherCron] Error expiring vouchers for tenant ${tenant.id}:`, error.message);
         }
       }
-    } catch (error) {
+    }
+    catch (error) {
       await masterTransaction.rollback();
       console.error(`[VoucherCron] Error fetching tenants:`, error.message);
     }

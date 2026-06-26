@@ -1,11 +1,12 @@
-import { MigrationContext } from '../migrator';
+import type { MigrationFn } from 'umzug';
+import type { MigrationContext } from '../migrator';
 import { DataType } from 'sequelize-typescript';
-import { MigrationFn } from 'umzug';
 
 export const up: MigrationFn<MigrationContext> = async ({ context }) => {
   const { queryInterface, schema } = context;
-  
-  if (['public', 'master', 'information_schema', 'pg_catalog'].includes(schema)) return;
+
+  if (['public', 'master', 'information_schema', 'pg_catalog'].includes(schema))
+    return;
 
   await queryInterface.addColumn(
     { tableName: 'product_variant', schema },
@@ -20,7 +21,8 @@ export const up: MigrationFn<MigrationContext> = async ({ context }) => {
 export const down: MigrationFn<MigrationContext> = async ({ context }) => {
   const { queryInterface, schema } = context;
 
-  if (['public', 'master', 'information_schema', 'pg_catalog'].includes(schema)) return;
+  if (['public', 'master', 'information_schema', 'pg_catalog'].includes(schema))
+    return;
 
   await queryInterface.removeColumn(
     { tableName: 'product_variant', schema },

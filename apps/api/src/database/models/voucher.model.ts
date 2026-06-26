@@ -10,9 +10,9 @@ import {
   Table,
 } from 'sequelize-typescript';
 import { ProductVariant, ProductVariantAttributes } from './product-variant.model';
-import { Transaction, TransactionAttributes } from './transaction.model';
-import { TransactionItem } from './transaction-item.model';
 import { PromoCode } from './promo-code.model';
+import { TransactionItem } from './transaction-item.model';
+import { Transaction, TransactionAttributes } from './transaction.model';
 
 export type VoucherStatus = 'PENDING' | 'UNUSED' | 'USED' | 'EXPIRED';
 export type PaymentStatus = 'PENDING' | 'PAID' | 'FAILED' | 'EXPIRED';

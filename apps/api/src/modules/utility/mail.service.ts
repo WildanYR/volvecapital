@@ -38,7 +38,8 @@ export class MailService {
     fromName?: string;
   }) {
     const transporter = this.getTransporter();
-    if (!transporter) return;
+    if (!transporter)
+      return;
 
     const from = this.configService.get<string>('mail.from');
 
@@ -50,7 +51,8 @@ export class MailService {
         html,
       });
       this.logger.log(`Email sent to ${to}: ${subject}`);
-    } catch (error) {
+    }
+    catch (error) {
       this.logger.error(`Failed to send email to ${to}: ${error.message}`);
     }
   }

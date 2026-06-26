@@ -1,11 +1,11 @@
 require('dotenv').config();
-const { Sequelize } = require('sequelize');
 const Redis = require('ioredis');
+const { Sequelize } = require('sequelize');
 
 async function run() {
   const dbUrl = process.env.DATABASE_URL;
   if (!dbUrl) {
-    console.error("❌ DATABASE_URL tidak ditemukan di .env!");
+    console.error('❌ DATABASE_URL tidak ditemukan di .env!');
     process.exit(1);
   }
 
@@ -15,17 +15,17 @@ async function run() {
     port: process.env.REDIS_PORT || 6379,
     password: process.env.REDIS_PASSWORD || undefined,
   });
-  
+
   try {
     // Cari task yatim (orphan) di Redis yang sudah tidak ada di DB
     const allRedisTasks = await redisClient.zrange('scheduler:task_zset', 0, -1);
     const orphanTasks = [];
-    
+
     for (const redisKey of allRedisTasks) {
       const taskId = redisKey.split(':')[1];
       if (taskId) {
         const [[task]] = await sequelize.query(`SELECT id FROM master.task_queue WHERE id = :taskId`, {
-          replacements: { taskId }
+          replacements: { taskId },
         });
         if (!task) {
           orphanTasks.push(redisKey);
@@ -49,13 +49,13 @@ async function run() {
       WHERE status IN ('QUEUED', 'DISPATCHED') 
       AND execute_at < :twoHoursAgo
     `, {
-      replacements: { twoHoursAgo }
+      replacements: { twoHoursAgo },
     });
 
     if (expiredTasks.length > 0) {
       const taskQueueIds = expiredTasks.map(t => t.id);
       await sequelize.query(`DELETE FROM master.task_queue WHERE id IN (:taskQueueIds)`, {
-        replacements: { taskQueueIds }
+        replacements: { taskQueueIds },
       });
 
       const redisPipeline = redisClient.pipeline();
@@ -67,12 +67,13 @@ async function run() {
     }
 
     if (orphanTasks.length === 0 && expiredTasks.length === 0) {
-      console.log("✅ Tidak ada task lama (> 2 jam) atau task hantu yang perlu dihapus. Semuanya sudah bersih!");
+      console.log('✅ Tidak ada task lama (> 2 jam) atau task hantu yang perlu dihapus. Semuanya sudah bersih!');
     }
-
-  } catch (error) {
-    console.error("❌ Gagal membersihkan task:", error);
-  } finally {
+  }
+  catch (error) {
+    console.error('❌ Gagal membersihkan task:', error);
+  }
+  finally {
     process.exit(0);
   }
 }

@@ -9,11 +9,12 @@
  */
 
 import * as dotenv from 'dotenv';
-dotenv.config();
 
-import { Sequelize } from 'sequelize-typescript';
 import * as pg from 'pg';
+import { Sequelize } from 'sequelize-typescript';
 import { ALL_PERMISSIONS, ROLE_PRESETS } from '../constants/permissions.const';
+
+dotenv.config();
 
 async function seed() {
   const tenantId = process.argv[2];

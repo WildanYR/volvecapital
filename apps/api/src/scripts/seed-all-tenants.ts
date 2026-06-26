@@ -1,9 +1,10 @@
 import * as dotenv from 'dotenv';
-dotenv.config();
 
-import { Sequelize } from 'sequelize-typescript';
 import * as pg from 'pg';
+import { Sequelize } from 'sequelize-typescript';
 import { ALL_PERMISSIONS, ROLE_PRESETS } from '../constants/permissions.const';
+
+dotenv.config();
 
 async function seedAll() {
   const sequelize = new Sequelize(process.env.DATABASE_URL!, {
@@ -14,11 +15,11 @@ async function seedAll() {
 
   try {
     const [schemas] = await sequelize.query(`SELECT nspname AS id FROM pg_namespace WHERE nspname NOT LIKE 'pg_%' AND nspname != 'information_schema' AND nspname != 'public'`);
-    
+
     for (const tenantRow of schemas) {
       const tenantId = (tenantRow as any).id;
       console.log(`\nSeeding permissions for tenant: ${tenantId}...`);
-      
+
       const transaction = await sequelize.transaction();
       try {
         await sequelize.query(`SET LOCAL search_path TO "${tenantId}"`, { transaction });
@@ -73,13 +74,15 @@ async function seedAll() {
 
         await transaction.commit();
         console.log(`✅ Seed berhasil untuk tenant: ${tenantId}`);
-      } catch (error) {
+      }
+      catch (error) {
         await transaction.rollback();
         console.error(`❌ Seed gagal untuk tenant ${tenantId}:`, error);
       }
     }
     process.exit(0);
-  } catch (error) {
+  }
+  catch (error) {
     console.error('Failed to get tenants:', error);
     process.exit(1);
   }

@@ -13,6 +13,10 @@ import {
 } from '../ui/collapsible'
 import { DurationFieldGroup } from './common/fields/duration-field-group'
 import { ProductVariantFormSchema } from './common/schemas/product-variant-form.schema'
+import { useQuery } from '@tanstack/react-query'
+import { useAuth } from '@/dashboard/context-providers/auth.provider'
+import { AccountingServiceGenerator } from '@/dashboard/services/accounting.service'
+import { API_URL } from '@/dashboard/constants/api-url.cont'
 
 export type ProductVariantFormSubmitData = z.infer<
   typeof ProductVariantFormSchema
@@ -31,6 +35,14 @@ export function ProductVariantForm({
   submitButtonText?: string
   tutorials?: Tutorial[]
 }) {
+  const auth = useAuth()
+  const accountingService = AccountingServiceGenerator(API_URL, auth.tenant!.accessToken, auth.tenant!.id)
+  
+  const { data: coaList } = useQuery({
+    queryKey: ['coaList', auth.tenant!.id],
+    queryFn: () => accountingService.getCoaList(),
+  })
+
   const form = useAppForm({
     validators: { onSubmit: ProductVariantFormSchema as any },
     defaultValues: {
@@ -56,6 +68,11 @@ export function ProductVariantForm({
       low_stock_threshold: initialData?.low_stock_threshold?.toString() ?? '5',
       strike_price: initialData?.strike_price?.toString() ?? '',
       reminder_before_hours: initialData?.reminder_before_hours?.toString() ?? '',
+      income_coa_id: (initialData as any)?.income_coa_id ?? '',
+      expense_coa_id: (initialData as any)?.expense_coa_id ?? '',
+      inventory_coa_id: (initialData as any)?.inventory_coa_id ?? '',
+      deferred_revenue_coa_id: (initialData as any)?.deferred_revenue_coa_id ?? '',
+      revenue_coa_id: (initialData as any)?.revenue_coa_id ?? '',
     },
     onSubmit: ({ value }) => {
       const duration = convertTimeUnit(
@@ -96,6 +113,11 @@ export function ProductVariantForm({
         low_stock_threshold: value.low_stock_threshold?.trim() ? Number.parseInt(value.low_stock_threshold) : 5,
         strike_price: value.strike_price?.trim() ? Number.parseInt(value.strike_price) : undefined,
         reminder_before_hours: value.reminder_before_hours?.trim() ? Number.parseInt(value.reminder_before_hours) : undefined,
+        income_coa_id: (value.income_coa_id && value.income_coa_id !== '__none__') ? value.income_coa_id : null,
+        expense_coa_id: (value.expense_coa_id && value.expense_coa_id !== '__none__') ? value.expense_coa_id : null,
+        inventory_coa_id: (value.inventory_coa_id && value.inventory_coa_id !== '__none__') ? value.inventory_coa_id : null,
+        deferred_revenue_coa_id: (value.deferred_revenue_coa_id && value.deferred_revenue_coa_id !== '__none__') ? value.deferred_revenue_coa_id : null,
+        revenue_coa_id: (value.revenue_coa_id && value.revenue_coa_id !== '__none__') ? value.revenue_coa_id : null,
       } as any
 
       onSubmit(payload)
@@ -143,6 +165,96 @@ export function ProductVariantForm({
               )}
             />
           </div>
+          
+          <form.AppField
+            name="income_coa_id"
+            children={field => (
+              <field.SelectField
+                label="Akun Pendapatan / Pendapatan Diterima di Muka"
+                placeholder="Pilih Akun Pendapatan"
+                selectItems={[
+                  { title: '-- Tidak Ada Akun Pendapatan --', value: '__none__' },
+                  ...(coaList?.filter((c: any) => c.type === 'PENDAPATAN' || c.type === 'KEWAJIBAN').map((c: any) => ({
+                    title: `${c.code} - ${c.name}`,
+                    value: c.id,
+                  })) || []),
+                ]}
+              />
+            )}
+          />
+
+          <form.AppField
+            name="expense_coa_id"
+            children={field => (
+              <field.SelectField
+                label="Akun Beban/HPP (Untuk Jurnal Modal Otomatis)"
+                placeholder="Pilih Akun Beban/HPP"
+                selectItems={[
+                  { title: '-- Tidak Ada Akun Beban/HPP --', value: '__none__' },
+                  ...(coaList?.filter((c: any) => c.type === 'BEBAN' || c.type === 'HPP' || c.type === 'ASET').map((c: any) => ({
+                    title: `${c.code} - ${c.name}`,
+                    value: c.id,
+                  })) || []),
+                ]}
+              />
+            )}
+          />
+
+          <div className="flex flex-col gap-4 bg-muted/50 p-4 rounded-lg border">
+            <h4 className="col-span-full font-bold text-sm">Pengaturan Automasi Amortisasi (Opsional)</h4>
+            
+            <form.AppField
+              name="inventory_coa_id"
+              children={field => (
+                <field.SelectField
+                  label="Akun Persediaan (Aset)"
+                  placeholder="Pilih Akun Persediaan"
+                  selectItems={[
+                    { title: '-- Pilih Akun Persediaan --', value: '__none__' },
+                    ...(coaList?.filter((c: any) => c.type === 'ASET').map((c: any) => ({
+                      title: `${c.code} - ${c.name}`,
+                      value: c.id,
+                    })) || []),
+                  ]}
+                />
+              )}
+            />
+
+            <form.AppField
+              name="deferred_revenue_coa_id"
+              children={field => (
+                <field.SelectField
+                  label="Akun Pendapatan Ditangguhkan (Kewajiban)"
+                  placeholder="Pilih Akun Kewajiban"
+                  selectItems={[
+                    { title: '-- Pilih Akun Kewajiban --', value: '__none__' },
+                    ...(coaList?.filter((c: any) => c.type === 'KEWAJIBAN').map((c: any) => ({
+                      title: `${c.code} - ${c.name}`,
+                      value: c.id,
+                    })) || []),
+                  ]}
+                />
+              )}
+            />
+
+            <form.AppField
+              name="revenue_coa_id"
+              children={field => (
+                <field.SelectField
+                  label="Akun Pendapatan Realisasi"
+                  placeholder="Pilih Akun Pendapatan"
+                  selectItems={[
+                    { title: '-- Pilih Akun Pendapatan --', value: '__none__' },
+                    ...(coaList?.filter((c: any) => c.type === 'PENDAPATAN').map((c: any) => ({
+                      title: `${c.code} - ${c.name}`,
+                      value: c.id,
+                    })) || []),
+                  ]}
+                />
+              )}
+            />
+          </div>
+
           <form.AppField
             name="description"
             children={field => (

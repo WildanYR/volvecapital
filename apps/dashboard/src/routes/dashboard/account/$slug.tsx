@@ -117,6 +117,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/dashboard/components/ui/select'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/dashboard/components/ui/tooltip'
 import { Skeleton } from '@/dashboard/components/ui/skeleton'
 import { AccountStatusSelect } from '@/dashboard/constants/account-status-select'
 import { copyAccountTemplate } from '@/dashboard/lib/copy-template'
@@ -124,6 +130,7 @@ import { convertMetadataObjectToString } from '@/dashboard/lib/metadata-converte
 import { formatRupiah } from '@/dashboard/lib/currency.util'
 import { formatDateIdStandard } from '@/dashboard/lib/time-converter.util'
 import { AccountServiceGenerator, GetAccountsParamsSchema } from '@/dashboard/services/account.service'
+import { AccountingServiceGenerator } from '@/dashboard/services/accounting.service'
 import { ProductServiceGenerator } from '@/dashboard/services/product.service'
 import { API_URL } from '@/dashboard/constants/api-url.cont'
 import { useGlobalAlertDialog } from '@/dashboard/context-providers/alert-dialog.provider'
@@ -146,6 +153,11 @@ function RouteComponent() {
     auth.tenant!.accessToken,
     auth.tenant!.id,
   )
+  const accountingService = AccountingServiceGenerator(
+    API_URL,
+    auth.tenant!.accessToken,
+    auth.tenant!.id,
+  )
   const productService = ProductServiceGenerator(
     API_URL,
     auth.tenant!.accessToken,
@@ -155,6 +167,11 @@ function RouteComponent() {
   const { data: product } = useQuery({
     queryKey: ['product', slug],
     queryFn: ({ signal }) => productService.getProductById(slug, signal),
+  })
+
+  const { data: coaList } = useQuery({
+    queryKey: ['accounting-coa-list'],
+    queryFn: () => accountingService.getCoaList(),
   })
 
   const [filter, setFilter] = useState<AccountFilter>({
@@ -189,6 +206,8 @@ function RouteComponent() {
   const [bulkActionType, setBulkActionType] = useState<string>('')
   const [bulkModalAmount, setBulkModalAmount] = useState<string>('')
   const [bulkModalNote, setBulkModalNote] = useState<string>('')
+  const [bulkModalPaymentCoaId, setBulkModalPaymentCoaId] = useState<string>('')
+  const [bulkModalExpenseCoaId, setBulkModalExpenseCoaId] = useState<string>('')
 
   const [selectedAccountState, setSelectedAccount] = useState<Account>()
   const [selectedAccountProfile, setSelectedAccountProfile]
@@ -353,6 +372,8 @@ function RouteComponent() {
     setConfirmInput('')
     setBulkModalAmount('')
     setBulkModalNote('')
+    setBulkModalPaymentCoaId('')
+    setBulkModalExpenseCoaId('')
     setDialogBulkConfirmOpen(true)
   }
 
@@ -371,7 +392,9 @@ function RouteComponent() {
       }
       payload = {
         amount,
-        note: bulkModalNote
+        note: bulkModalNote,
+        payment_coa_id: bulkModalPaymentCoaId || undefined,
+        expense_coa_id: bulkModalExpenseCoaId || undefined
       };
     }
 
@@ -2188,6 +2211,34 @@ function RouteComponent() {
                     onChange={(e) => setBulkModalNote(e.target.value)}
                     placeholder="Catatan penggunaan modal..."
                   />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label className="text-xs font-bold">Dibayar dari Kas/Bank</Label>
+                    <Select value={bulkModalPaymentCoaId} onValueChange={setBulkModalPaymentCoaId}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Pilih Kas/Bank..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {coaList?.filter((c: any) => c.type === 'ASET').map((c: any) => (
+                          <SelectItem key={c.id} value={c.id}>{c.code} - {c.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label className="text-xs font-bold">Kategori Beban/HPP</Label>
+                    <Select value={bulkModalExpenseCoaId} onValueChange={setBulkModalExpenseCoaId}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Pilih Akun Beban/HPP..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {coaList?.filter((c: any) => c.type === 'BEBAN' || c.type === 'HPP' || c.type === 'ASET').map((c: any) => (
+                          <SelectItem key={c.id} value={c.id}>{c.code} - {c.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </div>
             )}

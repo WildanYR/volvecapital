@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { UtilityModule } from '../utility/utility.module';
+import { TenantProvisioningService } from './tenant-provisioning.service';
 import { TenantController } from './tenant.controller';
 import { TenantService } from './tenant.service';
-import { TenantProvisioningService } from './tenant-provisioning.service';
 
 @Module({
   imports: [UtilityModule],

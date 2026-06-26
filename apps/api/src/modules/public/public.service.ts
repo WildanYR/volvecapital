@@ -46,6 +46,7 @@ import { Article } from 'src/database/models/article.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
 import { TenantProvisioningService } from '../tenant/tenant-provisioning.service';
 import { PromoService } from '../promo/promo.service';
+import { AccountingService } from '../accounting/accounting.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { RegisterTenantDto } from './dto/register-tenant.dto';
 import { RedeemVoucherDto } from './dto/redeem-voucher.dto';
@@ -87,6 +88,7 @@ export class PublicService {
     private readonly articleRepository: typeof Article,
     private readonly tenantProvisioningService: TenantProvisioningService,
     private readonly promoService: PromoService,
+    private readonly accountingService: AccountingService,
   ) {}
 
   async getSettings(tenantId: string) {
@@ -555,6 +557,15 @@ export class PublicService {
               transaction: dbTransaction,
             }
           );
+        }
+
+        // Auto-Journal: Menggunakan pemetaan dinamis platform
+        try {
+          if (voucher.transaction_id) {
+            await this.accountingService.autoJournalTransaction(tenantId, voucher.transaction_id, dbTransaction);
+          }
+        } catch (err) {
+          this.logger.error(`Gagal membuat auto-jurnal untuk transaksi voucher DOKU ${voucher.transaction_id}: ${err.message}`);
         }
       }
       else if (isExpiredOrFailed) {

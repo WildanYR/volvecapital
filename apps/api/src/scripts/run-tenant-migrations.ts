@@ -1,8 +1,9 @@
+import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
+import { QueryTypes } from 'sequelize';
 import { AppModule } from '../app.module';
 import { MigrationProvider } from '../database/migration.provider';
 import { PostgresProvider } from '../database/postgres.provider';
-import { QueryTypes } from 'sequelize';
 
 async function bootstrap() {
   const app = await NestFactory.createApplicationContext(AppModule);
@@ -22,7 +23,8 @@ async function bootstrap() {
     try {
       await migrationProvider.migrateTenant(tenant.id);
       console.log(`Successfully migrated tenant: ${tenant.id}`);
-    } catch (error: any) {
+    }
+    catch (error: any) {
       console.error(`Failed to migrate tenant: ${tenant.id}`, error.message);
     }
   }

@@ -21,7 +21,8 @@ export class EmailSubjectService {
       });
       await transaction.commit();
       return subjects;
-    } catch (error) {
+    }
+    catch (error) {
       await transaction.rollback();
       throw error;
     }
@@ -34,7 +35,8 @@ export class EmailSubjectService {
       const subject = await this.emailSubjectRepository.create(data, { transaction });
       await transaction.commit();
       return subject;
-    } catch (error) {
+    }
+    catch (error) {
       await transaction.rollback();
       throw error;
     }
@@ -50,7 +52,8 @@ export class EmailSubjectService {
       });
       await transaction.commit();
       return { success: true };
-    } catch (error) {
+    }
+    catch (error) {
       await transaction.rollback();
       throw error;
     }
@@ -66,7 +69,8 @@ export class EmailSubjectService {
       });
       await transaction.commit();
       return { success: true };
-    } catch (error) {
+    }
+    catch (error) {
       await transaction.rollback();
       throw error;
     }

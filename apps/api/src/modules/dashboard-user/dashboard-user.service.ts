@@ -1,5 +1,4 @@
-import * as crypto from 'crypto';
-import { Op } from 'sequelize';
+import * as crypto from 'node:crypto';
 import {
   BadRequestException,
   Inject,
@@ -8,24 +7,25 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Op } from 'sequelize';
 import {
   DASHBOARD_USER_REPOSITORY,
+  DEVICE_SESSION_REPOSITORY,
   PERMISSION_REPOSITORY,
   ROLE_REPOSITORY,
-  DEVICE_SESSION_REPOSITORY,
-  TENANT_REPOSITORY,
   TENANT_OWNER_REPOSITORY,
+  TENANT_REPOSITORY,
 } from 'src/constants/database.const';
-import { DeviceSession } from 'src/database/models/device-session.model';
 import { DashboardUser } from 'src/database/models/dashboard-user.model';
+import { DeviceSession } from 'src/database/models/device-session.model';
 import { Permission } from 'src/database/models/permission.model';
 import { Role } from 'src/database/models/role.model';
-import { Tenant } from 'src/database/models/tenant.model';
 import { TenantOwner } from 'src/database/models/tenant-owner.model';
+import { Tenant } from 'src/database/models/tenant.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
 import { IAccessTokenPayload } from 'src/types/access-token.type';
-import { TokenProvider } from '../utility/token.provider';
 import { getLocationFromIp } from 'src/utils/geo.util';
+import { TokenProvider } from '../utility/token.provider';
 import {
   CreateDashboardUserDto,
   LoginDashboardUserDto,
@@ -76,7 +76,8 @@ export class DashboardUserService {
         transaction,
       });
       await transaction.commit();
-      if (!user) throw new NotFoundException(`Staff dengan id ${id} tidak ditemukan`);
+      if (!user)
+        throw new NotFoundException(`Staff dengan id ${id} tidak ditemukan`);
       return user;
     }
     catch (error) {
@@ -91,7 +92,8 @@ export class DashboardUserService {
       await this.postgresProvider.setSchema(tenantId, transaction);
 
       const role = await this.roleRepository.findOne({ where: { id: dto.role_id }, transaction });
-      if (!role) throw new NotFoundException(`Role tidak ditemukan`);
+      if (!role)
+        throw new NotFoundException(`Role tidak ditemukan`);
 
       const hashedPassword = crypto.createHash('sha256').update(dto.password).digest('hex');
       const user = await this.dashboardUserRepository.create(
@@ -117,7 +119,8 @@ export class DashboardUserService {
     try {
       await this.postgresProvider.setSchema(tenantId, transaction);
       const user = await this.dashboardUserRepository.findOne({ where: { id }, transaction });
-      if (!user) throw new NotFoundException(`Staff tidak ditemukan`);
+      if (!user)
+        throw new NotFoundException(`Staff tidak ditemukan`);
 
       const updateData: any = { ...dto };
       if (dto.password) {
@@ -205,7 +208,8 @@ export class DashboardUserService {
       });
       await transaction.commit();
       return sessions;
-    } catch (error) {
+    }
+    catch (error) {
       await transaction.rollback();
       throw error;
     }
@@ -228,7 +232,8 @@ export class DashboardUserService {
       await session.update({ is_revoked: true }, { transaction });
       await transaction.commit();
       return { message: 'Sesi berhasil diakhiri' };
-    } catch (error) {
+    }
+    catch (error) {
       await transaction.rollback();
       throw error;
     }
@@ -267,7 +272,7 @@ export class DashboardUserService {
         userMap.set(user.id, { name: user.name, email: user.email, type: 'Staff' });
       }
 
-      return sessions.map(s => {
+      return sessions.map((s) => {
         const userInfo = userMap.get(s.user_id) || { name: 'Unknown User', type: 'Unknown' };
         return {
           id: s.id,
@@ -330,7 +335,8 @@ export class DashboardUserService {
           ],
           transaction,
         });
-      } catch (err: any) {
+      }
+      catch (err: any) {
         if (err.name === 'SequelizeDatabaseError') {
           throw new UnauthorizedException('Tenant salah');
         }

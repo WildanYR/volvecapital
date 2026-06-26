@@ -5,7 +5,8 @@ import { DataTypes } from 'sequelize';
 export const up: MigrationFn<MigrationContext> = async ({ context }) => {
   const { queryInterface, schema } = context;
 
-  if (['public', 'master', 'information_schema', 'pg_catalog'].includes(schema)) return;
+  if (['public', 'master', 'information_schema', 'pg_catalog'].includes(schema))
+    return;
 
   await queryInterface.createTable(
     { schema, tableName: 'account_user_move_history' },
@@ -87,7 +88,8 @@ export const up: MigrationFn<MigrationContext> = async ({ context }) => {
 
 export const down: MigrationFn<MigrationContext> = async ({ context }) => {
   const { queryInterface, schema } = context;
-  if (['public', 'master', 'information_schema', 'pg_catalog'].includes(schema)) return;
+  if (['public', 'master', 'information_schema', 'pg_catalog'].includes(schema))
+    return;
 
   await queryInterface.dropTable({ schema, tableName: 'account_user_move_history' });
 };

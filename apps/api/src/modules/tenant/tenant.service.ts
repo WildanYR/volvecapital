@@ -1,3 +1,4 @@
+import * as crypto from 'node:crypto';
 import {
   BadRequestException,
   Inject,
@@ -7,14 +8,14 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Op, WhereOptions } from 'sequelize';
-import { TENANT_REPOSITORY, TENANT_OWNER_REPOSITORY, DEVICE_SESSION_REPOSITORY } from 'src/constants/database.const';
-import { DeviceSession } from 'src/database/models/device-session.model';
-import { Tenant } from 'src/database/models/tenant.model';
-import { TenantOwner } from 'src/database/models/tenant-owner.model';
+import { DEVICE_SESSION_REPOSITORY, TENANT_OWNER_REPOSITORY, TENANT_REPOSITORY } from 'src/constants/database.const';
 import { DashboardUser } from 'src/database/models/dashboard-user.model';
+import { DeviceSession } from 'src/database/models/device-session.model';
+import { TenantOwner } from 'src/database/models/tenant-owner.model';
+import { Tenant } from 'src/database/models/tenant.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
-import * as crypto from 'crypto';
 import { IAccessTokenPayload } from 'src/types/access-token.type';
+import { getLocationFromIp } from 'src/utils/geo.util';
 import { PaginationProvider } from '../utility/pagination.provider';
 import { TokenProvider } from '../utility/token.provider';
 import { BaseGetAllUrlQuery } from '../utility/types/base-get-all-url-query.type';
@@ -22,7 +23,6 @@ import { CreateTenantDto } from './dto/create-tenant.dto';
 import { LoginDto } from './dto/login.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
 import { ITenantGetFilter } from './filter/tenant-get.filter';
-import { getLocationFromIp } from 'src/utils/geo.util';
 
 @Injectable()
 export class TenantService {
@@ -271,7 +271,8 @@ export class TenantService {
       });
       await transaction.commit();
       return sessions;
-    } catch (error) {
+    }
+    catch (error) {
       await transaction.rollback();
       throw error;
     }
@@ -338,7 +339,7 @@ export class TenantService {
         userMap.set(user.id, { name: user.name, email: user.email, type: 'Staff' });
       }
 
-      return sessions.map(s => {
+      return sessions.map((s) => {
         const userInfo = userMap.get(s.user_id) || { name: 'Unknown User', type: 'Unknown' };
         return {
           id: s.id,

@@ -7,50 +7,51 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AppConfig } from './configs/app.config';
 import { DatabaseConfig } from './configs/database.config';
+import { DokuConfig } from './configs/doku.config';
+import { MailConfig } from './configs/mail.config';
+import { MidtransConfig } from './configs/midtrans.config';
 import { RedisConfig } from './configs/redis.config';
 import { TokenConfig } from './configs/token.config';
 import { VoucherConfig } from './configs/voucher.config';
-import { MidtransConfig } from './configs/midtrans.config';
-import { DokuConfig } from './configs/doku.config';
-import { MailConfig } from './configs/mail.config';
 import { DatabaseModule } from './database/database.module';
 import { VcAuthGuard } from './guards/vc-auth.guard';
 import { AccountProfileModule } from './modules/account-profile/account-profile.module';
 import { AccountUserModule } from './modules/account-user/account-user.module';
 import { AccountModule } from './modules/account/account.module';
+import { AccountingModule } from './modules/accounting/accounting.module';
+import { ArticleModule } from './modules/article/article.module';
+import { AttendanceModule } from './modules/attendance/attendance.module';
+import { BankAccountModule } from './modules/bank-account/bank-account.module';
 import { CronModule } from './modules/cron/cron.module';
+import { DashboardUserModule } from './modules/dashboard-user/dashboard-user.module';
 import { EmailForwardModule } from './modules/email-forward/email-forward.module';
+import { EmailMessageModule } from './modules/email-message/email-message.module';
+import { EmailSubjectModule } from './modules/email-subject/email-subject.module';
 import { EmailModule } from './modules/email/email.module';
+import { LabelModule } from './modules/label/label.module';
 import { AppLoggerModule } from './modules/logger/logger.module';
+import { ManualBookCategoryModule } from './modules/manual-book-category/manual-book-category.module';
+import { ManualBookModule } from './modules/manual-book/manual-book.module';
+import { PermissionModule } from './modules/permission/permission.module';
 import { PlatformProductModule } from './modules/platform-product/platform-product.module';
 import { ProductVariantModule } from './modules/product-variant/product-variant.module';
 import { ProductModule } from './modules/product/product.module';
+import { PromoModule } from './modules/promo/promo.module';
+import { PublicModule } from './modules/public/public.module';
 import { RedisModule } from './modules/redis/redis.module';
+import { RoleModule } from './modules/role/role.module';
+import { SettingModule } from './modules/setting/setting.module';
+import { ShiftModule } from './modules/shift/shift.module';
 import { SocketModule } from './modules/socket/socket.module';
 import { StatisticModule } from './modules/statistic/statistic.module';
 import { TaskQueueModule } from './modules/task-queue/task-queue.module';
 import { TenantModule } from './modules/tenant/tenant.module';
 import { TransactionModule } from './modules/transaction/transaction.module';
-import { UtilityModule } from './modules/utility/utility.module';
-import { PublicModule } from './modules/public/public.module';
-import { VoucherModule } from './modules/voucher/voucher.module';
-import { SettingModule } from './modules/setting/setting.module';
-import { EmailMessageModule } from './modules/email-message/email-message.module';
-import { EmailSubjectModule } from './modules/email-subject/email-subject.module';
 import { TutorialModule } from './modules/tutorial/tutorial.module';
-import { ArticleModule } from './modules/article/article.module';
-import { PromoModule } from './modules/promo/promo.module';
-import { WithdrawalModule } from './modules/withdrawal/withdrawal.module';
-import { BankAccountModule } from './modules/bank-account/bank-account.module';
-import { RoleModule } from './modules/role/role.module';
-import { PermissionModule } from './modules/permission/permission.module';
-import { DashboardUserModule } from './modules/dashboard-user/dashboard-user.module';
-import { LabelModule } from './modules/label/label.module';
-import { ShiftModule } from './modules/shift/shift.module';
+import { UtilityModule } from './modules/utility/utility.module';
+import { VoucherModule } from './modules/voucher/voucher.module';
 import { WeeklyOffModule } from './modules/weekly-off/weekly-off.module';
-import { AttendanceModule } from './modules/attendance/attendance.module';
-import { ManualBookCategoryModule } from './modules/manual-book-category/manual-book-category.module';
-import { ManualBookModule } from './modules/manual-book/manual-book.module';
+import { WithdrawalModule } from './modules/withdrawal/withdrawal.module';
 
 @Module({
   imports: [
@@ -110,6 +111,7 @@ import { ManualBookModule } from './modules/manual-book/manual-book.module';
     AttendanceModule,
     ManualBookCategoryModule,
     ManualBookModule,
+    AccountingModule,
   ],
   controllers: [AppController],
   providers: [{ provide: APP_GUARD, useClass: VcAuthGuard }, AppService],

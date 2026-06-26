@@ -1,6 +1,6 @@
-const { Sequelize } = require('sequelize');
+const path = require('node:path');
 const dotenv = require('dotenv');
-const path = require('path');
+const { Sequelize } = require('sequelize');
 
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
@@ -17,9 +17,11 @@ async function check() {
       WHERE table_name = 'landing_page_settings'
     `);
     console.log('Found tables:', results);
-  } catch (err) {
+  }
+  catch (err) {
     console.error('Error checking tables:', err);
-  } finally {
+  }
+  finally {
     await sequelize.close();
   }
 }

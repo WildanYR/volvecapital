@@ -3,7 +3,7 @@ import type { MigrationFn } from 'umzug';
 
 export const up: MigrationFn<MigrationContext> = async ({ context }) => {
   const { queryInterface, schema } = context;
-  
+
   await queryInterface.sequelize.transaction(async (tx) => {
     await queryInterface.sequelize.query(
       `ALTER TABLE "${schema}"."transaction" ADD COLUMN IF NOT EXISTS "mdr_fee" INTEGER NOT NULL DEFAULT 0;`,
@@ -22,7 +22,7 @@ export const up: MigrationFn<MigrationContext> = async ({ context }) => {
 
 export const down: MigrationFn<MigrationContext> = async ({ context }) => {
   const { queryInterface, schema } = context;
-  
+
   await queryInterface.sequelize.transaction(async (tx) => {
     await queryInterface.sequelize.query(
       `ALTER TABLE "${schema}"."transaction" DROP COLUMN IF EXISTS "mdr_fee";`,

@@ -9,5 +9,6 @@ export const PERMISSIONS_KEY = 'permissions';
  * @example
  * @RequirePermissions('product.create', 'product.edit')
  */
-export const RequirePermissions = (...permissions: string[]) =>
-  SetMetadata(PERMISSIONS_KEY, permissions);
+export function RequirePermissions(...permissions: string[]) {
+  return SetMetadata(PERMISSIONS_KEY, permissions);
+}

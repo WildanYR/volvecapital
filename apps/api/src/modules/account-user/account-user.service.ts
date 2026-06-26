@@ -76,7 +76,7 @@ export class AccountUserService {
       SET batch_end_date = (SELECT max_expired_at FROM max_expiry)
       WHERE a.id = :accountId;
     `;
-    
+
     await this.postgresProvider.rawQuery(query, {
       type: QueryTypes.UPDATE,
       replacements: { accountId },
@@ -614,7 +614,8 @@ export class AccountUserService {
       throw error;
     }
 
-    if (!accountId) return;
+    if (!accountId)
+      return;
 
     const accountUpdate = await this.accountRepository.findOne({
       where: { id: accountId },

@@ -1,9 +1,9 @@
-import { Controller, Get, Post, Delete, Body, Param, UseGuards, Req } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
+import { Request } from 'express';
+import { RequirePermissions } from 'src/guards/permissions.decorator';
 import { BankAccountService } from './bank-account.service';
 import { CreateBankAccountDto } from './dto/create-bank-account.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
-import { RequirePermissions } from 'src/guards/permissions.decorator';
-import { Request } from 'express';
 
 @Controller('bank-accounts')
 export class BankAccountController {

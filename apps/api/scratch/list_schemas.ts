@@ -8,12 +8,14 @@ async function listSchemas() {
   });
 
   try {
-    const [results] = await sequelize.query("SELECT schema_name FROM information_schema.schemata WHERE schema_name NOT IN ('information_schema', 'pg_catalog', 'public', 'master')");
+    const [results] = await sequelize.query('SELECT schema_name FROM information_schema.schemata WHERE schema_name NOT IN (\'information_schema\', \'pg_catalog\', \'public\', \'master\')');
     console.log('Available Tenant Schemas:');
     console.log(results.map((r: any) => r.schema_name).join(', '));
-  } catch (error) {
+  }
+  catch (error) {
     console.error('Error fetching schemas:', error);
-  } finally {
+  }
+  finally {
     await sequelize.close();
   }
 }

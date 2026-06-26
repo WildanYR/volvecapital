@@ -6,22 +6,23 @@ export async function getLocationFromIp(ip: string): Promise<string> {
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 3000);
-    
+
     const response = await fetch(`http://ip-api.com/json/${ip}?fields=status,message,country,regionName,city`, {
-      signal: controller.signal
+      signal: controller.signal,
     });
-    
+
     clearTimeout(timeoutId);
-    
+
     if (response.ok) {
       const data = await response.json() as any;
       if (data.status === 'success') {
         return `${ip} (${data.city}, ${data.regionName})`;
       }
     }
-  } catch (error) {
+  }
+  catch (error) {
     // Silently ignore geolocation errors to not block login
   }
-  
+
   return ip;
 }

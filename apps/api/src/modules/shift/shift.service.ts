@@ -1,20 +1,20 @@
 import {
+  BadRequestException,
   Inject,
   Injectable,
   NotFoundException,
-  BadRequestException,
 } from '@nestjs/common';
 import {
+  ATTENDANCE_REPOSITORY,
   SHIFT_REPOSITORY,
   USER_SHIFT_REPOSITORY,
-  ATTENDANCE_REPOSITORY,
 } from 'src/constants/database.const';
-import { Shift } from 'src/database/models/shift.model';
-import { UserShift } from 'src/database/models/user-shift.model';
 import { Attendance } from 'src/database/models/attendance.model';
 import { DashboardUser } from 'src/database/models/dashboard-user.model';
-import { AppLoggerService } from '../logger/logger.service';
+import { Shift } from 'src/database/models/shift.model';
+import { UserShift } from 'src/database/models/user-shift.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
+import { AppLoggerService } from '../logger/logger.service';
 import { AssignShiftDto, CreateShiftDto, UpdateShiftDto } from './dto/shift.dto';
 
 @Injectable()
@@ -37,7 +37,8 @@ export class ShiftService {
       });
       await transaction.commit();
       return shifts;
-    } catch (error) {
+    }
+    catch (error) {
       await transaction.rollback();
       throw error;
     }
@@ -52,7 +53,8 @@ export class ShiftService {
       });
       await transaction.commit();
       return shift;
-    } catch (error) {
+    }
+    catch (error) {
       await transaction.rollback();
       throw error;
     }
@@ -69,7 +71,8 @@ export class ShiftService {
       await shift.update(payload, { transaction });
       await transaction.commit();
       return shift;
-    } catch (error) {
+    }
+    catch (error) {
       await transaction.rollback();
       throw error;
     }
@@ -86,7 +89,8 @@ export class ShiftService {
       await shift.destroy({ transaction });
       await transaction.commit();
       return { success: true };
-    } catch (error) {
+    }
+    catch (error) {
       await transaction.rollback();
       throw error;
     }
@@ -100,13 +104,14 @@ export class ShiftService {
         where: { is_default: true },
         include: [
           { model: DashboardUser, attributes: ['id', 'name', 'email'] },
-          { model: Shift }
+          { model: Shift },
         ],
         transaction,
       });
       await transaction.commit();
       return assignments;
-    } catch (error) {
+    }
+    catch (error) {
       await transaction.rollback();
       throw error;
     }
@@ -116,7 +121,7 @@ export class ShiftService {
     const transaction = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema(tenantSchema, transaction);
-      
+
       const shift = await this.shiftRepository.findByPk(payload.shift_id, { transaction });
       if (!shift) {
         throw new NotFoundException('Shift not found');
@@ -135,7 +140,7 @@ export class ShiftService {
       // Check if there is already an active shift mapping and disable it if so
       await this.userShiftRepository.update(
         { is_default: false },
-        { 
+        {
           where: { user_id: userId, is_default: true },
           transaction,
         }
@@ -150,7 +155,8 @@ export class ShiftService {
 
       await transaction.commit();
       return userShift;
-    } catch (error) {
+    }
+    catch (error) {
       await transaction.rollback();
       throw error;
     }
@@ -187,7 +193,8 @@ export class ShiftService {
 
       await transaction.commit();
       return userShift;
-    } catch (error) {
+    }
+    catch (error) {
       await transaction.rollback();
       throw error;
     }

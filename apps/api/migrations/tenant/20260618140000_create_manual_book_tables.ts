@@ -5,7 +5,8 @@ import { DataTypes } from 'sequelize';
 export const up: MigrationFn<MigrationContext> = async ({ context }) => {
   const { queryInterface, schema } = context;
 
-  if (['public', 'master', 'information_schema', 'pg_catalog'].includes(schema)) return;
+  if (['public', 'master', 'information_schema', 'pg_catalog'].includes(schema))
+    return;
 
   // Create Category Table
   await queryInterface.createTable(
@@ -63,7 +64,7 @@ export const up: MigrationFn<MigrationContext> = async ({ context }) => {
         references: {
           model: {
             tableName: 'manual_book_category',
-            schema: schema,
+            schema,
           },
           key: 'id',
         },
@@ -111,7 +112,8 @@ export const up: MigrationFn<MigrationContext> = async ({ context }) => {
 export const down: MigrationFn<MigrationContext> = async ({ context }) => {
   const { queryInterface, schema } = context;
 
-  if (['public', 'master', 'information_schema', 'pg_catalog'].includes(schema)) return;
+  if (['public', 'master', 'information_schema', 'pg_catalog'].includes(schema))
+    return;
 
   await queryInterface.dropTable({ schema, tableName: 'manual_book' });
   await queryInterface.dropTable({ schema, tableName: 'manual_book_category' });

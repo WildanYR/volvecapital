@@ -39,7 +39,8 @@ export class ExpiryReminderService {
     for (const tenant of tenants) {
       try {
         await this.processTenantReminders(tenant);
-      } catch (error) {
+      }
+      catch (error) {
         this.logger.error(`Error processing reminders for tenant ${tenant.id}: ${error.message}`);
       }
     }
@@ -88,10 +89,10 @@ export class ExpiryReminderService {
 
       for (const row of results) {
         this.logger.log(`Sending reminder to ${row.buyerEmail} for ${row.productName}`);
-        
+
         // Send email without holding a database transaction
         await this.sendReminderEmail(tenantId, tenantName, customDomain, row);
-        
+
         // Update user row after successful email
         const transaction = await this.postgresProvider.transaction();
         try {
@@ -101,12 +102,14 @@ export class ExpiryReminderService {
             { where: { id: row.userId }, transaction }
           );
           await transaction.commit();
-        } catch (updateError) {
+        }
+        catch (updateError) {
           await transaction.rollback();
           this.logger.error(`Failed to update reminder status for user ${row.userId}: ${updateError.message}`);
         }
       }
-    } catch (error) {
+    }
+    catch (error) {
       throw error;
     }
   }
@@ -141,7 +144,8 @@ export class ExpiryReminderService {
         transaction: tempTx,
       });
       await tempTx.commit();
-    } catch (e) {
+    }
+    catch (e) {
       await tempTx.rollback();
     }
 

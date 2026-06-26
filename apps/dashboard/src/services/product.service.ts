@@ -50,6 +50,11 @@ export interface ProductVariant {
   low_stock_threshold?: number
   strike_price?: number
   reminder_before_hours?: number
+  income_coa_id?: string | null
+  expense_coa_id?: string | null
+  inventory_coa_id?: string | null
+  deferred_revenue_coa_id?: string | null
+  revenue_coa_id?: string | null
 }
 
 export interface Product {
@@ -83,6 +88,8 @@ export interface CreateProductVariantPayload {
   low_stock_threshold?: number
   strike_price?: number
   reminder_before_hours?: number
+  income_coa_id?: string | null
+  expense_coa_id?: string | null
 }
 
 export interface CreateProductPayload {
@@ -105,6 +112,8 @@ export interface UpdateProductVariantPayload {
   low_stock_threshold?: number
   strike_price?: number
   reminder_before_hours?: number
+  income_coa_id?: string | null
+  expense_coa_id?: string | null
 }
 
 export interface UpdateProductPayload {

@@ -1,15 +1,15 @@
+import * as crypto from 'node:crypto';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { TENANT_REPOSITORY, TUTORIAL_REPOSITORY, TENANT_OWNER_REPOSITORY } from 'src/constants/database.const';
-import { Tenant } from 'src/database/models/tenant.model';
-import { TenantOwner } from 'src/database/models/tenant-owner.model';
-import { Tutorial } from 'src/database/models/tutorial.model';
-import { Permission } from 'src/database/models/permission.model';
-import { Role } from 'src/database/models/role.model';
-import { RolePermission } from 'src/database/models/role-permission.model';
-import { PostgresProvider } from 'src/database/postgres.provider';
-import { MigrationProvider } from 'src/database/migration.provider';
+import { TENANT_OWNER_REPOSITORY, TENANT_REPOSITORY, TUTORIAL_REPOSITORY } from 'src/constants/database.const';
 import { ALL_PERMISSIONS, ROLE_PRESETS } from 'src/constants/permissions.const';
-import * as crypto from 'crypto';
+import { MigrationProvider } from 'src/database/migration.provider';
+import { Permission } from 'src/database/models/permission.model';
+import { RolePermission } from 'src/database/models/role-permission.model';
+import { Role } from 'src/database/models/role.model';
+import { TenantOwner } from 'src/database/models/tenant-owner.model';
+import { Tenant } from 'src/database/models/tenant.model';
+import { Tutorial } from 'src/database/models/tutorial.model';
+import { PostgresProvider } from 'src/database/postgres.provider';
 
 @Injectable()
 export class TenantProvisioningService {
@@ -47,7 +47,7 @@ export class TenantProvisioningService {
     try {
       // 1. Create Tenant Record in Master
       await this.postgresProvider.setSchema('master', transaction);
-      
+
       const tenant = await this.tenantRepository.create({
         id: schema,
         name: name || username,
@@ -82,7 +82,7 @@ export class TenantProvisioningService {
 
       // 5. Insert Role and Permissions
       const permissions = await this.permissionRepository.bulkCreate(ALL_PERMISSIONS, { transaction });
-      
+
       const permissionMap: Record<string, string> = {};
       for (const p of permissions) {
         permissionMap[p.name] = p.id;
@@ -104,7 +104,8 @@ export class TenantProvisioningService {
 
       await transaction.commit();
       return tenant;
-    } catch (error: any) {
+    }
+    catch (error: any) {
       await transaction.rollback();
       throw error;
     }

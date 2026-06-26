@@ -1,14 +1,14 @@
-import 'reflect-metadata';
+import type Redis from 'ioredis';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../app.module';
-import { TaskQueue } from '../database/models/task-queue.model';
 import { REDIS_CLIENT } from '../constants/provider.const';
-import Redis from 'ioredis';
+import { TaskQueue } from '../database/models/task-queue.model';
+import 'reflect-metadata';
 
 async function bootstrap() {
   // Gunakan suppress error logger agar tidak berisik saat init
   const app = await NestFactory.createApplicationContext(AppModule, { logger: false });
-  
+
   console.log('🚀 Memulai proses cuci gudang task queue...');
 
   try {
@@ -23,13 +23,14 @@ async function bootstrap() {
       { status: 'FAILED' },
       { where: { status: ['QUEUED', 'DISPATCHED'] } }
     );
-    
+
     console.log(`✅ Database dibersihkan: ${affectedCount} task diubah statusnya menjadi FAILED.`);
     console.log('✨ Selesai! Antrian sekarang kosong.');
-
-  } catch (error) {
+  }
+  catch (error) {
     console.error('❌ Gagal membersihkan queue:', error);
-  } finally {
+  }
+  finally {
     await app.close();
     process.exit(0);
   }

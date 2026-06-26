@@ -1,8 +1,8 @@
 import { Body, Controller, Delete, Get, Headers, Param, Post, Put, Query } from '@nestjs/common';
-import { ManualBookService } from './manual-book.service';
+import { RequirePermissions } from 'src/guards/permissions.decorator';
 import { CreateManualBookDto } from './dto/create-manual-book.dto';
 import { UpdateManualBookDto } from './dto/update-manual-book.dto';
-import { RequirePermissions } from 'src/guards/permissions.decorator';
+import { ManualBookService } from './manual-book.service';
 
 @Controller('manual-book')
 export class ManualBookController {

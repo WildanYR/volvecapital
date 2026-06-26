@@ -51,7 +51,8 @@ export class RoleService {
         transaction,
       });
       await transaction.commit();
-      if (!role) throw new NotFoundException(`Role dengan id ${id} tidak ditemukan`);
+      if (!role)
+        throw new NotFoundException(`Role dengan id ${id} tidak ditemukan`);
       return role;
     }
     catch (error) {
@@ -91,7 +92,8 @@ export class RoleService {
     try {
       await this.postgresProvider.setSchema(tenantId, transaction);
       const role = await this.roleRepository.findOne({ where: { id }, transaction });
-      if (!role) throw new NotFoundException(`Role dengan id ${id} tidak ditemukan`);
+      if (!role)
+        throw new NotFoundException(`Role dengan id ${id} tidak ditemukan`);
       await role.update({ ...dto }, { transaction });
       await transaction.commit();
       return this.findOne(id, tenantId);
@@ -108,7 +110,8 @@ export class RoleService {
       await this.postgresProvider.setSchema(tenantId, transaction);
 
       const role = await this.roleRepository.findOne({ where: { id }, transaction });
-      if (!role) throw new NotFoundException(`Role dengan id ${id} tidak ditemukan`);
+      if (!role)
+        throw new NotFoundException(`Role dengan id ${id} tidak ditemukan`);
 
       // Delete existing permissions for this role
       await this.rolePermissionRepository.destroy({
@@ -139,7 +142,8 @@ export class RoleService {
     try {
       await this.postgresProvider.setSchema(tenantId, transaction);
       const role = await this.roleRepository.findOne({ where: { id }, transaction });
-      if (!role) throw new NotFoundException(`Role dengan id ${id} tidak ditemukan`);
+      if (!role)
+        throw new NotFoundException(`Role dengan id ${id} tidak ditemukan`);
       await role.destroy({ transaction });
       await transaction.commit();
     }

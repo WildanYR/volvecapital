@@ -28,7 +28,6 @@ class CreateAccountProfileDto {
   metadata?: string;
 }
 
-
 export class CreateAccountDto {
   @IsNotEmpty()
   @IsString()
@@ -69,5 +68,4 @@ export class CreateAccountDto {
   @ValidateNested({ each: true })
   @Type(() => CreateAccountProfileDto)
   profile: CreateAccountProfileDto[];
-
 }

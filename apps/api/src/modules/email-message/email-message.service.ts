@@ -1,9 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Op, WhereOptions } from 'sequelize';
 import { EMAIL_MESSAGE_REPOSITORY } from 'src/constants/database.const';
+import { DatabaseModule } from 'src/database/database.module';
 import { EmailMessage } from 'src/database/models/email-message.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
-import { DatabaseModule } from 'src/database/database.module';
 import { PaginationProvider } from '../utility/pagination.provider';
 import { BaseGetAllUrlQuery } from '../utility/types/base-get-all-url-query.type';
 import { IEmailMessageGetFilter } from './filter/email-message-get.filter';

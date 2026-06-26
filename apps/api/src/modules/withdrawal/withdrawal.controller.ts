@@ -1,8 +1,8 @@
-import { Controller, Get, Post, Body, Param, UseGuards, Req, Query } from '@nestjs/common';
-import { WithdrawalService } from './withdrawal.service';
-import { CreateWithdrawalDto } from './dto/create-withdrawal.dto';
-import { RequirePermissions } from 'src/guards/permissions.decorator';
+import { Body, Controller, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { Request } from 'express';
+import { RequirePermissions } from 'src/guards/permissions.decorator';
+import { CreateWithdrawalDto } from './dto/create-withdrawal.dto';
+import { WithdrawalService } from './withdrawal.service';
 
 @Controller('withdrawals')
 export class WithdrawalController {

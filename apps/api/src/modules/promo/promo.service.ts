@@ -61,7 +61,8 @@ export class PromoService {
         where: { id },
         transaction,
       });
-      if (!promoCode) throw new NotFoundException('Promo code not found');
+      if (!promoCode)
+        throw new NotFoundException('Promo code not found');
       await transaction.commit();
       return promoCode;
     }
@@ -75,12 +76,13 @@ export class PromoService {
     const transaction = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema(tenantId, transaction);
-      
+
       const existing = await this.promoCodeRepository.findOne({
         where: { code: dto.code.toUpperCase() },
         transaction,
       });
-      if (existing) throw new BadRequestException('Code already exists');
+      if (existing)
+        throw new BadRequestException('Code already exists');
 
       const promoCode = await this.promoCodeRepository.create(
         {
@@ -108,7 +110,8 @@ export class PromoService {
         where: { id },
         transaction,
       });
-      if (!promoCode) throw new NotFoundException('Promo code not found');
+      if (!promoCode)
+        throw new NotFoundException('Promo code not found');
 
       await promoCode.update(
         {
@@ -136,8 +139,9 @@ export class PromoService {
         where: { id },
         transaction,
       });
-      if (!promoCode) throw new NotFoundException('Promo code not found');
-      
+      if (!promoCode)
+        throw new NotFoundException('Promo code not found');
+
       // Check if the promo code is used in any voucher
       const isUsed = await this.voucherRepository.findOne({
         where: { promo_code_id: id },
@@ -147,11 +151,12 @@ export class PromoService {
       if (isUsed) {
         // If used, just deactivate it
         await promoCode.update({ is_active: false }, { transaction });
-      } else {
+      }
+      else {
         // If not used, we can safely hard delete
         await promoCode.destroy({ transaction });
       }
-      
+
       await transaction.commit();
       return { success: true };
     }
@@ -165,11 +170,11 @@ export class PromoService {
     const transaction = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema(tenantId, transaction);
-      
+
       const promoCode = await this.promoCodeRepository.findOne({
-        where: { 
+        where: {
           code: code.toUpperCase(),
-          is_active: true
+          is_active: true,
         },
         transaction,
       });
@@ -201,7 +206,8 @@ export class PromoService {
       let discountAmount = 0;
       if (promoCode.type === 'FIXED') {
         discountAmount = promoCode.value;
-      } else {
+      }
+      else {
         discountAmount = (totalPurchase * promoCode.value) / 100;
       }
 

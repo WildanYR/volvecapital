@@ -12,6 +12,7 @@ import {
   Request,
   UsePipes,
 } from '@nestjs/common';
+import { RequirePermissions } from 'src/guards/permissions.decorator';
 import { AtLeastOnePropertyPipe } from 'src/pipes/at-least-one-property.pipe';
 import { AppRequest } from 'src/types/app-request.type';
 import { PaginationProvider } from '../utility/pagination.provider';
@@ -19,7 +20,6 @@ import { AccountProfileService } from './account-profile.service';
 import { CreateAccountProfileDto } from './dto/create-account-profile.dto';
 import { GetAllAccountProfileQueryUrlDto } from './dto/get-all-account-profile.dto';
 import { UpdateAccountProfileDto } from './dto/update-account-profile.dto';
-import { RequirePermissions } from 'src/guards/permissions.decorator';
 
 @Controller('account-profile')
 export class AccountProfileController {

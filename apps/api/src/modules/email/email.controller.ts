@@ -12,13 +12,13 @@ import {
   Request,
   UsePipes,
 } from '@nestjs/common';
+import { RequirePermissions } from 'src/guards/permissions.decorator';
 import { AtLeastOnePropertyPipe } from 'src/pipes/at-least-one-property.pipe';
 import { AppRequest } from 'src/types/app-request.type';
 import { PaginationProvider } from '../utility/pagination.provider';
 import { CreateEmailDto } from './dto/create-email.dto';
 import { GetAllEmailQueryUrlDto } from './dto/get-all-email.dto';
 import { UpdateEmailDto } from './dto/update-email.dto';
-import { RequirePermissions } from 'src/guards/permissions.decorator';
 import { EmailService } from './email.service';
 
 @Controller('email')

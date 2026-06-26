@@ -10,8 +10,8 @@ import {
   Post,
   Request,
 } from '@nestjs/common';
-import { PublicRoute } from 'src/guards/public-route.decorator';
 import { RequirePermissions } from 'src/guards/permissions.decorator';
+import { PublicRoute } from 'src/guards/public-route.decorator';
 import { DashboardUserService } from './dashboard-user.service';
 import {
   CreateDashboardUserDto,

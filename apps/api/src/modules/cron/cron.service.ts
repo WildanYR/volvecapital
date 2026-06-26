@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
+import { TaskQueueService } from '../task-queue/task-queue.service';
+import { VoucherService } from '../voucher/voucher.service';
 import { LogTtlService } from './log-ttl.service';
 import { TransactionReportService } from './transaction-report.service';
-import { VoucherService } from '../voucher/voucher.service';
-import { TaskQueueService } from '../task-queue/task-queue.service';
 
 @Injectable()
 export class CronService {

@@ -71,7 +71,7 @@ export default function BlogDetailPage({ params }: { params: Promise<{ slug: str
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               className="relative max-w-7xl w-full h-full flex flex-col items-center justify-center"
-              onClick={e => e.stopPropagation()}
+              onClick={(e: React.MouseEvent) => e.stopPropagation()}
             >
               <button 
                 onClick={() => setSelectedImage(null)}

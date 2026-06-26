@@ -1,14 +1,14 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { Op } from 'sequelize';
 import { EMAIL_MESSAGE_REPOSITORY, EMAIL_SUBJECT_REPOSITORY } from 'src/constants/database.const';
-import { NETFLIX_OTP, NETFLIX_REQ_RESET_PASSWORD, DISNEY_OTP, NETFLIX_HOUSE_CHANGE } from 'src/constants/email-subject.const';
+import { DISNEY_OTP, NETFLIX_HOUSE_CHANGE, NETFLIX_OTP, NETFLIX_REQ_RESET_PASSWORD } from 'src/constants/email-subject.const';
+import { EmailMessage } from 'src/database/models/email-message.model';
 import { EmailSubject } from 'src/database/models/email-subject.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
 import { AppLoggerService } from '../logger/logger.service';
 import { SocketGateway } from '../socket/socket.gateway';
 import { EmailParser } from '../utility/email-parser.provider';
 import { RecieveEmailDto } from './dto/recieve-email.dto';
-import { Op } from 'sequelize';
-import { EmailMessage } from 'src/database/models/email-message.model';
 
 @Injectable()
 export class EmailForwardService {
@@ -32,19 +32,18 @@ export class EmailForwardService {
       const emailSubject = await this.emailSubjectRepository.findAll({
         where: {
           subject: {
-            [Op.or]: payload.emails.map(e => ({ [Op.iLike]: e.subject.trim() }))
-          }
+            [Op.or]: payload.emails.map(e => ({ [Op.iLike]: e.subject.trim() })),
+          },
         },
         transaction,
       });
 
       if (emailSubject?.length) {
-
         for (const es of emailSubject) {
           for (const e of payload.emails) {
             const incomingSubject = e.subject.trim().toLowerCase();
             const dbSubject = es.dataValues.subject.trim().toLowerCase();
-            
+
             if (incomingSubject === dbSubject) {
               let data: string | null = null;
               let context: string | null = null;
@@ -71,15 +70,15 @@ export class EmailForwardService {
 
               if (data && context) {
                 // 1. Save to database
-                  await this.emailMessageRepository.create({
-                    tenant_id: payload.tenant,
-                    from_email: e.from,
-                    recipient_email: e.recipient,
-                    subject: e.subject,
-                    email_date: new Date(e.date),
-                    parsed_context: context,
-                    parsed_data: data,
-                  }, { transaction });
+                await this.emailMessageRepository.create({
+                  tenant_id: payload.tenant,
+                  from_email: e.from,
+                  recipient_email: e.recipient,
+                  subject: e.subject,
+                  email_date: new Date(e.date),
+                  parsed_context: context,
+                  parsed_data: data,
+                }, { transaction });
 
                 // 2. Send via Socket
                 // Hanya kirim sinyal jika email baru (kurang dari 2 menit yang lalu)
@@ -87,15 +86,15 @@ export class EmailForwardService {
                 const isRecent = new Date(e.date).getTime() > twoMinutesAgo;
 
                 if (isRecent) {
-                    const sanitizeEmail = this.emailParser.sanitizeEmail(e.recipient);
-                    const eventName = `${sanitizeEmail}:${context}`;
-                    
-                    this.socketGateway.sendEvent(eventName, {
-                        from: e.from,
-                        date: e.date,
-                        subject: e.subject,
-                        data,
-                    });
+                  const sanitizeEmail = this.emailParser.sanitizeEmail(e.recipient);
+                  const eventName = `${sanitizeEmail}:${context}`;
+
+                  this.socketGateway.sendEvent(eventName, {
+                    from: e.from,
+                    date: e.date,
+                    subject: e.subject,
+                    data,
+                  });
                 }
               }
             }
@@ -115,7 +114,7 @@ export class EmailForwardService {
     const transaction = await this.postgresProvider.transaction();
     try {
       const schemasResult: any = await this.postgresProvider.rawQuery(
-        "SELECT schema_name FROM information_schema.schemata WHERE schema_name NOT IN ('public', 'master', 'information_schema', 'pg_catalog', 'pg_toast')",
+        'SELECT schema_name FROM information_schema.schemata WHERE schema_name NOT IN (\'public\', \'master\', \'information_schema\', \'pg_catalog\', \'pg_toast\')',
         { transaction }
       );
       const schemas = schemasResult[0] || schemasResult;
@@ -126,7 +125,8 @@ export class EmailForwardService {
           await this.postgresProvider.setSchema(row.schema_name, transaction);
           const emailSubject = await this.emailSubjectRepository.findAll({ transaction });
           emailSubject.forEach(es => allSubjects.add(es.dataValues.subject));
-        } catch (e) {
+        }
+        catch (e) {
           // Ignore if table not found in this schema
         }
       }

@@ -51,6 +51,7 @@ import { IAccountGetFilter } from './filter/account-get.filter';
 import { NetflixResetPasswordMetadata } from './types/netflix-reset-password-metadata.type';
 import { SubsEndNotifyMetadata } from './types/subs-end-notify-metadata.type';
 import { AppLoggerService } from '../logger/logger.service';
+import { AccountingService } from '../accounting/accounting.service';
 
 @Injectable()
 export class AccountService {
@@ -79,6 +80,7 @@ export class AccountService {
     @Inject(ACCOUNT_USER_MOVE_HISTORY_REPOSITORY)
     private readonly accountUserMoveHistoryRepository: typeof AccountUserMoveHistory,
     private readonly logger: AppLoggerService,
+    private readonly accountingService: AccountingService,
   ) {}
 
   async findAll(
@@ -1338,9 +1340,19 @@ export class AccountService {
       const capital = await this.accountCapitalRepository.create({
         account_id: accountId,
         amount: dto.amount,
-        note: dto.description || 'Manual Add',
+        note: dto.description || dto.note || 'Manual Add',
+        payment_coa_id: dto.payment_coa_id,
+        expense_coa_id: dto.expense_coa_id,
         created_at: dto.date ? new Date(dto.date) : new Date(),
       }, { transaction });
+
+      try {
+        const accountInfo = await this.accountRepository.findOne({ where: { id: accountId }, include: [{ model: Email, as: 'email' }], transaction });
+        const emailStr = (accountInfo?.email as any)?.email || accountId;
+        await this.accountingService.autoJournalCapital(tenantId, capital.id, emailStr, transaction);
+      } catch (err) {
+        this.logger.error(`[AccountService] Failed auto journal capital ${capital.id}: ${err.message}`);
+      }
 
       await transaction.commit();
       return capital;
@@ -1375,14 +1387,30 @@ export class AccountService {
         updateSql += `, created_at = :created_at`;
         replacements.created_at = new Date(dto.date);
       }
+      if (dto.payment_coa_id !== undefined) {
+        updateSql += `, payment_coa_id = :payment_coa_id`;
+        replacements.payment_coa_id = dto.payment_coa_id;
+      }
+      if (dto.expense_coa_id !== undefined) {
+        updateSql += `, expense_coa_id = :expense_coa_id`;
+        replacements.expense_coa_id = dto.expense_coa_id;
+      }
       
       updateSql += ` WHERE id = :capitalId`;
 
       await this.postgresProvider.rawQuery(updateSql, {
         replacements,
         transaction,
-        type: QueryTypes.UPDATE
+        type: QueryTypes.UPDATE,
       });
+
+      try {
+        const accountInfo = await this.accountRepository.findOne({ where: { id: accountId }, include: [{ model: Email, as: 'email' }], transaction });
+        const emailStr = (accountInfo?.email as any)?.email || accountId;
+        await this.accountingService.autoJournalCapital(tenantId, capitalId, emailStr, transaction);
+      } catch (err) {
+        this.logger.error(`[AccountService] Failed auto journal capital edit ${capitalId}: ${err.message}`);
+      }
 
       await transaction.commit();
       return capital;

@@ -1,9 +1,9 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Op } from 'sequelize';
 import { MANUAL_BOOK_REPOSITORY } from 'src/constants/database.const';
-import { PostgresProvider } from 'src/database/postgres.provider';
-import { ManualBook } from 'src/database/models/manual-book.model';
 import { ManualBookCategory } from 'src/database/models/manual-book-category.model';
+import { ManualBook } from 'src/database/models/manual-book.model';
+import { PostgresProvider } from 'src/database/postgres.provider';
 import { CreateManualBookDto } from './dto/create-manual-book.dto';
 import { UpdateManualBookDto } from './dto/update-manual-book.dto';
 
@@ -22,7 +22,8 @@ export class ManualBookService {
       const book = await this.manualBookRepository.create(createDto as any, { transaction });
       await transaction.commit();
       return book;
-    } catch (error) {
+    }
+    catch (error) {
       await transaction.rollback();
       throw error;
     }
@@ -33,15 +34,17 @@ export class ManualBookService {
     try {
       await this.postgresProvider.setSchema(tenantId, transaction);
       const where: any = {};
-      if (query?.status) where.status = query.status;
-      if (query?.category_id) where.category_id = query.category_id;
+      if (query?.status)
+        where.status = query.status;
+      if (query?.category_id)
+        where.category_id = query.category_id;
       if (query?.q) {
         where[Op.or] = [
           { title: { [Op.iLike]: `%${query.q}%` } },
           { content: { [Op.iLike]: `%${query.q}%` } },
         ];
       }
-      
+
       const books = await this.manualBookRepository.findAll({
         where,
         include: [ManualBookCategory],
@@ -50,7 +53,8 @@ export class ManualBookService {
       });
       await transaction.commit();
       return books;
-    } catch (error) {
+    }
+    catch (error) {
       await transaction.rollback();
       throw error;
     }
@@ -69,12 +73,13 @@ export class ManualBookService {
       }
       await transaction.commit();
       return book;
-    } catch (error) {
+    }
+    catch (error) {
       await transaction.rollback();
       throw error;
     }
   }
-  
+
   async findBySlug(tenantId: string, slug: string): Promise<ManualBook> {
     const transaction = await this.postgresProvider.transaction();
     try {
@@ -89,7 +94,8 @@ export class ManualBookService {
       }
       await transaction.commit();
       return book;
-    } catch (error) {
+    }
+    catch (error) {
       await transaction.rollback();
       throw error;
     }
@@ -106,7 +112,8 @@ export class ManualBookService {
       await book.update(updateDto as any, { transaction });
       await transaction.commit();
       return book;
-    } catch (error) {
+    }
+    catch (error) {
       await transaction.rollback();
       throw error;
     }
@@ -122,7 +129,8 @@ export class ManualBookService {
       }
       await book.destroy({ transaction });
       await transaction.commit();
-    } catch (error) {
+    }
+    catch (error) {
       await transaction.rollback();
       throw error;
     }

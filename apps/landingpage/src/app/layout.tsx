@@ -127,7 +127,9 @@ export default async function RootLayout({
           {children}
           <WhatsAppFloating />
           {/* DOKU Checkout Scripts */}
+          {/* @ts-expect-error Next.js Script types are incomplete in this version */}
           <Script src="https://sandbox.doku.com/jokul-checkout-js/v1/jokul-checkout-1.0.0.js" strategy="lazyOnload" />
+          {/* @ts-expect-error Next.js Script types are incomplete in this version */}
           <Script src="https://doku.com/jokul-checkout-js/v1/jokul-checkout-1.0.0.js" strategy="lazyOnload" />
         </Providers>
       </body>

@@ -3,14 +3,14 @@ import {
   Controller,
   Get,
   Post,
-  Req,
   Query,
+  Req,
 } from '@nestjs/common';
 import { RequirePermissions } from 'src/guards/permissions.decorator';
 import { RolesCheck } from 'src/guards/roles.decorator';
 import { AppRequest } from 'src/types/app-request.type';
-import { EndAttendanceDto, UpdateAttendanceSettingDto } from './dto/attendance.dto';
 import { AttendanceService } from './attendance.service';
+import { EndAttendanceDto, UpdateAttendanceSettingDto } from './dto/attendance.dto';
 
 @Controller()
 export class AttendanceController {

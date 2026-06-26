@@ -1,10 +1,10 @@
-import { Inject, Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
-import { PostgresProvider } from 'src/database/postgres.provider';
-import { SnowflakeIdProvider } from '../utility/snowflake-id.provider';
-import { MailService } from '../utility/mail.service';
+import { BadRequestException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { TENANT_BANK_ACCOUNT_REPOSITORY, TENANT_OWNER_REPOSITORY } from 'src/constants/database.const';
 import { TenantBankAccount } from 'src/database/models/tenant-bank-account.model';
 import { TenantOwner } from 'src/database/models/tenant-owner.model';
-import { TENANT_BANK_ACCOUNT_REPOSITORY, TENANT_OWNER_REPOSITORY } from 'src/constants/database.const';
+import { PostgresProvider } from 'src/database/postgres.provider';
+import { MailService } from '../utility/mail.service';
+import { SnowflakeIdProvider } from '../utility/snowflake-id.provider';
 import { CreateBankAccountDto } from './dto/create-bank-account.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
 
@@ -33,7 +33,8 @@ export class BankAccountService {
       });
       await tx.commit();
       return accounts;
-    } catch (error) {
+    }
+    catch (error) {
       await tx.rollback();
       throw error;
     }
@@ -49,7 +50,7 @@ export class BankAccountService {
         where: { tenant_id: tenantId },
         transaction: tx,
       });
-      
+
       if (!owner || !owner.email) {
         throw new BadRequestException('Owner email not found for this tenant');
       }
@@ -63,7 +64,7 @@ export class BankAccountService {
       expires.setMinutes(expires.getMinutes() + 10); // 10 minutes expiry
 
       const id = this.snowflakeIdProvider.generateId();
-      
+
       const newAccount = await this.bankAccountRepository.create({
         id,
         bank_name: dto.bank_name,
@@ -86,9 +87,10 @@ export class BankAccountService {
       return {
         id: newAccount.id,
         message: 'OTP sent to owner email',
-        expires_at: expires
+        expires_at: expires,
       };
-    } catch (error) {
+    }
+    catch (error) {
       await tx.rollback();
       throw error;
     }
@@ -98,7 +100,7 @@ export class BankAccountService {
     const tx = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema(tenantId, tx);
-      
+
       const account = await this.bankAccountRepository.findOne({
         where: { id: bankAccountId },
         transaction: tx,
@@ -128,7 +130,8 @@ export class BankAccountService {
 
       await tx.commit();
       return { message: 'Rekening berhasil diverifikasi' };
-    } catch (error) {
+    }
+    catch (error) {
       await tx.rollback();
       throw error;
     }
@@ -138,7 +141,7 @@ export class BankAccountService {
     const tx = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema(tenantId, tx);
-      
+
       const account = await this.bankAccountRepository.findOne({
         where: { id: bankAccountId },
         transaction: tx,
@@ -149,10 +152,11 @@ export class BankAccountService {
       }
 
       await account.destroy({ transaction: tx });
-      
+
       await tx.commit();
       return { message: 'Rekening berhasil dihapus' };
-    } catch (error) {
+    }
+    catch (error) {
       await tx.rollback();
       throw error;
     }

@@ -1,7 +1,7 @@
 import { Global, Module } from '@nestjs/common';
+import { MigrationProvider } from './migration.provider';
 import { PostgresProvider } from './postgres.provider';
 import { RepositoryProvider } from './repository.provider';
-import { MigrationProvider } from './migration.provider';
 
 @Global()
 @Module({

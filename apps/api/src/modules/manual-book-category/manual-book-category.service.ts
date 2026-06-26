@@ -1,8 +1,8 @@
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { ForeignKeyConstraintError } from 'sequelize';
 import { MANUAL_BOOK_CATEGORY_REPOSITORY } from 'src/constants/database.const';
-import { PostgresProvider } from 'src/database/postgres.provider';
 import { ManualBookCategory } from 'src/database/models/manual-book-category.model';
+import { PostgresProvider } from 'src/database/postgres.provider';
 import { CreateManualBookCategoryDto } from './dto/create-manual-book-category.dto';
 import { UpdateManualBookCategoryDto } from './dto/update-manual-book-category.dto';
 
@@ -24,7 +24,8 @@ export class ManualBookCategoryService {
       );
       await transaction.commit();
       return category;
-    } catch (error) {
+    }
+    catch (error) {
       await transaction.rollback();
       throw error;
     }
@@ -40,7 +41,8 @@ export class ManualBookCategoryService {
       });
       await transaction.commit();
       return categories;
-    } catch (error) {
+    }
+    catch (error) {
       await transaction.rollback();
       throw error;
     }
@@ -56,7 +58,8 @@ export class ManualBookCategoryService {
       }
       await transaction.commit();
       return category;
-    } catch (error) {
+    }
+    catch (error) {
       await transaction.rollback();
       throw error;
     }
@@ -73,7 +76,8 @@ export class ManualBookCategoryService {
       await category.update(updateDto as any, { transaction });
       await transaction.commit();
       return category;
-    } catch (error) {
+    }
+    catch (error) {
       await transaction.rollback();
       throw error;
     }
@@ -89,13 +93,14 @@ export class ManualBookCategoryService {
       }
       await category.destroy({ transaction });
       await transaction.commit();
-    } catch (error: any) {
+    }
+    catch (error: any) {
       await transaction.rollback();
-      const isForeignKeyError = 
-        error instanceof ForeignKeyConstraintError || 
-        error?.name === 'SequelizeForeignKeyConstraintError' || 
-        error?.parent?.code === '23503' ||
-        (error?.message && error.message.toLowerCase().includes('foreign key constraint'));
+      const isForeignKeyError
+        = error instanceof ForeignKeyConstraintError
+          || error?.name === 'SequelizeForeignKeyConstraintError'
+          || error?.parent?.code === '23503'
+          || (error?.message && error.message.toLowerCase().includes('foreign key constraint'));
 
       if (isForeignKeyError) {
         throw new BadRequestException('Kategori ini tidak bisa dihapus karena masih digunakan oleh panduan atau sub-kategori lain.');

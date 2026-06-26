@@ -7,10 +7,10 @@ import { TASK_QUEUE_REPOSITORY } from 'src/constants/database.const';
 import { REDIS_CLIENT } from 'src/constants/provider.const';
 import { CONSUMER_GROUP, STREAM_KEY, TASK_REFERENCE_KEY, ZSET_KEY } from 'src/constants/scheduler.const';
 import {
-  NETFLIX_RESET_PASSWORD,
   NETFLIX_AUTO_RELOAD,
   NETFLIX_AUTO_UPGRADE,
   NETFLIX_LOGIN_TV,
+  NETFLIX_RESET_PASSWORD,
   SUBS_END_NOTIFY,
   UNFREEZE_ACCOUNT,
 } from 'src/constants/task.const';
@@ -104,7 +104,6 @@ export class TaskWorkerService {
       this.logger.error(`TaskWorker: Gagal reload task ke Redis: ${error.message}`, error.stack, 'TaskWorkerInit');
     }
   }
-
 
   async consumeTasks() {
     while (true) {
@@ -376,7 +375,7 @@ export class TaskWorkerService {
           NETFLIX_RESET_PASSWORD,
           NETFLIX_AUTO_RELOAD,
           NETFLIX_AUTO_UPGRADE,
-          NETFLIX_LOGIN_TV
+          NETFLIX_LOGIN_TV,
         ].includes(tm.taskData.context);
 
         taskQueueUpdates.push({

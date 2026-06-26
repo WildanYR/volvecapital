@@ -11,8 +11,8 @@ import {
   PrimaryKey,
   Table,
 } from 'sequelize-typescript';
-import { Account, AccountAttributes } from './account.model';
 import { AccountLabel } from './account-label.model';
+import { Account, AccountAttributes } from './account.model';
 import { ProductVariant, ProductVariantAttributes } from './product-variant.model';
 
 export interface LabelAttributes {

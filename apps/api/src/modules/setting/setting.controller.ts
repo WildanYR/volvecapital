@@ -1,13 +1,13 @@
 import {
   Body,
   Controller,
+  ForbiddenException,
   Get,
   Patch,
   Request,
-  ForbiddenException,
 } from '@nestjs/common';
-import { AppRequest } from 'src/types/app-request.type';
 import { RequirePermissions } from 'src/guards/permissions.decorator';
+import { AppRequest } from 'src/types/app-request.type';
 import { SettingService } from './setting.service';
 
 @Controller('setting')
@@ -36,7 +36,7 @@ export class SettingController {
       const perms = user.permissions || [];
       const isVoucherSetting = body.key === 'VOUCHER_COPY_TEMPLATE';
       const hasVoucherEdit = perms.includes('voucher.edit');
-      
+
       if (!perms.some(p => ['setting.edit', 'landing.edit', 'content.edit'].includes(p))) {
         // Allow if it's a voucher setting and user has voucher.edit
         if (!(isVoucherSetting && hasVoucherEdit)) {

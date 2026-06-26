@@ -1,23 +1,23 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
+  Headers,
+  Inject,
   Param,
   Post,
-  Headers,
-  BadRequestException,
-  Inject,
 } from '@nestjs/common';
-import { PublicRoute } from 'src/guards/public-route.decorator';
-import { CreatePaymentDto } from './dto/create-payment.dto';
-import { RegisterTenantDto } from './dto/register-tenant.dto';
-import { RedeemVoucherDto } from './dto/redeem-voucher.dto';
-import { PublicService } from './public.service';
-import { SocketGateway } from '../socket/socket.gateway';
-import { AccountService } from '../account/account.service';
-import { Tenant } from 'src/database/models/tenant.model';
 import { TENANT_REPOSITORY } from 'src/constants/database.const';
+import { Tenant } from 'src/database/models/tenant.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
+import { PublicRoute } from 'src/guards/public-route.decorator';
+import { AccountService } from '../account/account.service';
+import { SocketGateway } from '../socket/socket.gateway';
+import { CreatePaymentDto } from './dto/create-payment.dto';
+import { RedeemVoucherDto } from './dto/redeem-voucher.dto';
+import { RegisterTenantDto } from './dto/register-tenant.dto';
+import { PublicService } from './public.service';
 
 @Controller('public')
 @PublicRoute()
@@ -32,12 +32,14 @@ export class PublicController {
 
   private async getTenantId(host: string, xTenantId?: string, xForwardedHost?: string): Promise<string> {
     // 1. Prioritas: header x-tenant-id (dikirim dari dashboard)
-    if (xTenantId) return xTenantId;
+    if (xTenantId)
+      return xTenantId;
 
     // x-forwarded-host dikirim dari Next.js server-side fetch untuk custom domain
     // (karena 'host' adalah restricted header di undici/Node.js)
     const effectiveHost = xForwardedHost || host;
-    if (!effectiveHost) throw new BadRequestException('Missing host or x-tenant-id header');
+    if (!effectiveHost)
+      throw new BadRequestException('Missing host or x-tenant-id header');
 
     // Bersihkan port dari host (e.g. localhost:3000 → localhost)
     const cleanHost = effectiveHost.split(':')[0].toLowerCase();
@@ -76,13 +78,13 @@ export class PublicController {
         }
       }
       await transaction.commit();
-    } catch {
+    }
+    catch {
       await transaction.rollback();
     }
 
     throw new BadRequestException('Tenant ID tidak ditemukan untuk domain/host ini');
   }
-
 
   @Get('product')
   async getProducts(@Headers() headers: any) {
@@ -122,7 +124,7 @@ export class PublicController {
     // Format: VC-TENANTID-TIMESTAMP
     const orderId = body.order?.invoice_number || body.order_id || '';
     const parts = orderId.split('-');
-    
+
     console.log(`[PaymentNotify] Incoming: ${orderId}, Body: ${JSON.stringify(body)}`);
 
     if (parts.length < 2) {
@@ -167,18 +169,19 @@ export class PublicController {
     @Param('order_id') orderId: string,
   ) {
     let tenantId = '';
-    
+
     // 1. Try to extract from orderId (VC-TENANT-TIMESTAMP)
     const parts = orderId.split('-');
     if (parts.length >= 2) {
       tenantId = parts[1].toLowerCase();
-    } else {
+    }
+    else {
       // 2. Fallback to headers
       const host = headers.host || '';
       const xTenantId = headers['x-tenant-id'];
       tenantId = await this.getTenantId(host, xTenantId);
     }
-    
+
     return this.publicService.checkPaymentStatus(tenantId, orderId);
   }
 
@@ -293,7 +296,8 @@ export class PublicController {
     const xTenantId = headers['x-tenant-id'];
     const xForwardedHost = headers['x-forwarded-host'];
     const tenantId = await this.getTenantId(host, xTenantId, xForwardedHost);
-    if (!accountId) throw new BadRequestException('account_id is required');
+    if (!accountId)
+      throw new BadRequestException('account_id is required');
 
     // Emit event ke bot yang sedang menunggu konfirmasi top-up
     const eventName = `${accountId}:NETFLIX_TOPUP_CONFIRM`;
@@ -314,7 +318,8 @@ export class PublicController {
     const xTenantId = headers['x-tenant-id'];
     const xForwardedHost = headers['x-forwarded-host'];
     const tenantId = await this.getTenantId(host, xTenantId, xForwardedHost);
-    if (!accountId) throw new BadRequestException('account_id is required');
+    if (!accountId)
+      throw new BadRequestException('account_id is required');
 
     // Emit event pembatalan ke bot
     const eventName = `${accountId}:NETFLIX_TOPUP_CANCEL`;

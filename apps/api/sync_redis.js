@@ -1,11 +1,11 @@
 require('dotenv').config();
-const { Sequelize, Op } = require('sequelize');
 const Redis = require('ioredis');
+const { Sequelize, Op } = require('sequelize');
 
 async function sync() {
   const dbUrl = process.env.DATABASE_URL;
   if (!dbUrl) {
-    console.error("❌ DATABASE_URL tidak ditemukan di .env!");
+    console.error('❌ DATABASE_URL tidak ditemukan di .env!');
     process.exit(1);
   }
 
@@ -24,29 +24,30 @@ async function sync() {
       WHERE status IN ('QUEUED', 'DISPATCHED') 
       AND execute_at >= :twoHoursAgo
     `, {
-      replacements: { twoHoursAgo }
+      replacements: { twoHoursAgo },
     });
 
     if (pendingTasks.length === 0) {
-      console.log("✅ Tidak ada task pending di DB yang perlu di-sync.");
+      console.log('✅ Tidak ada task pending di DB yang perlu di-sync.');
       process.exit(0);
     }
 
     const redisPipeline = redisClient.pipeline();
     let count = 0;
-    
+
     for (const task of pendingTasks) {
       const executeAt = new Date(task.execute_at).getTime();
       redisPipeline.zadd('scheduler:task_zset', executeAt, `task-reference:${task.id}`);
       count++;
     }
-    
+
     await redisPipeline.exec();
     console.log(`✅ Berhasil melakukan sinkronisasi! ${count} task telah dimuat ulang ke dalam memori alarm Redis.`);
-    
-  } catch (err) {
-    console.error("❌ Error:", err);
-  } finally {
+  }
+  catch (err) {
+    console.error('❌ Error:', err);
+  }
+  finally {
     process.exit(0);
   }
 }

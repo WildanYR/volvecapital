@@ -9,8 +9,8 @@ import {
   Table,
   Unique,
 } from 'sequelize-typescript';
-import { Role } from './role.model';
 import { RolePermission } from './role-permission.model';
+import { Role } from './role.model';
 
 export interface PermissionAttributes {
   id: string;

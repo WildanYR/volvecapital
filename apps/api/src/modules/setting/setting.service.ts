@@ -1,8 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { TENANT_SETTING_REPOSITORY } from 'src/constants/database.const';
 import { TenantSetting } from 'src/database/models/tenant-setting.model';
-import { PostgresProvider } from 'src/database/postgres.provider';
 import { Tenant } from 'src/database/models/tenant.model';
+import { PostgresProvider } from 'src/database/postgres.provider';
 
 @Injectable()
 export class SettingService {
@@ -17,15 +17,16 @@ export class SettingService {
     try {
       await this.postgresProvider.setSchema(tenantId, transaction);
       const settings = await this.tenantSettingRepository.findAll({ transaction });
-      
+
       const result: Record<string, string> = {};
-      settings.forEach(s => {
+      settings.forEach((s) => {
         result[s.key] = s.value;
       });
 
       await transaction.commit();
       return result;
-    } catch (error) {
+    }
+    catch (error) {
       await transaction.rollback();
       throw error;
     }
@@ -35,7 +36,7 @@ export class SettingService {
     const transaction = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema(tenantId, transaction);
-      
+
       const [setting] = await this.tenantSettingRepository.upsert(
         { key, value },
         { transaction, returning: true }
@@ -54,14 +55,16 @@ export class SettingService {
             { where: { id: tenantId }, transaction: masterTransaction }
           );
           await masterTransaction.commit();
-        } catch (masterError: any) {
+        }
+        catch (masterError: any) {
           await masterTransaction.rollback();
           console.error(`Failed to sync custom_domain to master.tenant: ${masterError.message}`);
         }
       }
 
       return setting;
-    } catch (error) {
+    }
+    catch (error) {
       await transaction.rollback();
       throw error;
     }
@@ -71,8 +74,8 @@ export class SettingService {
     const transaction = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema(tenantId, transaction);
-      
-      const updatePromises = Object.entries(settings).map(([key, value]) => 
+
+      const updatePromises = Object.entries(settings).map(([key, value]) =>
         this.tenantSettingRepository.upsert(
           { key, value },
           { transaction }
@@ -93,14 +96,16 @@ export class SettingService {
             { where: { id: tenantId }, transaction: masterTransaction }
           );
           await masterTransaction.commit();
-        } catch (masterError: any) {
+        }
+        catch (masterError: any) {
           await masterTransaction.rollback();
           console.error(`Failed to sync custom_domain in bulk to master.tenant: ${masterError.message}`);
         }
       }
 
       return { success: true };
-    } catch (error) {
+    }
+    catch (error) {
       await transaction.rollback();
       throw error;
     }

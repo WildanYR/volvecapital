@@ -11,10 +11,11 @@ async function run() {
     AND t.status IN ('QUEUED', 'DISPATCHED') 
     AND e.email IN ('istilahkata883@gmail.com', 'ajikamala4@gmail.com', 'ALUNapremium.70@gmail.com')
   `);
-  
+
   if (results.length === 0) {
-    console.log("Antrian task reset kosong untuk akun tersebut.");
-  } else {
+    console.log('Antrian task reset kosong untuk akun tersebut.');
+  }
+  else {
     console.table(results);
   }
   process.exit(0);

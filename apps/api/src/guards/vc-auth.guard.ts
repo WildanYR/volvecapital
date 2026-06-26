@@ -10,18 +10,18 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
-import { TENANT_REPOSITORY, DEVICE_SESSION_REPOSITORY } from 'src/constants/database.const';
-import { Tenant } from 'src/database/models/tenant.model';
+import { DEVICE_SESSION_REPOSITORY, TENANT_REPOSITORY } from 'src/constants/database.const';
 import { DeviceSession } from 'src/database/models/device-session.model';
+import { Tenant } from 'src/database/models/tenant.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
 import { AppLoggerService } from 'src/modules/logger/logger.service';
 import { TokenProvider } from 'src/modules/utility/token.provider';
 import { IAccessTokenPayload } from 'src/types/access-token.type';
 import { AppRequest } from 'src/types/app-request.type';
 import { Roles } from 'src/types/roles.type';
+import { PERMISSIONS_KEY } from './permissions.decorator';
 import { PUBLIC_ROUTE } from './public-route.decorator';
 import { ROLES_KEY } from './roles.decorator';
-import { PERMISSIONS_KEY } from './permissions.decorator';
 
 @Injectable()
 export class VcAuthGuard implements CanActivate {

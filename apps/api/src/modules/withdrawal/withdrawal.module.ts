@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
-import { WithdrawalService } from './withdrawal.service';
-import { WithdrawalController } from './withdrawal.controller';
 import { UtilityModule } from '../utility/utility.module';
+import { WithdrawalController } from './withdrawal.controller';
+import { WithdrawalService } from './withdrawal.service';
 
 @Module({
   imports: [UtilityModule],

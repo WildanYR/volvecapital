@@ -3,11 +3,11 @@ import {
   AllowNull,
   AutoIncrement,
   BelongsTo,
+  BelongsToMany,
   Column,
   DataType,
   ForeignKey,
   HasMany,
-  BelongsToMany,
   Model,
   PrimaryKey,
   Table,
@@ -16,18 +16,18 @@ import {
   AccountCapital,
   AccountCapitalAttributes,
 } from './account-capital.model';
+import { AccountLabel } from './account-label.model';
 import {
   AccountProfile,
   AccountProfileAttributes,
 } from './account-profile.model';
 import { AccountUser, AccountUserAttributes } from './account-user.model';
 import { Email, EmailAttributes } from './email.model';
+import { Label, LabelAttributes } from './label.model';
 import {
   ProductVariant,
   ProductVariantAttributes,
 } from './product-variant.model';
-import { Label, LabelAttributes } from './label.model';
-import { AccountLabel } from './account-label.model';
 
 export interface AccountAttributes {
   id: string;
@@ -129,7 +129,6 @@ export class Account extends Model<
 
   @HasMany(() => AccountProfile)
   declare profile?: AccountProfile[];
-
 
   @HasMany(() => AccountCapital)
   declare capitals?: AccountCapital[];

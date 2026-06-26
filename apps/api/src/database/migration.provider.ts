@@ -15,9 +15,9 @@ export class MigrationProvider {
   private sequelize: Sequelize;
 
   constructor(private configService: ConfigService) {
-    const databaseUrl = this.configService.get<string>('database.migration_url') 
+    const databaseUrl = this.configService.get<string>('database.migration_url')
       || this.configService.get<string>('database.url');
-    
+
     this.sequelize = new Sequelize(databaseUrl!, {
       dialect: 'postgres',
       logging: false,

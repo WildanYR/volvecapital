@@ -106,12 +106,16 @@ export interface AddAccountCapitalPayload {
   amount: number
   note?: string
   date?: string
+  payment_coa_id?: string
+  expense_coa_id?: string
 }
 
 export interface EditAccountCapitalPayload {
   amount?: number
   note?: string
   date?: string
+  payment_coa_id?: string
+  expense_coa_id?: string
 }
 
 export interface CreateAccountProfilePayload {
@@ -132,6 +136,8 @@ export interface CreateAccountPayload {
   product_variant_id: string
   profile?: Array<CreateAccountProfilePayload>
   capital_price?: number
+  payment_coa_id?: string
+  expense_coa_id?: string
 }
 
 export interface BulkAccountItemPayload {
@@ -144,6 +150,8 @@ export interface BulkAccountItemPayload {
   product_variant_id: string
   profile?: Array<CreateAccountProfilePayload>
   capital_price?: number
+  payment_coa_id?: string
+  expense_coa_id?: string
 }
 
 export interface BulkCreateAccountPayload {

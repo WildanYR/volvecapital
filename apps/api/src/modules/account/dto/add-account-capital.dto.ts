@@ -13,4 +13,12 @@ export class AddAccountCapitalDto {
   @IsOptional()
   @IsString()
   date?: string;
+
+  @IsOptional()
+  @IsString()
+  payment_coa_id?: string;
+
+  @IsOptional()
+  @IsString()
+  expense_coa_id?: string;
 }

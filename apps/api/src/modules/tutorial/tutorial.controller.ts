@@ -1,9 +1,9 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Request } from '@nestjs/common';
+import { RequirePermissions } from 'src/guards/permissions.decorator';
 import { AppRequest } from 'src/types/app-request.type';
-import { TutorialService } from './tutorial.service';
 import { CreateTutorialDto } from './dto/create-tutorial.dto';
 import { UpdateTutorialDto } from './dto/update-tutorial.dto';
-import { RequirePermissions } from 'src/guards/permissions.decorator';
+import { TutorialService } from './tutorial.service';
 
 @Controller('tutorial')
 export class TutorialController {

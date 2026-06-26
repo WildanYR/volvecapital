@@ -116,7 +116,7 @@ export class ProductService {
       .trim()
       .replace(/\s+/g, '-')
       .replace(/[^\w-]+/g, '')
-      .replace(/--+/g, '-');
+      .replace(/-{2,}/g, '-');
   }
 
   async create(tenantId: string, createProductDto: CreateProductDto) {
@@ -298,7 +298,7 @@ export class ProductService {
       const variants = (product as any).variants as ProductVariant[];
 
       if (variants && variants.length > 0) {
-        const variantIds = variants.map((v) => v.id);
+        const variantIds = variants.map(v => v.id);
 
         // 1. Hapus semua voucher yang terkait variant terlebih dahulu
         await this.voucherRepository.destroy({

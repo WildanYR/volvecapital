@@ -5,12 +5,12 @@ import {
   Get,
   Headers,
   Param,
-  Put,
   Post,
+  Put,
 } from '@nestjs/common';
+import { RequirePermissions } from 'src/guards/permissions.decorator';
 import { ArticleService } from './article.service';
 import { CreateArticleDto, UpdateArticleDto } from './dto/article.dto';
-import { RequirePermissions } from 'src/guards/permissions.decorator';
 
 @Controller('article')
 export class ArticleController {

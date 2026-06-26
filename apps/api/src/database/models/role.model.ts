@@ -9,9 +9,9 @@ import {
   PrimaryKey,
   Table,
 } from 'sequelize-typescript';
+import { DashboardUser } from './dashboard-user.model';
 import { Permission } from './permission.model';
 import { RolePermission } from './role-permission.model';
-import { DashboardUser } from './dashboard-user.model';
 
 export interface RoleAttributes {
   id: string;

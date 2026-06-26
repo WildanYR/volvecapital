@@ -16,13 +16,15 @@ export const up: MigrationFn<MigrationContext> = async ({ context }) => {
         defaultValue: false,
       }
     );
-  } catch (err) {
+  }
+  catch (err) {
     // Already exists or other error we skip
   }
 
   // 2. Add fields to current tenant schema
   const { schema } = context;
-  if (['public', 'master', 'information_schema', 'pg_catalog'].includes(schema)) return;
+  if (['public', 'master', 'information_schema', 'pg_catalog'].includes(schema))
+    return;
 
   // Add access fields to voucher table
   try {
@@ -35,7 +37,8 @@ export const up: MigrationFn<MigrationContext> = async ({ context }) => {
         unique: true,
       }
     );
-  } catch (err) {}
+  }
+  catch (err) {}
 
   try {
     await queryInterface.addColumn(
@@ -47,7 +50,8 @@ export const up: MigrationFn<MigrationContext> = async ({ context }) => {
         defaultValue: 0,
       }
     );
-  } catch (err) {}
+  }
+  catch (err) {}
 
   try {
     await queryInterface.addColumn(
@@ -58,7 +62,8 @@ export const up: MigrationFn<MigrationContext> = async ({ context }) => {
         allowNull: true,
       }
     );
-  } catch (err) {}
+  }
+  catch (err) {}
 };
 
 export const down: MigrationFn<MigrationContext> = async ({ context }) => {
@@ -68,7 +73,8 @@ export const down: MigrationFn<MigrationContext> = async ({ context }) => {
 
   const schemas = (await queryInterface.showAllSchemas()) as string[];
   for (const schema of schemas) {
-    if (['public', 'master', 'information_schema', 'pg_catalog'].includes(schema)) continue;
+    if (['public', 'master', 'information_schema', 'pg_catalog'].includes(schema))
+      continue;
     await queryInterface.removeColumn({ schema, tableName: 'voucher' }, 'access_token');
     await queryInterface.removeColumn({ schema, tableName: 'voucher' }, 'access_count_today');
     await queryInterface.removeColumn({ schema, tableName: 'voucher' }, 'last_access_at');

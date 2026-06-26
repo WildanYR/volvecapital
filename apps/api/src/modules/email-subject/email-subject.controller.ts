@@ -25,7 +25,7 @@ export class EmailSubjectController {
   @RequirePermissions('email.edit')
   update(
     @Headers('x-tenant-id') tenantId: string,
-    @Param('id') id: string, 
+    @Param('id') id: string,
     @Body() data: { context?: string; subject?: string; is_public?: boolean }
   ) {
     return this.emailSubjectService.update(tenantId, id, data);

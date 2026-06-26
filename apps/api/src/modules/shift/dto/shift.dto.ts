@@ -7,14 +7,14 @@ export class CreateShiftDto {
 
   @IsString()
   @IsNotEmpty()
-  @Matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, {
+  @Matches(/^([01]?\d|2[0-3]):[0-5]\d$/, {
     message: 'start_time must be a valid time in HH:mm format',
   })
   start_time: string;
 
   @IsString()
   @IsNotEmpty()
-  @Matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, {
+  @Matches(/^([01]?\d|2[0-3]):[0-5]\d$/, {
     message: 'end_time must be a valid time in HH:mm format',
   })
   end_time: string;
@@ -35,14 +35,14 @@ export class UpdateShiftDto {
 
   @IsString()
   @IsOptional()
-  @Matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, {
+  @Matches(/^([01]?\d|2[0-3]):[0-5]\d$/, {
     message: 'start_time must be a valid time in HH:mm format',
   })
   start_time?: string;
 
   @IsString()
   @IsOptional()
-  @Matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, {
+  @Matches(/^([01]?\d|2[0-3]):[0-5]\d$/, {
     message: 'end_time must be a valid time in HH:mm format',
   })
   end_time?: string;

@@ -63,14 +63,16 @@ export const up: MigrationFn<MigrationContext> = async ({ context }) => {
           INSERT INTO "${schema}"."email_subject" (context, subject, is_public, created_at, updated_at)
           SELECT context, subject, is_public, created_at, updated_at FROM "master"."email_subject"
         `);
-      } else {
+      }
+      else {
         await queryInterface.sequelize.query(`
           INSERT INTO "${schema}"."email_subject" (context, subject, is_public, created_at, updated_at)
           SELECT context, subject, false, created_at, updated_at FROM "master"."email_subject"
         `);
       }
     }
-  } catch (error) {
+  }
+  catch (error) {
     console.error(`Failed to copy email_subject data to schema ${schema}:`, error);
     // Non-fatal, we continue
   }

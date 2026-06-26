@@ -1,52 +1,58 @@
-import { Injectable } from '@nestjs/common';
+import 'reflect-metadata';
+import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as pg from 'pg';
 import { QueryOptions, Transaction } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
-import { ARTICLE_REPOSITORY, EMAIL_MESSAGE_REPOSITORY, EMAIL_REPOSITORY, EMAIL_SUBJECT_REPOSITORY, PEAK_HOUR_STATISTICS_REPOSITORY, PLATFORM_PRODUCT_REPOSITORY, PLATFORM_STATISTICS_REPOSITORY, PRODUCT_REPOSITORY, PRODUCT_SALES_STATISTICS_REPOSITORY, PRODUCT_VARIANT_REPOSITORY, REVENUE_STATISTICS_REPOSITORY, SYSLOG_REPOSITORY, TASK_QUEUE_REPOSITORY, TENANT_REPOSITORY, TRANSACTION_ITEM_REPOSITORY, TRANSACTION_REPOSITORY, VOUCHER_REPOSITORY, ACCOUNT_REPOSITORY, ACCOUNT_PROFILE_REPOSITORY, ACCOUNT_USER_REPOSITORY, TENANT_SETTING_REPOSITORY, TENANT_OWNER_REPOSITORY, TUTORIAL_REPOSITORY, PROMO_CODE_REPOSITORY } from 'src/constants/database.const';
-import { EmailMessage } from './models/email-message.model';
+import { ACCOUNT_PROFILE_REPOSITORY, ACCOUNT_REPOSITORY, ACCOUNT_USER_REPOSITORY, ARTICLE_REPOSITORY, EMAIL_MESSAGE_REPOSITORY, EMAIL_REPOSITORY, EMAIL_SUBJECT_REPOSITORY, PEAK_HOUR_STATISTICS_REPOSITORY, PLATFORM_PRODUCT_REPOSITORY, PLATFORM_STATISTICS_REPOSITORY, PRODUCT_REPOSITORY, PRODUCT_SALES_STATISTICS_REPOSITORY, PRODUCT_VARIANT_REPOSITORY, PROMO_CODE_REPOSITORY, REVENUE_STATISTICS_REPOSITORY, SYSLOG_REPOSITORY, TASK_QUEUE_REPOSITORY, TENANT_OWNER_REPOSITORY, TENANT_REPOSITORY, TENANT_SETTING_REPOSITORY, TRANSACTION_ITEM_REPOSITORY, TRANSACTION_REPOSITORY, TUTORIAL_REPOSITORY, VOUCHER_REPOSITORY } from 'src/constants/database.const';
+import { AccountCapital } from './models/account-capital.model';
+import { AccountLabel } from './models/account-label.model';
 import { AccountProfile } from './models/account-profile.model';
+import { AccountUserMoveHistory } from './models/account-user-move-history.model';
 import { AccountUser } from './models/account-user.model';
 import { Account } from './models/account.model';
+import { AccountingPeriod } from './models/accounting-period.model';
+import { Article } from './models/article.model';
+import { AttendanceSetting } from './models/attendance-setting.model';
+import { Attendance } from './models/attendance.model';
+import { Coa } from './models/coa.model';
+import { DashboardUser } from './models/dashboard-user.model';
+import { DeviceSession } from './models/device-session.model';
+import { EmailMessage } from './models/email-message.model';
 import { EmailSubject } from './models/email-subject.model';
 import { Email } from './models/email.model';
+import { JournalEntry } from './models/journal-entry.model';
+import { JournalLine } from './models/journal-line.model';
+import { Label } from './models/label.model';
+import { ManualBookCategory } from './models/manual-book-category.model';
+import { ManualBook } from './models/manual-book.model';
 import { PeakHourStatistics } from './models/peak-hour-statistics.model';
+import { Permission } from './models/permission.model';
 import { PlatformProduct } from './models/platform-product.model';
 import { PlatformStatistics } from './models/platform-statistics.model';
 import { ProductSalesStatistics } from './models/product-sales-statistics.model';
 import { ProductVariant } from './models/product-variant.model';
 import { Product } from './models/product.model';
+import { PromoCode } from './models/promo-code.model';
 import { RevenueStatistics } from './models/revenue-statistics.model';
+import { RolePermission } from './models/role-permission.model';
+import { Role } from './models/role.model';
+import { Shift } from './models/shift.model';
 import { Syslog } from './models/syslog.model';
 import { TaskQueue } from './models/task-queue.model';
+import { TenantBankAccount } from './models/tenant-bank-account.model';
+import { PlatformAccountingSetting } from './models/platform-accounting-setting.model';
+import { TenantOwner } from './models/tenant-owner.model';
+import { TenantSetting } from './models/tenant-setting.model';
 import { Tenant } from './models/tenant.model';
 import { TransactionItem } from './models/transaction-item.model';
 import { Transaction as TransactionModel } from './models/transaction.model';
-import { Voucher } from './models/voucher.model';
-import { TenantSetting } from './models/tenant-setting.model';
 import { Tutorial } from './models/tutorial.model';
-import { Article } from './models/article.model';
-import { AccountCapital } from './models/account-capital.model';
-import { TenantOwner } from './models/tenant-owner.model';
-import { PromoCode } from './models/promo-code.model';
-import { WithdrawalRequest } from './models/withdrawal-request.model';
-import { TenantBankAccount } from './models/tenant-bank-account.model';
-import { Role } from './models/role.model';
-import { Permission } from './models/permission.model';
-import { RolePermission } from './models/role-permission.model';
-import { DashboardUser } from './models/dashboard-user.model';
-import { DeviceSession } from './models/device-session.model';
-import { Label } from './models/label.model';
-import { AccountLabel } from './models/account-label.model';
-import { AccountUserMoveHistory } from './models/account-user-move-history.model';
-import { Shift } from './models/shift.model';
 import { UserShift } from './models/user-shift.model';
-import { Attendance } from './models/attendance.model';
-import { WeeklyOffSchedule } from './models/weekly-off-schedule.model';
+import { Voucher } from './models/voucher.model';
 import { WeeklyOffRequest } from './models/weekly-off-request.model';
-import { AttendanceSetting } from './models/attendance-setting.model';
-import { ManualBookCategory } from './models/manual-book-category.model';
-import { ManualBook } from './models/manual-book.model';
+import { WeeklyOffSchedule } from './models/weekly-off-schedule.model';
+import { WithdrawalRequest } from './models/withdrawal-request.model';
 
 @Injectable()
 export class PostgresProvider {
@@ -127,6 +133,11 @@ export class PostgresProvider {
         AttendanceSetting,
         ManualBookCategory,
         ManualBook,
+        Coa,
+        AccountingPeriod,
+        JournalEntry,
+        JournalLine,
+        PlatformAccountingSetting,
       ]);
     }
     else {

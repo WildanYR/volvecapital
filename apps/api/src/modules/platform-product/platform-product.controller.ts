@@ -12,6 +12,7 @@ import {
   Request,
   UsePipes,
 } from '@nestjs/common';
+import { RequirePermissions } from 'src/guards/permissions.decorator';
 import { AtLeastOnePropertyPipe } from 'src/pipes/at-least-one-property.pipe';
 import { AppRequest } from 'src/types/app-request.type';
 import { PaginationProvider } from '../utility/pagination.provider';
@@ -20,7 +21,6 @@ import { GetAllPlatformProductByNamesDto } from './dto/get-all-platform-product-
 import { GetAllPlatformProductQueryUrlDto } from './dto/get-all-platform-product.dto';
 import { ResolvePlatformProductDto } from './dto/resolve-platform-product.dto';
 import { UpdatePlatformProductDto } from './dto/update-platform-product.dto';
-import { RequirePermissions } from 'src/guards/permissions.decorator';
 import { PlatformProductService } from './platform-product.service';
 
 @Controller('platform-product')

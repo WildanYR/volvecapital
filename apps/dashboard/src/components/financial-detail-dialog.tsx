@@ -1,7 +1,7 @@
 import type { Account, AddAccountCapitalPayload } from '@/dashboard/services/account.service'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Banknote, History, Pencil, Plus, Trash2, TrendingUp, User } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { Pagination } from '@/dashboard/components/pagination'
 import { Button } from '@/dashboard/components/ui/button'
@@ -25,11 +25,19 @@ import { Input } from '@/dashboard/components/ui/input'
 import { Label } from '@/dashboard/components/ui/label'
 import { ScrollArea } from '@/dashboard/components/ui/scroll-area'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/dashboard/components/ui/tabs'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/dashboard/components/ui/select'
 import { API_URL } from '@/dashboard/constants/api-url.cont'
 import { useAuth } from '@/dashboard/context-providers/auth.provider'
 import { formatRupiah } from '@/dashboard/lib/currency.util'
 import { formatDateIdStandard } from '@/dashboard/lib/time-converter.util'
 import { AccountServiceGenerator } from '@/dashboard/services/account.service'
+import { AccountingServiceGenerator } from '@/dashboard/services/accounting.service'
 
 interface FinancialDetailDialogProps {
   account: Account
@@ -49,24 +57,47 @@ export function FinancialDetailDialog({
     auth.tenant?.accessToken || '',
     auth.tenant?.id || '',
   )
+  const accountingService = AccountingServiceGenerator(
+    API_URL,
+    auth.tenant?.accessToken || '',
+    auth.tenant?.id || '',
+  )
 
   const [newCapital, setNewCapital] = useState<string>('')
   const [newNote, setNewNote] = useState<string>('')
   const [newDate, setNewDate] = useState<string>('')
+  const [newPaymentCoaId, setNewPaymentCoaId] = useState<string>('')
+  const [newExpenseCoaId, setNewExpenseCoaId] = useState<string>(
+    (account?.product_variant as any)?.inventory_coa_id || (account?.product_variant as any)?.expense_coa_id || ''
+  )
   const [capitalPage, setCapitalPage] = useState(1)
   const [revenuePage, setRevenuePage] = useState(1)
   const itemsPerPage = 5
+
+  useEffect(() => {
+    if (open && account?.product_variant) {
+      setNewExpenseCoaId((account.product_variant as any).inventory_coa_id || (account.product_variant as any).expense_coa_id || '')
+    }
+  }, [open, account])
 
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editAmount, setEditAmount] = useState<string>('')
   const [editNote, setEditNote] = useState<string>('')
   const [editDate, setEditDate] = useState<string>('')
+  const [editPaymentCoaId, setEditPaymentCoaId] = useState<string>('')
+  const [editExpenseCoaId, setEditExpenseCoaId] = useState<string>('')
 
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const { data: details, isLoading } = useQuery({
     queryKey: ['account-financial-details', account?.id],
     queryFn: () => accountService.getFinancialDetails(account!.id),
+    enabled: !!account && open,
+  })
+
+  const { data: coaList } = useQuery({
+    queryKey: ['accounting-coa-list'],
+    queryFn: () => accountingService.getCoaList(),
     enabled: !!account && open,
   })
 
@@ -79,6 +110,8 @@ export function FinancialDetailDialog({
       setNewCapital('')
       setNewNote('')
       setNewDate('')
+      setNewPaymentCoaId('')
+      setNewExpenseCoaId((account?.product_variant as any)?.inventory_coa_id || (account?.product_variant as any)?.expense_coa_id || '')
       toast.success('Modal berhasil ditambahkan')
     },
     onError: (error: any) => {
@@ -87,8 +120,14 @@ export function FinancialDetailDialog({
   })
 
   const editCapitalMutation = useMutation({
-    mutationFn: (payload: { id: string, amount: number, note: string, date: string }) =>
-      accountService.editAccountCapital(account!.id, payload.id, { amount: payload.amount, note: payload.note, date: payload.date ? new Date(payload.date).toISOString() : undefined }),
+    mutationFn: (payload: { id: string, amount: number, note: string, date: string, payment_coa_id?: string, expense_coa_id?: string }) =>
+      accountService.editAccountCapital(account!.id, payload.id, { 
+        amount: payload.amount, 
+        note: payload.note, 
+        date: payload.date ? new Date(payload.date).toISOString() : undefined,
+        payment_coa_id: payload.payment_coa_id,
+        expense_coa_id: payload.expense_coa_id
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['account-financial-details', account?.id] })
       queryClient.invalidateQueries({ queryKey: ['account'] })
@@ -125,7 +164,9 @@ export function FinancialDetailDialog({
     addCapitalMutation.mutate({ 
       amount, 
       note: newNote, 
-      date: newDate ? new Date(newDate).toISOString() : undefined 
+      date: newDate ? new Date(newDate).toISOString() : undefined,
+      payment_coa_id: newPaymentCoaId || undefined,
+      expense_coa_id: newExpenseCoaId || undefined,
     })
   }
 
@@ -195,10 +236,39 @@ export function FinancialDetailDialog({
                   onChange={e => setNewDate(e.target.value)}
                 />
               </div>
+            </div>
+            
+            <div className="flex gap-2 mb-4 items-end">
+              <div className="grid gap-1.5 flex-1">
+                <Label className="text-xs">Dibayar dari Kas/Bank (Kredit)</Label>
+                <Select value={newPaymentCoaId} onValueChange={setNewPaymentCoaId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih Kas/Bank..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {coaList?.filter(c => c.type === 'ASET').map(c => (
+                      <SelectItem key={c.id} value={c.id}>{c.code} - {c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-1.5 flex-1">
+                <Label className="text-xs">Kategori Beban/HPP (Debit)</Label>
+                <Select value={newExpenseCoaId} onValueChange={setNewExpenseCoaId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih Akun Beban/HPP..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {coaList?.filter(c => c.type === 'BEBAN' || c.type === 'HPP' || c.type === 'ASET').map(c => (
+                      <SelectItem key={c.id} value={c.id}>{c.code} - {c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <Button
                 onClick={handleAddCapital}
                 disabled={addCapitalMutation.isPending}
-                className="cursor-pointer"
+                className="whitespace-nowrap"
               >
                 <Plus className="size-4 mr-2" />
                 Tambah
@@ -267,6 +337,26 @@ export function FinancialDetailDialog({
                                               onChange={e => setEditDate(e.target.value)}
                                               className="h-7 text-xs"
                                             />
+                                            <Select value={editPaymentCoaId} onValueChange={setEditPaymentCoaId}>
+                                              <SelectTrigger className="h-7 text-xs">
+                                                <SelectValue placeholder="Pilih Kas/Bank..." />
+                                              </SelectTrigger>
+                                              <SelectContent>
+                                                {coaList?.filter(c => c.type === 'ASET').map(c => (
+                                                  <SelectItem key={c.id} value={c.id} className="text-xs">{c.code} - {c.name}</SelectItem>
+                                                ))}
+                                              </SelectContent>
+                                            </Select>
+                                            <Select value={editExpenseCoaId} onValueChange={setEditExpenseCoaId}>
+                                              <SelectTrigger className="h-7 text-xs">
+                                                <SelectValue placeholder="Pilih Beban/HPP..." />
+                                              </SelectTrigger>
+                                              <SelectContent>
+                                                {coaList?.filter(c => c.type === 'BEBAN' || c.type === 'HPP' || c.type === 'ASET').map(c => (
+                                                  <SelectItem key={c.id} value={c.id} className="text-xs">{c.code} - {c.name}</SelectItem>
+                                                ))}
+                                              </SelectContent>
+                                            </Select>
                                           </div>
                                           <div className="flex flex-col gap-1">
                                             <Button
@@ -278,7 +368,14 @@ export function FinancialDetailDialog({
                                                   toast.error('Masukkan nominal modal yang valid')
                                                   return
                                                 }
-                                                editCapitalMutation.mutate({ id: cap.id, amount, note: editNote, date: editDate })
+                                                editCapitalMutation.mutate({ 
+                                                  id: cap.id, 
+                                                  amount, 
+                                                  note: editNote, 
+                                                  date: editDate,
+                                                  payment_coa_id: editPaymentCoaId || undefined,
+                                                  expense_coa_id: editExpenseCoaId || undefined
+                                                })
                                               }}
                                               disabled={editCapitalMutation.isPending}
                                             >
@@ -314,6 +411,8 @@ export function FinancialDetailDialog({
                                                   setEditAmount(cap.amount.toString())
                                                   setEditNote(cap.note || '')
                                                   setEditDate(cap.created_at ? new Date(cap.created_at).toISOString().split('T')[0] : '')
+                                                  setEditPaymentCoaId(cap.payment_coa_id || '')
+                                                  setEditExpenseCoaId(cap.expense_coa_id || '')
                                                 }}
                                               >
                                                 <Pencil className="size-3" />

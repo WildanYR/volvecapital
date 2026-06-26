@@ -45,4 +45,3 @@ export class Tenant extends Model<TenantAttributes, TenantCreationAttributes> {
   })
   declare custom_domain: string | null;
 }
-

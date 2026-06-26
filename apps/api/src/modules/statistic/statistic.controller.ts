@@ -1,6 +1,6 @@
 import { Controller, Get, Query, Request } from '@nestjs/common';
 import { AppRequest } from 'src/types/app-request.type';
-import { StatisticService, StatisticParams } from './statistic.service';
+import { StatisticParams, StatisticService } from './statistic.service';
 
 @Controller('statistic')
 export class StatisticController {

@@ -1,8 +1,9 @@
 import * as dotenv from 'dotenv';
-dotenv.config();
 
-import { Sequelize } from 'sequelize-typescript';
 import * as pg from 'pg';
+import { Sequelize } from 'sequelize-typescript';
+
+dotenv.config();
 
 async function migrate() {
   const sequelize = new Sequelize(process.env.DATABASE_URL!, {
@@ -13,11 +14,11 @@ async function migrate() {
 
   try {
     const [schemas] = await sequelize.query(`SELECT nspname AS id FROM pg_namespace WHERE nspname NOT LIKE 'pg_%' AND nspname != 'information_schema' AND nspname != 'public'`);
-    
+
     for (const tenantRow of schemas) {
       const tenantId = (tenantRow as any).id;
       console.log(`\nMigrating categories for tenant: ${tenantId}...`);
-      
+
       const transaction = await sequelize.transaction();
       try {
         await sequelize.query(`SET LOCAL search_path TO "${tenantId}"`, { transaction });
@@ -40,13 +41,15 @@ async function migrate() {
 
         await transaction.commit();
         console.log(`✅ Migration berhasil untuk tenant: ${tenantId}`);
-      } catch (error) {
+      }
+      catch (error) {
         await transaction.rollback();
         console.error(`❌ Migration gagal untuk tenant ${tenantId}:`, error);
       }
     }
     process.exit(0);
-  } catch (error) {
+  }
+  catch (error) {
     console.error('Failed to get tenants:', error);
     process.exit(1);
   }

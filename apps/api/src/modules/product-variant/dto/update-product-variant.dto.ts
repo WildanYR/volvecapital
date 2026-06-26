@@ -51,4 +51,12 @@ export class UpdateProductVariantDto {
   @IsOptional()
   @IsNumber()
   reminder_before_hours?: number;
+
+  @IsOptional()
+  @IsString()
+  income_coa_id?: string;
+
+  @IsOptional()
+  @IsString()
+  expense_coa_id?: string;
 }

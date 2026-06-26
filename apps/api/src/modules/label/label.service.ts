@@ -1,8 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { LABEL_REPOSITORY } from 'src/constants/database.const';
 import { Label } from 'src/database/models/label.model';
-import { CreateLabelDto } from './dto/create-label.dto';
 import { PostgresProvider } from 'src/database/postgres.provider';
+import { CreateLabelDto } from './dto/create-label.dto';
 
 @Injectable()
 export class LabelService {
@@ -19,7 +19,8 @@ export class LabelService {
       const label = await this.labelRepository.create(createLabelDto as any, { transaction });
       await transaction.commit();
       return label;
-    } catch (error) {
+    }
+    catch (error) {
       await transaction.rollback();
       throw error;
     }
@@ -36,7 +37,8 @@ export class LabelService {
       const labels = await this.labelRepository.findAll({ where, transaction });
       await transaction.commit();
       return labels;
-    } catch (error) {
+    }
+    catch (error) {
       await transaction.rollback();
       throw error;
     }
@@ -51,7 +53,8 @@ export class LabelService {
         await label.destroy({ transaction });
       }
       await transaction.commit();
-    } catch (error) {
+    }
+    catch (error) {
       await transaction.rollback();
       throw error;
     }

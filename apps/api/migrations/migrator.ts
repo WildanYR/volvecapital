@@ -49,7 +49,7 @@ export async function migrateUp() {
     if (schemas.length === 0) {
       console.log('🔍 TENANT_SCHEMAS is empty, fetching all schemas from database...');
       const [results] = await sequelize.query(
-        "SELECT schema_name FROM information_schema.schemata WHERE schema_name NOT IN ('information_schema', 'pg_catalog', 'public', 'master', 'pg_toast') AND schema_name NOT LIKE 'pg_temp_%' AND schema_name NOT LIKE 'pg_toast_%'"
+        'SELECT schema_name FROM information_schema.schemata WHERE schema_name NOT IN (\'information_schema\', \'pg_catalog\', \'public\', \'master\', \'pg_toast\') AND schema_name NOT LIKE \'pg_temp_%\' AND schema_name NOT LIKE \'pg_toast_%\''
       );
       schemas = (results as any[]).map(r => r.schema_name);
     }
@@ -90,7 +90,7 @@ export async function migrateDown() {
     if (schemas.length === 0) {
       console.log('🔍 TENANT_SCHEMAS is empty, fetching all schemas from database...');
       const [results] = await sequelize.query(
-        "SELECT schema_name FROM information_schema.schemata WHERE schema_name NOT IN ('information_schema', 'pg_catalog', 'public', 'master', 'pg_toast') AND schema_name NOT LIKE 'pg_temp_%' AND schema_name NOT LIKE 'pg_toast_%'"
+        'SELECT schema_name FROM information_schema.schemata WHERE schema_name NOT IN (\'information_schema\', \'pg_catalog\', \'public\', \'master\', \'pg_toast\') AND schema_name NOT LIKE \'pg_temp_%\' AND schema_name NOT LIKE \'pg_toast_%\''
       );
       schemas = (results as any[]).map(r => r.schema_name);
     }

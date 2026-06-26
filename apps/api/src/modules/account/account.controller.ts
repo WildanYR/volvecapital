@@ -13,19 +13,19 @@ import {
   Request,
   UsePipes,
 } from '@nestjs/common';
+import { RequirePermissions } from 'src/guards/permissions.decorator';
 import { AtLeastOnePropertyPipe } from 'src/pipes/at-least-one-property.pipe';
 import { AppRequest } from 'src/types/app-request.type';
 import { PaginationProvider } from '../utility/pagination.provider';
 import { AccountService } from './account.service';
 import { AddAccountCapitalDto } from './dto/add-account-capital.dto';
-import { UpdateAccountCapitalDto } from './dto/update-account-capital.dto';
+import { BulkCreateAccountDto } from './dto/bulk-create-account.dto';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { FreezeAccountDto } from './dto/freeze-account.dto';
 import { GetAllAccountQueryUrlDto } from './dto/get-all-account.dto';
-import { UpdateAccountDto } from './dto/update-account.dto';
-import { BulkCreateAccountDto } from './dto/bulk-create-account.dto';
 import { MoveAccountUserDto } from './dto/move-account-user.dto';
-import { RequirePermissions } from 'src/guards/permissions.decorator';
+import { UpdateAccountCapitalDto } from './dto/update-account-capital.dto';
+import { UpdateAccountDto } from './dto/update-account.dto';
 
 @Controller('account')
 export class AccountController {
@@ -125,7 +125,6 @@ export class AccountController {
       updateAccountDto,
     );
   }
-
 
   @Patch(':id/freeze')
   @HttpCode(HttpStatus.NO_CONTENT)

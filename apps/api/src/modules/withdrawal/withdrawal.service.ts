@@ -1,22 +1,22 @@
-import { Inject, Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import * as https from 'https';
 import * as crypto from 'node:crypto';
+import * as https from 'node:https';
+import { BadRequestException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Op, WhereOptions } from 'sequelize';
 import {
-  TRANSACTION_REPOSITORY,
   TENANT_SETTING_REPOSITORY,
+  TRANSACTION_REPOSITORY,
   WITHDRAWAL_REQUEST_REPOSITORY,
 } from 'src/constants/database.const';
 import { TenantSetting } from 'src/database/models/tenant-setting.model';
+import { TransactionItem } from 'src/database/models/transaction-item.model';
 import { Transaction } from 'src/database/models/transaction.model';
 import { WithdrawalRequest } from 'src/database/models/withdrawal-request.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
-import { SnowflakeIdProvider } from '../utility/snowflake-id.provider';
-import { CreateWithdrawalDto } from './dto/create-withdrawal.dto';
 import { PaginationProvider } from '../utility/pagination.provider';
+import { SnowflakeIdProvider } from '../utility/snowflake-id.provider';
 import { BaseGetAllUrlQuery } from '../utility/types/base-get-all-url-query.type';
-import { TransactionItem } from 'src/database/models/transaction-item.model';
+import { CreateWithdrawalDto } from './dto/create-withdrawal.dto';
 
 @Injectable()
 export class WithdrawalService {
@@ -48,7 +48,7 @@ export class WithdrawalService {
         `SELECT SUM(net_profit) as total_profit FROM transaction WHERE platform = 'landing' AND net_profit > 0 AND created_at <= :tPlus2`,
         { replacements: { tPlus2 }, transaction: tx }
       );
-      
+
       const totalProfit = Number((profitResult as any)[0]?.total_profit || 0);
 
       // 2. Calculate Pending Balance (transactions within T+2, not yet cleared)
@@ -74,9 +74,10 @@ export class WithdrawalService {
         available_balance: availableBalance,
         pending_balance: pendingBalance,
         total_profit: totalProfit,
-        total_withdrawal: totalWd
+        total_withdrawal: totalWd,
       };
-    } catch (error) {
+    }
+    catch (error) {
       await tx.rollback();
       throw error;
     }
@@ -92,14 +93,15 @@ export class WithdrawalService {
       await this.postgresProvider.setSchema(tenantId, tx);
 
       const { limit, offset } = this.paginationProvider.generatePaginationQuery(pagination);
-      
+
       const tPlus2 = new Date();
       tPlus2.setDate(tPlus2.getDate() - 2);
 
       const whereOptions: WhereOptions = { platform: 'landing', net_profit: { [Op.gt]: 0 } };
       if (type === 'available') {
         whereOptions.created_at = { [Op.lte]: tPlus2 };
-      } else if (type === 'pending') {
+      }
+      else if (type === 'pending') {
         whereOptions.created_at = { [Op.gt]: tPlus2 };
       }
 
@@ -107,13 +109,13 @@ export class WithdrawalService {
         where: whereOptions,
         include: [{
           model: TransactionItem,
-          as: 'items'
+          as: 'items',
         }],
         order: [['created_at', 'DESC']],
         limit,
         offset,
         distinct: true,
-        transaction: tx
+        transaction: tx,
       });
 
       await tx.commit();
@@ -122,7 +124,8 @@ export class WithdrawalService {
         transactions.count,
         pagination
       );
-    } catch (error) {
+    }
+    catch (error) {
       await tx.rollback();
       throw error;
     }
@@ -134,11 +137,12 @@ export class WithdrawalService {
       await this.postgresProvider.setSchema(tenantId, tx);
       const history = await this.withdrawalRequestRepository.findAll({
         order: [['created_at', 'DESC']],
-        transaction: tx
+        transaction: tx,
       });
       await tx.commit();
       return history;
-    } catch (error) {
+    }
+    catch (error) {
       await tx.rollback();
       throw error;
     }
@@ -171,7 +175,7 @@ export class WithdrawalService {
       }
 
       const id = this.snowflakeIdProvider.generateId();
-      
+
       const request = await this.withdrawalRequestRepository.create({
         id,
         amount: dto.amount,
@@ -180,22 +184,24 @@ export class WithdrawalService {
         bank_info: {
           bank_name: bankAccount.bank_name,
           account_number: bankAccount.account_number,
-          account_holder: bankAccount.account_holder
-        }
+          account_holder: bankAccount.account_holder,
+        },
       }, { transaction: tx });
 
       await tx.commit();
       return request;
-    } catch (error) {
+    }
+    catch (error) {
       if (tx) {
-        try { await tx.rollback(); } catch (e) {}
+        try { await tx.rollback(); }
+        catch (e) {}
       }
       throw error;
     }
   }
 
   // --- Admin Methods ---
-  
+
   async getPendingRequests() {
     // For admin, we might need to query across all tenants, but since schemas are per tenant,
     // this would require querying all schemas.
@@ -210,24 +216,26 @@ export class WithdrawalService {
         await this.postgresProvider.setSchema(schema, tx);
         const requests = await this.withdrawalRequestRepository.findAll({
           where: { status: 'PENDING' },
-          transaction: tx
+          transaction: tx,
         });
-        
+
         for (const req of requests) {
           pendingRequests.push({
             ...req.toJSON(),
-            tenant_id: schema
+            tenant_id: schema,
           });
         }
         await tx.commit();
-      } catch (err: any) {
+      }
+      catch (err: any) {
         if (tx) {
-          try { await tx.rollback(); } catch (e) {}
+          try { await tx.rollback(); }
+          catch (e) {}
         }
         this.logger.error(`Failed to get pending requests for tenant ${schema}: ${err.message}`);
       }
     }
-    
+
     // Sort by created_at descending
     return pendingRequests.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   }
@@ -239,7 +247,7 @@ export class WithdrawalService {
 
       const request = await this.withdrawalRequestRepository.findOne({
         where: { id: requestId, status: 'PENDING' },
-        transaction: tx
+        transaction: tx,
       });
 
       if (!request) {
@@ -254,7 +262,7 @@ export class WithdrawalService {
       try {
         const externalId = `WD-${tenantId.toUpperCase()}-${requestId}`;
         // Usually bank code mapping is required for DOKU, we assume bank_name is the bank_code for now or map it if possible.
-        // In real world, bank_name from UI should be the DOKU bank code or we map it. 
+        // In real world, bank_name from UI should be the DOKU bank code or we map it.
         // Here we just use bank_name assuming it is the code.
 
         const payload = {
@@ -265,31 +273,32 @@ export class WithdrawalService {
                 beneficiary: {
                   name: request.bank_info.account_holder,
                   account_number: request.bank_info.account_number,
-                  bank_code: request.bank_info.bank_name, 
+                  bank_code: request.bank_info.bank_name,
                 },
                 description: `Withdrawal Digital Premium - Tenant ${tenantId}`,
-                external_id: externalId
-              }
-            ]
-          }
+                external_id: externalId,
+              },
+            ],
+          },
         };
 
         const response = await this.requestDokuPayout(payload);
-        
+
         // DOKU Payout response might have a reference ID
         // For Sandbox or Mock, we just update it
         const updateTx = await this.postgresProvider.transaction();
         await this.postgresProvider.setSchema(tenantId, updateTx);
         const dokuRef = response?.response?.payouts?.[0]?.reference_id || externalId;
-        
+
         await this.withdrawalRequestRepository.update(
           { doku_reference: dokuRef },
           { where: { id: requestId }, transaction: updateTx }
         );
         await updateTx.commit();
-        
+
         return { message: 'Withdrawal is processing', reference: dokuRef };
-      } catch (dokuError: any) {
+      }
+      catch (dokuError: any) {
         // If API fails immediately, we might want to revert or mark FAILED
         const revertTx = await this.postgresProvider.transaction();
         await this.postgresProvider.setSchema(tenantId, revertTx);
@@ -300,9 +309,11 @@ export class WithdrawalService {
         await revertTx.commit();
         throw new BadRequestException(`Gagal mengirim request ke DOKU: ${dokuError.message}`);
       }
-    } catch (error) {
+    }
+    catch (error) {
       if (tx) {
-        try { await tx.rollback(); } catch (e) {}
+        try { await tx.rollback(); }
+        catch (e) {}
       }
       throw error;
     }
@@ -312,7 +323,7 @@ export class WithdrawalService {
 
   private async getTenantSchemas(): Promise<string[]> {
     const [results] = await this.postgresProvider.rawQuery(
-      "SELECT schema_name FROM information_schema.schemata WHERE schema_name NOT IN ('information_schema', 'pg_catalog', 'public', 'master', 'pg_toast') AND schema_name NOT LIKE 'pg_temp_%' AND schema_name NOT LIKE 'pg_toast_%'",
+      'SELECT schema_name FROM information_schema.schemata WHERE schema_name NOT IN (\'information_schema\', \'pg_catalog\', \'public\', \'master\', \'pg_toast\') AND schema_name NOT LIKE \'pg_temp_%\' AND schema_name NOT LIKE \'pg_toast_%\'',
       {}
     );
     return (results as any[]).map(r => r.schema_name);
@@ -322,21 +333,21 @@ export class WithdrawalService {
     const clientId = this.configService.get<string>('doku.clientId');
     const secretKey = this.configService.get<string>('doku.secretKey') || '';
     const isProd = this.configService.get<boolean>('doku.isProduction');
-    
+
     // Sandbox or Prod URL
     const baseUrl = isProd ? 'api.doku.com' : 'api-sandbox.doku.com';
     const targetPath = '/payout/v1/payout';
     const requestId = `REQ-WD-${Date.now()}`;
-    const timestamp = new Date().toISOString().split('.')[0] + 'Z';
-    
+    const timestamp = `${new Date().toISOString().split('.')[0]}Z`;
+
     const body = JSON.stringify(payload);
     const digest = crypto.createHash('sha256').update(body).digest('base64');
-    
-    const signatureComponent = `Client-Id:${clientId}\n` +
-                               `Request-Id:${requestId}\n` +
-                               `Request-Timestamp:${timestamp}\n` +
-                               `Request-Target:${targetPath}\n` +
-                               `Digest:${digest}`;
+
+    const signatureComponent = `Client-Id:${clientId}\n`
+      + `Request-Id:${requestId}\n`
+      + `Request-Timestamp:${timestamp}\n`
+      + `Request-Target:${targetPath}\n`
+      + `Digest:${digest}`;
 
     const signature = crypto
       .createHmac('sha256', secretKey)
@@ -365,10 +376,12 @@ export class WithdrawalService {
             const parsed = JSON.parse(data);
             if ((res.statusCode || 500) >= 200 && (res.statusCode || 500) < 300) {
               resolve(parsed);
-            } else {
+            }
+            else {
               reject(new Error(`DOKU Payout API Error: ${JSON.stringify(parsed)}`));
             }
-          } catch {
+          }
+          catch {
             reject(new Error('Failed to parse DOKU Payout response'));
           }
         });

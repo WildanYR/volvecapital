@@ -17,6 +17,8 @@ export interface AccountCapitalAttributes {
   account_id: string;
   amount: number;
   note?: string;
+  payment_coa_id?: string;
+  expense_coa_id?: string;
   created_at: Date;
   updated_at: Date;
 }
@@ -42,6 +44,12 @@ export class AccountCapital extends Model<AccountCapitalAttributes, AccountCapit
 
   @Column(DataType.TEXT)
   declare note: string;
+
+  @Column(DataType.STRING)
+  declare payment_coa_id: string;
+
+  @Column(DataType.STRING)
+  declare expense_coa_id: string;
 
   @BelongsTo(() => Account)
   declare account: Account;

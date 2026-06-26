@@ -1,12 +1,12 @@
 # apps/api Code Analysis & Optimization Report
 
-Based on the review of the NestJS application under `apps/api`, a number of potential bugs, security vulnerabilities, and code improvement opportunities have been identified. 
+Based on the review of the NestJS application under `apps/api`, a number of potential bugs, security vulnerabilities, and code improvement opportunities have been identified.
 
 ## 🚨 Critical Security Vulnerabilities
 
 ### 1. Tenant Escape / Broken Access Control in `VcAuthGuard`
 **Location:** `apps/api/src/guards/vc-auth.guard.ts` (Lines 114-118)
-**Description:** 
+**Description:**
 The auth guard correctly verifies the JWT token and extracts the `tokenPayload`. For non-ADMIN users, it even queries the database to ensure the tenant defined in `tokenPayload.tenant_id` exists. However, it overrides `req.tenant_id` with the value supplied in the `x-tenant-id` header *without verifying* that it matches the user's `tokenPayload.tenant_id`.
 ```typescript
 const tenant_id = req.headers['x-tenant-id'] as string;
