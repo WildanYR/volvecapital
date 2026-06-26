@@ -296,8 +296,8 @@ export class DuokeModule extends BaseModule {
                         await this.sleep(300);
 
                         for (const line of replyLines) {
-                            // 2. Ketik langsung menggunakan keyboard global
-                            await this.loopPage.keyboard.type(line, { delay: 15 });
+                            // 2. Auto-fill langsung untuk mencegah duplikasi karakter
+                            await inputBox.fill(line);
                             await this.sleep(300);
                             
                             // 3. Tekan Enter untuk jaga-jaga
