@@ -8,11 +8,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/das
 import { Input } from '@/dashboard/components/ui/input'
 import { Label } from '@/dashboard/components/ui/label'
 
-export const Route = createFileRoute('/dashboard/accounting/income-statement/')({
-  component: IncomeStatement,
+export const Route = createFileRoute('/dashboard/accounting/cash-flow/')({
+  component: CashFlowStatement,
 })
 
-function IncomeStatement() {
+function CashFlowStatement() {
   const auth = useAuth()
   const accountingService = AccountingServiceGenerator(API_URL, auth.tenant!.accessToken, auth.tenant!.id)
   
@@ -24,17 +24,17 @@ function IncomeStatement() {
   const [startDate, setStartDate] = useState(defaultStartDate)
   const [endDate, setEndDate] = useState(defaultEndDate)
 
-  const { data: incomeStatement, isLoading } = useQuery({
-    queryKey: ['accounting', 'income-statement', startDate, endDate],
-    queryFn: ({ signal }) => accountingService.getIncomeStatement({ startDate, endDate, signal }),
+  const { data: cashFlow, isLoading } = useQuery({
+    queryKey: ['accounting', 'cash-flow', startDate, endDate],
+    queryFn: ({ signal }) => accountingService.getCashFlowStatement({ startDate, endDate, signal }),
   })
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
       <div className="mb-6 flex justify-between items-end">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Laporan Laba Rugi</h1>
-          <p className="text-muted-foreground">Laporan ringkas mengenai performa keuntungan bisnis.</p>
+          <h1 className="text-2xl font-bold tracking-tight">Laporan Arus Kas</h1>
+          <p className="text-muted-foreground">Laporan ringkas mengenai pergerakan arus kas bisnis.</p>
         </div>
         <div className="flex items-center gap-4 bg-card text-card-foreground p-3 rounded-md shadow-sm border">
           <div className="space-y-1">
@@ -50,7 +50,7 @@ function IncomeStatement() {
 
       <Card>
         <CardHeader className="text-center border-b">
-          <CardTitle className="text-xl font-medium tracking-tight">Laporan Laba Rugi (Income Statement)</CardTitle>
+          <CardTitle className="text-xl font-medium tracking-tight">Laporan Arus Kas (Cash Flow Statement)</CardTitle>
           <CardDescription>
             Periode: {startDate} s/d {endDate}
           </CardDescription>
@@ -60,58 +60,59 @@ function IncomeStatement() {
             <div className="p-8 text-center text-muted-foreground">Memuat data...</div>
           ) : (
             <div className="divide-y">
+              {/* OPERATING */}
               <div className="flex flex-col">
                 <div className="flex justify-between items-center p-6 bg-muted/10">
-                  <span className="font-semibold text-lg">Total Pendapatan (Revenue)</span>
+                  <span className="font-semibold text-lg">Arus Kas dari Aktivitas Operasi</span>
                   <span className="font-semibold text-lg font-mono">
-                    Rp {Number(incomeStatement?.revenue || 0).toLocaleString()}
+                    Rp {Number(cashFlow?.operating || 0).toLocaleString()}
                   </span>
                 </div>
-                {incomeStatement?.revenue_details?.map((detail: any) => (
-                  <div key={detail.code} className="flex justify-between items-center px-10 py-3 text-sm text-muted-foreground border-t border-dashed">
-                    <span>{detail.code} - {detail.name}</span>
-                    <span className="font-mono">Rp {Number(detail.total).toLocaleString()}</span>
+                {cashFlow?.operating_details?.map((detail: any, i: number) => (
+                  <div key={i} className="flex justify-between items-center px-10 py-3 text-sm text-muted-foreground border-t border-dashed">
+                    <span>{detail.description}</span>
+                    <span className="font-mono">Rp {Number(detail.amount).toLocaleString()}</span>
                   </div>
                 ))}
               </div>
+
+              {/* INVESTING */}
               <div className="flex flex-col border-t">
                 <div className="flex justify-between items-center p-6 bg-muted/10">
-                  <span className="font-semibold text-lg">Harga Pokok Penjualan (HPP / COGS)</span>
+                  <span className="font-semibold text-lg">Arus Kas dari Aktivitas Investasi</span>
                   <span className="font-semibold text-lg font-mono">
-                    - Rp {Number(incomeStatement?.cogs || 0).toLocaleString()}
+                    Rp {Number(cashFlow?.investing || 0).toLocaleString()}
                   </span>
                 </div>
-                {incomeStatement?.cogs_details?.map((detail: any) => (
-                  <div key={detail.code} className="flex justify-between items-center px-10 py-3 text-sm text-muted-foreground border-t border-dashed">
-                    <span>{detail.code} - {detail.name}</span>
-                    <span className="font-mono">- Rp {Number(detail.total).toLocaleString()}</span>
+                {cashFlow?.investing_details?.map((detail: any, i: number) => (
+                  <div key={i} className="flex justify-between items-center px-10 py-3 text-sm text-muted-foreground border-t border-dashed">
+                    <span>{detail.description}</span>
+                    <span className="font-mono">Rp {Number(detail.amount).toLocaleString()}</span>
                   </div>
                 ))}
               </div>
-              <div className="flex justify-between items-center p-6 border-t-2 border-muted">
-                <span className="font-bold text-lg">Laba Kotor (Gross Profit)</span>
-                <span className="font-bold text-lg font-mono">
-                  Rp {Number(incomeStatement?.gross_profit || 0).toLocaleString()}
-                </span>
-              </div>
+
+              {/* FINANCING */}
               <div className="flex flex-col border-t">
                 <div className="flex justify-between items-center p-6 bg-muted/10">
-                  <span className="font-semibold text-lg">Total Beban Operasional (Expenses)</span>
+                  <span className="font-semibold text-lg">Arus Kas dari Aktivitas Pendanaan</span>
                   <span className="font-semibold text-lg font-mono">
-                    - Rp {Number(incomeStatement?.expense || 0).toLocaleString()}
+                    Rp {Number(cashFlow?.financing || 0).toLocaleString()}
                   </span>
                 </div>
-                {incomeStatement?.expense_details?.map((detail: any) => (
-                  <div key={detail.code} className="flex justify-between items-center px-10 py-3 text-sm text-muted-foreground border-t border-dashed">
-                    <span>{detail.code} - {detail.name}</span>
-                    <span className="font-mono">- Rp {Number(detail.total).toLocaleString()}</span>
+                {cashFlow?.financing_details?.map((detail: any, i: number) => (
+                  <div key={i} className="flex justify-between items-center px-10 py-3 text-sm text-muted-foreground border-t border-dashed">
+                    <span>{detail.description}</span>
+                    <span className="font-mono">Rp {Number(detail.amount).toLocaleString()}</span>
                   </div>
                 ))}
               </div>
+
+              {/* TOTAL NET CASH FLOW */}
               <div className="flex justify-between items-center p-8 bg-card border-t-2">
-                <span className="font-bold text-2xl">Laba Bersih (Net Income)</span>
-                <span className={`font-bold text-2xl font-mono ${Number(incomeStatement?.net_income) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                  Rp {Number(incomeStatement?.net_income || 0).toLocaleString()}
+                <span className="font-bold text-2xl">Kenaikan/(Penurunan) Kas Bersih</span>
+                <span className={`font-bold text-2xl font-mono ${Number(cashFlow?.net_cash_flow) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                  Rp {Number(cashFlow?.net_cash_flow || 0).toLocaleString()}
                 </span>
               </div>
             </div>

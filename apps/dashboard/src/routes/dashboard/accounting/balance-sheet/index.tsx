@@ -40,30 +40,38 @@ function BalanceSheet() {
       </div>
 
       <Card>
-        <CardHeader className="text-center border-b bg-muted/30">
-          <CardTitle className="text-xl">Neraca Keuangan (Balance Sheet)</CardTitle>
+        <CardHeader className="text-center border-b">
+          <CardTitle className="text-xl font-medium tracking-tight">Neraca Keuangan (Balance Sheet)</CardTitle>
           <CardDescription>
             Per Tanggal: {asOfDate}
           </CardDescription>
         </CardHeader>
-        <CardContent className="p-6">
+        <CardContent className="p-8">
           {isLoading ? (
             <div className="p-8 text-center text-muted-foreground">Memuat data...</div>
           ) : (
-            <div className="grid grid-cols-2 gap-12">
+            <div className="grid grid-cols-2 gap-16">
               {/* Sisi Kiri: Aset */}
               <div>
-                <h3 className="text-lg font-bold border-b pb-2 mb-4 text-blue-800">Aset (Assets)</h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium">Total Aset</span>
-                    <span className="font-mono">Rp {Number(balanceSheet?.assets || 0).toLocaleString()}</span>
+                <h3 className="text-lg font-semibold border-b pb-3 mb-6">Aset (Assets)</h3>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center bg-muted/30 p-3 rounded-md">
+                    <span className="font-semibold">Total Aset</span>
+                    <span className="font-mono font-semibold">Rp {Number(balanceSheet?.assets || 0).toLocaleString()}</span>
+                  </div>
+                  <div className="pl-4 space-y-3 mt-4">
+                    {balanceSheet?.asset_details?.map((detail: any) => (
+                      <div key={detail.code} className="flex justify-between items-center text-sm text-muted-foreground border-b border-dashed border-muted pb-2">
+                        <span>{detail.code} - {detail.name}</span>
+                        <span className="font-mono">Rp {Number(detail.total).toLocaleString()}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
                 
-                <div className="mt-8 pt-4 border-t-2 border-black flex justify-between items-center">
+                <div className="mt-12 pt-4 border-t-2 flex justify-between items-center">
                   <span className="font-bold text-lg">Total Aset</span>
-                  <span className="font-bold text-lg font-mono text-blue-700">
+                  <span className="font-bold text-lg font-mono">
                     Rp {Number(balanceSheet?.assets || 0).toLocaleString()}
                   </span>
                 </div>
@@ -71,29 +79,47 @@ function BalanceSheet() {
 
               {/* Sisi Kanan: Kewajiban & Modal */}
               <div>
-                <h3 className="text-lg font-bold border-b pb-2 mb-4 text-orange-800">Kewajiban (Liabilities)</h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium">Total Kewajiban</span>
-                    <span className="font-mono">Rp {Number(balanceSheet?.liabilities || 0).toLocaleString()}</span>
+                <h3 className="text-lg font-semibold border-b pb-3 mb-6">Kewajiban (Liabilities)</h3>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center bg-muted/30 p-3 rounded-md">
+                    <span className="font-semibold">Total Kewajiban</span>
+                    <span className="font-mono font-semibold">Rp {Number(balanceSheet?.liabilities || 0).toLocaleString()}</span>
+                  </div>
+                  <div className="pl-4 space-y-3 mt-4">
+                    {balanceSheet?.liability_details?.map((detail: any) => (
+                      <div key={detail.code} className="flex justify-between items-center text-sm text-muted-foreground border-b border-dashed border-muted pb-2">
+                        <span>{detail.code} - {detail.name}</span>
+                        <span className="font-mono">Rp {Number(detail.total).toLocaleString()}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
 
-                <h3 className="text-lg font-bold border-b pb-2 mb-4 mt-8 text-purple-800">Modal (Equity)</h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium">Total Modal / Ekuitas</span>
-                    <span className="font-mono">Rp {Number(balanceSheet?.equity || 0).toLocaleString()}</span>
+                <h3 className="text-lg font-semibold border-b pb-3 mb-6 mt-12">Modal (Equity)</h3>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center bg-muted/30 p-3 rounded-md">
+                    <span className="font-semibold">Total Modal / Ekuitas</span>
+                    <span className="font-mono font-semibold">Rp {Number(balanceSheet?.equity || 0).toLocaleString()}</span>
                   </div>
-                  <div className="flex justify-between items-center text-sm text-muted-foreground">
-                    <span>Laba/Rugi Tahun Berjalan</span>
-                    <span className="font-mono">Rp {Number(balanceSheet?.current_earnings || 0).toLocaleString()}</span>
+                  <div className="pl-4 space-y-3 mt-4">
+                    {balanceSheet?.equity_details?.map((detail: any) => (
+                      <div key={detail.code} className="flex justify-between items-center text-sm text-muted-foreground border-b border-dashed border-muted pb-2">
+                        <span>{detail.code} - {detail.name}</span>
+                        <span className="font-mono">Rp {Number(detail.total).toLocaleString()}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex justify-between items-center text-sm font-medium bg-muted/10 p-3 rounded-md border mt-4">
+                    <span className="text-muted-foreground">Laba/Rugi Tahun Berjalan</span>
+                    <span className="font-mono">
+                      Rp {Number(balanceSheet?.current_earnings || 0).toLocaleString()}
+                    </span>
                   </div>
                 </div>
 
-                <div className="mt-8 pt-4 border-t-2 border-black flex justify-between items-center">
+                <div className="mt-12 pt-4 border-t-2 flex justify-between items-center">
                   <span className="font-bold text-lg">Total Kewajiban + Modal</span>
-                  <span className="font-bold text-lg font-mono text-orange-700">
+                  <span className="font-bold text-lg font-mono">
                     Rp {Number(balanceSheet?.total_liabilities_equity || 0).toLocaleString()}
                   </span>
                 </div>
@@ -102,7 +128,7 @@ function BalanceSheet() {
           )}
 
           {!isLoading && balanceSheet && (
-            <div className={`mt-8 p-4 rounded-md text-center font-semibold ${balanceSheet.is_balanced ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+            <div className={`mt-12 p-4 rounded-md text-center font-medium border ${balanceSheet.is_balanced ? 'bg-green-500/10 text-green-500 border-green-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'}`}>
               {balanceSheet.is_balanced 
                 ? '✅ Neraca Seimbang (Balanced)' 
                 : '❌ Neraca Tidak Seimbang (Unbalanced) - Mohon periksa kembali penjurnalan'}

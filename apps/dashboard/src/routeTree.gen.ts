@@ -58,6 +58,7 @@ import { Route as DashboardAccountingLedgerIndexRouteImport } from './routes/das
 import { Route as DashboardAccountingJournalIndexRouteImport } from './routes/dashboard/accounting/journal/index'
 import { Route as DashboardAccountingIncomeStatementIndexRouteImport } from './routes/dashboard/accounting/income-statement/index'
 import { Route as DashboardAccountingCoaIndexRouteImport } from './routes/dashboard/accounting/coa/index'
+import { Route as DashboardAccountingCashFlowIndexRouteImport } from './routes/dashboard/accounting/cash-flow/index'
 import { Route as DashboardAccountingBalanceSheetIndexRouteImport } from './routes/dashboard/accounting/balance-sheet/index'
 import { Route as DashboardManualBookEditIdRouteImport } from './routes/dashboard/manual-book/edit.$id'
 import { Route as DashboardAccountsettingStaffCreateRouteImport } from './routes/dashboard/accountsetting/staff/create'
@@ -342,6 +343,12 @@ const DashboardAccountingCoaIndexRoute =
     path: '/coa/',
     getParentRoute: () => DashboardAccountingRouteRoute,
   } as any)
+const DashboardAccountingCashFlowIndexRoute =
+  DashboardAccountingCashFlowIndexRouteImport.update({
+    id: '/cash-flow/',
+    path: '/cash-flow/',
+    getParentRoute: () => DashboardAccountingRouteRoute,
+  } as any)
 const DashboardAccountingBalanceSheetIndexRoute =
   DashboardAccountingBalanceSheetIndexRouteImport.update({
     id: '/balance-sheet/',
@@ -426,6 +433,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/accountsetting/staff/create': typeof DashboardAccountsettingStaffCreateRoute
   '/dashboard/manual-book/edit/$id': typeof DashboardManualBookEditIdRoute
   '/dashboard/accounting/balance-sheet': typeof DashboardAccountingBalanceSheetIndexRoute
+  '/dashboard/accounting/cash-flow': typeof DashboardAccountingCashFlowIndexRoute
   '/dashboard/accounting/coa': typeof DashboardAccountingCoaIndexRoute
   '/dashboard/accounting/income-statement': typeof DashboardAccountingIncomeStatementIndexRoute
   '/dashboard/accounting/journal': typeof DashboardAccountingJournalIndexRoute
@@ -482,6 +490,7 @@ export interface FileRoutesByTo {
   '/dashboard/accountsetting/staff/create': typeof DashboardAccountsettingStaffCreateRoute
   '/dashboard/manual-book/edit/$id': typeof DashboardManualBookEditIdRoute
   '/dashboard/accounting/balance-sheet': typeof DashboardAccountingBalanceSheetIndexRoute
+  '/dashboard/accounting/cash-flow': typeof DashboardAccountingCashFlowIndexRoute
   '/dashboard/accounting/coa': typeof DashboardAccountingCoaIndexRoute
   '/dashboard/accounting/income-statement': typeof DashboardAccountingIncomeStatementIndexRoute
   '/dashboard/accounting/journal': typeof DashboardAccountingJournalIndexRoute
@@ -541,6 +550,7 @@ export interface FileRoutesById {
   '/dashboard/accountsetting/staff/create': typeof DashboardAccountsettingStaffCreateRoute
   '/dashboard/manual-book/edit/$id': typeof DashboardManualBookEditIdRoute
   '/dashboard/accounting/balance-sheet/': typeof DashboardAccountingBalanceSheetIndexRoute
+  '/dashboard/accounting/cash-flow/': typeof DashboardAccountingCashFlowIndexRoute
   '/dashboard/accounting/coa/': typeof DashboardAccountingCoaIndexRoute
   '/dashboard/accounting/income-statement/': typeof DashboardAccountingIncomeStatementIndexRoute
   '/dashboard/accounting/journal/': typeof DashboardAccountingJournalIndexRoute
@@ -601,6 +611,7 @@ export interface FileRouteTypes {
     | '/dashboard/accountsetting/staff/create'
     | '/dashboard/manual-book/edit/$id'
     | '/dashboard/accounting/balance-sheet'
+    | '/dashboard/accounting/cash-flow'
     | '/dashboard/accounting/coa'
     | '/dashboard/accounting/income-statement'
     | '/dashboard/accounting/journal'
@@ -657,6 +668,7 @@ export interface FileRouteTypes {
     | '/dashboard/accountsetting/staff/create'
     | '/dashboard/manual-book/edit/$id'
     | '/dashboard/accounting/balance-sheet'
+    | '/dashboard/accounting/cash-flow'
     | '/dashboard/accounting/coa'
     | '/dashboard/accounting/income-statement'
     | '/dashboard/accounting/journal'
@@ -715,6 +727,7 @@ export interface FileRouteTypes {
     | '/dashboard/accountsetting/staff/create'
     | '/dashboard/manual-book/edit/$id'
     | '/dashboard/accounting/balance-sheet/'
+    | '/dashboard/accounting/cash-flow/'
     | '/dashboard/accounting/coa/'
     | '/dashboard/accounting/income-statement/'
     | '/dashboard/accounting/journal/'
@@ -1087,6 +1100,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardAccountingCoaIndexRouteImport
       parentRoute: typeof DashboardAccountingRouteRoute
     }
+    '/dashboard/accounting/cash-flow/': {
+      id: '/dashboard/accounting/cash-flow/'
+      path: '/cash-flow'
+      fullPath: '/dashboard/accounting/cash-flow'
+      preLoaderRoute: typeof DashboardAccountingCashFlowIndexRouteImport
+      parentRoute: typeof DashboardAccountingRouteRoute
+    }
     '/dashboard/accounting/balance-sheet/': {
       id: '/dashboard/accounting/balance-sheet/'
       path: '/balance-sheet'
@@ -1143,6 +1163,7 @@ interface DashboardAccountingRouteRouteChildren {
   DashboardAccountingIndexRoute: typeof DashboardAccountingIndexRoute
   DashboardAccountingJournalCreateRoute: typeof DashboardAccountingJournalCreateRoute
   DashboardAccountingBalanceSheetIndexRoute: typeof DashboardAccountingBalanceSheetIndexRoute
+  DashboardAccountingCashFlowIndexRoute: typeof DashboardAccountingCashFlowIndexRoute
   DashboardAccountingCoaIndexRoute: typeof DashboardAccountingCoaIndexRoute
   DashboardAccountingIncomeStatementIndexRoute: typeof DashboardAccountingIncomeStatementIndexRoute
   DashboardAccountingJournalIndexRoute: typeof DashboardAccountingJournalIndexRoute
@@ -1160,6 +1181,8 @@ const DashboardAccountingRouteRouteChildren: DashboardAccountingRouteRouteChildr
       DashboardAccountingJournalCreateRoute,
     DashboardAccountingBalanceSheetIndexRoute:
       DashboardAccountingBalanceSheetIndexRoute,
+    DashboardAccountingCashFlowIndexRoute:
+      DashboardAccountingCashFlowIndexRoute,
     DashboardAccountingCoaIndexRoute: DashboardAccountingCoaIndexRoute,
     DashboardAccountingIncomeStatementIndexRoute:
       DashboardAccountingIncomeStatementIndexRoute,

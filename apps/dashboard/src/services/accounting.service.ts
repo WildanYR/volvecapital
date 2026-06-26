@@ -100,6 +100,11 @@ export function AccountingServiceGenerator(
       return parseApiResponse(response)
     },
     
+    getCashFlowStatement: async (params?: { startDate?: string, endDate?: string, signal?: AbortSignal }) => {
+      const response = await generateApiFetch(apiUrl, accessToken, tenantId, '/accounting/cash-flow', params)
+      return parseApiResponse(response)
+    },
+
     getPeriods: async (params?: { signal?: AbortSignal }) => {
       const response = await generateApiFetch(apiUrl, accessToken, tenantId, '/accounting/periods', params)
       return parseApiResponse(response)

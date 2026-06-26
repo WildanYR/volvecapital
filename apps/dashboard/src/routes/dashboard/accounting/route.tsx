@@ -1,5 +1,5 @@
 import { createFileRoute, Link, Outlet, useLocation } from '@tanstack/react-router'
-import { BookA, LibraryBig, Wallet, Scale, LineChart, PieChart, Lock, Settings } from 'lucide-react'
+import { BookA, LibraryBig, Wallet, Scale, LineChart, PieChart, Lock, Settings, Activity } from 'lucide-react'
 
 export const Route = createFileRoute('/dashboard/accounting')({
   component: AccountingLayout,
@@ -12,6 +12,7 @@ const accountingTabs = [
   { title: 'Neraca Saldo', url: '/dashboard/accounting/trial-balance', icon: Scale },
   { title: 'Laba Rugi', url: '/dashboard/accounting/income-statement', icon: LineChart },
   { title: 'Neraca Keuangan', url: '/dashboard/accounting/balance-sheet', icon: PieChart },
+  { title: 'Arus Kas', url: '/dashboard/accounting/cash-flow', icon: Activity },
   { title: 'Tutup Buku', url: '/dashboard/accounting/periods', icon: Lock },
   { title: 'Template Jurnal', url: '/dashboard/accounting/templates', icon: LibraryBig },
   { title: 'Pengaturan', url: '/dashboard/accounting/settings', icon: Settings },

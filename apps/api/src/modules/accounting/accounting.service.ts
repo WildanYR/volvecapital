@@ -449,15 +449,31 @@ export class AccountingService {
       let totalCogs = 0;
       let totalExpense = 0;
 
+      const revenueDetails: Record<string, any> = {};
+      const cogsDetails: Record<string, any> = {};
+      const expenseDetails: Record<string, any> = {};
+
       lines.forEach(line => {
         const coa = line.coa;
         const balanceChange = coa.normal_balance === 'DEBIT' 
           ? Number(line.debit) - Number(line.credit)
           : Number(line.credit) - Number(line.debit);
 
-        if (coa.type === 'PENDAPATAN') totalRevenue += balanceChange;
-        if (coa.type === 'HPP') totalCogs += balanceChange;
-        if (coa.type === 'BEBAN') totalExpense += balanceChange;
+        if (coa.type === 'PENDAPATAN') {
+          totalRevenue += balanceChange;
+          if (!revenueDetails[coa.code]) revenueDetails[coa.code] = { code: coa.code, name: coa.name, total: 0 };
+          revenueDetails[coa.code].total += balanceChange;
+        }
+        if (coa.type === 'HPP') {
+          totalCogs += balanceChange;
+          if (!cogsDetails[coa.code]) cogsDetails[coa.code] = { code: coa.code, name: coa.name, total: 0 };
+          cogsDetails[coa.code].total += balanceChange;
+        }
+        if (coa.type === 'BEBAN') {
+          totalExpense += balanceChange;
+          if (!expenseDetails[coa.code]) expenseDetails[coa.code] = { code: coa.code, name: coa.name, total: 0 };
+          expenseDetails[coa.code].total += balanceChange;
+        }
       });
 
       await tx.commit();
@@ -467,9 +483,12 @@ export class AccountingService {
 
       return {
         revenue: totalRevenue,
+        revenue_details: Object.values(revenueDetails),
         cogs: totalCogs,
+        cogs_details: Object.values(cogsDetails),
         gross_profit: grossProfit,
         expense: totalExpense,
+        expense_details: Object.values(expenseDetails),
         net_income: netIncome
       };
     } catch (error) {
@@ -498,15 +517,31 @@ export class AccountingService {
       let totalEquity = 0;
       let netIncome = 0;
 
+      const assetDetails: Record<string, any> = {};
+      const liabilityDetails: Record<string, any> = {};
+      const equityDetails: Record<string, any> = {};
+
       lines.forEach(line => {
         const coa = line.coa;
         const balanceChange = coa.normal_balance === 'DEBIT' 
           ? Number(line.debit) - Number(line.credit)
           : Number(line.credit) - Number(line.debit);
 
-        if (coa.type === 'ASET') totalAsset += balanceChange;
-        if (coa.type === 'KEWAJIBAN') totalLiability += balanceChange;
-        if (coa.type === 'MODAL') totalEquity += balanceChange;
+        if (coa.type === 'ASET') {
+          totalAsset += balanceChange;
+          if (!assetDetails[coa.code]) assetDetails[coa.code] = { code: coa.code, name: coa.name, total: 0 };
+          assetDetails[coa.code].total += balanceChange;
+        }
+        if (coa.type === 'KEWAJIBAN') {
+          totalLiability += balanceChange;
+          if (!liabilityDetails[coa.code]) liabilityDetails[coa.code] = { code: coa.code, name: coa.name, total: 0 };
+          liabilityDetails[coa.code].total += balanceChange;
+        }
+        if (coa.type === 'MODAL') {
+          totalEquity += balanceChange;
+          if (!equityDetails[coa.code]) equityDetails[coa.code] = { code: coa.code, name: coa.name, total: 0 };
+          equityDetails[coa.code].total += balanceChange;
+        }
         if (coa.type === 'PENDAPATAN') netIncome += balanceChange;
         if (coa.type === 'HPP') netIncome -= balanceChange;
         if (coa.type === 'BEBAN') netIncome -= balanceChange;
@@ -519,8 +554,11 @@ export class AccountingService {
 
       return {
         assets: totalAsset,
+        asset_details: Object.values(assetDetails),
         liabilities: totalLiability,
+        liability_details: Object.values(liabilityDetails),
         equity: totalEquity,
+        equity_details: Object.values(equityDetails),
         current_earnings: netIncome,
         total_liabilities_equity: totalLiability + totalEquityWithIncome,
         is_balanced: Math.abs(totalAsset - (totalLiability + totalEquityWithIncome)) < 0.01
@@ -937,5 +975,105 @@ export class AccountingService {
       ),
       transaction: tx
     });
+  }
+
+  async getCashFlowStatement(tenantId: string, startDate?: string, endDate?: string) {
+    const tx = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema(tenantId, tx);
+      
+      const dateFilter: any = {};
+      if (startDate && endDate) {
+        dateFilter.transaction_date = { [Op.between]: [startDate, endDate] };
+      } else if (startDate) {
+        dateFilter.transaction_date = { [Op.gte]: startDate };
+      } else if (endDate) {
+        dateFilter.transaction_date = { [Op.lte]: endDate };
+      }
+
+      // Fetch all entries with lines
+      const entries = await this.journalEntryRepository.findAll({
+        where: { ...dateFilter, status: 'POSTED' },
+        include: [
+          {
+            model: JournalLine,
+            include: [{ model: Coa, required: true }]
+          }
+        ],
+        transaction: tx
+      });
+
+      const operating_details: any[] = [];
+      const investing_details: any[] = [];
+      const financing_details: any[] = [];
+
+      let totalOperating = 0;
+      let totalInvesting = 0;
+      let totalFinancing = 0;
+
+      for (const entry of entries) {
+        const lines = entry.lines || [];
+        const isCashLine = (l: any) => l.coa?.type === 'ASET' && l.coa?.code?.startsWith('10');
+        
+        const cashLines = lines.filter(isCashLine);
+        if (cashLines.length === 0) continue;
+
+        let netCashChange = 0;
+        cashLines.forEach(l => {
+          netCashChange += (Number(l.debit) - Number(l.credit));
+        });
+        
+        if (netCashChange === 0) continue;
+
+        const nonCashLines = lines.filter(l => !isCashLine(l));
+        
+        let category = 'OPERATING';
+        let descriptionName = entry.description;
+
+        if (nonCashLines.length > 0) {
+          const nonCashCOA = nonCashLines[0].coa;
+          descriptionName = nonCashCOA.name;
+
+          if (nonCashCOA.type === 'PENDAPATAN' || nonCashCOA.type === 'HPP' || nonCashCOA.type === 'BEBAN') {
+            category = 'OPERATING';
+          } else if (nonCashCOA.type === 'ASET') {
+            category = 'INVESTING';
+          } else if (nonCashCOA.type === 'MODAL' || nonCashCOA.type === 'KEWAJIBAN') {
+            category = 'FINANCING';
+          }
+        }
+
+        const detailItem = {
+          description: entry.description || descriptionName,
+          amount: netCashChange
+        };
+
+        if (category === 'OPERATING') {
+          operating_details.push(detailItem);
+          totalOperating += netCashChange;
+        } else if (category === 'INVESTING') {
+          investing_details.push(detailItem);
+          totalInvesting += netCashChange;
+        } else {
+          financing_details.push(detailItem);
+          totalFinancing += netCashChange;
+        }
+      }
+
+      await tx.commit();
+
+      return {
+        operating: totalOperating,
+        operating_details,
+        investing: totalInvesting,
+        investing_details,
+        financing: totalFinancing,
+        financing_details,
+        net_cash_flow: totalOperating + totalInvesting + totalFinancing
+      };
+    } catch (error) {
+      await tx.rollback();
+      throw error;
+    }
   }
 }

@@ -83,6 +83,12 @@ export class AccountingController {
     return this.accountingService.getBalanceSheet(tenantId, asOfDate);
   }
 
+  @Get('cash-flow')
+  async getCashFlowStatement(@Req() req: any, @Query('startDate') startDate?: string, @Query('endDate') endDate?: string) {
+    const tenantId = req.headers['x-tenant-id'] || 'master';
+    return this.accountingService.getCashFlowStatement(tenantId, startDate, endDate);
+  }
+
   @Get('periods')
   async getPeriods(@Req() req: any) {
     const tenantId = req.headers['x-tenant-id'] || 'master';
