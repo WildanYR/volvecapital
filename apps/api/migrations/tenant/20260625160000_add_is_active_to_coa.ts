@@ -8,16 +8,20 @@ export const up: MigrationFn<MigrationContext> = async ({ context }) => {
   if (['public', 'master', 'information_schema', 'pg_catalog'].includes(schema))
     return;
 
-  // Add is_active column to coa
-  await queryInterface.addColumn(
-    { schema, tableName: 'coa' },
-    'is_active',
-    {
-      type: DataTypes.BOOLEAN,
-      allowNull: false,
-      defaultValue: true,
-    }
-  );
+  try {
+    // Add is_active column to coa
+    await queryInterface.addColumn(
+      { schema, tableName: 'coa' },
+      'is_active',
+      {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: true,
+      }
+    );
+  } catch (err: any) {
+    console.log(`Column is_active might already exist:`, err.message);
+  }
 };
 
 export const down: MigrationFn<MigrationContext> = async ({ context }) => {

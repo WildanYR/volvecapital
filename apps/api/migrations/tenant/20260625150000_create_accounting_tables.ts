@@ -60,10 +60,18 @@ export const up: MigrationFn<MigrationContext> = async ({ context }) => {
     }
   );
 
-  await queryInterface.addIndex({ schema, tableName: 'coa' }, ['code'], {
-    unique: true,
-    name: `idx_coa_code_${schema}`,
-  });
+  const indexes = await queryInterface.showIndex({ schema, tableName: 'coa' });
+  const indexExists = indexes.some(idx => idx.name === `idx_coa_code_${schema}`);
+  if (!indexExists) {
+    try {
+      await queryInterface.addIndex({ schema, tableName: 'coa' }, ['code'], {
+        unique: true,
+        name: `idx_coa_code_${schema}`,
+      });
+    } catch (err: any) {
+      console.log(`Index idx_coa_code_${schema} might already exist:`, err.message);
+    }
+  }
 
   // 2. Tabel Periode Akuntansi
   await queryInterface.createTable(

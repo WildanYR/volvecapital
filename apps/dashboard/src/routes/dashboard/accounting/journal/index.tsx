@@ -75,6 +75,25 @@ function JournalList() {
     }
   }
 
+  const triggerAmortizationMutation = useMutation({
+    mutationFn: () => accountingService.triggerAmortization(),
+    onSuccess: (res) => {
+      if (res.success === false) {
+        if (res.alreadyRun) {
+          toast.info(res.message || 'Amortisasi sudah dilakukan hari ini.')
+        } else {
+          toast.error(res.message || 'Gagal men-trigger amortisasi')
+        }
+      } else {
+        toast.success(res.message || 'Jurnal amortisasi berhasil di-trigger!')
+        queryClient.invalidateQueries({ queryKey: ['accounting', 'journal'] })
+      }
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Gagal men-trigger amortisasi')
+    }
+  })
+
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
@@ -95,6 +114,9 @@ function JournalList() {
               onChange={(e) => setEndDate(e.target.value)} 
             />
           </div>
+          <Button variant="outline" onClick={() => triggerAmortizationMutation.mutate()} disabled={triggerAmortizationMutation.isPending}>
+            {triggerAmortizationMutation.isPending ? 'Loading...' : 'Trigger Amortisasi'}
+          </Button>
           <Button asChild>
             <Link to="/dashboard/accounting/journal/create">
               <Plus className="w-4 h-4 mr-2" />

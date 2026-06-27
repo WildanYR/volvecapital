@@ -55,11 +55,11 @@ export class TaskHelperService {
       // Fetch akun terkini untuk mendapatkan password & variant_name yang up-to-date
       // (payload di task queue mungkin stale jika varian berubah setelah task didaftarkan)
       account = await this.accountRepository.findOne({
+        where: { id: payload.accountId },
         include: [
           {
             model: Email,
             as: 'email',
-            where: { email: payload.email },
             required: true,
           },
           {

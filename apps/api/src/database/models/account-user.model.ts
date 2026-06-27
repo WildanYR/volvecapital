@@ -74,6 +74,9 @@ export class AccountUser extends Model<
   @Column(DataType.DATE)
   declare expired_at?: Date;
 
+  @Column(DataType.DATE)
+  declare created_at: Date;
+
   @BelongsTo(() => Account, 'account_id')
   declare account: Account;
 

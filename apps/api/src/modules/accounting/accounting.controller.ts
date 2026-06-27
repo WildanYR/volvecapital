@@ -1,12 +1,27 @@
 import { Controller, Get, Req, UseGuards, Post, Put, Delete, Body, Query, Param } from '@nestjs/common';
 import { AccountingService } from './accounting.service';
+import { AmortizationService } from './amortization.service';
 import { CreateJournalTemplateDto } from './dto/create-journal-template.dto';
 import { UpdateJournalTemplateDto } from './dto/update-journal-template.dto';
+import { PostgresProvider } from 'src/database/postgres.provider';
+
+import { PublicRoute } from 'src/guards/public-route.decorator';
 
 // Akan ditambahkan Guards nantinya
 @Controller('accounting')
 export class AccountingController {
-  constructor(private readonly accountingService: AccountingService) {}
+  constructor(
+    private readonly accountingService: AccountingService,
+    private readonly amortizationService: AmortizationService,
+    private readonly postgresProvider: PostgresProvider,
+  ) {}
+
+  @PublicRoute()
+  @Post('trigger-amortization')
+  async triggerAmortization() {
+    const result = await this.amortizationService.handleDailyAmortization(true);
+    return result || { success: true, message: 'Amortization triggered successfully' };
+  }
 
   @Get('coa')
   async getCoa(@Req() req: any) {

@@ -45,7 +45,27 @@ export function AccountingServiceGenerator(
       return parseApiResponse(response)
     },
     
-    getJournalEntries: async (params?: { signal?: AbortSignal }) => {
+    voidJournal: async (id: string) => {
+      const response = await generateApiFetch(apiUrl, accessToken, tenantId, `/accounting/journal/${id}/void`, undefined, {
+        method: 'POST',
+      })
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.message || 'Failed to void journal')
+      }
+      return await response.json()
+    },
+    triggerAmortization: async () => {
+      const response = await generateApiFetch(apiUrl, accessToken, tenantId, `/accounting/trigger-amortization`, undefined, {
+        method: 'POST',
+      })
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.message || 'Failed to trigger amortization')
+      }
+      return await response.json()
+    },
+    getJournalEntries: async (params: { startDate?: string, endDate?: string, signal?: AbortSignal }) => {
       const response = await generateApiFetch(apiUrl, accessToken, tenantId, '/accounting/journal', params)
       return parseApiResponse(response)
     },
