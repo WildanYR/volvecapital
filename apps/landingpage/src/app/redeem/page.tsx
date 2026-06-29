@@ -142,7 +142,7 @@ export default function RedeemPage() {
                         : 'bg-primary/10 text-primary border border-primary/20'
                       }`}>
                         {result.voucher.status === 'USED' 
-                          ? 'Sudah Digunakan' 
+                          ? `Voucher diklaim oleh ${result.voucher.buyer_name}` 
                           : result.voucher.status === 'PENDING'
                           ? 'Belum Dibayar'
                           : result.voucher.status === 'EXPIRED'
