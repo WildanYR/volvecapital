@@ -639,6 +639,17 @@ export class AccountingService {
         await this.postgresProvider.setSchema(tenantId, tx);
       }
 
+      // Cut-off Date check
+      const settingRaw = await this.postgresProvider.rawQuery(
+        `SELECT value FROM "tenant_setting" WHERE key = 'ACCOUNTING_START_DATE'`,
+        { type: 'SELECT', transaction: tx }
+      );
+      if (!settingRaw || (settingRaw as any[]).length === 0 || !(settingRaw as any[])[0].value) {
+        if (!isExternalTx) await tx.commit();
+        return null; // Pause auto-journal if no cut-off date is set
+      }
+      const cutoffDate = new Date((settingRaw as any[])[0].value);
+
       // Load transaction
       const txDataRaw = await this.postgresProvider.rawQuery(
         `SELECT t.* FROM "transaction" t WHERE t.id = :id`,
@@ -649,6 +660,13 @@ export class AccountingService {
         return null; // not found
       }
       const t: any = (txDataRaw as any[])[0];
+
+      // Check if transaction is before cut-off date
+      const txDate = new Date(t.created_at || t.updated_at || new Date());
+      if (txDate < cutoffDate) {
+        if (!isExternalTx) await tx.commit();
+        return null;
+      }
 
       // Load items & product_variant to get income_coa_id
       const itemsRaw = await this.postgresProvider.rawQuery(
@@ -754,14 +772,31 @@ export class AccountingService {
     try {
       await this.postgresProvider.setSchema(tenantId, tx);
 
+      // Cut-off Date check
+      const settingRaw = await this.postgresProvider.rawQuery(
+        `SELECT value FROM "tenant_setting" WHERE key = 'ACCOUNTING_START_DATE'`,
+        { type: 'SELECT', transaction: tx }
+      );
+      if (!settingRaw || (settingRaw as any[]).length === 0 || !(settingRaw as any[])[0].value) {
+        if (!isExternalTx) await tx.commit();
+        return null;
+      }
+      const cutoffDate = new Date((settingRaw as any[])[0].value);
+
       const capitalRaw: any[] = await this.postgresProvider.rawQuery(
-        `SELECT amount, payment_coa_id, expense_coa_id FROM account_capital WHERE id = :capitalId`,
+        `SELECT amount, payment_coa_id, expense_coa_id, created_at FROM account_capital WHERE id = :capitalId`,
         { replacements: { capitalId }, type: 'SELECT', transaction: tx }
       ) as any[];
       if (!capitalRaw || capitalRaw.length === 0) return;
 
-      const { amount, payment_coa_id, expense_coa_id } = capitalRaw[0] as any;
+      const { amount, payment_coa_id, expense_coa_id, created_at } = capitalRaw[0] as any;
       if (!payment_coa_id || !expense_coa_id) return; // Silent return if not mapped
+
+      const capDate = new Date(created_at || new Date());
+      if (capDate < cutoffDate) {
+        if (!isExternalTx) await tx.commit();
+        return null;
+      }
 
       const coas = await this.coaRepository.findAll({
         where: { id: { [Op.in]: [payment_coa_id, expense_coa_id] } },

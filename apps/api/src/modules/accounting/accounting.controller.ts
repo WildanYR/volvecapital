@@ -1,13 +1,13 @@
-import { Controller, Get, Req, UseGuards, Post, Put, Delete, Body, Query, Param } from '@nestjs/common';
+import { Controller, Get, Request, UseGuards, Post, Put, Delete, Body, Query, Param } from '@nestjs/common';
 import { AccountingService } from './accounting.service';
 import { AmortizationService } from './amortization.service';
 import { CreateJournalTemplateDto } from './dto/create-journal-template.dto';
 import { UpdateJournalTemplateDto } from './dto/update-journal-template.dto';
 import { PostgresProvider } from 'src/database/postgres.provider';
-
+import { AppRequest } from 'src/types/app-request.type';
+import { RequirePermissions } from 'src/guards/permissions.decorator';
 import { PublicRoute } from 'src/guards/public-route.decorator';
 
-// Akan ditambahkan Guards nantinya
 @Controller('accounting')
 export class AccountingController {
   constructor(
@@ -24,147 +24,147 @@ export class AccountingController {
   }
 
   @Get('coa')
-  async getCoa(@Req() req: any) {
-    const tenantId = req.headers['x-tenant-id'] || 'master';
-    return this.accountingService.getCoaList(tenantId);
+  @RequirePermissions('accounting.view')
+  async getCoa(@Request() request: AppRequest) {
+    return this.accountingService.getCoaList(request.tenant_id!);
   }
 
   @Post('coa')
-  async createCoa(@Req() req: any, @Body() body: any) {
-    const tenantId = req.headers['x-tenant-id'] || 'master';
-    return this.accountingService.createCoa(tenantId, body);
+  @RequirePermissions('accounting.edit')
+  async createCoa(@Request() request: AppRequest, @Body() body: any) {
+    return this.accountingService.createCoa(request.tenant_id!, body);
   }
 
   @Post('seed-netflix-coa')
-  async seedNetflixCoa(@Req() req: any) {
-    const tenantId = req.headers['x-tenant-id'] || 'master';
-    return this.accountingService.seedNetflixCoa(tenantId);
+  @RequirePermissions('accounting.edit')
+  async seedNetflixCoa(@Request() request: AppRequest) {
+    return this.accountingService.seedNetflixCoa(request.tenant_id!);
   }
 
   @Put('coa/:id')
-  async updateCoa(@Req() req: any, @Param('id') id: string, @Body() body: any) {
-    const tenantId = req.headers['x-tenant-id'] || 'master';
-    return this.accountingService.updateCoa(tenantId, id, body);
+  @RequirePermissions('accounting.edit')
+  async updateCoa(@Request() request: AppRequest, @Param('id') id: string, @Body() body: any) {
+    return this.accountingService.updateCoa(request.tenant_id!, id, body);
   }
 
   @Delete('coa/:id')
-  async deleteCoa(@Req() req: any, @Param('id') id: string) {
-    const tenantId = req.headers['x-tenant-id'] || 'master';
-    return this.accountingService.deleteCoa(tenantId, id);
+  @RequirePermissions('accounting.edit')
+  async deleteCoa(@Request() request: AppRequest, @Param('id') id: string) {
+    return this.accountingService.deleteCoa(request.tenant_id!, id);
   }
 
   @Get('journal')
-  async getJournalEntries(@Req() req: any, @Query('startDate') startDate?: string, @Query('endDate') endDate?: string) {
-    const tenantId = req.headers['x-tenant-id'] || 'master';
-    return this.accountingService.getJournalEntries(tenantId, startDate, endDate);
+  @RequirePermissions('accounting.view')
+  async getJournalEntries(@Request() request: AppRequest, @Query('startDate') startDate?: string, @Query('endDate') endDate?: string) {
+    return this.accountingService.getJournalEntries(request.tenant_id!, startDate, endDate);
   }
 
   @Post('journal')
-  async createJournalEntry(@Req() req: any, @Body() body: any) {
-    const tenantId = req.headers['x-tenant-id'] || 'master';
-    return this.accountingService.createJournalEntry(tenantId, body);
+  @RequirePermissions('accounting.edit')
+  async createJournalEntry(@Request() request: AppRequest, @Body() body: any) {
+    return this.accountingService.createJournalEntry(request.tenant_id!, body);
   }
 
   @Get('ledger')
-  async getLedger(@Req() req: any, @Query('coa_id') coaId: string) {
-    const tenantId = req.headers['x-tenant-id'] || 'master';
+  @RequirePermissions('accounting.view')
+  async getLedger(@Request() request: AppRequest, @Query('coa_id') coaId: string) {
     if (!coaId) {
         return { error: 'coa_id is required' };
     }
-    return this.accountingService.getLedger(tenantId, coaId);
+    return this.accountingService.getLedger(request.tenant_id!, coaId);
   }
 
   @Get('trial-balance')
-  async getTrialBalance(@Req() req: any) {
-    const tenantId = req.headers['x-tenant-id'] || 'master';
-    return this.accountingService.getTrialBalance(tenantId);
+  @RequirePermissions('accounting.view')
+  async getTrialBalance(@Request() request: AppRequest) {
+    return this.accountingService.getTrialBalance(request.tenant_id!);
   }
 
   @Put('journal/:id/void')
-  async voidJournal(@Req() req: any, @Param('id') id: string) {
-    const tenantId = req.headers['x-tenant-id'] || 'master';
-    return this.accountingService.voidJournal(tenantId, id);
+  @RequirePermissions('accounting.edit')
+  async voidJournal(@Request() request: AppRequest, @Param('id') id: string) {
+    return this.accountingService.voidJournal(request.tenant_id!, id);
   }
 
   @Get('income-statement')
-  async getIncomeStatement(@Req() req: any, @Query('startDate') startDate?: string, @Query('endDate') endDate?: string) {
-    const tenantId = req.headers['x-tenant-id'] || 'master';
-    return this.accountingService.getIncomeStatement(tenantId, startDate, endDate);
+  @RequirePermissions('accounting.view')
+  async getIncomeStatement(@Request() request: AppRequest, @Query('startDate') startDate?: string, @Query('endDate') endDate?: string) {
+    return this.accountingService.getIncomeStatement(request.tenant_id!, startDate, endDate);
   }
 
   @Get('balance-sheet')
-  async getBalanceSheet(@Req() req: any, @Query('asOfDate') asOfDate?: string) {
-    const tenantId = req.headers['x-tenant-id'] || 'master';
-    return this.accountingService.getBalanceSheet(tenantId, asOfDate);
+  @RequirePermissions('accounting.view')
+  async getBalanceSheet(@Request() request: AppRequest, @Query('asOfDate') asOfDate?: string) {
+    return this.accountingService.getBalanceSheet(request.tenant_id!, asOfDate);
   }
 
   @Get('cash-flow')
-  async getCashFlowStatement(@Req() req: any, @Query('startDate') startDate?: string, @Query('endDate') endDate?: string) {
-    const tenantId = req.headers['x-tenant-id'] || 'master';
-    return this.accountingService.getCashFlowStatement(tenantId, startDate, endDate);
+  @RequirePermissions('accounting.view')
+  async getCashFlowStatement(@Request() request: AppRequest, @Query('startDate') startDate?: string, @Query('endDate') endDate?: string) {
+    return this.accountingService.getCashFlowStatement(request.tenant_id!, startDate, endDate);
   }
 
   @Get('periods')
-  async getPeriods(@Req() req: any) {
-    const tenantId = req.headers['x-tenant-id'] || 'master';
-    return this.accountingService.getPeriods(tenantId);
+  @RequirePermissions('accounting.view')
+  async getPeriods(@Request() request: AppRequest) {
+    return this.accountingService.getPeriods(request.tenant_id!);
   }
 
   @Post('periods/close')
-  async closePeriod(@Req() req: any, @Body() body: { periodName: string; startDate: string; endDate: string }) {
-    const tenantId = req.headers['x-tenant-id'] || 'master';
-    return this.accountingService.closePeriod(tenantId, body.periodName, body.startDate, body.endDate);
+  @RequirePermissions('accounting.edit')
+  async closePeriod(@Request() request: AppRequest, @Body() body: { periodName: string; startDate: string; endDate: string }) {
+    return this.accountingService.closePeriod(request.tenant_id!, body.periodName, body.startDate, body.endDate);
   }
 
   // --- Platform Accounting Settings ---
 
   @Get('platform-settings')
-  async getPlatformSettings(@Req() req: any) {
-    const tenantId = req.headers['x-tenant-id'] || 'master';
-    return this.accountingService.getPlatformSettings(tenantId);
+  @RequirePermissions('accounting.view')
+  async getPlatformSettings(@Request() request: AppRequest) {
+    return this.accountingService.getPlatformSettings(request.tenant_id!);
   }
 
   @Post('platform-settings')
-  async createPlatformSetting(@Req() req: any, @Body() body: any) {
-    const tenantId = req.headers['x-tenant-id'] || 'master';
-    return this.accountingService.createPlatformSetting(tenantId, body);
+  @RequirePermissions('accounting.edit')
+  async createPlatformSetting(@Request() request: AppRequest, @Body() body: any) {
+    return this.accountingService.createPlatformSetting(request.tenant_id!, body);
   }
 
   @Put('platform-settings/:id')
-  async updatePlatformSetting(@Req() req: any, @Param('id') id: string, @Body() body: any) {
-    const tenantId = req.headers['x-tenant-id'] || 'master';
-    return this.accountingService.updatePlatformSetting(tenantId, id, body);
+  @RequirePermissions('accounting.edit')
+  async updatePlatformSetting(@Request() request: AppRequest, @Param('id') id: string, @Body() body: any) {
+    return this.accountingService.updatePlatformSetting(request.tenant_id!, id, body);
   }
 
   @Delete('platform-settings/:id')
-  async deletePlatformSetting(@Req() req: any, @Param('id') id: string) {
-    const tenantId = req.headers['x-tenant-id'] || 'master';
-    return this.accountingService.deletePlatformSetting(tenantId, id);
+  @RequirePermissions('accounting.edit')
+  async deletePlatformSetting(@Request() request: AppRequest, @Param('id') id: string) {
+    return this.accountingService.deletePlatformSetting(request.tenant_id!, id);
   }
 
   // --- Journal Templates ---
 
   @Get('templates')
-  async getJournalTemplates(@Req() req: any) {
-    const tenantId = req.headers['x-tenant-id'] || 'master';
-    return this.accountingService.getJournalTemplates(tenantId);
+  @RequirePermissions('accounting.view')
+  async getJournalTemplates(@Request() request: AppRequest) {
+    return this.accountingService.getJournalTemplates(request.tenant_id!);
   }
 
   @Post('templates')
-  async createJournalTemplate(@Req() req: any, @Body() body: CreateJournalTemplateDto) {
-    const tenantId = req.headers['x-tenant-id'] || 'master';
-    return this.accountingService.createJournalTemplate(tenantId, body);
+  @RequirePermissions('accounting.edit')
+  async createJournalTemplate(@Request() request: AppRequest, @Body() body: CreateJournalTemplateDto) {
+    return this.accountingService.createJournalTemplate(request.tenant_id!, body);
   }
 
   @Put('templates/:id')
-  async updateJournalTemplate(@Req() req: any, @Param('id') id: string, @Body() body: UpdateJournalTemplateDto) {
-    const tenantId = req.headers['x-tenant-id'] || 'master';
-    return this.accountingService.updateJournalTemplate(tenantId, id, body);
+  @RequirePermissions('accounting.edit')
+  async updateJournalTemplate(@Request() request: AppRequest, @Param('id') id: string, @Body() body: UpdateJournalTemplateDto) {
+    return this.accountingService.updateJournalTemplate(request.tenant_id!, id, body);
   }
 
   @Delete('templates/:id')
-  async deleteJournalTemplate(@Req() req: any, @Param('id') id: string) {
-    const tenantId = req.headers['x-tenant-id'] || 'master';
-    return this.accountingService.deleteJournalTemplate(tenantId, id);
+  @RequirePermissions('accounting.edit')
+  async deleteJournalTemplate(@Request() request: AppRequest, @Param('id') id: string) {
+    return this.accountingService.deleteJournalTemplate(request.tenant_id!, id);
   }
 }

@@ -38,6 +38,7 @@ import { useGlobalAlertDialog } from '@/dashboard/context-providers/alert-dialog
 import { useAuth } from '@/dashboard/context-providers/auth.provider'
 import { AccountingServiceGenerator } from '@/dashboard/services/accounting.service'
 import { ShopServiceGenerator } from '@/dashboard/services/shop.service'
+import { SettingServiceGenerator } from '@/dashboard/services/setting.service'
 
 export const Route = createFileRoute('/dashboard/accounting/settings/')({
   component: RouteComponent,
@@ -58,6 +59,11 @@ function RouteComponent() {
     auth.tenant!.accessToken,
     auth.tenant!.id,
   )
+  const settingService = SettingServiceGenerator(
+    API_URL,
+    auth.tenant!.accessToken,
+    auth.tenant!.id,
+  )
 
   const { data: coaList } = useQuery({
     queryKey: ['coaList', auth.tenant!.id],
@@ -72,6 +78,11 @@ function RouteComponent() {
   const { data: shops } = useQuery({
     queryKey: ['shops', auth.tenant!.id],
     queryFn: () => shopService.getAllShop(),
+  })
+
+  const { data: tenantSettings, isLoading: isLoadingSettings } = useQuery({
+    queryKey: ['tenantSettings', auth.tenant!.id],
+    queryFn: () => settingService.getSettings(),
   })
 
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -131,8 +142,27 @@ function RouteComponent() {
         deleteMutation.mutate(id)
         hideAlertDialog()
       },
-      onCancel: hideAlertDialog,
     })
+  }
+
+  const updateSettingMutation = useMutation({
+    mutationFn: (data: { key: string; value: string }) => settingService.updateSetting(data.key, data.value),
+    onSuccess: () => {
+      toast.success('Pengaturan berhasil diperbarui')
+      queryClient.invalidateQueries({ queryKey: ['tenantSettings'] })
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Gagal memperbarui pengaturan')
+    },
+  })
+
+  const handleUpdateCutoff = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const formData = new FormData(e.currentTarget)
+    const cutoffDate = formData.get('ACCOUNTING_START_DATE') as string
+    if (cutoffDate) {
+      updateSettingMutation.mutate({ key: 'ACCOUNTING_START_DATE', value: cutoffDate })
+    }
   }
 
   const handleEdit = (setting: any) => {
@@ -159,6 +189,36 @@ function RouteComponent() {
 
   return (
     <div className="flex flex-col gap-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Tanggal Mulai Pembukuan (Cut-off Date)</CardTitle>
+          <CardDescription>
+            Sistem Auto-Jurnal hanya akan memproses transaksi yang terjadi setelah waktu ini. 
+            Isi dengan tanggal dan jam mulai pembukuan awal Anda. Kosongkan akan menghentikan seluruh auto-jurnal.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleUpdateCutoff} className="flex flex-col sm:flex-row gap-4 items-end">
+            <div className="flex-1 space-y-2 w-full">
+              <label className="text-sm font-medium">Batas Waktu Mulai (Local Time)</label>
+              <Input 
+                type="datetime-local" 
+                name="ACCOUNTING_START_DATE" 
+                defaultValue={tenantSettings?.ACCOUNTING_START_DATE ? (() => {
+                  const d = new Date(tenantSettings.ACCOUNTING_START_DATE);
+                  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+                })() : ''}
+                required
+              />
+            </div>
+            <Button type="submit" disabled={updateSettingMutation.isPending || isLoadingSettings}>
+              {updateSettingMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Simpan Cut-off
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>

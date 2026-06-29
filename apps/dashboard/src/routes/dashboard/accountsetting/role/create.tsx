@@ -29,6 +29,7 @@ const PERMISSION_GROUPS: Record<string, string> = {
   user: 'Staff',
   role: 'Role',
   transaction: 'Transaksi',
+  accounting: 'Akuntansi',
   report: 'Laporan',
   voucher: 'Voucher',
   platform_product: 'Platform Produk',

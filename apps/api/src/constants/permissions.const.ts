@@ -16,6 +16,8 @@ export const ALL_PERMISSIONS = [
   { name: 'transaction.create', description: 'Membuat transaksi' },
   { name: 'transaction.edit', description: 'Mengedit transaksi' },
   { name: 'transaction.delete', description: 'Menghapus transaksi' },
+  { name: 'accounting.view', description: 'Melihat pembukuan, jurnal, dan laporan keuangan' },
+  { name: 'accounting.edit', description: 'Mengelola COA, menjurnal manual, dan tutup buku' },
   { name: 'setting.view', description: 'Melihat pengaturan' },
   { name: 'setting.edit', description: 'Mengubah pengaturan' },
   { name: 'voucher.view', description: 'Melihat voucher' },
