@@ -7,6 +7,8 @@ import { PlatformProductForm } from '@/dashboard/components/forms/platform-produ
 import { API_URL } from '@/dashboard/constants/api-url.cont'
 import { useAuth } from '@/dashboard/context-providers/auth.provider'
 import { PlatformProductServiceGenerator } from '@/dashboard/services/platform-product.service'
+import { ShopServiceGenerator } from '@/dashboard/services/shop.service'
+import { useQuery } from '@tanstack/react-query'
 
 export const Route = createFileRoute('/dashboard/platform-product/create')({
   component: RouteComponent,
@@ -21,6 +23,16 @@ function RouteComponent() {
     auth.tenant!.accessToken,
     auth.tenant!.id,
   )
+  const shopService = ShopServiceGenerator(
+    API_URL,
+    auth.tenant!.accessToken,
+    auth.tenant!.id,
+  )
+
+  const { data: shops } = useQuery({
+    queryKey: ['shops'],
+    queryFn: ({ signal }) => shopService.getAllShop({ signal, limit: 100 }),
+  })
 
   const mutation = useMutation({
     mutationFn: (payload: CreatePlatformProductPayload) =>
@@ -38,6 +50,7 @@ function RouteComponent() {
   const handleSubmit = (values: PlatformProductFormSubmitData) => {
     mutation.mutate({
       ...values,
+      shop_id: values.shop_id || undefined,
       product_variant_id: values.product_variant_id,
     })
   }
@@ -52,6 +65,7 @@ function RouteComponent() {
           onSubmit={handleSubmit}
           isPending={mutation.isPending}
           submitButtonText="Buat Produk Platform"
+          shops={shops?.map((s) => ({ title: s.name, value: s.id })) ?? []}
         />
       </div>
     </div>

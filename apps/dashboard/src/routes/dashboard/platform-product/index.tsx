@@ -42,6 +42,8 @@ import {
   SelectValue,
 } from '@/dashboard/components/ui/select'
 import { Skeleton } from '@/dashboard/components/ui/skeleton'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/dashboard/components/ui/tabs'
+import { CreateShopDialog } from '@/dashboard/components/shop/create-shop-dialog'
 import { API_URL } from '@/dashboard/constants/api-url.cont'
 import { useGlobalAlertDialog } from '@/dashboard/context-providers/alert-dialog.provider'
 import { useAuth } from '@/dashboard/context-providers/auth.provider'
@@ -49,6 +51,7 @@ import {
   GetPlatformProductParamsSchema,
   PlatformProductServiceGenerator,
 } from '@/dashboard/services/platform-product.service'
+import { ShopServiceGenerator } from '@/dashboard/services/shop.service'
 
 export const Route = createFileRoute('/dashboard/platform-product/')({
   component: RouteComponent,
@@ -66,12 +69,18 @@ function RouteComponent() {
     auth.tenant!.accessToken,
     auth.tenant!.id,
   )
+  const shopService = ShopServiceGenerator(
+    API_URL,
+    auth.tenant!.accessToken,
+    auth.tenant!.id,
+  )
 
   const [filter, setFilter] = useState<PlatformProductFilter>({
     name: searchParam.name ?? '',
     platform: searchParam.platform ?? '',
     platform_product_id: searchParam.platform_product_id ?? '',
     product_variant_id: searchParam.product_variant_id ?? '',
+    shop_id: searchParam.shop_id ?? 'all',
   })
   const [sort, setSort] = useState<string>(
     !!searchParam.order_by && !!searchParam.order_direction
@@ -79,10 +88,15 @@ function RouteComponent() {
       : 'default',
   )
 
+  const { data: shops } = useQuery({
+    queryKey: ['shops'],
+    queryFn: ({ signal }) => shopService.getAllShop({ signal, limit: 100 }),
+  })
+
   const { data: platformProducts, isLoading: isFetchPlatformProductLoading }
     = useQuery({
       queryKey: ['platform-product', searchParam],
-      queryFn: ({ signal }) => platformProductService.getAllPlatformProduct({ ...searchParam, signal }),
+      queryFn: ({ signal }) => platformProductService.getAllPlatformProduct({ ...searchParam, shop_id: searchParam.shop_id === 'all' ? undefined : searchParam.shop_id, signal }),
     })
 
   const deleteMutation = useMutation({
@@ -152,23 +166,33 @@ function RouteComponent() {
     })
   }
 
+  const handleShopTabChange = (shopId: string) => {
+    setFilter({ ...filter, shop_id: shopId })
+    navigate({ search: prev => ({ ...prev, shop_id: shopId, page: 1 }), replace: true })
+  }
+
   return (
     <div className="flex flex-col gap-8">
       <div className="flex flex-col md:flex-row gap-6 justify-between items-center">
         <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight text-balance">
           Produk Platform
         </h1>
-        <PermissionGate permission="platform_product.edit">
-          <Button asChild>
-            <Link to="/dashboard/platform-product/create">
-              <span>
-                <Plus />
-              </span>
-              {' '}
-              Buat Produk Platform
-            </Link>
-          </Button>
-        </PermissionGate>
+        <div className="flex items-center gap-2">
+          <PermissionGate permission="platform_product.edit">
+            <CreateShopDialog />
+          </PermissionGate>
+          <PermissionGate permission="platform_product.edit">
+            <Button asChild>
+              <Link to="/dashboard/platform-product/create">
+                <span>
+                  <Plus />
+                </span>
+                {' '}
+                Buat Produk Platform
+              </Link>
+            </Button>
+          </PermissionGate>
+        </div>
       </div>
       <div className="flex flex-col md:flex-row justify-center items-center gap-4">
         <Input
@@ -191,7 +215,16 @@ function RouteComponent() {
           </Select>
         </div>
       </div>
-      {!!platformProducts && (
+
+      <Tabs value={filter.shop_id} onValueChange={handleShopTabChange} className="w-full">
+        <TabsList className="mb-4 overflow-x-auto w-full justify-start h-auto p-1 max-w-full flex-wrap">
+          <TabsTrigger value="all">Semua Toko</TabsTrigger>
+          {shops?.map(shop => (
+            <TabsTrigger key={shop.id} value={shop.id}>{shop.name}</TabsTrigger>
+          ))}
+        </TabsList>
+        <TabsContent value={filter.shop_id!} className="mt-0 outline-none border-0 p-0">
+          {!!platformProducts && (
         <div className="flex items-center justify-center">
           <Pagination
             currentPage={platformProducts.paginationData.currentPage}
@@ -296,7 +329,7 @@ function RouteComponent() {
               )}
       </div>
       {!!platformProducts && (
-        <div className="flex items-center justify-center">
+        <div className="flex items-center justify-center mt-4">
           <Pagination
             currentPage={platformProducts.paginationData.currentPage}
             totalPages={platformProducts.paginationData.totalPage}
@@ -304,6 +337,8 @@ function RouteComponent() {
           />
         </div>
       )}
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

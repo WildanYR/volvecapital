@@ -11,6 +11,7 @@ const TransactionItemFormSchema = z.object({
 export const TransactionFormSchema = z.object({
   customer: z.string().nonempty(),
   platform: z.string().nonempty(),
+  store_name: z.string().optional(),
   total_price: z.string().nonempty(),
   items: z.array(TransactionItemFormSchema).min(1),
 })
@@ -21,16 +22,19 @@ export function TransactionCreateForm({
   onSubmit,
   isPending,
   submitButtonText,
+  shops = [],
 }: {
   onSubmit: (values: TransactionFormSubmitData) => void
   isPending: boolean
   submitButtonText?: string
+  shops?: { title: string; value: string }[]
 }) {
   const form = useAppForm({
     validators: { onSubmit: TransactionFormSchema },
     defaultValues: {
       customer: '',
       platform: '',
+      store_name: '',
       total_price: '',
       items: [
         {
@@ -72,6 +76,16 @@ export function TransactionCreateForm({
                   { title: 'Shopee', value: 'Shopee' },
                   { title: 'Whatsapp', value: 'Whatsapp' },
                 ]}
+              />
+            )}
+          />
+          <form.AppField
+            name="store_name"
+            children={field => (
+              <field.SelectField
+                label="Toko (Opsional)"
+                placeholder="Pilih Toko..."
+                selectItems={shops}
               />
             )}
           />

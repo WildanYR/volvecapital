@@ -42,6 +42,7 @@ import { RedisModule } from './modules/redis/redis.module';
 import { RoleModule } from './modules/role/role.module';
 import { SettingModule } from './modules/setting/setting.module';
 import { ShiftModule } from './modules/shift/shift.module';
+import { ShopModule } from './modules/shop/shop.module';
 import { SocketModule } from './modules/socket/socket.module';
 import { StatisticModule } from './modules/statistic/statistic.module';
 import { TaskQueueModule } from './modules/task-queue/task-queue.module';
@@ -112,6 +113,7 @@ import { WithdrawalModule } from './modules/withdrawal/withdrawal.module';
     ManualBookCategoryModule,
     ManualBookModule,
     AccountingModule,
+    ShopModule,
   ],
   controllers: [AppController],
   providers: [{ provide: APP_GUARD, useClass: VcAuthGuard }, AppService],

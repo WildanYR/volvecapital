@@ -22,6 +22,10 @@ export class ResolvePlatformProductDto {
   @IsString()
   platform: string;
 
+  @IsOptional()
+  @IsString()
+  store_name?: string;
+
   @IsNotEmpty()
   @IsArray()
   @ValidateNested({ each: true })

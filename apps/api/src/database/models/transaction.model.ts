@@ -7,16 +7,21 @@ import {
   Model,
   PrimaryKey,
   Table,
+  ForeignKey,
+  BelongsTo,
 } from 'sequelize-typescript';
 import {
   TransactionItem,
   TransactionItemAttributes,
 } from './transaction-item.model';
+import { Shop } from './shop.model';
 
 export interface TransactionAttributes {
   id: string;
   customer: string;
   platform: string;
+  buyer_whatsapp?: string;
+  shop_id?: string;
   total_price: number;
   mdr_fee: number;
   platform_fee: number;
@@ -49,6 +54,16 @@ export class Transaction extends Model<
   @AllowNull(false)
   @Column(DataType.STRING)
   declare platform: string;
+
+  @Column(DataType.STRING)
+  declare buyer_whatsapp?: string;
+
+  @ForeignKey(() => Shop)
+  @Column(DataType.BIGINT)
+  declare shop_id?: string;
+
+  @BelongsTo(() => Shop, 'shop_id')
+  declare shop?: Shop;
 
   @AllowNull(false)
   @Column(DataType.INTEGER)

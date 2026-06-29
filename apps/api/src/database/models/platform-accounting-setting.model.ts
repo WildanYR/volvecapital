@@ -6,7 +6,10 @@ import {
   Model,
   PrimaryKey,
   Table,
+  ForeignKey,
+  BelongsTo,
 } from 'sequelize-typescript';
+import { Shop } from './shop.model';
 
 export interface PlatformAccountingSettingAttributes {
   id: string;
@@ -15,6 +18,7 @@ export interface PlatformAccountingSettingAttributes {
   expense_coa_id: string;
   fee_type: string;
   fee_amount: number;
+  shop_id?: string;
   created_at: Date;
   updated_at: Date;
 }
@@ -63,6 +67,14 @@ export class PlatformAccountingSetting extends Model<
     defaultValue: 0,
   })
   declare fee_amount: number;
+
+  @AllowNull(true)
+  @ForeignKey(() => Shop)
+  @Column(DataType.BIGINT)
+  declare shop_id: string;
+
+  @BelongsTo(() => Shop)
+  declare shop: Shop;
 
   @Column(DataType.DATE)
   declare created_at: Date;

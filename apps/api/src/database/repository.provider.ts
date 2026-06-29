@@ -35,6 +35,7 @@ import {
   ROLE_PERMISSION_REPOSITORY,
   ROLE_REPOSITORY,
   SHIFT_REPOSITORY,
+  SHOP_REPOSITORY,
   SYSLOG_REPOSITORY,
 
   TASK_QUEUE_REPOSITORY,
@@ -88,6 +89,7 @@ import { RevenueStatistics } from './models/revenue-statistics.model';
 import { RolePermission } from './models/role-permission.model';
 import { Role } from './models/role.model';
 import { Shift } from './models/shift.model';
+import { Shop } from './models/shop.model';
 import { Syslog } from './models/syslog.model';
 import { TaskQueue } from './models/task-queue.model';
 import { TenantBankAccount } from './models/tenant-bank-account.model';
@@ -166,4 +168,5 @@ export const RepositoryProvider: Provider[] = [
     provide: JOURNAL_TEMPLATE_ITEM_REPOSITORY,
     useValue: JournalTemplateItem,
   },
+  { provide: SHOP_REPOSITORY, useValue: Shop },
 ];

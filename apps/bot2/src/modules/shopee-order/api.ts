@@ -50,7 +50,8 @@ export async function fetchVoucherCopyTemplate(
 export async function checkProductNames(
   apiBaseUrl: string,
   credentials: AuthCredentials,
-  products: ProductLookupItem[]
+  products: ProductLookupItem[],
+  storeName?: string
 ): Promise<ProductPlatform[]> {
   const headers = authHeaders(credentials);
   const url = `${apiBaseUrl}/platform-product/resolve`;
@@ -61,6 +62,7 @@ export async function checkProductNames(
     body: JSON.stringify({
       platform: 'Shopee',
       items: products,
+      store_name: storeName,
     }),
   });
 
@@ -129,20 +131,21 @@ export async function generateAccountTransaction(
 /**
  * Generate voucher transaction - request a new voucher for buyer
  */
-export interface GenerateVoucherPayload {
+export interface VoucherPayload {
   product_variant_id: string;
   buyer_name: string;
-  buyer_whatsapp: string;
+  buyer_whatsapp?: string;
   buyer_email: string;
-  platform?: string;
-  price?: number;
+  platform: string;
+  price: number;
   prefix?: string;
+  store_name?: string;
 }
 
 export async function generateVoucherTransaction(
   apiBaseUrl: string,
   credentials: AuthCredentials,
-  payload: GenerateVoucherPayload
+  payload: VoucherPayload
 ): Promise<any> {
   const headers = authHeaders(credentials);
   const url = `${apiBaseUrl}/voucher/generate`;

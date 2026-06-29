@@ -18,6 +18,7 @@ import { JournalTemplate } from 'src/database/models/journal-template.model';
 import { JournalTemplateItem } from 'src/database/models/journal-template-item.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
 import { Transaction as TransactionModel } from 'src/database/models/transaction.model';
+import { Shop } from 'src/database/models/shop.model';
 import { CreateJournalTemplateDto } from './dto/create-journal-template.dto';
 import { UpdateJournalTemplateDto } from './dto/update-journal-template.dto';
 
@@ -662,14 +663,21 @@ export class AccountingService {
         { replacements: { txId: transactionId }, type: 'SELECT', transaction: tx }
       );
 
-      // Load platform setting (case-insensitive)
-      const platformSetting = await this.platformAccountingSettingRepository.findOne({
+      // Load platform setting (case-insensitive) prioritizing the shop_id match if available
+      const platformSettingList = await this.platformAccountingSettingRepository.findAll({
         where: where(
           fn('LOWER', col('platform')),
           t.platform.toLowerCase()
         ),
+        order: [['shop_id', 'DESC NULLS LAST']], // Prioritize non-null shop_id
         transaction: tx
       });
+      
+      let platformSetting = platformSettingList.find(s => String(s.shop_id) === String(t.shop_id));
+      if (!platformSetting) {
+        // Fallback to general platform setting
+        platformSetting = platformSettingList.find(s => s.shop_id === null || s.shop_id === undefined);
+      }
 
       if (!platformSetting) {
         throw new BadRequestException(`Pengaturan Akuntansi untuk Platform '${t.platform}' belum dikonfigurasi.`);
@@ -799,7 +807,10 @@ export class AccountingService {
     const tx = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema(tenantId, tx);
-      const settings = await this.platformAccountingSettingRepository.findAll({ transaction: tx });
+      const settings = await this.platformAccountingSettingRepository.findAll({ 
+        include: [{ model: Shop, as: 'shop', attributes: ['id', 'name'] }],
+        transaction: tx 
+      });
       await tx.commit();
       return settings;
     } catch (error) {
@@ -808,16 +819,20 @@ export class AccountingService {
     }
   }
 
-  async createPlatformSetting(tenantId: string, data: { platform: string, asset_coa_id: string, expense_coa_id: string }) {
+  async createPlatformSetting(tenantId: string, data: { platform: string, asset_coa_id: string, expense_coa_id: string, shop_id?: string }) {
     const tx = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema(tenantId, tx);
       const existing = await this.platformAccountingSettingRepository.findOne({
-        where: { platform: data.platform },
+        where: { 
+          platform: data.platform,
+          shop_id: data.shop_id ? data.shop_id : { [Op.is]: null }
+        } as any,
         transaction: tx,
       });
       if (existing) {
-        throw new BadRequestException(`Pengaturan akuntansi untuk platform ${data.platform} sudah ada.`);
+        const shopDesc = data.shop_id ? ` dan toko terpilih` : ``;
+        throw new BadRequestException(`Pengaturan akuntansi untuk platform ${data.platform}${shopDesc} sudah ada.`);
       }
       const setting = await this.platformAccountingSettingRepository.create(data as any, { transaction: tx });
       await tx.commit();
@@ -828,7 +843,7 @@ export class AccountingService {
     }
   }
 
-  async updatePlatformSetting(tenantId: string, id: string, data: { platform?: string, asset_coa_id?: string, expense_coa_id?: string }) {
+  async updatePlatformSetting(tenantId: string, id: string, data: { platform?: string, asset_coa_id?: string, expense_coa_id?: string, shop_id?: string }) {
     const tx = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema(tenantId, tx);
@@ -836,13 +851,20 @@ export class AccountingService {
       if (!setting) {
         throw new NotFoundException('Pengaturan platform tidak ditemukan.');
       }
-      if (data.platform && data.platform !== setting.platform) {
+      
+      const newPlatform = data.platform !== undefined ? data.platform : setting.platform;
+      const newShopId = data.shop_id !== undefined ? (data.shop_id || null) : setting.shop_id;
+      
+      if (newPlatform !== setting.platform || String(newShopId) !== String(setting.shop_id)) {
         const existing = await this.platformAccountingSettingRepository.findOne({
-          where: { platform: data.platform },
+          where: { 
+            platform: newPlatform, 
+            shop_id: newShopId ? newShopId : { [Op.is]: null } 
+          } as any,
           transaction: tx,
         });
-        if (existing) {
-          throw new BadRequestException(`Pengaturan akuntansi untuk platform ${data.platform} sudah ada.`);
+        if (existing && String(existing.id) !== String(id)) {
+          throw new BadRequestException(`Pengaturan akuntansi untuk platform tersebut dan toko tersebut sudah ada.`);
         }
       }
       await setting.update(data, { transaction: tx });

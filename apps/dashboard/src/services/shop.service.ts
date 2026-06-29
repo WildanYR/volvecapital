@@ -1,60 +1,42 @@
-import type { ProductVariant } from './product.service'
 import type { GetAllServiceFn } from '@/dashboard/types/get-all-service.type'
 import { z } from 'zod'
 import { generateApiFetch, parseApiResponse } from '@/dashboard/lib/api-fetch.util'
 import { BaseQueryParamsSchema } from '@/dashboard/types/get-all-service.type'
 
-export const PlatformProductFilterSchema = z.object({
+export const ShopFilterSchema = z.object({
   name: z.string().optional(),
   platform: z.string().optional(),
-  shop_id: z.string().optional(),
-  platform_product_id: z.string().optional(),
-  product_variant_id: z.string().optional(),
-  variant: z.string().optional(),
 })
 
-export type PlatformProductFilter = z.infer<typeof PlatformProductFilterSchema>
+export type ShopFilter = z.infer<typeof ShopFilterSchema>
 
-export const GetPlatformProductParamsSchema = BaseQueryParamsSchema.merge(
-  PlatformProductFilterSchema,
+export const GetShopParamsSchema = BaseQueryParamsSchema.merge(
+  ShopFilterSchema,
 )
 
-export interface PlatformProduct {
+export interface Shop {
   id: string
   name: string
   platform: string
-  platform_product_id?: string
-  product_variant_id: string
-  variant?: string
-  product_variant: ProductVariant
 }
 
-export interface CreatePlatformProductPayload {
+export interface CreateShopPayload {
   name: string
   platform: string
-  platform_product_id?: string
-  product_variant_id: string
-  variant?: string
 }
 
-export interface UpdatePlatformProductPayload {
+export interface UpdateShopPayload {
   name?: string
   platform?: string
-  platform_product_id?: string
-  product_variant_id?: string
-  variant?: string
 }
 
-export function PlatformProductServiceGenerator(apiUrl: string, accessToken: string, tenantId: string) {
-  const getAllPlatformProduct: GetAllServiceFn<
-    PlatformProduct,
-    PlatformProductFilter
-  > = async (params) => {
+export function ShopServiceGenerator(apiUrl: string, accessToken: string, tenantId: string) {
+  const getAllShop = async (params?: Record<string, any>): Promise<Shop[]> => {
     const response = await generateApiFetch(
       apiUrl,
       accessToken,
       tenantId,
-      '/platform-product',
+      '/shop',
       params,
     )
     if (!response.ok) {
@@ -62,18 +44,18 @@ export function PlatformProductServiceGenerator(apiUrl: string, accessToken: str
       const errorMessage = Array.isArray(errorData.message)
         ? errorData.message[0]
         : errorData.message
-      throw new Error(errorMessage || 'Failed to fetch Platform Product')
+      throw new Error(errorMessage || 'Failed to fetch Shop')
     }
 
     return response.json()
   }
 
-  const getPlatformProductById = async (platformProductId: string, signal?: AbortSignal) => {
+  const getShopById = async (shopId: string, signal?: AbortSignal) => {
     const response = await generateApiFetch(
       apiUrl,
       accessToken,
       tenantId,
-      `/platform-product/${platformProductId}`,
+      `/shop/${shopId}`,
       { signal },
     )
     if (!response.ok) {
@@ -81,20 +63,20 @@ export function PlatformProductServiceGenerator(apiUrl: string, accessToken: str
       const errorMessage = Array.isArray(errorData.message)
         ? errorData.message[0]
         : errorData.message
-      throw new Error(errorMessage || 'Failed to fetch platform product')
+      throw new Error(errorMessage || 'Failed to fetch shop')
     }
 
     return response.json()
   }
 
-  const createPlatformProduct = async (
-    payload: CreatePlatformProductPayload,
+  const createShop = async (
+    payload: CreateShopPayload,
   ) => {
     const response = await generateApiFetch(
       apiUrl,
       accessToken,
       tenantId,
-      '/platform-product',
+      '/shop',
       undefined,
       {
         method: 'POST',
@@ -108,21 +90,21 @@ export function PlatformProductServiceGenerator(apiUrl: string, accessToken: str
       const errorMessage = Array.isArray(errorData.message)
         ? errorData.message[0]
         : errorData.message
-      throw new Error(errorMessage || 'Failed to create platform product')
+      throw new Error(errorMessage || 'Failed to create shop')
     }
 
     return response.json()
   }
 
-  const updatePlatformProduct = async (
-    platformProductId: string,
-    payload: UpdatePlatformProductPayload,
+  const updateShop = async (
+    shopId: string,
+    payload: UpdateShopPayload,
   ) => {
     const response = await generateApiFetch(
       apiUrl,
       accessToken,
       tenantId,
-      `/platform-product/${platformProductId}`,
+      `/shop/${shopId}`,
       undefined,
       {
         method: 'PATCH',
@@ -136,18 +118,18 @@ export function PlatformProductServiceGenerator(apiUrl: string, accessToken: str
       const errorMessage = Array.isArray(errorData.message)
         ? errorData.message[0]
         : errorData.message
-      throw new Error(errorMessage || 'Failed to update platform product')
+      throw new Error(errorMessage || 'Failed to update shop')
     }
 
     return response.json()
   }
 
-  const deletePlatformProduct = async (platformProductId: string) => {
+  const deleteShop = async (shopId: string) => {
     const response = await generateApiFetch(
       apiUrl,
       accessToken,
       tenantId,
-      `/platform-product/${platformProductId}`,
+      `/shop/${shopId}`,
       undefined,
       {
         method: 'DELETE',
@@ -159,15 +141,15 @@ export function PlatformProductServiceGenerator(apiUrl: string, accessToken: str
       const errorMessage = Array.isArray(errorData.message)
         ? errorData.message[0]
         : errorData.message
-      throw new Error(errorMessage || 'Failed to delete email')
+      throw new Error(errorMessage || 'Failed to delete shop')
     }
   }
 
   return {
-    getAllPlatformProduct,
-    getPlatformProductById,
-    createPlatformProduct,
-    updatePlatformProduct,
-    deletePlatformProduct,
+    getAllShop,
+    getShopById,
+    createShop,
+    updateShop,
+    deleteShop,
   }
 }

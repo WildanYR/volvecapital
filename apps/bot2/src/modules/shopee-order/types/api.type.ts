@@ -16,6 +16,8 @@ export interface TransactionAccountPayload {
   platform: string;
   total_price: number;
   items: { product_variant_id: string }[];
+  store_name?: string;
+  buyer_whatsapp?: string;
 }
 
 export interface AccountUser {

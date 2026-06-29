@@ -8,6 +8,7 @@ import { Skeleton } from '@/dashboard/components/ui/skeleton'
 import { API_URL } from '@/dashboard/constants/api-url.cont'
 import { useAuth } from '@/dashboard/context-providers/auth.provider'
 import { PlatformProductServiceGenerator } from '@/dashboard/services/platform-product.service'
+import { ShopServiceGenerator } from '@/dashboard/services/shop.service'
 
 export const Route = createFileRoute('/dashboard/platform-product/$id')({
   component: RouteComponent,
@@ -23,6 +24,16 @@ function RouteComponent() {
     auth.tenant!.accessToken,
     auth.tenant!.id,
   )
+  const shopService = ShopServiceGenerator(
+    API_URL,
+    auth.tenant!.accessToken,
+    auth.tenant!.id,
+  )
+
+  const { data: shops } = useQuery({
+    queryKey: ['shops'],
+    queryFn: ({ signal }) => shopService.getAllShop({ signal, limit: 100 }),
+  })
 
   const { data: platformProduct, isLoading: isFetchPlatformProductLoading }
     = useQuery({
@@ -45,6 +56,7 @@ function RouteComponent() {
   const handleSubmit = (values: PlatformProductFormSubmitData) => {
     mutation.mutate({
       ...values,
+      shop_id: values.shop_id || undefined,
       product_variant_id: values.product_variant_id,
     })
   }
@@ -68,6 +80,7 @@ function RouteComponent() {
                 isPending={mutation.isPending}
                 initialData={platformProduct}
                 submitButtonText="Ubah Produk Platform"
+                shops={shops?.map((s) => ({ title: s.name, value: s.id })) ?? []}
               />
             </div>
           )}

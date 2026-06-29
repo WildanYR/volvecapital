@@ -55,6 +55,7 @@ import { Voucher } from './models/voucher.model';
 import { WeeklyOffRequest } from './models/weekly-off-request.model';
 import { WeeklyOffSchedule } from './models/weekly-off-schedule.model';
 import { WithdrawalRequest } from './models/withdrawal-request.model';
+import { Shop } from './models/shop.model';
 
 @Injectable()
 export class PostgresProvider {
@@ -142,6 +143,7 @@ export class PostgresProvider {
         JournalTemplate,
         JournalTemplateItem,
         PlatformAccountingSetting,
+        Shop,
       ]);
     }
     else {

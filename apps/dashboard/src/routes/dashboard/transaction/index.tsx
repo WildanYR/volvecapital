@@ -405,7 +405,14 @@ function RouteComponent() {
                                 <span className="italic">No Item</span>
                               )}
                         </TableCell>
-                        <TableCell className="hidden lg:table-cell">{transaction.customer}</TableCell>
+                        <TableCell className="hidden lg:table-cell">
+                          <div>
+                            <p>{transaction.customer}</p>
+                            {transaction.buyer_whatsapp && (
+                              <p className="text-xs text-muted-foreground">{transaction.buyer_whatsapp}</p>
+                            )}
+                          </div>
+                        </TableCell>
                         <TableCell className="hidden lg:table-cell">
                           <div className="flex gap-2 items-center">
                             {transaction.platform === 'Shopee'
@@ -433,13 +440,18 @@ function RouteComponent() {
                                         </div>
                                       )
                                     : (
-                                        <div className="p-1 bg-neutral-500/20 text-neutral-500 w-min rounded-md">
-                                          <CircleQuestionMark className="size-6" />
-                                        </div>
-                                      )}
-                            <p>{transaction.platform}</p>
-                          </div>
-                        </TableCell>
+                                          <div className="p-1 bg-neutral-500/20 text-neutral-500 w-min rounded-md">
+                                            <CircleQuestionMark className="size-6" />
+                                          </div>
+                                        )}
+                              <div>
+                                <p>{transaction.platform}</p>
+                                {transaction.shop && (
+                                  <p className="text-xs text-muted-foreground">{transaction.shop.name}</p>
+                                )}
+                              </div>
+                            </div>
+                          </TableCell>
                         <TableCell className="hidden lg:table-cell">{formatRupiah(transaction.total_price)}</TableCell>
                         <TableCell className="text-center lg:text-right">
                           <div className="flex justify-center lg:justify-end gap-2">

@@ -42,6 +42,12 @@ export interface Transaction {
   id: string
   customer: string
   platform: string
+  buyer_whatsapp?: string
+  shop_id?: string
+  shop?: {
+    id: string
+    name: string
+  }
   total_price: number
   items: Array<TransactionItem>
   created_at: Date
@@ -65,6 +71,7 @@ interface CreateTransactionItemPayload {
 export interface CreateTransactionPayload {
   customer: string
   platform: string
+  buyer_whatsapp?: string
   total_price: number
   items: Array<CreateTransactionItemPayload>
 }

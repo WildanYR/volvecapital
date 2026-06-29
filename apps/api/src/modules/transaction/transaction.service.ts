@@ -6,6 +6,7 @@ import {
   TENANT_SETTING_REPOSITORY,
   TRANSACTION_ITEM_REPOSITORY,
   TRANSACTION_REPOSITORY,
+  SHOP_REPOSITORY,
 } from 'src/constants/database.const';
 import { AccountProfile } from 'src/database/models/account-profile.model';
 import {
@@ -16,6 +17,7 @@ import { Account } from 'src/database/models/account.model';
 import { Email } from 'src/database/models/email.model';
 import { ProductVariant } from 'src/database/models/product-variant.model';
 import { Product } from 'src/database/models/product.model';
+import { Shop } from 'src/database/models/shop.model';
 import { TenantSetting } from 'src/database/models/tenant-setting.model';
 import {
   TransactionItem,
@@ -54,6 +56,8 @@ export class TransactionService {
     private readonly productVariantRepository: typeof ProductVariant,
     @Inject(TENANT_SETTING_REPOSITORY)
     private readonly tenantSettingRepository: typeof TenantSetting,
+    @Inject(SHOP_REPOSITORY)
+    private readonly shopRepository: typeof Shop,
     private readonly accountingService: AccountingService,
   ) {}
 
@@ -137,6 +141,10 @@ export class TransactionService {
               },
             ],
           },
+          {
+            model: Shop,
+            as: 'shop',
+          },
         ],
         transaction: tx,
       });
@@ -190,6 +198,10 @@ export class TransactionService {
               },
             ],
           },
+          {
+            model: Shop,
+            as: 'shop',
+          },
         ],
         transaction: tx,
       });
@@ -222,7 +234,7 @@ export class TransactionService {
       }
     )[];
   }> {
-    const { id, items, ...transactionData } = createTransactionDto;
+    const { id, items, store_name, ...transactionData } = createTransactionDto;
     const tx = await this.postgresProvider.transaction();
     const failedGeneratedAccountUser: {
       availability_status: 'NOT_AVAILABLE' | 'COOLDOWN';
@@ -387,6 +399,17 @@ export class TransactionService {
 
       const net_profit = transactionData.total_price - mdr_fee - platform_fee;
 
+      let shop_id: string | undefined = undefined;
+      if (store_name) {
+        const shop = await this.shopRepository.findOne({
+          where: { name: store_name },
+          transaction: tx,
+        });
+        if (shop) {
+          shop_id = String(shop.id);
+        }
+      }
+
       await this.transactionRepository.create(
         {
           id: transactionId,
@@ -394,6 +417,7 @@ export class TransactionService {
           mdr_fee,
           platform_fee,
           net_profit,
+          shop_id,
         },
         {
           transaction: tx,

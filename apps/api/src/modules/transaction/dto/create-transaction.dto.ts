@@ -31,6 +31,14 @@ export class CreateTransactionDto {
   @IsString()
   platform: string;
 
+  @IsOptional()
+  @IsString()
+  store_name?: string;
+
+  @IsOptional()
+  @IsString()
+  buyer_whatsapp?: string;
+
   @IsNotEmpty()
   @IsNumber()
   total_price: number;

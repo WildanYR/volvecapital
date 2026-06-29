@@ -14,11 +14,13 @@ import {
   ProductVariant,
   ProductVariantAttributes,
 } from './product-variant.model';
+import { Shop } from './shop.model';
 
 export interface PlatformProductAttributes {
   id: string;
   name: string;
   platform: string;
+  shop_id?: string;
   platform_product_id?: string;
   product_variant_id: string;
   variant?: string | null;
@@ -56,6 +58,13 @@ export class PlatformProduct extends Model<
 
   @Column(DataType.STRING)
   declare platform_product_id?: string;
+
+  @ForeignKey(() => Shop)
+  @Column(DataType.BIGINT)
+  declare shop_id?: string;
+
+  @BelongsTo(() => Shop, 'shop_id')
+  declare shop?: Shop;
 
   @ForeignKey(() => ProductVariant)
   @AllowNull(false)

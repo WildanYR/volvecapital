@@ -60,8 +60,8 @@ export const up: MigrationFn<MigrationContext> = async ({ context }) => {
     }
   );
 
-  const indexes = await queryInterface.showIndex({ schema, tableName: 'coa' });
-  const indexExists = indexes.some(idx => idx.name === `idx_coa_code_${schema}`);
+  const indexes = (await queryInterface.showIndex({ schema, tableName: 'coa' })) as any[];
+  const indexExists = indexes.some((idx: any) => idx.name === `idx_coa_code_${schema}`);
   if (!indexExists) {
     try {
       await queryInterface.addIndex({ schema, tableName: 'coa' }, ['code'], {

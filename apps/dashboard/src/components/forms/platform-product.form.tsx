@@ -8,6 +8,7 @@ export const PlatformProductFormSchema = z.object({
   platform_product_id: z.string(),
   product_variant_id: z.string(),
   variant: z.string(),
+  shop_id: z.string().optional(),
 })
 
 export type PlatformProductFormSubmitData = z.infer<
@@ -19,11 +20,13 @@ export function PlatformProductForm({
   isPending,
   initialData,
   submitButtonText,
+  shops,
 }: {
   onSubmit: (values: PlatformProductFormSubmitData) => void
   isPending: boolean
   initialData?: PlatformProduct
   submitButtonText?: string
+  shops: { title: string, value: string }[]
 }) {
   const form = useAppForm({
     validators: { onSubmit: PlatformProductFormSchema },
@@ -33,6 +36,7 @@ export function PlatformProductForm({
       platform_product_id: initialData?.platform_product_id ?? '',
       product_variant_id: initialData?.product_variant_id ?? '',
       variant: initialData?.variant ?? '',
+      shop_id: (initialData as any)?.shop_id ?? '',
     },
     onSubmit: ({ value }) => {
       onSubmit(value)
@@ -74,6 +78,16 @@ export function PlatformProductForm({
                 label="Platform"
                 placeholder="Pilih Platform..."
                 selectItems={[{ title: 'Shopee', value: 'Shopee' }]}
+              />
+            )}
+          />
+          <form.AppField
+            name="shop_id"
+            children={field => (
+              <field.SelectField
+                label="Toko (opsional)"
+                placeholder="Pilih Toko..."
+                selectItems={shops}
               />
             )}
           />

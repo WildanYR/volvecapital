@@ -325,6 +325,7 @@ export class ShopeeOrderModule extends BaseModule {
           this.apiBaseUrl,
           this.authCredentials,
           products.map((p) => ({ name: p.name, variant: p.variant })),
+          this.instanceId,
         );
         const productList: { id: string; name: string; variant?: string }[] =
           [];
@@ -357,11 +358,15 @@ export class ShopeeOrderModule extends BaseModule {
           );
         }
 
+        const buyerWhatsapp = await this.extractBuyerWhatsapp(page);
+
         const transactionPayload: TransactionAccountPayload = {
           customer: username,
           platform: "Shopee",
           total_price: totalPrice,
           items: productList.map((p) => ({ product_variant_id: p.id })),
+          store_name: this.instanceId,
+          buyer_whatsapp: buyerWhatsapp,
         };
 
         // Build messages to send
@@ -369,7 +374,6 @@ export class ShopeeOrderModule extends BaseModule {
 
         if (this.moduleConfig.delivery_mode === "voucher") {
           // JALUR VOUCHER
-          const buyerWhatsapp = await this.extractBuyerWhatsapp(page);
 
           // Loop products to generate vouchers (usually 1 per item)
           for (const p of productList) {
@@ -384,6 +388,7 @@ export class ShopeeOrderModule extends BaseModule {
                 platform: "Shopee",
                 price: totalPrice,
                 prefix: "SHP-",
+                store_name: this.instanceId,
               },
             );
 

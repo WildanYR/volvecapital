@@ -22,7 +22,7 @@ async function bootstrap() {
   console.log('Fetching all tenants...');
   try {
     const tenants: any[] = await postgresProvider.rawQuery(
-      'SELECT id FROM master.tenant WHERE status = \'active\'',
+      'SELECT id FROM master.tenant',
       { type: QueryTypes.SELECT }
     );
 

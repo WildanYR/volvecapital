@@ -15,7 +15,11 @@ export class CreatePlatformProductDto {
 
   @IsOptional()
   @IsString()
-  variant?: string;
+  shop_id?: string;
+
+  @IsOptional()
+  @IsString()
+  variant?: string | null;
 
   @IsNotEmpty()
   @IsString()

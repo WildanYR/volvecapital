@@ -37,6 +37,7 @@ import { API_URL } from '@/dashboard/constants/api-url.cont'
 import { useGlobalAlertDialog } from '@/dashboard/context-providers/alert-dialog.provider'
 import { useAuth } from '@/dashboard/context-providers/auth.provider'
 import { AccountingServiceGenerator } from '@/dashboard/services/accounting.service'
+import { ShopServiceGenerator } from '@/dashboard/services/shop.service'
 
 export const Route = createFileRoute('/dashboard/accounting/settings/')({
   component: RouteComponent,
@@ -52,6 +53,11 @@ function RouteComponent() {
     auth.tenant!.accessToken,
     auth.tenant!.id,
   )
+  const shopService = ShopServiceGenerator(
+    API_URL,
+    auth.tenant!.accessToken,
+    auth.tenant!.id,
+  )
 
   const { data: coaList } = useQuery({
     queryKey: ['coaList', auth.tenant!.id],
@@ -63,6 +69,11 @@ function RouteComponent() {
     queryFn: () => accountingService.getPlatformSettings(),
   })
 
+  const { data: shops } = useQuery({
+    queryKey: ['shops', auth.tenant!.id],
+    queryFn: () => shopService.getAllShop(),
+  })
+
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
   const [formData, setFormData] = useState({
@@ -71,6 +82,7 @@ function RouteComponent() {
     expense_coa_id: '',
     fee_type: 'FIXED',
     fee_amount: 0,
+    shop_id: '',
   })
 
   const createMutation = useMutation({
@@ -79,7 +91,7 @@ function RouteComponent() {
       toast.success('Pengaturan platform berhasil ditambahkan')
       queryClient.invalidateQueries({ queryKey: ['platformSettings'] })
       setIsModalOpen(false)
-      setFormData({ platform: '', asset_coa_id: '', expense_coa_id: '' })
+      setFormData({ platform: '', asset_coa_id: '', expense_coa_id: '', fee_type: 'FIXED', fee_amount: 0, shop_id: '' })
     },
     onError: (error: any) => {
       toast.error(error.message || 'Gagal menambahkan pengaturan')
@@ -93,7 +105,7 @@ function RouteComponent() {
       queryClient.invalidateQueries({ queryKey: ['platformSettings'] })
       setIsModalOpen(false)
       setEditId(null)
-      setFormData({ platform: '', asset_coa_id: '', expense_coa_id: '', fee_type: 'FIXED', fee_amount: 0 })
+      setFormData({ platform: '', asset_coa_id: '', expense_coa_id: '', fee_type: 'FIXED', fee_amount: 0, shop_id: '' })
     },
     onError: (error: any) => {
       toast.error(error.message || 'Gagal memperbarui pengaturan')
@@ -131,13 +143,14 @@ function RouteComponent() {
       expense_coa_id: setting.expense_coa_id,
       fee_type: setting.fee_type || 'FIXED',
       fee_amount: setting.fee_amount || 0,
+      shop_id: setting.shop_id ? String(setting.shop_id) : '',
     })
     setIsModalOpen(true)
   }
 
   const handleAddNew = () => {
     setEditId(null)
-    setFormData({ platform: '', asset_coa_id: '', expense_coa_id: '', fee_type: 'FIXED', fee_amount: 0 })
+    setFormData({ platform: '', asset_coa_id: '', expense_coa_id: '', fee_type: 'FIXED', fee_amount: 0, shop_id: '' })
     setIsModalOpen(true)
   }
 
@@ -164,6 +177,7 @@ function RouteComponent() {
             <TableHeader>
               <TableRow>
                 <TableHead>Platform</TableHead>
+                <TableHead>Toko</TableHead>
                 <TableHead>Akun Kas / Bank (Debit)</TableHead>
                 <TableHead>Akun Biaya Admin (Debit)</TableHead>
                 <TableHead>Besaran Biaya Admin</TableHead>
@@ -179,7 +193,7 @@ function RouteComponent() {
                 </TableRow>
               ) : settings?.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground py-6">
+                  <TableCell colSpan={6} className="text-center text-muted-foreground py-6">
                     Belum ada pemetaan platform.
                   </TableCell>
                 </TableRow>
@@ -190,6 +204,7 @@ function RouteComponent() {
                   return (
                     <TableRow key={s.id}>
                       <TableCell className="font-medium">{s.platform}</TableCell>
+                      <TableCell>{s.shop?.name || <span className="text-muted-foreground italic">Umum (Semua Toko)</span>}</TableCell>
                       <TableCell>{assetCoa ? `${assetCoa.code} - ${assetCoa.name}` : '-'}</TableCell>
                       <TableCell>{expenseCoa ? `${expenseCoa.code} - ${expenseCoa.name}` : '-'}</TableCell>
                       <TableCell>
@@ -235,8 +250,28 @@ function RouteComponent() {
               <Input
                 value={formData.platform}
                 onChange={(e) => setFormData({ ...formData, platform: e.target.value.toUpperCase() })}
-                placeholder="NAMA PLATFORM"
+                placeholder="Contoh: SHOPEE"
               />
+            </div>
+            <div className="grid gap-2">
+              <label>Toko (Opsional)</label>
+              <Select
+                value={formData.shop_id}
+                onValueChange={(val) => setFormData({ ...formData, shop_id: val === 'none' ? '' : val })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Pilih Toko Spesifik (Atau biarkan kosong untuk Umum)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none" className="text-muted-foreground italic">Umum (Semua Toko)</SelectItem>
+                  {shops?.map((s: any) => (
+                    <SelectItem key={s.id} value={String(s.id)}>
+                      {s.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">Jika diisi, pengaturan ini hanya berlaku untuk platform tersebut di toko yang dipilih.</p>
             </div>
             <div className="grid gap-2">
               <label>Akun Penerimaan Kas/Bank</label>

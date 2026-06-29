@@ -4,10 +4,14 @@ import { Op, QueryTypes } from 'sequelize';
 import {
   PRODUCT_VARIANT_REPOSITORY,
   TENANT_REPOSITORY,
+  TENANT_SETTING_REPOSITORY,
   TRANSACTION_ITEM_REPOSITORY,
   TRANSACTION_REPOSITORY,
   VOUCHER_REPOSITORY,
+  SHOP_REPOSITORY,
 } from 'src/constants/database.const';
+import { Shop } from 'src/database/models/shop.model';
+import { TenantSetting } from 'src/database/models/tenant-setting.model';
 import { AccountProfile } from 'src/database/models/account-profile.model';
 import { AccountUser } from 'src/database/models/account-user.model';
 import { Account } from 'src/database/models/account.model';
@@ -36,6 +40,10 @@ export class VoucherService {
     private readonly voucherRepository: typeof Voucher,
     @Inject(TENANT_REPOSITORY)
     private readonly tenantRepository: typeof Tenant,
+    @Inject(TENANT_SETTING_REPOSITORY)
+    private readonly tenantSettingRepository: typeof TenantSetting,
+    @Inject(SHOP_REPOSITORY)
+    private readonly shopRepository: typeof Shop,
     private readonly accountingService: AccountingService,
   ) {}
 
@@ -68,16 +76,62 @@ export class VoucherService {
 
       const orderId = `M-${tenantId.toUpperCase().substring(0, 3)}-${Date.now()}`;
 
+      const platform = dto.platform || 'dashboard';
+      let mdr_fee = 0;
+      let platform_fee = 0;
+      const total_price = dto.price ? Number(dto.price) : Number(variant.price || 0);
+
+      // Cek apakah ada konfigurasi di platform accounting setting
+      const platformSetting = await this.accountingService.getPlatformSettingByPlatform(tenantId, platform, transaction);
+      if (platformSetting && Number(platformSetting.fee_amount) > 0) {
+        if (platformSetting.fee_type === 'PERCENTAGE') {
+          mdr_fee = (total_price * Number(platformSetting.fee_amount)) / 100;
+        } else {
+          mdr_fee = Number(platformSetting.fee_amount);
+        }
+      } else if (platform.toUpperCase() === 'LANDING_PAGE') {
+        const settings = await this.tenantSettingRepository.findAll({
+          where: { key: ['doku_mdr', 'platform_fee'] },
+          transaction,
+        });
+        
+        mdr_fee = 4500;
+        platform_fee = 500;
+
+        for (const setting of settings) {
+          if (setting.key === 'doku_mdr' && !isNaN(Number(setting.value))) {
+            mdr_fee = Number(setting.value);
+          }
+          if (setting.key === 'platform_fee' && !isNaN(Number(setting.value))) {
+            platform_fee = Number(setting.value);
+          }
+        }
+      }
+
+      const net_profit = total_price - mdr_fee - platform_fee;
+
+      let shop_id: string | undefined = undefined;
+      if (dto.store_name) {
+        const shop = await this.shopRepository.findOne({
+          where: { name: dto.store_name },
+          transaction,
+        });
+        if (shop) {
+          shop_id = String(shop.id);
+        }
+      }
+
       // 1. Create transaction
       const txn = await this.transactionRepository.create(
         {
           id: orderId,
           customer: dto.buyer_name,
-          platform: dto.platform || 'dashboard',
-          total_price: dto.price ? Number(dto.price) : Number(variant.price || 0),
-          mdr_fee: 0,
-          platform_fee: 0,
-          net_profit: dto.price ? Number(dto.price) : Number(variant.price || 0),
+          platform,
+          total_price,
+          mdr_fee,
+          platform_fee,
+          net_profit,
+          shop_id,
         },
         { transaction },
       );

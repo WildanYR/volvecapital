@@ -5,10 +5,11 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Op, WhereOptions } from 'sequelize';
-import { PLATFORM_PRODUCT_REPOSITORY } from 'src/constants/database.const';
+import { PLATFORM_PRODUCT_REPOSITORY, SHOP_REPOSITORY } from 'src/constants/database.const';
 import { PlatformProduct } from 'src/database/models/platform-product.model';
 import { ProductVariant } from 'src/database/models/product-variant.model';
 import { Product } from 'src/database/models/product.model';
+import { Shop } from 'src/database/models/shop.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
 import { PaginationProvider } from '../utility/pagination.provider';
 import { BaseGetAllUrlQuery } from '../utility/types/base-get-all-url-query.type';
@@ -25,6 +26,8 @@ export class PlatformProductService {
     private readonly postgresProvider: PostgresProvider,
     @Inject(PLATFORM_PRODUCT_REPOSITORY)
     private readonly platformProductRepository: typeof PlatformProduct,
+    @Inject(SHOP_REPOSITORY)
+    private readonly shopRepository: typeof Shop,
   ) {}
 
   async findAll(
@@ -48,6 +51,9 @@ export class PlatformProductService {
       }
       if (filter?.product_variant_id) {
         whereOptions.product_variant_id = filter.product_variant_id;
+      }
+      if (filter?.shop_id) {
+        whereOptions.shop_id = filter.shop_id;
       }
       if (filter?.variant) {
         whereOptions.variant = { [Op.iLike]: `%${filter.variant}%` };
@@ -182,17 +188,34 @@ export class PlatformProductService {
 
       const items = resolvePlatformProductDto.items;
 
+      let shop_id: string | undefined = undefined;
+      if (resolvePlatformProductDto.store_name) {
+        const shop = await this.shopRepository.findOne({
+          where: { name: resolvePlatformProductDto.store_name },
+          transaction,
+        });
+        if (shop) {
+          shop_id = String(shop.id);
+        }
+      }
+
+      const whereOptions: WhereOptions = {
+        platform: resolvePlatformProductDto.platform,
+        [Op.or]: items.map((item) => {
+          const v = item.variant?.trim();
+          if (v) {
+            return { name: item.name, variant: v };
+          }
+          return { name: item.name, variant: { [Op.or]: [null, ''] } };
+        }),
+      };
+
+      if (shop_id) {
+        whereOptions.shop_id = shop_id;
+      }
+
       const platformProducts = await this.platformProductRepository.findAll({
-        where: {
-          platform: resolvePlatformProductDto.platform,
-          [Op.or]: items.map((item) => {
-            const v = item.variant?.trim();
-            if (v) {
-              return { name: item.name, variant: v };
-            }
-            return { name: item.name, variant: { [Op.or]: [null, ''] } };
-          }),
-        },
+        where: whereOptions,
         transaction,
       });
 
