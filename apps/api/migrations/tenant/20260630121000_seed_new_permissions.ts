@@ -1,7 +1,7 @@
 import type { MigrationContext } from 'migrations/migrator';
 import type { MigrationFn } from 'umzug';
 import { ALL_PERMISSIONS } from '../../src/constants/permissions.const';
-import { v4 as uuidv4 } from 'uuid';
+
 
 export const up: MigrationFn<MigrationContext> = async ({ context }) => {
   const { queryInterface, schema } = context;
