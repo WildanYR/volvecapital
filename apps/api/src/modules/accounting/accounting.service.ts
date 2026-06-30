@@ -307,7 +307,7 @@ export class AccountingService {
 
       const list = await this.journalEntryRepository.findAll({
         where,
-        include: [{ model: JournalLine, include: [Coa] }],
+        include: [{ model: JournalLine, as: 'lines', include: [{ model: Coa, as: 'coa' }] }],
         order: [['transaction_date', 'DESC']],
         transaction: tx,
       });
@@ -342,7 +342,7 @@ export class AccountingService {
     try {
       await this.postgresProvider.setSchema(tenantId, tx);
       const coas = await this.coaRepository.findAll({
-        include: [{ model: JournalLine }],
+        include: [{ model: JournalLine, as: 'journal_lines' }],
         order: [['code', 'ASC']],
         transaction: tx,
       });

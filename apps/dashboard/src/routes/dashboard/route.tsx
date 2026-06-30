@@ -99,7 +99,7 @@ const navGroups = [
   {
     title: 'Keuangan',
     items: [
-      { title: '', url: '/dashboard/wallet', icon: Receipt, permission: 'wallet.view' },
+      { title: 'Wallet', url: '/dashboard/wallet', icon: Receipt, permission: 'wallet.view' },
       { title: 'Akuntansi', url: '/dashboard/accounting', icon: BookA },
     ],
   },
