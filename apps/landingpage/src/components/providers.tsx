@@ -33,7 +33,6 @@ export function Providers({
 
   return (
     <TenantProvider tenantId={tenantId} hostname={hostname}>
-      {/* @ts-expect-error ThemeProvider typings issue */}
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
         <PersistQueryClientProvider 
           client={queryClient}
