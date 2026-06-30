@@ -143,9 +143,9 @@ function CoaList() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     
-    // Validasi angka
-    if (!/^\d+$/.test(formData.code)) {
-      toast.error('Kode Akun hanya boleh berisi angka.')
+    // Validasi angka dan titik
+    if (!/^[\d.]+$/.test(formData.code)) {
+      toast.error('Kode Akun hanya boleh berisi angka dan titik (.).')
       return
     }
 
@@ -325,12 +325,12 @@ function CoaList() {
               <Label>Kode Akun</Label>
               <Input 
                 value={formData.code} 
-                onChange={(e) => setFormData({...formData, code: e.target.value.replace(/\D/g, '')})}
-                placeholder="Hanya Angka (Misal: 101)"
+                onChange={(e) => setFormData({...formData, code: e.target.value.replace(/[^\d.]/g, '')})}
+                placeholder="Hanya Angka & Titik (Misal: 101.1)"
                 required 
                 maxLength={20}
               />
-              <p className="text-xs text-muted-foreground">Hanya boleh berisi angka.</p>
+              <p className="text-xs text-muted-foreground">Hanya boleh berisi angka dan titik (.).</p>
             </div>
             <div className="space-y-2">
               <Label>Nama Akun</Label>
