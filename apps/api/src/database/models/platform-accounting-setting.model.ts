@@ -18,7 +18,7 @@ export interface PlatformAccountingSettingAttributes {
   expense_coa_id: string;
   fee_type: string;
   fee_amount: number;
-  shop_id?: string;
+  shop_id?: string | null;
   created_at: Date;
   updated_at: Date;
 }

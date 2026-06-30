@@ -903,7 +903,7 @@ export class AccountingService {
           throw new BadRequestException(`Pengaturan akuntansi untuk platform tersebut dan toko tersebut sudah ada.`);
         }
       }
-      await setting.update(data, { transaction: tx });
+      await setting.update(data as any, { transaction: tx });
       await tx.commit();
       return setting;
     } catch (error) {
