@@ -2238,7 +2238,7 @@ function RouteComponent() {
                               <SelectValue placeholder="Pilih Kas/Bank..." />
                             </SelectTrigger>
                             <SelectContent>
-                              {coaList?.filter((c: any) => c.type === 'ASET').map((c: any) => (
+                              {coaList?.filter((c: any) => c.type === 'ASET' && (c.name.toLowerCase().includes('kas') || c.name.toLowerCase().includes('bank'))).map((c: any) => (
                                 <SelectItem key={c.id} value={c.id} className="text-xs">{c.code} - {c.name}</SelectItem>
                               ))}
                             </SelectContent>
