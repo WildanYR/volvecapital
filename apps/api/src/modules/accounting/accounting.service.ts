@@ -71,8 +71,8 @@ export class AccountingService {
     const tx = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema(tenantId, tx);
-      if (!/^\d+$/.test(data.code)) {
-        throw new BadRequestException('Kode akun hanya boleh berisi angka.');
+      if (!/^[\d.]+$/.test(data.code)) {
+        throw new BadRequestException('Kode akun hanya boleh berisi angka dan titik.');
       }
       const existing = await this.coaRepository.findOne({
         where: { code: data.code },
@@ -99,8 +99,8 @@ export class AccountingService {
         throw new BadRequestException('Akun tidak ditemukan.');
       }
       if (data.code && data.code !== coa.code) {
-        if (!/^\d+$/.test(data.code)) {
-          throw new BadRequestException('Kode akun hanya boleh berisi angka.');
+        if (!/^[\d.]+$/.test(data.code)) {
+          throw new BadRequestException('Kode akun hanya boleh berisi angka dan titik.');
         }
         const existing = await this.coaRepository.findOne({
           where: { code: data.code },
