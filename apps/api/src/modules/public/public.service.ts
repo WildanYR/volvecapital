@@ -92,6 +92,16 @@ export class PublicService {
   ) {}
 
   async getSettings(tenantId: string) {
+    if (!tenantId) return {};
+
+    const [schemaResult] = await this.postgresProvider.rawQuery(
+      `SELECT schema_name FROM information_schema.schemata WHERE schema_name = :tenantId`,
+      { replacements: { tenantId } }
+    );
+    if (!schemaResult || (schemaResult as any[]).length === 0) {
+      return {};
+    }
+
     const transaction = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema(tenantId, transaction);
@@ -268,6 +278,16 @@ export class PublicService {
   // ─── LIST PRODUCTS ──────────────────────────────────────────────────────────
 
   async getProducts(tenantId: string) {
+    if (!tenantId) return [];
+    
+    const [schemaResult] = await this.postgresProvider.rawQuery(
+      `SELECT schema_name FROM information_schema.schemata WHERE schema_name = :tenantId`,
+      { replacements: { tenantId } }
+    );
+    if (!schemaResult || (schemaResult as any[]).length === 0) {
+      throw new NotFoundException('Tenant not found');
+    }
+
     const transaction = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema(tenantId, transaction);
@@ -1285,6 +1305,16 @@ export class PublicService {
   }
 
   async getArticleBySlug(tenantId: string, slug: string) {
+    if (!tenantId) throw new NotFoundException('Article not found');
+    
+    const [schemaResult] = await this.postgresProvider.rawQuery(
+      `SELECT schema_name FROM information_schema.schemata WHERE schema_name = :tenantId`,
+      { replacements: { tenantId } }
+    );
+    if (!schemaResult || (schemaResult as any[]).length === 0) {
+      throw new NotFoundException('Article not found');
+    }
+
     const transaction = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema(tenantId, transaction);
