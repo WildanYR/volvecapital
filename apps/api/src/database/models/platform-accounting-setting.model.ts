@@ -29,7 +29,15 @@ interface PlatformAccountingSettingCreationAttributes
     'id' | 'created_at' | 'updated_at'
   > {}
 
-@Table({ tableName: 'platform_accounting_setting' })
+@Table({ 
+  tableName: 'platform_accounting_setting',
+  indexes: [
+    {
+      unique: true,
+      fields: ['platform', 'shop_id']
+    }
+  ]
+})
 export class PlatformAccountingSetting extends Model<
   PlatformAccountingSettingAttributes,
   PlatformAccountingSettingCreationAttributes
