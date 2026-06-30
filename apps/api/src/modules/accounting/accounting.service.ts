@@ -853,7 +853,8 @@ export class AccountingService {
     }
   }
 
-  async createPlatformSetting(tenantId: string, data: { platform: string, asset_coa_id: string, expense_coa_id: string, shop_id?: string }) {
+  async createPlatformSetting(tenantId: string, data: { platform: string, asset_coa_id: string, expense_coa_id: string, shop_id?: string | null }) {
+    if (data.shop_id === '') data.shop_id = null;
     const tx = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema(tenantId, tx);
@@ -877,7 +878,8 @@ export class AccountingService {
     }
   }
 
-  async updatePlatformSetting(tenantId: string, id: string, data: { platform?: string, asset_coa_id?: string, expense_coa_id?: string, shop_id?: string }) {
+  async updatePlatformSetting(tenantId: string, id: string, data: { platform?: string, asset_coa_id?: string, expense_coa_id?: string, shop_id?: string | null }) {
+    if (data.shop_id === '') data.shop_id = null;
     const tx = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema(tenantId, tx);
