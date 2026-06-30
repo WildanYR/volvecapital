@@ -2158,7 +2158,7 @@ function RouteComponent() {
 
       {/* Bulk Confirm Dialog */}
       <Dialog open={dialogBulkConfirmOpen} onOpenChange={setDialogBulkConfirmOpen}>
-        <DialogContent className="max-w-[700px]">
+        <DialogContent className="sm:max-w-[800px]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <ListChecks className="size-5 text-red-600" />
@@ -2218,7 +2218,7 @@ function RouteComponent() {
                         <div className="min-w-0 flex-1">
                           <p className="font-semibold text-xs truncate">{account.email.email}</p>
                           <p className="text-[10px] text-muted-foreground truncate">{account.product_variant.name}</p>
-                          {account.billing && <p className="text-[10px] text-orange-500 font-medium truncate mt-0.5">Billing: {account.billing}</p>}
+                          {account.billing && <p className="text-[10px] text-orange-500 font-medium mt-0.5 leading-tight">Billing: {account.billing}</p>}
                         </div>
                         <div className="w-full sm:w-[120px] flex-shrink-0">
                           <Input
