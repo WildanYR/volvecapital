@@ -159,6 +159,7 @@ function RouteComponent() {
                     'email',
                     'account',
                     'transaction',
+                    'accounting',
                     'voucher',
                     'email_message',
                     'wallet',
