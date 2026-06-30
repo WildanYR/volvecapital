@@ -230,10 +230,6 @@ function CoaList() {
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-4">Loading...</TableCell>
                 </TableRow>
-              ) : coaList?.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-4">Belum ada data COA.</TableCell>
-                </TableRow>
               ) : (
                 groupOrder.map(group => {
                   const groupCoas = coaList?.filter((c: any) => c.type === group) || []
