@@ -252,7 +252,6 @@ export class AccountingService {
       const entry = await this.journalEntryRepository.create(
         {
           transaction_date: dto.date,
-          date: dto.date, // <--- Backward compatibility for NOT NULL constraint
           reference_number: dto.reference || null,
           description: dto.description,
           source: dto.source || 'MANUAL',

@@ -16,11 +16,6 @@ export class JournalEntry extends Model<JournalEntry> {
   })
   declare transaction_date: Date;
 
-  @Column({
-    type: DataType.DATEONLY,
-    allowNull: true,
-  })
-  declare date: Date;
 
   @Column({
     type: DataType.STRING(100),
