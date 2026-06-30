@@ -1,7 +1,7 @@
 import type { MigrationContext } from 'migrations/migrator';
 import type { MigrationFn } from 'umzug';
 import { ALL_PERMISSIONS } from '../../src/constants/permissions.const';
-
+import crypto from 'crypto';
 
 export const up: MigrationFn<MigrationContext> = async ({ context }) => {
   const { queryInterface, schema } = context;
@@ -35,21 +35,17 @@ export const up: MigrationFn<MigrationContext> = async ({ context }) => {
 
   const now = new Date();
   
-  // Karena ID permission menggunakan UUID atau BIGINT auto increment?
-  // Mari kita cek struktur tabel permissions. Di database ini biasanya auto increment (BIGINT).
-  // Tapi bulkInsert butuh createdAt updatedAt
   const recordsToInsert = newPerms.map(p => ({
+    id: crypto.randomUUID(),
     name: p.name,
     description: p.description,
     created_at: now,
     updated_at: now,
   }));
 
-  // Insert dan dapatkan hasil kembalian (id)
-  // Untuk PostgreSQL, kita bisa query RETURNING id
   const insertQuery = `
-    INSERT INTO "${schema}"."permissions" (name, description, created_at, updated_at)
-    VALUES ${recordsToInsert.map(p => `('${p.name}', '${p.description}', '${now.toISOString()}', '${now.toISOString()}')`).join(', ')}
+    INSERT INTO "${schema}"."permissions" (id, name, description, created_at, updated_at)
+    VALUES ${recordsToInsert.map(p => `('${p.id}', '${p.name}', '${p.description}', '${now.toISOString()}', '${now.toISOString()}')`).join(', ')}
     RETURNING id, name;
   `;
 
