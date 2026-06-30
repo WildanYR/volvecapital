@@ -117,12 +117,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/dashboard/components/ui/select'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/dashboard/components/ui/tooltip'
 import { Skeleton } from '@/dashboard/components/ui/skeleton'
 import { AccountStatusSelect } from '@/dashboard/constants/account-status-select'
 import { copyAccountTemplate } from '@/dashboard/lib/copy-template'

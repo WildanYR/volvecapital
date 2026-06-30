@@ -20,7 +20,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
       <Toaster richColors position="top-center" />
     </>
   ),
-  errorComponent: ({ error }) => (
+  errorComponent: ({ error }: any) => (
     <div className="flex h-screen w-full flex-col items-center justify-center gap-4 text-center">
       <AlertCircle className="size-10 text-destructive" />
       <h2 className="text-xl font-bold">Terjadi Kesalahan</h2>

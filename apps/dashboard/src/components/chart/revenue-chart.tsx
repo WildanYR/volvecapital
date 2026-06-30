@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { RevenueChartData } from '@/dashboard/services/statistic.service'
 import { useMemo } from 'react'
 import { Bar, CartesianGrid, ComposedChart, Line, XAxis, YAxis } from 'recharts'

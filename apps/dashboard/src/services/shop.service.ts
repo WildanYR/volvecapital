@@ -1,4 +1,4 @@
-import type { GetAllServiceFn } from '@/dashboard/types/get-all-service.type'
+import type { } from '@/dashboard/types/get-all-service.type'
 import { z } from 'zod'
 import { generateApiFetch, parseApiResponse } from '@/dashboard/lib/api-fetch.util'
 import { BaseQueryParamsSchema } from '@/dashboard/types/get-all-service.type'

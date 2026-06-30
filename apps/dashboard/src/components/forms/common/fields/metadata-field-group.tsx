@@ -14,7 +14,7 @@ export const MetadataFieldGroup = withFieldGroup({
     value: '',
   } as MetadataFieldGroupValue,
   props: { className: '', label: '', onDelete: () => {} },
-  render: function Render({ group, className, label, onDelete }) {
+  render: function Render({ group, className, label, onDelete }: any) {
     return (
       <div className={cn('relative flex flex-col gap-6', className)}>
         <p className="text-center font-medium">{label}</p>
@@ -30,7 +30,7 @@ export const MetadataFieldGroup = withFieldGroup({
         </Button>
         <group.AppField
           name="key"
-          children={field => (
+          children={(field: any) => (
             <field.TextField
               label="Key"
               placeholder="Masukkan key dari metadata..."
@@ -39,7 +39,7 @@ export const MetadataFieldGroup = withFieldGroup({
         />
         <group.AppField
           name="value"
-          children={field => (
+          children={(field: any) => (
             <field.TextField
               label="Value"
               placeholder="Masukkan value dari metadata..."

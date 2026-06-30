@@ -35,7 +35,7 @@ import {
 } from '@/dashboard/components/ui/alert-dialog'
 import { Input } from '@/dashboard/components/ui/input'
 import { Label } from '@/dashboard/components/ui/label'
-import { Lock, Plus } from 'lucide-react'
+import { Lock, } from 'lucide-react'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
 

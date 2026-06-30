@@ -282,7 +282,7 @@ function CoaList() {
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <Badge variant={coa.is_active ? 'success' : 'destructive'}>
+                            <Badge variant={coa.is_active ? 'default' : 'destructive'}>
                               {coa.is_active ? 'Aktif' : 'Non-Aktif'}
                             </Badge>
                           </TableCell>

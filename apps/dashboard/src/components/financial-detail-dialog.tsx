@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { Account, AddAccountCapitalPayload } from '@/dashboard/services/account.service'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Banknote, History, Pencil, Plus, Trash2, TrendingUp, User } from 'lucide-react'

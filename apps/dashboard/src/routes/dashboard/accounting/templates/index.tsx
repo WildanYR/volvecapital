@@ -13,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/dashboard/components/ui/table'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/dashboard/components/ui/card'
+import { Card, CardContent, } from '@/dashboard/components/ui/card'
 import { Button } from '@/dashboard/components/ui/button'
 import { Input } from '@/dashboard/components/ui/input'
 import { Label } from '@/dashboard/components/ui/label'

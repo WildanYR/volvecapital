@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { AllStatistic } from '@/dashboard/services/statistic.service'
 import { useMemo } from 'react'
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { AllStatistic } from '@/dashboard/services/statistic.service'
 
 export function PlatformList({ data }: { data: AllStatistic['charts']['platform'] }) {

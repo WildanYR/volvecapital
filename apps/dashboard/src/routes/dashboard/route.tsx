@@ -20,14 +20,8 @@ import {
 
   Ticket,
   User,
-  LibraryBig,
   BookA,
-  Wallet,
-  Scale,
-  LineChart,
-  PieChart,
-  Lock,
-} from 'lucide-react'
+  } from 'lucide-react'
 import { PermissionGate } from '@/dashboard/components/permission-gate'
 import { StockNotification } from '@/dashboard/components/stock-notification'
 import { AttendanceCheck } from './components/attendance-check'
@@ -105,7 +99,7 @@ const navGroups = [
   {
     title: 'Keuangan',
     items: [
-      { title: 'Wallet', url: '/dashboard/wallet', icon: Receipt, permission: 'wallet.view' },
+      { title: '', url: '/dashboard/wallet', icon: Receipt, permission: 'wallet.view' },
       { title: 'Akuntansi', url: '/dashboard/accounting', icon: BookA },
     ],
   },

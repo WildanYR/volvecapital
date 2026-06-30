@@ -50,7 +50,7 @@ function RouteComponent() {
   const handleSubmit = (values: PlatformProductFormSubmitData) => {
     mutation.mutate({
       ...values,
-      shop_id: values.shop_id || undefined,
+      
       product_variant_id: values.product_variant_id,
     })
   }

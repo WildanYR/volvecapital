@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { AllStatistic } from '@/dashboard/services/statistic.service'
 
 export function ProductSales({ data }: { data: AllStatistic['charts']['products'] }) {

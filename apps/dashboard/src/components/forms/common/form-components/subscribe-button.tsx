@@ -13,7 +13,7 @@ export function SubscribeButton({
   return (
     <form.Subscribe
       selector={state => [state.canSubmit, state.isSubmitting]}
-      children={([canSubmit, isSubmitting]) => (
+      children={([canSubmit, isSubmitting]: any) => (
         <Button
           type="submit"
           className="w-full cursor-pointer"

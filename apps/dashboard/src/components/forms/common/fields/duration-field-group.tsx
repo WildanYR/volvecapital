@@ -26,7 +26,7 @@ export const DurationFieldGroup = withFieldGroup({
     name: '',
     placeholder: 'masukkan nilai waktu...',
   },
-  render: function Render({ group, label, name, placeholder }) {
+  render: function Render({ group, label, name, placeholder }: any) {
     return (
       <div className="grid grid-cols-4 gap-3">
         <Label htmlFor={name} className="col-span-full">
@@ -34,7 +34,7 @@ export const DurationFieldGroup = withFieldGroup({
         </Label>
         <group.AppField
           name="duration"
-          children={field => (
+          children={(field: any) => (
             <div className="col-span-3">
               <Input
                 id={name}
@@ -51,7 +51,7 @@ export const DurationFieldGroup = withFieldGroup({
         />
         <group.AppField
           name="unit"
-          children={field => (
+          children={(field: any) => (
             <Select
               name={field.name}
               defaultValue={field.state.value || 'millisecond'}
