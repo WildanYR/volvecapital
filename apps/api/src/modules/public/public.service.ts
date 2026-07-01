@@ -399,40 +399,7 @@ export class PublicService {
 
       const { payment_url } = await this.requestDokuCheckout(dokuPayload);
 
-      // 4. Create voucher record (PENDING)
-      // Expiration: 24 hours from now
-      const voucherExpiry = new Date();
-      voucherExpiry.setHours(voucherExpiry.getHours() + 24);
-
-      await this.voucherRepository.create(
-        {
-          id: `VC-${Date.now().toString(36).toUpperCase()}`, 
-          buyer_name: dto.buyer_name,
-          buyer_email: dto.buyer_email,
-          buyer_whatsapp: dto.buyer_whatsapp,
-          product_variant_id: variant.id,
-          payment_id: orderId,
-          payment_status: 'PENDING',
-          status: 'PENDING',
-          expired_at: voucherExpiry,
-          promo_code_id: promoCodeId,
-          discount_amount: discountAmount,
-        },
-        { transaction },
-      );
-
-      // 5. Send invoice email (non-blocking)
-      this.sendInvoiceEmail(
-        dto.buyer_email,
-        dto.buyer_name,
-        payment_url, 
-        `${(variant as any).product?.name ?? 'Produk'} - ${variant.name}`,
-        grossAmount,
-      ).catch((err) => {
-        this.logger.error(`[CreatePayment] Failed to send invoice email: ${err.message}`);
-      });
-
-      // 6. Create transaction record
+      // 4. Create transaction record
       const txn = await this.transactionRepository.create(
         {
           id: orderId,
@@ -446,14 +413,49 @@ export class PublicService {
         { transaction },
       );
 
-      // 7. Create transaction item
-      await this.transactionItemRepository.create(
+      // 5. Create transaction item
+      const txnItem = await this.transactionItemRepository.create(
         {
           name: `${(variant as any).product?.name ?? 'Produk'} - ${variant.name}`,
           transaction_id: txn.id,
         },
         { transaction },
       );
+
+      // 6. Create voucher record (PENDING)
+      // Expiration: 24 hours from now
+      const voucherExpiry = new Date();
+      voucherExpiry.setHours(voucherExpiry.getHours() + 24);
+
+      await this.voucherRepository.create(
+        {
+          id: `VC-${Date.now().toString(36).toUpperCase()}`, 
+          buyer_name: dto.buyer_name,
+          buyer_email: dto.buyer_email,
+          buyer_whatsapp: dto.buyer_whatsapp,
+          product_variant_id: variant.id,
+          payment_id: orderId,
+          transaction_id: txn.id,
+          transaction_item_id: txnItem.id,
+          payment_status: 'PENDING',
+          status: 'PENDING',
+          expired_at: voucherExpiry,
+          promo_code_id: promoCodeId,
+          discount_amount: discountAmount,
+        },
+        { transaction },
+      );
+
+      // 7. Send invoice email (non-blocking)
+      this.sendInvoiceEmail(
+        dto.buyer_email,
+        dto.buyer_name,
+        payment_url, 
+        `${(variant as any).product?.name ?? 'Produk'} - ${variant.name}`,
+        grossAmount,
+      ).catch((err) => {
+        this.logger.error(`[CreatePayment] Failed to send invoice email: ${err.message}`);
+      });
 
       await transaction.commit();
 
