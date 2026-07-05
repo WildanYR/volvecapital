@@ -70,9 +70,27 @@ export function SettingServiceGenerator(apiUrl: string, accessToken: string, ten
     }
   }
 
+  const getActiveBots = async (): Promise<string[]> => {
+    const response = await generateApiFetch(
+      apiUrl,
+      accessToken,
+      tenantId,
+      '/socket/active-bots',
+    )
+    if (!response.ok) {
+      const errorData = await parseApiResponse(response)
+      const errorMessage = Array.isArray(errorData.message)
+        ? errorData.message[0]
+        : errorData.message
+      throw new Error(errorMessage || 'Failed to fetch active bots')
+    }
+    return response.json()
+  }
+
   return {
     getSettings,
     updateSetting,
     updateBulkSettings,
+    getActiveBots,
   }
 }

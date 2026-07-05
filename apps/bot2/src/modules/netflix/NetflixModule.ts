@@ -1051,6 +1051,66 @@ export class NetflixModule extends BaseModule {
       }
       await this.sleep(2000);
 
+      // STEP 3.5: Cek apakah ada tantangan OTP sebelum konfirmasi
+      this.logger.info(`[AutoUpgrade][${email}] Mengecek apakah diperlukan verifikasi OTP...`);
+      
+      const mfaEmailBtn = page.locator('div[data-uia="account-mfa-button-OTP_EMAIL"]');
+      const isOtpRequired = await mfaEmailBtn.isVisible({ timeout: 5000 }).catch(() => false);
+
+      if (isOtpRequired) {
+        this.logger.info(`[AutoUpgrade][${email}] Tantangan OTP terdeteksi. Melakukan klik opsi Email...`);
+        await mfaEmailBtn.click();
+        await this.sleep(1500);
+
+        // Klik tombol Kirim
+        this.logger.info(`[AutoUpgrade][${email}] Mengklik tombol Kirim OTP...`);
+        const sendBtn = page.locator('button[data-uia="collect-input-submit-cta"]');
+        await sendBtn.waitFor({ state: 'visible', timeout: 5000 });
+        await sendBtn.click();
+        
+        // Menunggu kode OTP via socket event
+        const otpEventName = `${sanitizeEmail(email)}:NETFLIX_OTP`;
+        this.eventBus.emit('socket:subscribe', otpEventName);
+        this.logger.info(`[AutoUpgrade][${email}] Menunggu OTP dari email (Filter: Verification Code)...`);
+        
+        let otpCode = '';
+        try {
+            // Kita tunggu sampai mendapatkan subject yang benar (Whitelist)
+            while (!otpCode) {
+                const eventData = await this.waitForTaskEvent<any>(task.id, otpEventName);
+                const subject = (eventData.subject || "").toLowerCase();
+                
+                this.logger.info(`[AutoUpgrade][${email}] Menerima email untuk OTP dengan subject: "${eventData.subject}"`);
+
+                if (subject.includes("your verification code") || subject.includes("kode verifikasimu")) {
+                    otpCode = eventData.data;
+                    this.logger.info(`[AutoUpgrade][${email}] OTP VALID ditemukan: ${otpCode}. Memasukkan kode...`);
+                } else if (subject.includes("kode masukmu") || subject.includes("login code")) {
+                    this.logger.warn(`[AutoUpgrade][${email}] Subject "${eventData.subject}" diabaikan (Email Login Link). Menunggu email OTP Verifikasi yang benar...`);
+                    // Loop berlanjut, waitForTaskEvent akan menunggu event socket berikutnya
+                } else {
+                    this.logger.warn(`[AutoUpgrade][${email}] Subject "${eventData.subject}" tidak sesuai kriteria. Menunggu email OTP...`);
+                }
+            }
+
+            // Memasukkan kode OTP ke dalam input
+            const otpInput = page.locator('input[data-uia="collect-otp-input-entry"]');
+            await otpInput.waitFor({ state: 'visible', timeout: 15000 });
+            await otpInput.fill(otpCode);
+            await this.sleep(1000);
+
+            // Mengklik tombol submit OTP (Kirim)
+            this.logger.info(`[AutoUpgrade][${email}] Mengklik tombol Kirim / Submit OTP...`);
+            const submitOtpBtn = page.locator('button[data-uia="collect-input-submit-cta"]');
+            await submitOtpBtn.waitFor({ state: 'visible', timeout: 5000 });
+            await submitOtpBtn.click();
+            await this.sleep(3000);
+        } catch (error: any) {
+            this.logger.error(`[AutoUpgrade][${email}] Gagal saat memproses OTP: ${error.message}`);
+            throw error;
+        }
+      }
+
       // STEP 4: Konfirmasi Upgrade (Halaman Final)
       // Tombol dari DOM: <button data-uia="action-button">Confirm</button>
       this.logger.info(`[AutoUpgrade][${email}] Menunggu halaman konfirmasi akhir...`);

@@ -293,16 +293,21 @@ export class DuokeModule extends BaseModule {
                     if (await inputBox.isVisible()) {
                         // 1. Klik kolom input agar fokus
                         await inputBox.click({ force: true });
-                        await this.sleep(300);
+                        await this.sleep(500);
 
                         for (const line of replyLines) {
-                            // 2. Auto-fill langsung untuk mencegah duplikasi karakter
-                            await inputBox.fill(line);
+                            // Kosongkan kolom input terlebih dahulu untuk mencegah sisa teks
+                            await this.loopPage.keyboard.press('Control+A');
+                            await this.loopPage.keyboard.press('Backspace');
                             await this.sleep(300);
+
+                            // 2. Auto-fill langsung dengan jeda 1 detik
+                            await inputBox.fill(line);
+                            await this.sleep(1000); // Delay 1 detik sesuai permintaan
                             
-                            // 3. Tekan Enter untuk jaga-jaga
+                            // 3. Tekan Enter untuk mengirim
                             await this.loopPage.keyboard.press('Enter');
-                            await this.sleep(500);
+                            await this.sleep(1000); // Jeda tambahan setelah mengirim
                         }
 
                         // 4. Klik tombol Send berwarna biru (Kirim) jika Enter tidak berfungsi

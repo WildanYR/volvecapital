@@ -15,3 +15,13 @@ export function getProjectRoot(): string {
     // as the package root so config.toml, storage, and session data live beside package.json.
     return process.cwd();
 }
+
+let customDataRoot: string | null = null;
+
+export function setDataRoot(path: string): void {
+    customDataRoot = path;
+}
+
+export function getDataRoot(): string {
+    return customDataRoot || getProjectRoot();
+}

@@ -254,12 +254,30 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect, 
     return this.unsubscribeClientToEvent(client.id, data.eventName);
   }
 
+  getActiveBots(tenantId: string): string[] {
+    return Array.from(this.connections.values())
+      .filter(c => c.tenant_id === tenantId && c.type === 'BOT')
+      .map(c => c.name);
+  }
+
   async dispatchTask(
     taskId: string,
     tenantId: string,
-    dispatchTaskData?: DispatchTaskData
+    dispatchTaskData?: DispatchTaskData,
+    targetBotName?: string
   ) {
-    const availableBot = this.getAvailableBot(tenantId);
+    let availableBot: SocketConnection | undefined;
+
+    if (targetBotName) {
+      availableBot = Array.from(this.connections.values()).find(
+        c => c.tenant_id === tenantId && c.type === 'BOT' && c.name === targetBotName
+      );
+    }
+
+    if (!availableBot) {
+      availableBot = this.getAvailableBot(tenantId);
+    }
+
     if (!availableBot) {
       const transaction = await this.postgresProvider.transaction();
       try {

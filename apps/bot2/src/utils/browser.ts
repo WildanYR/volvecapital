@@ -5,7 +5,7 @@
 import { chromium, type Browser, type BrowserContext, type LaunchOptions } from 'playwright';
 import { existsSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
-import { getProjectRoot } from './path.js';
+import { getDataRoot } from './path.js';
 
 // Default launch options
 const DEFAULT_LAUNCH_OPTIONS: LaunchOptions = {
@@ -87,7 +87,7 @@ export function getStorageStatePath(instanceId: string, contextName: string = 'd
     const filename = contextName === 'default'
         ? `${instanceId}.json`
         : `${instanceId}_${contextName}.json`;
-    return resolve(getProjectRoot(), 'session_data', filename);
+    return resolve(getDataRoot(), 'session_data', filename);
 }
 
 /**

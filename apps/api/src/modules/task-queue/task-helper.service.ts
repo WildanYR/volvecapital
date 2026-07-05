@@ -99,7 +99,7 @@ export class TaskHelperService {
         module: 'netflix',
         type: 'resetPassword',
         payload: enrichedPayload,
-      });
+      }, payload.target_bot);
 
       if (!clientId) {
         throw new Error('No bot available to handle the task');
@@ -121,7 +121,7 @@ export class TaskHelperService {
         module: 'netflix',
         type: 'autoReload',
         payload,
-      });
+      }, payload.target_bot);
 
       if (!clientId) {
         throw new Error('No bot available to handle the task');
@@ -144,7 +144,7 @@ export class TaskHelperService {
         module: 'netflix',
         type: 'autoUpgradePlan',
         payload,
-      });
+      }, payload.target_bot);
 
       if (!clientId) {
         throw new Error('No bot available to handle the task');
@@ -162,7 +162,7 @@ export class TaskHelperService {
         module: 'netflix',
         type: 'loginTvFlow',
         payload,
-      });
+      }, payload.target_bot);
 
       if (!clientId) {
         throw new Error('No bot available to handle the task');

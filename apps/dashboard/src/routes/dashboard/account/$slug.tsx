@@ -970,7 +970,10 @@ function RouteComponent() {
   }
 
   const triggerResetMutation = useMutation({
-    mutationFn: (accountId: string) => accountService.triggerReset(accountId),
+    mutationFn: (accountId: string) => {
+      const targetBot = localStorage.getItem('local_target_bot') || undefined
+      return accountService.triggerReset(accountId, targetBot)
+    },
     onSuccess: () => {
       toast.success('Tugas reset berhasil ditambahkan ke antrian.')
     },
@@ -980,7 +983,10 @@ function RouteComponent() {
   })
 
   const triggerReloadMutation = useMutation({
-    mutationFn: (accountId: string) => accountService.triggerReload(accountId),
+    mutationFn: (accountId: string) => {
+      const targetBot = localStorage.getItem('local_target_bot') || undefined
+      return accountService.triggerReload(accountId, targetBot)
+    },
     onSuccess: () => {
       toast.success('Tugas Auto Reload ditambahkan ke antrian. Bot segera memproses...')
     },
@@ -990,7 +996,10 @@ function RouteComponent() {
   })
 
   const triggerUpgradeMutation = useMutation({
-    mutationFn: (accountId: string) => accountService.triggerUpgrade(accountId),
+    mutationFn: (accountId: string) => {
+      const targetBot = localStorage.getItem('local_target_bot') || undefined
+      return accountService.triggerUpgrade(accountId, targetBot)
+    },
     onSuccess: () => {
       toast.success('Tugas Auto Upgrade Premium ditambahkan ke antrian. Bot segera memproses...')
     },
@@ -1000,7 +1009,10 @@ function RouteComponent() {
   })
 
   const triggerLoginTvMutation = useMutation({
-    mutationFn: (account: Account) => accountService.triggerLoginTv(account.id),
+    mutationFn: (account: Account) => {
+      const targetBot = localStorage.getItem('local_target_bot') || undefined
+      return accountService.triggerLoginTv(account.id, targetBot)
+    },
     onMutate: (account) => {
       setSelectedAccount(account)
       setTvPinError(null)

@@ -23,6 +23,7 @@ export interface NetflixResetPasswordPayload {
   accountId: string;
   subscription_expiry: string;
   variant_name: string;
+  target_bot?: string;
 }
 
 export interface NetflixAutoReloadPayload {
@@ -31,6 +32,7 @@ export interface NetflixAutoReloadPayload {
   password: string;
   billing: string;
   variant_name: string;
+  target_bot?: string;
 }
 
 export interface NetflixAutoUpgradePayload {
@@ -39,4 +41,5 @@ export interface NetflixAutoUpgradePayload {
   password: string;
   subscription_expiry: string;
   variant_name: string;
+  target_bot?: string;
 }

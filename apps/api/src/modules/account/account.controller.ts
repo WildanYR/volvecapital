@@ -204,26 +204,42 @@ export class AccountController {
 
   @Post(':id/reset')
   @RequirePermissions('account.edit')
-  resetAccount(@Param('id') id: string, @Request() request: AppRequest) {
-    return this.accountService.triggerReset(request.tenant_id!, id);
+  resetAccount(
+    @Param('id') id: string,
+    @Body() body: { target_bot?: string },
+    @Request() request: AppRequest,
+  ) {
+    return this.accountService.triggerReset(request.tenant_id!, id, body?.target_bot);
   }
 
   @Post(':id/reload')
   @RequirePermissions('account.edit')
-  reloadAccount(@Param('id') id: string, @Request() request: AppRequest) {
-    return this.accountService.triggerReload(request.tenant_id!, id);
+  reloadAccount(
+    @Param('id') id: string,
+    @Body() body: { target_bot?: string },
+    @Request() request: AppRequest,
+  ) {
+    return this.accountService.triggerReload(request.tenant_id!, id, body?.target_bot);
   }
 
   @Post(':id/upgrade')
   @RequirePermissions('account.edit')
-  upgradeAccount(@Param('id') id: string, @Request() request: AppRequest) {
-    return this.accountService.triggerUpgrade(request.tenant_id!, id);
+  upgradeAccount(
+    @Param('id') id: string,
+    @Body() body: { target_bot?: string },
+    @Request() request: AppRequest,
+  ) {
+    return this.accountService.triggerUpgrade(request.tenant_id!, id, body?.target_bot);
   }
 
   @Post(':id/login-tv')
   @RequirePermissions('account.edit')
-  loginTv(@Param('id') id: string, @Request() request: AppRequest) {
-    return this.accountService.triggerLoginTv(request.tenant_id!, id);
+  loginTv(
+    @Param('id') id: string,
+    @Body() body: { target_bot?: string },
+    @Request() request: AppRequest,
+  ) {
+    return this.accountService.triggerLoginTv(request.tenant_id!, id, body?.target_bot);
   }
 
   @Post(':id/request-topup')

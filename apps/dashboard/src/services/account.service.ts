@@ -716,7 +716,7 @@ export function AccountServiceGenerator(apiUrl: string, accessToken: string, ten
         throw new Error(errorData.message || 'Failed to delete capital')
       }
     },
-    triggerReset: async (accountId: string): Promise<void> => {
+    triggerReset: async (accountId: string, targetBot?: string): Promise<void> => {
       const response = await generateApiFetch(
         apiUrl,
         accessToken,
@@ -725,6 +725,8 @@ export function AccountServiceGenerator(apiUrl: string, accessToken: string, ten
         undefined,
         {
           method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ target_bot: targetBot }),
         },
       )
       if (!response.ok) {
@@ -732,7 +734,7 @@ export function AccountServiceGenerator(apiUrl: string, accessToken: string, ten
         throw new Error(errorData.message || 'Failed to trigger reset')
       }
     },
-    triggerReload: async (accountId: string): Promise<void> => {
+    triggerReload: async (accountId: string, targetBot?: string): Promise<void> => {
       const response = await generateApiFetch(
         apiUrl,
         accessToken,
@@ -741,6 +743,8 @@ export function AccountServiceGenerator(apiUrl: string, accessToken: string, ten
         undefined,
         {
           method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ target_bot: targetBot }),
         },
       )
       if (!response.ok) {
@@ -748,7 +752,7 @@ export function AccountServiceGenerator(apiUrl: string, accessToken: string, ten
         throw new Error(errorData.message || 'Failed to trigger reload')
       }
     },
-    triggerUpgrade: async (accountId: string): Promise<void> => {
+    triggerUpgrade: async (accountId: string, targetBot?: string): Promise<void> => {
       const response = await generateApiFetch(
         apiUrl,
         accessToken,
@@ -757,6 +761,8 @@ export function AccountServiceGenerator(apiUrl: string, accessToken: string, ten
         undefined,
         {
           method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ target_bot: targetBot }),
         },
       )
       if (!response.ok) {
@@ -764,7 +770,7 @@ export function AccountServiceGenerator(apiUrl: string, accessToken: string, ten
         throw new Error(errorData.message || 'Failed to trigger upgrade')
       }
     },
-    triggerLoginTv: async (accountId: string): Promise<void> => {
+    triggerLoginTv: async (accountId: string, targetBot?: string): Promise<void> => {
       const response = await generateApiFetch(
         apiUrl,
         accessToken,
@@ -773,6 +779,8 @@ export function AccountServiceGenerator(apiUrl: string, accessToken: string, ten
         undefined,
         {
           method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ target_bot: targetBot }),
         },
       )
       if (!response.ok) {

@@ -1071,7 +1071,7 @@ export class AccountService {
     ]);
   }
 
-  async triggerReset(tenantId: string, accountId: string) {
+  async triggerReset(tenantId: string, accountId: string, targetBot?: string) {
     const transaction = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema(tenantId, transaction);
@@ -1101,6 +1101,7 @@ export class AccountService {
         newPassword: '',
         subscription_expiry: account.subscription_expiry.toISOString(),
         variant_name: account.product_variant.name,
+        target_bot: targetBot,
       };
 
       const task: UpsertTaskQueueDto = {
@@ -1122,7 +1123,7 @@ export class AccountService {
     }
   }
 
-  async triggerReload(tenantId: string, accountId: string) {
+  async triggerReload(tenantId: string, accountId: string, targetBot?: string) {
     const transaction = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema(tenantId, transaction);
@@ -1150,6 +1151,7 @@ export class AccountService {
         password: account.account_password,
         billing: account.billing || '',
         variant_name: account.product_variant.name,
+        target_bot: targetBot,
       };
 
       const task: UpsertTaskQueueDto = {
@@ -1171,7 +1173,7 @@ export class AccountService {
     }
   }
 
-  async triggerUpgrade(tenantId: string, accountId: string) {
+  async triggerUpgrade(tenantId: string, accountId: string, targetBot?: string) {
     const transaction = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema(tenantId, transaction);
@@ -1199,6 +1201,7 @@ export class AccountService {
         password: account.account_password,
         subscription_expiry: account.subscription_expiry.toISOString(),
         variant_name: account.product_variant.name,
+        target_bot: targetBot,
       };
 
       const task: UpsertTaskQueueDto = {
@@ -1220,7 +1223,7 @@ export class AccountService {
     }
   }
 
-  async triggerLoginTv(tenantId: string, accountId: string) {
+  async triggerLoginTv(tenantId: string, accountId: string, targetBot?: string) {
     const transaction = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema(tenantId, transaction);
@@ -1247,6 +1250,7 @@ export class AccountService {
         email: account.email.email,
         password: account.account_password,
         variant_name: account.product_variant.name,
+        target_bot: targetBot,
       };
 
       const task: UpsertTaskQueueDto = {

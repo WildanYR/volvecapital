@@ -114,6 +114,7 @@ export class ConfigLoader {
             default_loop_interval: section['default_loop_interval'] as number | undefined,
             api_base_url: apiBaseHost,
             browser_recycle_interval_minutes: section['browser_recycle_interval_minutes'] as number | undefined,
+            cloud_data_dir: section['cloud_data_dir'] as string | undefined,
         };
     }
 

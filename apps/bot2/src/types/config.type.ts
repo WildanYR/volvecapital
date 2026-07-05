@@ -17,6 +17,7 @@ export interface AppConfig {
     default_loop_interval?: number;  // default interval untuk loop modules (ms)
     api_base_url: string;  // API host only, without protocol/path (for example api.volve-capital.com)
     browser_recycle_interval_minutes?: number;  // interval untuk global browser recycle (menit), default 60
+    cloud_data_dir?: string;
   };
   api: ApiConfig;
   connector: {

@@ -3,7 +3,8 @@
  */
 
 import { resolve } from 'node:path';
-import { getProjectRoot } from './utils/path.js';
+import { existsSync, mkdirSync } from 'node:fs';
+import { getDataRoot, setDataRoot } from './utils/path.js';
 import { ConfigLoader } from './core/ConfigLoader.js';
 import { Database } from './core/Database.js';
 import { Logger } from './core/Logger.js';
@@ -33,11 +34,20 @@ class Application {
             const configLoader = new ConfigLoader();
             this.config = configLoader.load();
             console.log(`Configuration loaded: ${this.config.app.name}`);
+
+            // 1b. Set data root to cloud_data_dir if configured
+            if (this.config.app.cloud_data_dir) {
+                if (!existsSync(this.config.app.cloud_data_dir)) {
+                    mkdirSync(this.config.app.cloud_data_dir, { recursive: true });
+                }
+                setDataRoot(this.config.app.cloud_data_dir);
+                console.log(`Cloud data root set to: ${this.config.app.cloud_data_dir}`);
+            }
             configureBrowserLaunchOptions({ headless: this.config.app.headless });
             this.apiBaseUrl = buildApiBaseUrl(this.config.app.api_base_url);
 
             // 2. Initialize database
-            const dbPath = resolve(getProjectRoot(), 'storage', 'database.sqlite');
+            const dbPath = resolve(getDataRoot(), 'storage', 'database.sqlite');
             this.db = new Database(dbPath);
             this.db.initSystemTables();
             console.log('Database initialized');

@@ -1,17 +1,15 @@
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { House, LayoutTemplate, Loader2, BookOpen, FileText } from 'lucide-react'
-
+import { useState, useEffect } from 'react'
 
 import { Button } from '@/dashboard/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/dashboard/components/ui/card'
-
 
 import { API_URL } from '@/dashboard/constants/api-url.cont'
 import { useAuth } from '@/dashboard/context-providers/auth.provider'
 import { SettingServiceGenerator } from '@/dashboard/services/setting.service'
 import { PermissionGate } from '@/dashboard/components/permission-gate'
-
 
 export const Route = createFileRoute('/dashboard/setting/')({
   component: RouteComponent,
@@ -19,6 +17,7 @@ export const Route = createFileRoute('/dashboard/setting/')({
 
 function RouteComponent() {
   const auth = useAuth()
+  const [selectedBot, setSelectedBot] = useState<string>('')
 
   const settingService = SettingServiceGenerator(
     API_URL,
@@ -34,8 +33,26 @@ function RouteComponent() {
     enabled: !!auth.tenant?.accessToken && hasSettingView,
   })
 
-  // settings query is still needed if we want to display anything else, but for now it's just the CMS cards.
+  const { data: activeBots } = useQuery({
+    queryKey: ['active-bots'],
+    queryFn: () => settingService.getActiveBots(),
+    enabled: !!auth.tenant?.accessToken,
+    refetchInterval: 5000, // Refresh every 5s to keep list fresh
+  })
 
+  useEffect(() => {
+    const saved = localStorage.getItem('local_target_bot') || ''
+    setSelectedBot(saved)
+  }, [])
+
+  const handleSelectBot = (value: string) => {
+    setSelectedBot(value)
+    if (value) {
+      localStorage.setItem('local_target_bot', value)
+    } else {
+      localStorage.removeItem('local_target_bot')
+    }
+  }
 
   if (isLoading) {
     return (
@@ -101,6 +118,36 @@ function RouteComponent() {
             </CardContent>
           </Card>
         </PermissionGate>
+      </div>
+
+      <div className="border-t pt-8 mt-4">
+        <Card className="max-w-md">
+          <CardHeader>
+            <CardTitle>Pengeksekusi Bot Lokal</CardTitle>
+            <CardDescription>
+              Pilih perangkat bot lokal yang sedang berjalan di komputer ini untuk menangani aksi manual (Reset Password, TV PIN, dll.).
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col gap-2">
+              <select
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                value={selectedBot}
+                onChange={(e) => handleSelectBot(e.target.value)}
+              >
+                <option value="">Default (Beban Terendah / Mini PC)</option>
+                {activeBots?.map((bot) => (
+                  <option key={bot} value={bot}>
+                    {bot}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-muted-foreground">
+                Bot aktif saat ini harus terhubung ke server agar muncul di pilihan di atas. Pilihan ini akan disimpan secara lokal di browser komputer ini.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
     </div>
