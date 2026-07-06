@@ -1469,6 +1469,7 @@ export class AccountService {
     action: string,
     payload?: any
   ) {
+    this.logger.log(`[bulkAction] action: ${action} | ids: ${ids.length} | payload: ${JSON.stringify(payload)}`, 'AccountService');
     const transaction = await this.postgresProvider.transaction();
     let isCommitted = false;
     try {
