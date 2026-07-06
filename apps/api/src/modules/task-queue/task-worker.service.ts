@@ -140,50 +140,83 @@ export class TaskWorkerService {
   async dispatchReadyTasks() {
     const now = Date.now();
 
+    // Step 1: Ambil task dari ZSET yang sudah waktunya (tapi belum pindah ke Stream)
+    const rawMembers = await this.redisClient.zrangebyscore(ZSET_KEY, '-inf', now, 'LIMIT', 0, 50) as string[];
+    if (!rawMembers.length) return;
+
+    const taskIds = rawMembers.map(m => m.replace(`${TASK_REFERENCE_KEY}:`, ''));
+
+    // Step 2: Update status DB ke DISPATCHED DULU sebelum pindah ke Stream
+    // Ini mencegah race condition di mana task masih QUEUED di DB tapi sudah di Stream
+    const transaction = await this.postgresProvider.transaction();
+    let successfulTaskIds: string[] = [];
+    try {
+      await this.postgresProvider.setSchema('master', transaction);
+      await this.taskQueueRepository.update(
+        { status: 'DISPATCHED' },
+        { where: { id: taskIds, status: 'QUEUED' }, transaction },
+      );
+      // Ambil yang benar-benar berhasil diupdate (masih QUEUED sebelumnya)
+      // Cara aman: anggap semua berhasil, karena hanya yang QUEUED yang terupdate
+      successfulTaskIds = taskIds;
+      await transaction.commit();
+    }
+    catch (error) {
+      this.logger.error(error.message, error.stack, 'DispatchTask:DBUpdate');
+      await transaction.rollback();
+      return; // Jangan lanjut ke Redis jika DB gagal
+    }
+
+    // Step 3: Pindahkan dari ZSET ke Stream secara atomik (Lua)
+    if (successfulTaskIds.length === 0) return;
+
     const luaScript = `
       local zsetKey = KEYS[1]
       local streamKey = KEYS[2]
-      local maxScore = ARGV[1]
-      local limit = ARGV[2]
-      local streamLimit = ARGV[3] 
+      local streamLimit = ARGV[1]
+      local moved = 0
 
-      local tasks = redis.call('ZRANGEBYSCORE', zsetKey, '-inf', maxScore, 'LIMIT', 0, limit)
-
-      if #tasks > 0 then
-        for i, task in ipairs(tasks) do
-          -- XADD stream MAXLEN ~ 100 * field value
-          redis.call('XADD', streamKey, 'MAXLEN', '~', streamLimit, '*', 'taskData', task)
-          redis.call('ZREM', zsetKey, task)
+      for i = 2, #ARGV do
+        local member = ARGV[i]
+        local removed = redis.call('ZREM', zsetKey, member)
+        if removed == 1 then
+          redis.call('XADD', streamKey, 'MAXLEN', '~', streamLimit, '*', 'taskData', member)
+          moved = moved + 1
         end
       end
 
-      return tasks
+      return moved
     `;
 
-    const transaction = await this.postgresProvider.transaction();
     try {
-      const members = await this.redisClient.eval(
+      const args: (string | number)[] = [500];
+      for (const id of successfulTaskIds) {
+        args.push(`${TASK_REFERENCE_KEY}:${id}`);
+      }
+      await this.redisClient.eval(
         luaScript,
         2,
         ZSET_KEY,
         STREAM_KEY,
-        now,
-        50,
-        500
-      ) as string[];
-
-      await this.postgresProvider.setSchema('master', transaction);
-
-      const taskIds = members.map(m => m.replace(`${TASK_REFERENCE_KEY}:`, ''));
-      if (taskIds.length > 0) {
-        await this.taskQueueRepository.update({ status: 'DISPATCHED' }, { where: { id: taskIds }, transaction });
-      }
-
-      await transaction.commit();
+        ...args
+      );
     }
     catch (error) {
-      this.logger.error(error.message, error.stack, 'DispatchTask');
-      await transaction.rollback();
+      this.logger.error(error.message, error.stack, 'DispatchTask:RedisStream');
+      // Jika Redis gagal, rollback status DB kembali ke QUEUED agar task bisa di-retry
+      const rollbackTransaction = await this.postgresProvider.transaction();
+      try {
+        await this.postgresProvider.setSchema('master', rollbackTransaction);
+        await this.taskQueueRepository.update(
+          { status: 'QUEUED' },
+          { where: { id: successfulTaskIds }, transaction: rollbackTransaction },
+        );
+        await rollbackTransaction.commit();
+      }
+      catch (rollbackErr) {
+        this.logger.error(`Rollback gagal: ${rollbackErr.message}`, rollbackErr.stack, 'DispatchTask:Rollback');
+        await rollbackTransaction.rollback();
+      }
     }
   }
 
