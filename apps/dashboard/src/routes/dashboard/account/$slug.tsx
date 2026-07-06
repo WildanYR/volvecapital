@@ -163,6 +163,8 @@ function RouteComponent() {
     queryFn: ({ signal }) => productService.getProductById(slug, signal),
   })
 
+  const isNetflixProduct = product?.name?.toLowerCase().includes('netflix') ?? false;
+
   const { data: coaList } = useQuery({
     queryKey: ['accounting-coa-list'],
     queryFn: () => accountingService.getCoaList(),
@@ -1406,22 +1408,26 @@ function RouteComponent() {
                         <Timer className="mr-2 h-4 w-4" />
                         Bulk Unfreeze
                       </DropdownMenuItem>
-                      <DropdownMenuItem onSelect={() => handleBulkActionClick('reset_now')}>
-                        <RefreshCw className="mr-2 h-4 w-4" />
-                        Bulk Reset
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onSelect={() => handleBulkActionClick('auto_reload')}>
-                        <RotateCw className="mr-2 h-4 w-4" />
-                        Bulk Reload
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onSelect={() => handleBulkActionClick('auto_upgrade')}>
-                        <TrendingUp className="mr-2 h-4 w-4" />
-                        Bulk Upgrade Premium
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onSelect={() => handleBulkActionClick('login_tv')}>
-                        <Monitor className="mr-2 h-4 w-4" />
-                        Bulk Login TV
-                      </DropdownMenuItem>
+                      {isNetflixProduct && (
+                        <>
+                          <DropdownMenuItem onSelect={() => handleBulkActionClick('reset_now')}>
+                            <RefreshCw className="mr-2 h-4 w-4" />
+                            Bulk Reset
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => handleBulkActionClick('auto_reload')}>
+                            <RotateCw className="mr-2 h-4 w-4" />
+                            Bulk Reload
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => handleBulkActionClick('auto_upgrade')}>
+                            <TrendingUp className="mr-2 h-4 w-4" />
+                            Bulk Upgrade Premium
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => handleBulkActionClick('login_tv')}>
+                            <Monitor className="mr-2 h-4 w-4" />
+                            Bulk Login TV
+                          </DropdownMenuItem>
+                        </>
+                      )}
                       <DropdownMenuItem onSelect={() => handleBulkActionClick('clear')}>
                         <BrushCleaning className="mr-2 h-4 w-4" />
                         Bulk Clear
@@ -1575,42 +1581,46 @@ function RouteComponent() {
                                 {' '}
                                 Clear
                               </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onSelect={() => handleTriggerReset(account)}
-                              >
-                                <span>
-                                  <RefreshCw className={triggerResetMutation.isPending ? 'animate-spin' : ''} />
-                                </span>
-                                {' '}
-                                Reset Now
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onSelect={() => handleTriggerReload(account)}
-                              >
-                                <span>
-                                  <RotateCw className={triggerReloadMutation.isPending ? 'animate-spin' : ''} />
-                                </span>
-                                {' '}
-                                Auto Reload
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onSelect={() => handleTriggerUpgrade(account)}
-                              >
-                                <span>
-                                  <TrendingUp className={triggerUpgradeMutation.isPending ? 'animate-spin' : ''} />
-                                </span>
-                                {' '}
-                                Upgrade Premium
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onSelect={() => triggerLoginTvMutation.mutate(account)}
-                              >
-                                <span>
-                                  <Monitor className={triggerLoginTvMutation.isPending ? 'animate-spin' : ''} />
-                                </span>
-                                {' '}
-                                Login TV
-                              </DropdownMenuItem>
+                              {isNetflixProduct && (
+                                <>
+                                  <DropdownMenuItem
+                                    onSelect={() => handleTriggerReset(account)}
+                                  >
+                                    <span>
+                                      <RefreshCw className={triggerResetMutation.isPending ? 'animate-spin' : ''} />
+                                    </span>
+                                    {' '}
+                                    Reset Now
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onSelect={() => handleTriggerReload(account)}
+                                  >
+                                    <span>
+                                      <RotateCw className={triggerReloadMutation.isPending ? 'animate-spin' : ''} />
+                                    </span>
+                                    {' '}
+                                    Auto Reload
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onSelect={() => handleTriggerUpgrade(account)}
+                                  >
+                                    <span>
+                                      <TrendingUp className={triggerUpgradeMutation.isPending ? 'animate-spin' : ''} />
+                                    </span>
+                                    {' '}
+                                    Upgrade Premium
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onSelect={() => triggerLoginTvMutation.mutate(account)}
+                                  >
+                                    <span>
+                                      <Monitor className={triggerLoginTvMutation.isPending ? 'animate-spin' : ''} />
+                                    </span>
+                                    {' '}
+                                    Login TV
+                                  </DropdownMenuItem>
+                                </>
+                              )}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </CardAction>
