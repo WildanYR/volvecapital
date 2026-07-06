@@ -1755,16 +1755,6 @@ export class AccountService {
         this.logger.error(`Error in post-bulk-action cleanup: ${postActionError.message}`, postActionError.stack);
       }
 
-      // Handle direct bot triggers
-      if (['reset_now', 'auto_reload', 'auto_upgrade', 'login_tv'].includes(action)) {
-        for (const id of ids) {
-          if (action === 'reset_now') await this.triggerReset(tenantId, id);
-          if (action === 'auto_reload') await this.triggerReload(tenantId, id);
-          if (action === 'auto_upgrade') await this.triggerUpgrade(tenantId, id);
-          if (action === 'login_tv') await this.triggerLoginTv(tenantId, id);
-        }
-      }
-
       return { message: `Bulk ${action} completed for ${ids.length} accounts` };
     }
     catch (error) {
