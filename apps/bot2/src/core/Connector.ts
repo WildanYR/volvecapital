@@ -32,6 +32,7 @@ export class Connector {
   private taskManager: TaskManager;
   private logger: Logger;
   private eventBus: EventBus;
+  private isPrimary: boolean;
 
   private socket: Socket | null = null;
   private isConnected: boolean = false;
@@ -50,6 +51,7 @@ export class Connector {
     this.taskManager = taskManager;
     this.logger = logger;
     this.eventBus = eventBus;
+    this.isPrimary = config.app.is_primary;
   }
 
   /**
@@ -71,6 +73,7 @@ export class Connector {
         query: {
           connection_name: this.appName,
           connection_type: "BOT",
+          is_primary: this.isPrimary ? "true" : "false",
         },
         reconnection: true,
         reconnectionDelay: 1000,

@@ -11,6 +11,7 @@ export interface ApiConfig {
 export interface AppConfig {
   app: {
     name: string;
+    is_primary: boolean;  // jika true, bot ini diprioritaskan saat tidak ada target_bot
     max_concurrent_tasks: number;
     task_timeout_ms: number;
     headless?: boolean;

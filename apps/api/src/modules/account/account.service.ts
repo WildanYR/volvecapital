@@ -1657,12 +1657,12 @@ export class AccountService {
           });
 
           for (const account of accounts) {
-            let payload: any;
+            let taskPayload: any;
             let taskType: string;
 
             if (action === 'reset_now') {
               taskType = NETFLIX_RESET_PASSWORD;
-              payload = {
+              taskPayload = {
                 id: Date.now().toString(),
                 accountId: account.id,
                 email: account.email?.email || account.email_id,
@@ -1670,31 +1670,35 @@ export class AccountService {
                 newPassword: '',
                 subscription_expiry: account.subscription_expiry?.toISOString() || '',
                 variant_name: account.product_variant?.name || '',
+                target_bot: payload?.target_bot,
               };
             } else if (action === 'auto_reload') {
               taskType = NETFLIX_AUTO_RELOAD;
-              payload = {
+              taskPayload = {
                 accountId: account.id,
                 email: account.email?.email || account.email_id,
                 password: account.account_password,
                 billing: account.billing,
                 variant_name: account.product_variant?.name || '',
+                target_bot: payload?.target_bot,
               };
             } else if (action === 'login_tv') {
               taskType = NETFLIX_LOGIN_TV;
-              payload = {
+              taskPayload = {
                 accountId: account.id,
                 email: account.email?.email || account.email_id,
                 password: account.account_password,
+                target_bot: payload?.target_bot,
               };
             } else {
               taskType = NETFLIX_AUTO_UPGRADE;
-              payload = {
+              taskPayload = {
                 accountId: account.id,
                 email: account.email?.email || account.email_id,
                 password: account.account_password,
                 subscription_expiry: account.subscription_expiry?.toISOString() || '',
                 variant_name: account.product_variant?.name || '',
+                target_bot: payload?.target_bot,
               };
             }
 
@@ -1702,7 +1706,7 @@ export class AccountService {
               execute_at: action === 'login_tv' ? new Date(Date.now() - 60000) : new Date(),
               subject_id: account.id,
               context: taskType,
-              payload: JSON.stringify(payload),
+              payload: JSON.stringify(taskPayload),
               status: 'QUEUED',
               tenant_id: tenantId,
             });

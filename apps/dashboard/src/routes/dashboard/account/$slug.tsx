@@ -377,7 +377,7 @@ function RouteComponent() {
       return
     }
 
-    let payload = undefined;
+    let payload: any = undefined;
     if (bulkActionType === 'add_modal') {
       const amounts: Record<string, number> = {};
       for (const id of selectedIds) {
@@ -394,6 +394,11 @@ function RouteComponent() {
         note: bulkModalNote,
         payment_coas: bulkPaymentCoas
       };
+    }
+
+    const localTargetBot = localStorage.getItem('local_target_bot');
+    if (localTargetBot) {
+      payload = { ...(payload || {}), target_bot: localTargetBot };
     }
 
     bulkActionMutation.mutate({ ids: selectedIds, action: bulkActionType, payload })

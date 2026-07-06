@@ -155,7 +155,7 @@ function RouteComponent() {
               ) : (
                 <div className="flex items-center gap-2 rounded-md bg-muted/50 border border-border px-3 py-2 text-sm text-muted-foreground">
                   <CheckCircle2 className="size-4 shrink-0" />
-                  <span>Bot aktif di browser ini: <strong>Default (Beban Terendah)</strong></span>
+                  <span>Bot aktif di browser ini: <strong>Default (Bot Utama / Beban Terendah)</strong></span>
                 </div>
               )}
 
@@ -166,7 +166,7 @@ function RouteComponent() {
                   value={pendingBot}
                   onChange={(e) => setPendingBot(e.target.value)}
                 >
-                  <option value="">Default (Beban Terendah / Mini PC)</option>
+                  <option value="">Default (Bot Utama / Beban Terendah)</option>
                   {activeBots?.map((bot) => (
                     <option key={bot} value={bot}>
                       {bot}

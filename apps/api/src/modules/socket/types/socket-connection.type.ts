@@ -9,10 +9,12 @@ export interface SocketConnection {
   type: SocketConnectionType;
   inflight: number;
   connectedAt: number;
+  is_primary?: boolean;
 }
 
 export interface SocketAuthContext {
   tenant_id: string;
   name: string;
   type: SocketConnectionType;
+  is_primary?: boolean;
 }

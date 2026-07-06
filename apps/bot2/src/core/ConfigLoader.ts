@@ -108,6 +108,7 @@ export class ConfigLoader {
 
         return {
             name: section['name'],
+            is_primary: section['is_primary'] === true,
             max_concurrent_tasks: section['max_concurrent_tasks'],
             task_timeout_ms: section['task_timeout_ms'],
             headless: section['headless'] as boolean | undefined ?? false,

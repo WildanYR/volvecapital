@@ -39,6 +39,7 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect, 
       const token = socket.handshake.auth.token;
       const name = socket.handshake.query.connection_name as string;
       const type = socket.handshake.query.connection_type as SocketConnectionType;
+      const is_primary = socket.handshake.query.is_primary === 'true';
 
       if (!token && !name && !type) {
         const err = new Error('ValidationError');
@@ -89,6 +90,7 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect, 
           tenant_id: payload.tenant_id,
           name,
           type,
+          is_primary,
         };
 
         return next();
@@ -114,6 +116,7 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect, 
       tenant_id: authContext.tenant_id,
       inflight: 0,
       connectedAt: Date.now(),
+      is_primary: authContext.is_primary,
     });
   }
 
@@ -457,6 +460,9 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect, 
       return candidates[0];
 
     candidates.sort((a, b) => {
+      if (a.is_primary !== b.is_primary) {
+        return a.is_primary ? -1 : 1;
+      }
       if (a.inflight !== b.inflight)
         return a.inflight - b.inflight;
       return a.connectedAt - b.connectedAt;
