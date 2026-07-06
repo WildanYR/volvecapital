@@ -3,6 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../app.module';
 import { REDIS_CLIENT } from '../constants/provider.const';
 import { TaskQueue } from '../database/models/task-queue.model';
+import { PostgresProvider } from '../database/postgres.provider';
 import 'reflect-metadata';
 
 async function bootstrap() {
@@ -18,13 +19,21 @@ async function bootstrap() {
     console.log('✅ Redis ZSET & Stream berhasil dihapus.');
 
     // 2. Bersihkan Database
-    // TaskQueue di sini adalah model Sequelize-Typescript yang diimport langsung
-    const [affectedCount] = await TaskQueue.update(
-      { status: 'FAILED' },
-      { where: { status: ['QUEUED', 'DISPATCHED'] } }
-    );
-
-    console.log(`✅ Database dibersihkan: ${affectedCount} task diubah statusnya menjadi FAILED.`);
+    const postgresProvider = app.get(PostgresProvider);
+    const transaction = await postgresProvider.transaction();
+    try {
+      await postgresProvider.setSchema('master', transaction);
+      const [affectedCount] = await TaskQueue.update(
+        { status: 'FAILED' },
+        { where: { status: ['QUEUED', 'DISPATCHED'] }, transaction }
+      );
+      await transaction.commit();
+      console.log(`✅ Database dibersihkan: ${affectedCount} task diubah statusnya menjadi FAILED.`);
+    }
+    catch (dbError) {
+      await transaction.rollback();
+      throw dbError;
+    }
     console.log('✨ Selesai! Antrian sekarang kosong.');
   }
   catch (error) {
