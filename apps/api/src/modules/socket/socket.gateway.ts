@@ -242,6 +242,10 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect, 
     dispatchTaskData?: DispatchTaskData,
     targetBotName?: string
   ) {
+    this.logger.log(
+      `[SocketGateway] dispatchTask ${taskId} | targetBotName: ${targetBotName}`,
+      'SocketGateway',
+    );
     let availableBot: SocketConnection | undefined;
 
     if (targetBotName) {

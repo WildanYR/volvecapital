@@ -91,7 +91,7 @@ export class TaskHelperService {
       };
 
       this.logger.log(
-        `[NetflixReset] Dispatch task ${taskId} | email: ${payload.email} | variant: ${enrichedPayload.variant_name} | was: ${payload.variant_name}`,
+        `[NetflixReset] Dispatch task ${taskId} | email: ${payload.email} | targetBot: ${payload.target_bot}`,
         'TaskHelperService',
       );
 
