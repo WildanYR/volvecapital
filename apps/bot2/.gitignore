@@ -8,6 +8,8 @@ bundle/
 # Storage & Data
 storage/
 session_data/
+.node-portable/
+.playwright-browsers/
 
 # Logs
 *.log

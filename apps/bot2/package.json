@@ -18,14 +18,5 @@
     "winston": "^3.19.0",
     "winston-daily-rotate-file": "^5.0.0",
     "yoctocolors": "^2.1.2"
-  },
-  "devDependencies": {
-    "@types/better-sqlite3": "^7.6.13",
-    "@types/node": "^25.0.10",
-    "@vercel/ncc": "^0.38.0",
-    "@volvecapital/eslint-config": "workspace:^",
-    "tsx": "^4.19.0",
-    "typescript": "^5.7.0",
-    "vitest": "^3.0.0"
   }
 }

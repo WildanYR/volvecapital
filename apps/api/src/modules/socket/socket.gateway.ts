@@ -248,9 +248,29 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect, 
       availableBot = Array.from(this.connections.values()).find(
         c => c.tenant_id === tenantId && c.type === 'BOT' && c.name === targetBotName
       );
-    }
-
-    if (!availableBot) {
+      
+      // Jika bot target ditentukan tetapi offline, JANGAN fallback ke bot lain
+      if (!availableBot) {
+        this.logger.warn(`Target bot '${targetBotName}' is offline. Task ${taskId} will not be dispatched.`);
+        const transaction = await this.postgresProvider.transaction();
+        try {
+          await this.postgresProvider.setSchema('master', transaction);
+          await this.taskQueueRepository.update(
+            {
+              status: 'FAILED',
+              error_message: `target bot '${targetBotName}' is offline`,
+            },
+            { where: { id: taskId }, transaction },
+          );
+          await transaction.commit();
+        }
+        catch {
+          await transaction.rollback();
+        }
+        return undefined;
+      }
+    } else {
+      // Hanya jika tidak ada target_bot, cari bot available (fallback/default ke Lenovo)
       availableBot = this.getAvailableBot(tenantId);
     }
 
