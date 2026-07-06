@@ -1663,7 +1663,7 @@ export class AccountService {
             if (action === 'reset_now') {
               taskType = NETFLIX_RESET_PASSWORD;
               taskPayload = {
-                id: Date.now().toString(),
+                id: `${Date.now()}-${account.id}-${Math.random().toString(36).substring(2, 7)}`,
                 accountId: account.id,
                 email: account.email?.email || account.email_id,
                 password: account.account_password,
