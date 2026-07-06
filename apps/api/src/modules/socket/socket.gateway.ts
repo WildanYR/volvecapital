@@ -129,34 +129,7 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect, 
     @ConnectedSocket() client: Socket,
     @MessageBody() data: ConnectionTaskAcceptData
   ) {
-    const conn = this.connections.get(client.id);
-    if (!conn) {
-      return;
-    }
-
-    const transaction = await this.postgresProvider.transaction();
-    try {
-      await this.postgresProvider.setSchema('master', transaction);
-      await this.taskQueueRepository.update(
-        { status: 'DISPATCHED' },
-        {
-          where: {
-            id: data.taskId,
-          },
-          transaction,
-        }
-      );
-      await transaction.commit();
-      conn.inflight += 1;
-    }
-    catch (e) {
-      this.logger.error(
-        `Update task ${data.taskId} status to DISPATCHED error`,
-        (e as Error).stack,
-        'TaskDispatch'
-      );
-      await transaction.rollback();
-    }
+    // No-op: status DISPATCHED dan inflight count sudah di-handle langsung di SocketGateway.dispatchTask
   }
 
   @SubscribeMessage('task-reject')
@@ -301,6 +274,27 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect, 
     }
 
     availableBot.socket.emit('task-dispatch', { taskId, ...dispatchTaskData });
+
+    // Langsung update status ke DISPATCHED di DB agar tidak di-dispatch ulang oleh scheduler
+    const transaction = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema('master', transaction);
+      await this.taskQueueRepository.update(
+        { status: 'DISPATCHED' },
+        { where: { id: taskId }, transaction }
+      );
+      await transaction.commit();
+      availableBot.inflight += 1;
+    }
+    catch (e) {
+      this.logger.error(
+        `Directly update task ${taskId} to DISPATCHED error: ${e.message}`,
+        (e as Error).stack,
+        'SocketGatewayDispatch'
+      );
+      await transaction.rollback();
+    }
+
     return availableBot.socket.id;
   }
 
