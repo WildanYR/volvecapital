@@ -257,10 +257,10 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect, 
     return this.unsubscribeClientToEvent(client.id, data.eventName);
   }
 
-  getActiveBots(tenantId: string): string[] {
+  getActiveBots(tenantId: string): { name: string; is_primary: boolean }[] {
     return Array.from(this.connections.values())
       .filter(c => c.tenant_id === tenantId && c.type === 'BOT')
-      .map(c => c.name);
+      .map(c => ({ name: c.name, is_primary: c.is_primary ?? false }));
   }
 
   async dispatchTask(

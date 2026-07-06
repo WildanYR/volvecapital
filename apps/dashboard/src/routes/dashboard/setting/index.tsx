@@ -168,8 +168,8 @@ function RouteComponent() {
                 >
                   <option value="">Default (Bot Utama / Beban Terendah)</option>
                   {activeBots?.map((bot) => (
-                    <option key={bot} value={bot}>
-                      {bot}
+                    <option key={bot.name} value={bot.name}>
+                      {bot.name}{bot.is_primary ? ' 👑 (Primary)' : ''}
                     </option>
                   ))}
                 </select>

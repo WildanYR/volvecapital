@@ -70,7 +70,7 @@ export function SettingServiceGenerator(apiUrl: string, accessToken: string, ten
     }
   }
 
-  const getActiveBots = async (): Promise<string[]> => {
+  const getActiveBots = async (): Promise<{ name: string; is_primary: boolean }[]> => {
     const response = await generateApiFetch(
       apiUrl,
       accessToken,
