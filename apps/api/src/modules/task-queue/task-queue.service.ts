@@ -109,7 +109,10 @@ export class TaskQueueService {
         });
 
         if (taskQueue) {
-          await taskQueue.update(data, { transaction });
+          // Hapus entry lama dari Redis ZSET sebelum update,
+          // agar tidak ada entry stale yang bisa di-dispatch ulang ke bot yang salah
+          redisPipeline.zrem(ZSET_KEY, `${TASK_REFERENCE_KEY}:${taskQueue.id}`);
+          await taskQueue.update({ ...data, status: 'QUEUED' }, { transaction });
         }
         else {
           const id = this.snowflakeIdProvider.generateId();
