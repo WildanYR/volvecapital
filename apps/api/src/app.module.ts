@@ -52,6 +52,7 @@ import { TutorialModule } from './modules/tutorial/tutorial.module';
 import { UtilityModule } from './modules/utility/utility.module';
 import { VoucherModule } from './modules/voucher/voucher.module';
 import { WeeklyOffModule } from './modules/weekly-off/weekly-off.module';
+import { WhatsappModule } from './modules/whatsapp/whatsapp.module';
 import { WithdrawalModule } from './modules/withdrawal/withdrawal.module';
 
 @Module({
@@ -114,6 +115,7 @@ import { WithdrawalModule } from './modules/withdrawal/withdrawal.module';
     ManualBookModule,
     AccountingModule,
     ShopModule,
+    WhatsappModule,
   ],
   controllers: [AppController],
   providers: [{ provide: APP_GUARD, useClass: VcAuthGuard }, AppService],

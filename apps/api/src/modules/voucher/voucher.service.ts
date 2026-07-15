@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Op, QueryTypes } from 'sequelize';
 import {
@@ -24,9 +24,12 @@ import { Transaction } from 'src/database/models/transaction.model';
 import { Voucher } from 'src/database/models/voucher.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
 import { AccountingService } from '../accounting/accounting.service';
+import { WhatsappService } from '../whatsapp/whatsapp.service';
 
 @Injectable()
 export class VoucherService {
+  private readonly logger = new Logger(VoucherService.name);
+
   constructor(
     private readonly postgresProvider: PostgresProvider,
     private readonly configService: ConfigService,
@@ -45,6 +48,7 @@ export class VoucherService {
     @Inject(SHOP_REPOSITORY)
     private readonly shopRepository: typeof Shop,
     private readonly accountingService: AccountingService,
+    private readonly whatsappService: WhatsappService,
   ) {}
 
   private generateVoucherCode(prefix: string = 'MNL-'): string {
@@ -172,6 +176,23 @@ export class VoucherService {
       }
 
       await transaction.commit();
+
+      // Kirim kode voucher via WhatsApp (non-blocking — tidak gagalkan transaksi)
+      if (voucher.buyer_whatsapp) {
+        const productFullName = `${(variant as any).product?.name ?? 'Produk'} - ${variant.name}`;
+        this.whatsappService
+          .sendVoucherCode({
+            buyerPhone: voucher.buyer_whatsapp,
+            buyerName: voucher.buyer_name,
+            voucherCode: String(voucher.id),
+            productName: productFullName,
+            expiredAt: voucher.expired_at,
+          })
+          .catch(err =>
+            this.logger.error(`[WA] Gagal kirim voucher ${voucher.id} (non-fatal):`, err),
+          );
+      }
+
       return voucher;
     }
     catch (error) {

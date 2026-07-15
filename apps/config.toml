@@ -1,5 +1,5 @@
 [app]
-name = "VPS Gilang"
+name = "PC Gilang"
 max_concurrent_tasks = 3
 task_timeout_ms = 300000
 api_base_url = "api.digitalpremium.id"
@@ -164,4 +164,3 @@ name = "netflix"
 # Shipped_reply_habis_sharing_bulanan = "Mohon maaf kak durasinya sudah habis ya kak. Kakak order yang di etalase bulanan, ya? Mohon cek lagi deskripsinya, karena batas waktunya hanya 25-30 hari ya kak 🙏 || Silahkan CO lagi kak atau keWea aja lebih murah cuma 35k \n\nklik ==> s.id/LangganandiWea \nkalo gabisa diklik copy aja lalu paste di browser web"
 # Shipped_reply_bulanan = "Berikut Pesanannya ya kak"
 # Shipped_reply_habis_bulanan = "Mohon maaf kak durasinya sudah habis ya kak. Kakak order yang di etalase bulanan, ya? Mohon cek lagi deskripsinya, karena batas waktunya hanya 27-30 hari ya kak 🙏 || Silahkan CO lagi kak atau keWea aja lebih murah cuma 50k \n\nklik ==> s.id/LangganandiWea \nkalo gabisa diklik copy aja lalu paste di browser web"
-

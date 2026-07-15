@@ -1,4 +1,4 @@
-﻿[app]
+[app]
 name = "VPS Gilang"
 #is_primary = true   # Bot utama: dipilih sebagai fallback saat tidak ada target_bot ditentukan
 max_concurrent_tasks = 3
