@@ -577,6 +577,7 @@ export class PublicService {
     const bodyObj = {
       partnerReferenceNo: orderId,
       merchantId: merchantId,
+      terminalId: 'A01',
       amount: {
         value: `${amount}.00`,
         currency: 'IDR',
