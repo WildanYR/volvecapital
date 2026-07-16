@@ -399,7 +399,10 @@ export class TaskWorkerService {
           await this.taskHelperService.unfreezeAccount(tm.taskData.tenant_id, tm.taskData.payload as AccountUnfreezePayload);
         }
         else if (tm.taskData.context === 'SEND_WA_MESSAGE') {
-          await this.taskHelperService.sendWaMessage(tm.taskData.id, tm.taskData.tenant_id, tm.taskData.payload);
+          const waPayload = typeof tm.taskData.payload === 'string' 
+            ? JSON.parse(tm.taskData.payload) 
+            : tm.taskData.payload;
+          await this.taskHelperService.sendWaMessage(tm.taskData.id, tm.taskData.tenant_id, waPayload);
         }
         else {
           throw new UnknownTaskError(`Unknown Task: ${tm.taskData.context}`);
