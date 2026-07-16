@@ -9,6 +9,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import * as https from 'https';
 import * as crypto from 'node:crypto';
+import * as fs from 'node:fs';
 import * as nodemailer from 'nodemailer';
 import { Op } from 'sequelize';
 import {
@@ -489,18 +490,31 @@ export class PublicService {
 
   private async getDokuSnapAccessToken(): Promise<string> {
     const clientId = this.configService.get<string>('doku.clientId');
+    const privateKeyFile = this.configService.get<string>('doku.privateKeyFile');
     const privateKeyRaw = this.configService.get<string>('doku.privateKey') || '';
     const isProd = this.configService.get<boolean>('doku.isProduction');
     const baseUrl = isProd ? 'api.doku.com' : 'api-sandbox.doku.com';
+
+    // Prefer reading from file (more reliable for large RSA keys)
+    let privateKey: string;
+    if (privateKeyFile && fs.existsSync(privateKeyFile)) {
+      privateKey = fs.readFileSync(privateKeyFile, 'utf8');
+      this.logger.log(`[SNAP Token] Using private key from file: ${privateKeyFile}`);
+    } else {
+      // Fallback: convert escaped \n in env var to real newlines
+      privateKey = privateKeyRaw.replace(/\\n/g, '\n');
+      this.logger.log(`[SNAP Token] Using private key from env var`);
+    }
+
+    if (!privateKey || !privateKey.includes('PRIVATE KEY')) {
+      throw new Error('DOKU private key not configured. Set DOKU_PRIVATE_KEY_FILE or DOKU_PRIVATE_KEY in .env');
+    }
 
     // Timestamp in ISO8601 format
     const timestamp = new Date().toISOString().replace(/\..+/, '+00:00');
 
     // Build asymmetric stringToSign: clientId|timestamp
     const stringToSign = `${clientId}|${timestamp}`;
-
-    // Replace escaped \n in env var with real newlines
-    const privateKey = privateKeyRaw.replace(/\\n/g, '\n');
 
     const signer = crypto.createSign('SHA256');
     signer.update(stringToSign);

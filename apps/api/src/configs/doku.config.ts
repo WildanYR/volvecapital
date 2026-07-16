@@ -4,6 +4,7 @@ export const DokuConfig = registerAs('doku', () => ({
   clientId: process.env.DOKU_CLIENT_ID,
   secretKey: process.env.DOKU_SECRET_KEY,
   privateKey: process.env.DOKU_PRIVATE_KEY,
+  privateKeyFile: process.env.DOKU_PRIVATE_KEY_FILE,
   merchantId: process.env.DOKU_MERCHANT_ID,
   isProduction: process.env.DOKU_IS_PRODUCTION === 'true',
   notifyUrl: process.env.DOKU_NOTIFY_URL,
