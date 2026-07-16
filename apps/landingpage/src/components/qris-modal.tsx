@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, CheckCircle2, Loader2, RefreshCw, AlertCircle, ShieldCheck } from 'lucide-react'
-import { QRCodeSVG } from 'qrcode.react'
+import { X, CheckCircle2, Loader2, RefreshCw, AlertCircle, ShieldCheck, Download, Copy } from 'lucide-react'
+import { QRCodeCanvas } from 'qrcode.react'
 import { api } from '@/lib/api'
 import { toast } from 'sonner'
 import { formatCurrency } from '@/lib/format'
@@ -36,24 +36,51 @@ export function QrisModal({ isOpen, onClose, qrString, orderId, amount, productN
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
-  const checkStatus = async () => {
-    setIsChecking(true)
+  const checkStatus = async (isAutoPoll: boolean = false) => {
+    if (!isAutoPoll) setIsChecking(true)
     try {
       const { data } = await api.get(`/public/payment/status/${orderId}`)
       if (data.payment_status === 'PAID') {
         setStatus('PAID')
-        toast.success('Pembayaran Berhasil!')
+        if (!isAutoPoll) toast.success('Pembayaran Berhasil!')
         setTimeout(() => {
           window.location.href = `/success?order_id=${orderId}`
         }, 2000)
       } else {
-        toast.info('Pembayaran belum diterima. Silakan selesaikan pembayaran Anda.')
+        if (!isAutoPoll) toast.info('Pembayaran belum diterima. Silakan selesaikan pembayaran Anda.')
       }
     } catch (error) {
-      toast.error('Gagal mengecek status pembayaran')
+      if (!isAutoPoll) toast.error('Gagal mengecek status pembayaran')
     } finally {
-      setIsChecking(false)
+      if (!isAutoPoll) setIsChecking(false)
     }
+  }
+
+  // Auto-polling every 5 seconds
+  useEffect(() => {
+    if (!isOpen || status === 'PAID') return
+    const pollTimer = setInterval(() => {
+      checkStatus(true)
+    }, 5000)
+    return () => clearInterval(pollTimer)
+  }, [isOpen, status, orderId])
+
+  const handleDownloadQR = () => {
+    const canvas = document.getElementById('qris-canvas') as HTMLCanvasElement
+    if (!canvas) return
+    const pngUrl = canvas.toDataURL('image/png').replace('image/png', 'image/octet-stream')
+    const downloadLink = document.createElement('a')
+    downloadLink.href = pngUrl
+    downloadLink.download = `QRIS-${orderId}.png`
+    document.body.appendChild(downloadLink)
+    downloadLink.click()
+    document.body.removeChild(downloadLink)
+    toast.success('QRIS berhasil diunduh')
+  }
+
+  const copyOrderId = () => {
+    navigator.clipboard.writeText(orderId)
+    toast.success('Nomor Invoice disalin')
   }
 
   return (
@@ -96,20 +123,39 @@ export function QrisModal({ isOpen, onClose, qrString, orderId, amount, productN
 
                 <div className="text-center mb-8">
                   <h2 className="text-2xl font-black text-foreground mb-2">{productName}</h2>
-                  <p className="text-3xl font-black text-primary">{formatCurrency(amount)}</p>
+                  <p className="text-3xl font-black text-primary mb-4">{formatCurrency(amount)}</p>
+                  
+                  <div 
+                    onClick={copyOrderId}
+                    className="inline-flex items-center gap-2 bg-muted/30 px-3 py-1.5 rounded-full cursor-pointer hover:bg-muted/50 transition-colors"
+                  >
+                    <span className="text-xs font-bold text-muted-foreground">Order ID: {orderId}</span>
+                    <Copy className="size-3 text-muted-foreground" />
+                  </div>
                 </div>
 
-                <div className="bg-muted/50 p-6 rounded-3xl mb-8 flex flex-col items-center border border-border">
-                  <QRCodeSVG 
-                    value={qrString} 
-                    size={240}
-                    level="H"
-                    includeMargin={false}
-                  />
+                <div className="bg-muted/50 p-6 rounded-3xl mb-8 flex flex-col items-center border border-border relative group">
+                  <div className="bg-white p-2 rounded-xl">
+                    <QRCodeCanvas 
+                      id="qris-canvas"
+                      value={qrString} 
+                      size={240}
+                      level="H"
+                      includeMargin={false}
+                    />
+                  </div>
                   <div className="mt-4 flex items-center gap-2">
                     <img src="/qris-logo.png" alt="QRIS" className="h-6 opacity-80" onError={(e) => e.currentTarget.style.display = 'none'} />
-                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Scan menggunakan aplikasi bank atau e-wallet</span>
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Scan menggunakan aplikasi bank atau e-wallet</span>
                   </div>
+                  
+                  <button 
+                    onClick={handleDownloadQR}
+                    className="mt-6 flex items-center justify-center gap-2 w-full py-3 bg-white/5 hover:bg-white/10 text-foreground text-sm font-bold rounded-xl transition-all border border-border"
+                  >
+                    <Download className="size-4" />
+                    Simpan QRIS ke Galeri
+                  </button>
                 </div>
 
                 <div className="space-y-4">
@@ -124,7 +170,7 @@ export function QrisModal({ isOpen, onClose, qrString, orderId, amount, productN
                   </div>
 
                   <button
-                    onClick={checkStatus}
+                    onClick={() => checkStatus(false)}
                     disabled={isChecking || timeLeft === 0}
                     className="w-full bg-primary text-primary-foreground font-black py-4 rounded-2xl flex items-center justify-center gap-3 hover:scale-105 active:scale-[0.98] transition-all disabled:opacity-50 text-sm uppercase tracking-widest"
                   >

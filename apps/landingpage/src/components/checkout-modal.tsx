@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, ShieldCheck, Loader2, AlertCircle, Shield, Lock } from 'lucide-react'
+import { X, ShieldCheck, Loader2, AlertCircle, Shield } from 'lucide-react'
 import { Product, ProductVariant } from '@/hooks/use-products'
 import { api } from '@/lib/api'
+import { QrisModal } from './qris-modal'
 import { toast } from 'sonner'
 import { formatCurrency } from '@/lib/format'
 import { useNotification } from '@/hooks/use-notification'
-import { REOPEN_CHECKOUT_EVENT } from '@/lib/events'
 
 declare global {
   interface Window {
@@ -35,6 +35,7 @@ export function CheckoutModal({ isOpen, onClose, product, variant, initialData }
   const [isPromoLoading, setIsPromoLoading] = useState(false)
   const [promoError, setPromoError] = useState('')
   const [showCloseConfirm, setShowCloseConfirm] = useState(false)
+  const [qrisData, setQrisData] = useState<{ isOpen: boolean; qrString: string; orderId: string; amount: number; productName: string } | null>(null)
   const { addNotification } = useNotification()
   
   // Handle initial data population and local storage
@@ -61,7 +62,6 @@ export function CheckoutModal({ isOpen, onClose, product, variant, initialData }
 
       if (initialData?.paymentUrl) {
         setPaymentUrl(initialData.paymentUrl);
-        // If we have paymentUrl, we might want to skip to step 2
         setStep(2);
       }
     }
@@ -86,7 +86,6 @@ export function CheckoutModal({ isOpen, onClose, product, variant, initialData }
   const handleStep1Submit = (e: React.FormEvent) => {
     e.preventDefault()
     
-    // Validation
     if (!formData.name || !formData.email || !formData.whatsapp) {
       setIsShaking(true)
       toast.error('Silahkan isi form terlebih dahulu', {
@@ -97,7 +96,6 @@ export function CheckoutModal({ isOpen, onClose, product, variant, initialData }
       return
     }
 
-    // WhatsApp validation: must start with 08 or 62
     if (!formData.whatsapp.startsWith('08') && !formData.whatsapp.startsWith('62')) {
       setIsShaking(true)
       toast.error('Nomor WhatsApp harus diawali 08 atau 62', {
@@ -108,7 +106,6 @@ export function CheckoutModal({ isOpen, onClose, product, variant, initialData }
       return
     }
 
-    // Save to local storage for future autofill
     localStorage.setItem('checkout_buyer_info', JSON.stringify({
       name: formData.name,
       email: formData.email,
@@ -150,9 +147,8 @@ export function CheckoutModal({ isOpen, onClose, product, variant, initialData }
   const handleFinalCheckout = async () => {
     if (!product || !variant) return
 
-    // If we already have a payment URL (from notification), just use it
     if (paymentUrl) {
-      setIsLoading(true); // Show loading while redirecting
+      setIsLoading(true);
       if (window.loadJokulCheckout) {
         window.loadJokulCheckout(paymentUrl)
       } else {
@@ -166,10 +162,6 @@ export function CheckoutModal({ isOpen, onClose, product, variant, initialData }
     const finalVariantId = variant.id;
     const finalPromoCode = (promoData && promoCode) ? promoCode : undefined;
 
-    // Debug log to browser console
-    console.log(`[CHECKOUT] Creating payment for variant: ${variant.name} (${finalVariantId}) with price ${variant.price}`);
-    console.log(`[REAL_SEND] Sending to API - ID: ${finalVariantId}, Promo: ${finalPromoCode}`);
-
     try {
       const { data } = await api.post(`/public/payment/create?t=${Date.now()}`, {
         product_variant_id: finalVariantId,
@@ -179,8 +171,16 @@ export function CheckoutModal({ isOpen, onClose, product, variant, initialData }
         promo_code: finalPromoCode
       })
 
-      if (data.payment_url) {
-        // Add pending notification before redirecting
+      if (data.qris_string) {
+        setQrisData({
+          isOpen: true,
+          qrString: data.qris_string,
+          orderId: data.order_id,
+          amount: (variant.price || 0) - (promoData?.discount_amount || 0),
+          productName: `${product.name} - ${variant.name}`
+        });
+        setIsLoading(false);
+      } else if (data.payment_url) {
         addNotification({
           type: 'pending',
           title: 'Pembayaran Tertunda',
@@ -205,26 +205,25 @@ export function CheckoutModal({ isOpen, onClose, product, variant, initialData }
         }
       } else {
         toast.error('Gagal mendapatkan link pembayaran')
+        setIsLoading(false);
       }
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Gagal membuat pesanan')
-    } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   }
 
   const handleClose = () => {
-    // Show custom confirmation if in step 2 (payment process)
     if (step === 2 && !isLoading) {
       setShowCloseConfirm(true)
       return
     }
 
-    // Force a full page reload to clear any DOKU/Jokul cached sessions
     window.location.reload()
   }
 
   return (
+    <>
     <AnimatePresence>
       {isOpen && (
         <div key="modal-portal" className="fixed inset-0 z-[200] flex items-center justify-center p-4 md:p-6 overflow-y-auto">
@@ -242,7 +241,6 @@ export function CheckoutModal({ isOpen, onClose, product, variant, initialData }
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
             className="relative bg-background w-full max-w-6xl rounded-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[95vh]"
           >
-            {/* Header */}
             <div className="p-6 md:px-12 border-b border-border flex items-center justify-between sticky top-0 bg-background z-20 rounded-t-[2rem]">
               <div className="flex items-center gap-3">
                 <div className="bg-primary p-2 rounded-lg">
@@ -268,7 +266,6 @@ export function CheckoutModal({ isOpen, onClose, product, variant, initialData }
                     className="p-6 md:p-12"
                   >
                     <div className="grid grid-cols-1 lg:grid-cols-5 gap-12 lg:gap-16">
-                      {/* Left Side: Form */}
                       <motion.div 
                         animate={isShaking ? shakeAnimation : {}}
                         className="lg:col-span-3 space-y-6"
@@ -322,13 +319,12 @@ export function CheckoutModal({ isOpen, onClose, product, variant, initialData }
                           <div className="bg-primary p-1.5 rounded-full shrink-0">
                             <AlertCircle className="size-3.5 text-primary-foreground" />
                           </div>
-                          <p className="text-xs text-destructive font-bold leading-relaxed">
-                            Metode pembayaran QRIS (Dukungan Semua Bank & E-Wallet) akan muncul setelah menekan tombol Bayar Sekarang.
+                          <p className="text-xs text-primary font-bold leading-relaxed">
+                            Metode pembayaran QRIS (Dukungan Semua Bank & E-Wallet) tersedia.
                           </p>
                         </div>
                       </motion.div>
 
-                      {/* Right Side: Summary */}
                       <div className="lg:col-span-2">
                         <div className="bg-muted/50/50 rounded-2xl p-6 border border-border h-full flex flex-col">
                           <h4 className="text-lg font-black text-foreground mb-6">Ringkasan</h4>
@@ -425,9 +421,9 @@ export function CheckoutModal({ isOpen, onClose, product, variant, initialData }
                     </div>
 
                     <div className="max-w-md space-y-4">
-                      <h3 className="text-3xl font-black text-foreground tracking-tight">Pembayaran Aman</h3>
+                      <h3 className="text-3xl font-black text-foreground tracking-tight">Konfirmasi Pembayaran</h3>
                       <p className="text-muted-foreground font-medium leading-relaxed">
-                        Anda akan dialihkan ke <span className="text-primary font-bold">DOKU Gateway</span> untuk menyelesaikan pembayaran secara aman.
+                        Segera selesaikan pembayaran untuk mengamankan pesanan Anda.
                       </p>
                     </div>
 
@@ -444,7 +440,7 @@ export function CheckoutModal({ isOpen, onClose, product, variant, initialData }
                         disabled={isLoading}
                         className="w-full py-5 bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-2xl flex items-center justify-center gap-3 shadow-xl transition-all active:scale-95 disabled:opacity-50"
                       >
-                        {isLoading ? <Loader2 className="size-5 animate-spin" /> : (paymentUrl ? 'Bayar via DOKU Sekarang' : 'Lanjutkan ke Pembayaran')}
+                        {isLoading ? <Loader2 className="size-5 animate-spin" /> : 'Selesaikan Pembayaran'}
                       </button>
                       <button 
                         onClick={() => setStep(1)}
@@ -461,7 +457,6 @@ export function CheckoutModal({ isOpen, onClose, product, variant, initialData }
         </div>
       )}
 
-      {/* Custom Confirmation Dialog */}
       <AnimatePresence>
         {showCloseConfirm && (
           <div key="confirm-portal" className="fixed inset-0 z-[300] flex items-center justify-center p-4">
@@ -511,5 +506,16 @@ export function CheckoutModal({ isOpen, onClose, product, variant, initialData }
         )}
       </AnimatePresence>
     </AnimatePresence>
+    {qrisData && (
+      <QrisModal
+        isOpen={qrisData.isOpen}
+        onClose={() => setQrisData({ ...qrisData, isOpen: false })}
+        qrString={qrisData.qrString}
+        orderId={qrisData.orderId}
+        amount={qrisData.amount}
+        productName={qrisData.productName}
+      />
+    )}
+    </>
   )
 }

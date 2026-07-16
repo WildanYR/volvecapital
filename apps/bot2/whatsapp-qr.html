@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WhatsApp Bot QR Code</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        body { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; font-family: sans-serif; background: #f0f2f5; }
+        .box { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: center; }
+        h2 { color: #075e54; margin-bottom: 10px; }
+        p { color: #555; margin-bottom: 30px; }
+        #qrcode img { margin: 0 auto; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h2>WhatsApp Bot Login</h2>
+        <p>Buka WhatsApp di HP Anda > Perangkat Tertaut > Tautkan Perangkat<br>Lalu scan QR Code di bawah ini:</p>
+        <div id="qrcode"></div>
+    </div>
+    <script>
+        new QRCode(document.getElementById("qrcode"), {
+            text: "2@8M0S/cpW6f/Ez5cs10/T+7g64bonI3rixnXSx41FSAXjS/NH4agxsOfdZVZ00uw6aErJpMj1J4/gJqBPaYWQCa7UyM5oZ5GZt+E=,Kb8a9PF730qh4y394GKXnJr4ruQiH1h4YKBSFLWTnhk=,u9pFVeuuBNI1PBlX5HfnctRhcZqkWVhBJUZnkzL7ShY=,2OtbRJGmyRttil+bGWh4IgH/QZfN4kBkrXuHIlLLFBY=,1",
+            width: 300,
+            height: 300
+        });
+    </script>
+</body>
+</html>

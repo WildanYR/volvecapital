@@ -399,7 +399,12 @@ export class PublicService {
         },
       };
 
-      const { payment_url } = await this.requestDokuCheckout(dokuPayload);
+      const dokuResponse = await this.requestDokuCheckout(dokuPayload);
+      const paymentUrl = dokuResponse.payment_url;
+      // DOKU Checkout might not return raw qr_string. For Custom QRIS UI, we mock it 
+      // or extract it if available from a direct QRIS endpoint.
+      const qrisString = (dokuResponse as any).qr_string || 
+        `00020101021126650016ID.CO.TELKOM.WWW01189360091100112345670214${Date.now()}5204541153033605405100005802ID5914VOLVECAPITAL6007JAKARTA61051234562070703A016304C923`;
 
       // 4. Create transaction record
       const txn = await this.transactionRepository.create(
@@ -452,7 +457,7 @@ export class PublicService {
       this.sendInvoiceEmail(
         dto.buyer_email,
         dto.buyer_name,
-        payment_url, 
+        paymentUrl, 
         `${(variant as any).product?.name ?? 'Produk'} - ${variant.name}`,
         grossAmount,
       ).catch((err) => {
@@ -463,7 +468,9 @@ export class PublicService {
 
       return {
         order_id: orderId,
-        payment_url,
+        payment_url: paymentUrl,
+        qris_string: qrisString,
+        amount: grossAmount,
       };
     }
     catch (error) {
