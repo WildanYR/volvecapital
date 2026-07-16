@@ -279,23 +279,10 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect, 
     }
 
     if (!availableBot) {
-      const transaction = await this.postgresProvider.transaction();
-      try {
-        await this.postgresProvider.setSchema('master', transaction);
-        await this.taskQueueRepository.update(
-          {
-            status: 'FAILED',
-            error_message: 'no bot available to handle the task',
-          },
-          { where: { id: taskId }, transaction },
-        );
-        await transaction.commit();
-      }
-      catch {
-        await transaction.rollback();
-      }
-      return undefined;
+      // Jangan langsung mark FAILED — throw error agar task-worker bisa retry
+      throw new Error('No bot available to handle the task');
     }
+
 
     availableBot.socket.emit('task-dispatch', { taskId, ...dispatchTaskData });
 
