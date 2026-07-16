@@ -4,9 +4,10 @@ import { AccountingModule } from '../accounting/accounting.module';
 import { UtilityModule } from '../utility/utility.module';
 import { TransactionController } from './transaction.controller';
 import { TransactionService } from './transaction.service';
+import { TaskQueueModule } from '../task-queue/task-queue.module';
 
 @Module({
-  imports: [UtilityModule, AccountUserModule, AccountingModule],
+  imports: [UtilityModule, AccountUserModule, AccountingModule, TaskQueueModule],
   providers: [TransactionService],
   controllers: [TransactionController],
 })

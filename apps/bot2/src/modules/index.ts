@@ -45,3 +45,7 @@ registerModuleFactory('netflix', createNetflixModule);
 import { createDuokeModule } from './duoke/index.js';
 registerModuleFactory('duoke', createDuokeModule);
 
+// WhatsappModule
+import { createWhatsappModule } from './whatsapp/index.js';
+registerModuleFactory('whatsapp', createWhatsappModule);
+

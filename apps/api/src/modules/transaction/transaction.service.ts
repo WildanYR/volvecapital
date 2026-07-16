@@ -37,6 +37,7 @@ import { BaseGetAllUrlQuery } from '../utility/types/base-get-all-url-query.type
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import { ITransactionGetFilter } from './filter/transaction-get.filter';
+import { TaskQueueService } from '../task-queue/task-queue.service';
 
 @Injectable()
 export class TransactionService {
@@ -59,6 +60,7 @@ export class TransactionService {
     @Inject(SHOP_REPOSITORY)
     private readonly shopRepository: typeof Shop,
     private readonly accountingService: AccountingService,
+    private readonly taskQueueService: TaskQueueService,
   ) {}
 
   async findAll(
@@ -449,6 +451,7 @@ export class TransactionService {
       }
 
       await tx.commit();
+
       return {
         transaction: newTransaction.toJSON(),
         account_user: [...generatedAccountUser, ...failedGeneratedAccountUser],

@@ -398,6 +398,9 @@ export class TaskWorkerService {
         else if (tm.taskData.context === UNFREEZE_ACCOUNT) {
           await this.taskHelperService.unfreezeAccount(tm.taskData.tenant_id, tm.taskData.payload as AccountUnfreezePayload);
         }
+        else if (tm.taskData.context === 'SEND_WA_MESSAGE') {
+          await this.taskHelperService.sendWaMessage(tm.taskData.id, tm.taskData.tenant_id, tm.taskData.payload);
+        }
         else {
           throw new UnknownTaskError(`Unknown Task: ${tm.taskData.context}`);
         }

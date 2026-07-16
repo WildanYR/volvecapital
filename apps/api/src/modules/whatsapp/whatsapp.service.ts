@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
+import { TaskQueueService } from '../task-queue/task-queue.service';
 
 export interface SendVoucherWAParams {
   buyerPhone: string;
@@ -9,6 +10,7 @@ export interface SendVoucherWAParams {
   voucherCode: string;
   productName: string;
   expiredAt: Date;
+  tenantId?: string;
 }
 
 @Injectable()
@@ -18,6 +20,7 @@ export class WhatsappService {
   constructor(
     private readonly configService: ConfigService,
     private readonly httpService: HttpService,
+    private readonly taskQueueService: TaskQueueService,
   ) {}
 
   /**
@@ -52,85 +55,42 @@ export class WhatsappService {
    * Tidak throw error agar tidak menggagalkan transaksi utama.
    */
   async sendVoucherCode(params: SendVoucherWAParams): Promise<boolean> {
-    const { buyerPhone, buyerName, voucherCode, productName, expiredAt } = params;
-
-    const phoneNumberId = this.configService.get<string>('WHATSAPP_PHONE_NUMBER_ID');
-    const accessToken = this.configService.get<string>('WHATSAPP_ACCESS_TOKEN');
-    const apiVersion = this.configService.get<string>('WHATSAPP_API_VERSION', 'v20.0');
-    const templateName = this.configService.get<string>(
-      'WHATSAPP_TEMPLATE_NAME',
-      'voucher_kode_pembayaran',
-    );
-    const templateLanguage = this.configService.get<string>(
-      'WHATSAPP_TEMPLATE_LANGUAGE',
-      'id',
-    );
-
-    if (!phoneNumberId || !accessToken) {
-      this.logger.warn('WhatsApp env belum dikonfigurasi (WHATSAPP_PHONE_NUMBER_ID / WHATSAPP_ACCESS_TOKEN). Skip kirim WA.');
-      return false;
-    }
-
+    const { buyerPhone, buyerName, voucherCode, productName, expiredAt, tenantId } = params;
     const toPhone = this.normalizePhone(buyerPhone);
     const formattedDate = this.formatDate(expiredAt);
-
-    const url = `https://graph.facebook.com/${apiVersion}/${phoneNumberId}/messages`;
 
     const redeemBaseUrl = this.configService.get<string>('WHATSAPP_REDEEM_BASE_URL', '');
     const fullRedeemUrl = redeemBaseUrl ? `${redeemBaseUrl}${voucherCode}` : `https://paytronik.digitalpremium.id/redeem?code=${voucherCode}`;
 
-    const payload = {
-      messaging_product: 'whatsapp',
-      to: toPhone,
-      type: 'template',
-      template: {
-        name: templateName,
-        language: { code: templateLanguage },
-        components: [
-          {
-            type: 'body',
-            parameters: [
-              { type: 'text', text: voucherCode },    // {{1}} kode voucher
-              { type: 'text', text: formattedDate },  // {{2}} tanggal expired (batas klaim)
-              { type: 'text', text: fullRedeemUrl },  // {{3}} link redeem
-            ],
-          },
-          // Tombol URL dinamis — tetap ditambahkan sebagai opsi klik cepat
-          ...(redeemBaseUrl
-            ? [
-                {
-                  type: 'button',
-                  sub_type: 'url',
-                  index: '0',
-                  parameters: [
-                    { type: 'text', text: voucherCode }, // suffix URL → ?code={{1}}
-                  ],
-                },
-              ]
-            : []),
-        ],
-      },
-    };
+    const waMessage = `𝐓𝐞𝐫𝐢𝐦𝐚 𝐤𝐚𝐬𝐢𝐡 𝐭𝐞𝐥𝐚𝐡 𝐦𝐞𝐥𝐚𝐤𝐮𝐤𝐚𝐧 𝐩𝐞𝐦𝐛𝐞𝐥𝐢𝐚𝐧 𝐝𝐢 𝐭𝐨𝐤𝐨 𝐤𝐚𝐦𝐢. 𝐁𝐞𝐫𝐢𝐤𝐮𝐭 𝐚𝐝𝐚𝐥𝐚𝐡 𝐝𝐞𝐭𝐚𝐢𝐥 𝐯𝐨𝐮𝐜𝐡𝐞𝐫 𝐀𝐧𝐝𝐚:
 
+Kode Voucher	: ${voucherCode}
+Batas Klaim	: ${formattedDate}
+Link redeem	: ${fullRedeemUrl}
+
+𝐊𝐀𝐋𝐎 𝐋𝐈𝐍𝐊 𝐆𝐀𝐁𝐈𝐒𝐀 𝐃𝐈 𝐊𝐋𝐈𝐊 𝐂𝐎𝐏𝐘 𝐀𝐉𝐀 𝐓𝐄𝐑𝐔𝐒 𝐏𝐀𝐒𝐓𝐄 𝐊𝐄 𝐖𝐄𝐁
+
+Cara Redeem Voucher:
+1. Klik link redeem di atas.
+2. Kode voucher akan terisi otomatis.
+3. Klik "Cek Sekarang", lalu klik "Aktivasi Voucher".
+4. Jika berhasil, detail akun akan muncul seketika.`;
 
     try {
-      const response = await firstValueFrom(
-        this.httpService.post(url, payload, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-          },
-        }),
-      );
-
-      const messageId = response.data?.messages?.[0]?.id;
-      this.logger.log(`[WA] Terkirim ke ${toPhone} | Voucher: ${voucherCode} | Message ID: ${messageId}`);
+      await this.taskQueueService.upsert([{
+        tenant_id: tenantId || 'master',
+        execute_at: new Date(),
+        subject_id: voucherCode,
+        context: 'SEND_WA_MESSAGE',
+        payload: JSON.stringify({
+          phoneNumber: toPhone,
+          message: waMessage
+        })
+      }]);
+      this.logger.log(`[WA] Antrean terkirim ke ${toPhone} | Voucher: ${voucherCode}`);
       return true;
     } catch (error) {
-      const errData = error?.response?.data;
-      this.logger.error(
-        `[WA] Gagal kirim ke ${toPhone} | Voucher: ${voucherCode} | Error: ${JSON.stringify(errData ?? error.message)}`,
-      );
+      this.logger.error(`[WA] Gagal kirim ke ${toPhone} | Voucher: ${voucherCode} | Error: ${error.message}`);
       return false;
     }
   }

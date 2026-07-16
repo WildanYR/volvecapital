@@ -187,6 +187,7 @@ export class VoucherService {
             voucherCode: String(voucher.id),
             productName: productFullName,
             expiredAt: voucher.expired_at,
+            tenantId: tenantId,
           })
           .catch(err =>
             this.logger.error(`[WA] Gagal kirim voucher ${voucher.id} (non-fatal):`, err),

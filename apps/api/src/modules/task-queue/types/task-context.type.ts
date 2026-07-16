@@ -43,3 +43,9 @@ export interface NetflixAutoUpgradePayload {
   variant_name: string;
   target_bot?: string;
 }
+
+export interface SendWaMessagePayload {
+  phoneNumber: string;
+  message: string;
+  target_bot?: string;
+}

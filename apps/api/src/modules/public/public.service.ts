@@ -47,6 +47,7 @@ import { PostgresProvider } from 'src/database/postgres.provider';
 import { TenantProvisioningService } from '../tenant/tenant-provisioning.service';
 import { PromoService } from '../promo/promo.service';
 import { AccountingService } from '../accounting/accounting.service';
+import { WhatsappService } from '../whatsapp/whatsapp.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { RegisterTenantDto } from './dto/register-tenant.dto';
 import { RedeemVoucherDto } from './dto/redeem-voucher.dto';
@@ -89,6 +90,7 @@ export class PublicService {
     private readonly tenantProvisioningService: TenantProvisioningService,
     private readonly promoService: PromoService,
     private readonly accountingService: AccountingService,
+    private readonly whatsappService: WhatsappService,
   ) {}
 
   async getSettings(tenantId: string) {
@@ -614,6 +616,24 @@ export class PublicService {
 
       if (shouldSendEmail) {
         const productName = `${(voucher.product_variant as any)?.product?.name ?? 'Produk'} - ${voucher.product_variant?.name ?? ''}`;
+        
+        // Kirim WhatsApp (non-blocking)
+        if (voucher.buyer_whatsapp) {
+          this.whatsappService
+            .sendVoucherCode({
+              buyerPhone: voucher.buyer_whatsapp,
+              buyerName: voucher.buyer_name,
+              voucherCode: String(voucher.id),
+              productName: productName,
+              expiredAt: voucher.expired_at,
+              tenantId: tenantId,
+            })
+            .catch(err =>
+              this.logger.error(`[WA] Gagal kirim voucher ${voucher.id} (non-fatal):`, err),
+            );
+        }
+
+        // Kirim Email
         this.logger.log(`[PaymentNotify] Sending confirmation email for voucher ${voucher.id} to ${voucher.buyer_email}`);
         this.sendPaymentConfirmationEmail(
           tenantId,

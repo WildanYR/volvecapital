@@ -13,6 +13,7 @@ export class JournalEntry extends Model<JournalEntry> {
   @Column({
     type: DataType.DATEONLY,
     allowNull: false,
+    field: 'date',
   })
   declare transaction_date: Date;
 
@@ -20,6 +21,7 @@ export class JournalEntry extends Model<JournalEntry> {
   @Column({
     type: DataType.STRING(100),
     allowNull: true,
+    field: 'reference',
   })
   declare reference_number: string;
 

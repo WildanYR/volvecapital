@@ -177,4 +177,22 @@ export class TaskHelperService {
       throw error;
     }
   }
+
+  async sendWaMessage(taskId: string, tenantId: string, payload: any) {
+    try {
+      const clientId = await this.socketGateway.dispatchTask(taskId, tenantId, {
+        module: 'whatsapp',
+        type: 'send_wa_message',
+        payload,
+      }, payload.target_bot);
+
+      if (!clientId) {
+        throw new Error('No bot available to handle the task');
+      }
+    }
+    catch (error) {
+      this.logger.error(error.message, error.stack, 'TaskProcessorSendWaMessage');
+      throw error;
+    }
+  }
 }
