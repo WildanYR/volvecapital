@@ -401,10 +401,16 @@ export class PublicService {
 
       const dokuResponse = await this.requestDokuCheckout(dokuPayload);
       const paymentUrl = dokuResponse.payment_url;
-      // DOKU Checkout might not return raw qr_string. For Custom QRIS UI, we mock it 
-      // or extract it if available from a direct QRIS endpoint.
-      const qrisString = (dokuResponse as any).qr_string || 
-        `00020101021126650016ID.CO.TELKOM.WWW01189360091100112345670214${Date.now()}5204541153033605405100005802ID5914VOLVECAPITAL6007JAKARTA61051234562070703A016304C923`;
+
+      // Generate real QRIS string via DOKU SNAP API
+      let qrisString: string;
+      try {
+        qrisString = await this.requestDokuSnapQris(orderId, grossAmount);
+      } catch (qrisErr: any) {
+        this.logger.warn(`[CreatePayment] SNAP QRIS failed, falling back to payment_url: ${qrisErr.message}`);
+        // Fallback: return payment_url so frontend can redirect to DOKU Checkout
+        qrisString = '';
+      }
 
       // 4. Create transaction record
       const txn = await this.transactionRepository.create(
@@ -477,6 +483,135 @@ export class PublicService {
       await transaction.rollback();
       throw error;
     }
+  }
+
+  // ─── DOKU SNAP QRIS (B2B Direct API) ──────────────────────────────────────
+
+  private async getDokuSnapAccessToken(): Promise<string> {
+    const clientId = this.configService.get<string>('doku.clientId');
+    const privateKeyRaw = this.configService.get<string>('doku.privateKey') || '';
+    const isProd = this.configService.get<boolean>('doku.isProduction');
+    const baseUrl = isProd ? 'api.doku.com' : 'api-sandbox.doku.com';
+
+    // Timestamp in ISO8601 format
+    const timestamp = new Date().toISOString().replace(/\..+/, '+00:00');
+
+    // Build asymmetric stringToSign: clientId|timestamp
+    const stringToSign = `${clientId}|${timestamp}`;
+
+    // Replace escaped \n in env var with real newlines
+    const privateKey = privateKeyRaw.replace(/\\n/g, '\n');
+
+    const signer = crypto.createSign('SHA256');
+    signer.update(stringToSign);
+    signer.end();
+    const signature = signer.sign(privateKey, 'base64');
+
+    const body = JSON.stringify({ grantType: 'client_credentials' });
+    const targetPath = '/authorization/v1/access-token/b2b';
+
+    const options = {
+      hostname: baseUrl,
+      path: targetPath,
+      method: 'POST',
+      headers: {
+        'X-CLIENT-KEY': clientId,
+        'X-TIMESTAMP': timestamp,
+        'X-SIGNATURE': signature,
+        'Content-Type': 'application/json',
+      },
+    };
+
+    return new Promise((resolve, reject) => {
+      const req = https.request(options, (res) => {
+        let data = '';
+        res.on('data', (chunk) => { data += chunk; });
+        res.on('end', () => {
+          try {
+            const parsed = JSON.parse(data);
+            if (parsed.accessToken) {
+              resolve(parsed.accessToken);
+            } else {
+              reject(new Error(`DOKU SNAP Token error: ${JSON.stringify(parsed)}`));
+            }
+          } catch {
+            reject(new Error('Failed to parse DOKU SNAP access token response'));
+          }
+        });
+      });
+      req.on('error', reject);
+      req.write(body);
+      req.end();
+    });
+  }
+
+  private async requestDokuSnapQris(orderId: string, amount: number): Promise<string> {
+    const clientId = this.configService.get<string>('doku.clientId');
+    const secretKey = this.configService.get<string>('doku.secretKey') || '';
+    const merchantId = this.configService.get<string>('doku.merchantId');
+    const isProd = this.configService.get<boolean>('doku.isProduction');
+    const baseUrl = isProd ? 'api.doku.com' : 'api-sandbox.doku.com';
+    const targetPath = '/snap-adapter/b2b/v1.0/qr/qr-mpm-generate';
+
+    // 1. Get B2B Access Token
+    const accessToken = await this.getDokuSnapAccessToken();
+
+    // 2. Build request
+    const timestamp = new Date().toISOString().replace(/\..+/, '+00:00');
+    const externalId = `EXT-${Date.now()}`;
+
+    const bodyObj = {
+      partnerReferenceNo: orderId,
+      merchantId: merchantId,
+      amount: {
+        value: `${amount}.00`,
+        currency: 'IDR',
+      },
+    };
+    const body = JSON.stringify(bodyObj);
+
+    // 3. Build symmetric signature (HMAC-SHA512)
+    const bodyHash = crypto.createHash('sha256').update(body).digest('hex').toLowerCase();
+    const stringToSign = `POST:${targetPath}:${accessToken}:${bodyHash}:${timestamp}`;
+    const signature = crypto.createHmac('sha512', secretKey).update(stringToSign).digest('base64');
+
+    const options = {
+      hostname: baseUrl,
+      path: targetPath,
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'X-TIMESTAMP': timestamp,
+        'X-SIGNATURE': signature,
+        'X-PARTNER-ID': clientId,
+        'X-EXTERNAL-ID': externalId,
+        'CHANNEL-ID': 'H2H',
+        'Content-Type': 'application/json',
+      },
+    };
+
+    return new Promise((resolve, reject) => {
+      const req = https.request(options, (res) => {
+        let data = '';
+        res.on('data', (chunk) => { data += chunk; });
+        res.on('end', () => {
+          try {
+            const parsed = JSON.parse(data);
+            this.logger.log(`[SNAP QRIS] Response: ${JSON.stringify(parsed)}`);
+            if (parsed.qrContent) {
+              resolve(parsed.qrContent);
+            } else {
+              reject(new Error(`DOKU SNAP QRIS error: ${JSON.stringify(parsed)}`));
+            }
+          } catch {
+            reject(new Error('Failed to parse DOKU SNAP QRIS response'));
+          }
+        });
+      });
+      req.on('error', reject);
+      req.write(body);
+      req.end();
+    });
   }
 
   // ─── DOKU API UTILS ──────────────────────────────────────────────────────────
