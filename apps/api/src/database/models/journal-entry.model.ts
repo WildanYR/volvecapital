@@ -13,7 +13,6 @@ export class JournalEntry extends Model<JournalEntry> {
   @Column({
     type: DataType.DATEONLY,
     allowNull: false,
-    field: 'date',
   })
   declare transaction_date: Date;
 
