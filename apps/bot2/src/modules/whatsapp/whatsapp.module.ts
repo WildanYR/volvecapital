@@ -134,7 +134,11 @@ export class WhatsappModule extends BaseModule {
             throw new Error('Missing phoneNumber or message in payload');
         }
 
-        const formattedNumber = `${phoneNumber}@c.us`;
+        let formattedPhone = phoneNumber.replace(/\D/g, ''); // Remove non-digits
+        if (formattedPhone.startsWith('0')) {
+            formattedPhone = '62' + formattedPhone.substring(1);
+        }
+        const formattedNumber = `${formattedPhone}@c.us`;
         try {
             await this.waClient.sendMessage(formattedNumber, message);
             this.logger.info(`Message successfully sent to ${phoneNumber}`);

@@ -448,10 +448,31 @@ export class ShopeeOrderModule extends BaseModule {
           ];
         }
 
+        // Get Whatsapp module for dual sending
+        const waModule = this.taskManager.getModuleInstanceByModuleName('whatsapp');
+
         // Send messages
         for (const msg of messagesToSend) {
+          // 1. Send via Shopee Chat
           await chatInput.fill(msg);
           await page.keyboard.press("Enter");
+          
+          // 2. Send via WhatsApp as Backup/Dual Broadcast
+          if (buyerWhatsapp && waModule) {
+            try {
+              const waText = `[Notifikasi Pesanan Shopee]\n\n${msg}`;
+              this.taskManager.enqueueTask({
+                type: 'send_wa_message',
+                moduleInstanceId: waModule.instanceId,
+                payload: { phoneNumber: buyerWhatsapp, message: waText },
+                source: 'INTERNAL'
+              });
+              this.logger.info(`${orderId}: Berhasil mendaftarkan antrean pesan WhatsApp untuk ${buyerWhatsapp}`);
+            } catch (err) {
+              this.logger.error(`${orderId}: Gagal mendaftarkan antrean WhatsApp: ${err instanceof Error ? err.message : err}`);
+            }
+          }
+
           await this.sleep(500);
         }
 
