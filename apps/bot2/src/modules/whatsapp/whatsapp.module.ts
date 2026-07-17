@@ -126,7 +126,14 @@ export class WhatsappModule extends BaseModule {
      */
     async send_wa_message(task: any): Promise<void> {
         if (!this.isReady) {
-            throw new Error('WhatsApp client is not ready yet');
+            this.logger.info('WhatsApp client is not ready yet, waiting up to 60 seconds...');
+            for (let i = 0; i < 60; i++) {
+                if (this.isReady) break;
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+            if (!this.isReady) {
+                throw new Error('WhatsApp client is not ready yet (belum scan QR atau belum terhubung sepenuhnya)');
+            }
         }
 
         const { phoneNumber, message } = task.payload as { phoneNumber: string, message: string };
