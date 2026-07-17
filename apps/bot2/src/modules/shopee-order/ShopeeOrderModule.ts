@@ -454,8 +454,12 @@ export class ShopeeOrderModule extends BaseModule {
         // Send messages
         for (const msg of messagesToSend) {
           // 1. Send via Shopee Chat
-          await chatInput.fill(msg);
-          await page.keyboard.press("Enter");
+          try {
+            await chatInput.fill(msg);
+            await page.keyboard.press("Enter");
+          } catch (shopeeErr) {
+            this.logger.warn(`${orderId}: Gagal mengetik di Shopee, tetap lanjut kirim ke WA... (${shopeeErr instanceof Error ? shopeeErr.message : shopeeErr})`);
+          }
           
           // 2. Send via WhatsApp as Backup/Dual Broadcast
           if (buyerWhatsapp && waModule) {
