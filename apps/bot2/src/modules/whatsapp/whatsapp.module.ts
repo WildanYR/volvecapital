@@ -92,10 +92,22 @@ export class WhatsappModule extends BaseModule {
         const sessionPath = path.join(getDataRoot(), 'session_data', 'whatsapp');
         const exePath = await puppeteer.executablePath();
         
+        const authStrategy = new LocalAuth({
+            dataPath: sessionPath
+        });
+
+        // Patch logout to prevent crash when files are locked (e.g. by Google Drive)
+        const originalLogout = authStrategy.logout.bind(authStrategy);
+        authStrategy.logout = async () => {
+            try {
+                await originalLogout();
+            } catch (err) {
+                this.logger.warn(`Gagal menghapus sesi WhatsApp (terkunci). Abaikan saja: ${err instanceof Error ? err.message : err}`);
+            }
+        };
+
         this.waClient = new Client({
-            authStrategy: new LocalAuth({
-                dataPath: sessionPath
-            }),
+            authStrategy: authStrategy,
             puppeteer: {
                 executablePath: exePath,
                 args: ['--no-sandbox', '--disable-setuid-sandbox'],
