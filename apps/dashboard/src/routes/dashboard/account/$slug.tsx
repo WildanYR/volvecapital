@@ -198,6 +198,8 @@ function RouteComponent() {
   const [dialogFreezeOpen, setDialogFreezeOpen] = useState<boolean>(false)
   const [dialogFinancialDetailOpen, setDialogFinancialDetailOpen] = useState<boolean>(false)
   const [dialogBulkConfirmOpen, setDialogBulkConfirmOpen] = useState<boolean>(false)
+  const [dialogNetflixCookiesOpen, setDialogNetflixCookiesOpen] = useState<boolean>(false)
+  const [netflixCookieValue, setNetflixCookieValue] = useState<string>('')
   const [dialogBulkEditOpen, setDialogBulkEditOpen] = useState<boolean>(false)
   const [bulkActionType, setBulkActionType] = useState<string>('')
   const [bulkModalAmount, setBulkModalAmount] = useState<string>('')
@@ -1036,6 +1038,21 @@ function RouteComponent() {
     },
   })
 
+  const getNetflixCookiesMutation = useMutation({
+    mutationFn: (account: Account) => accountService.getNetflixCookies(account.id),
+    onSuccess: (data) => {
+      setNetflixCookieValue(data.cookie)
+      setDialogNetflixCookiesOpen(true)
+    },
+    onError: (error) => {
+      toast.error(`Gagal mendapatkan cookies: ${error.message}`)
+    },
+  })
+
+  const handleGetNetflixCookies = (account: Account) => {
+    getNetflixCookiesMutation.mutate(account)
+  }
+
 
   const handleTriggerReset = (account: Account) => {
     showAlertDialog({
@@ -1618,6 +1635,15 @@ function RouteComponent() {
                                     </span>
                                     {' '}
                                     Login TV
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onSelect={() => handleGetNetflixCookies(account)}
+                                  >
+                                    <span>
+                                      <Copy className={getNetflixCookiesMutation.isPending ? 'animate-pulse' : ''} />
+                                    </span>
+                                    {' '}
+                                    Dapatkan Cookies
                                   </DropdownMenuItem>
                                 </>
                               )}
@@ -2334,6 +2360,38 @@ function RouteComponent() {
         isBotReady={!!currentTvTask}
         progressMessage={tvPinProgress}
       />
+
+      <Dialog open={dialogNetflixCookiesOpen} onOpenChange={setDialogNetflixCookiesOpen}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Cookies NetflixId</DialogTitle>
+            <DialogDescription>
+              Silakan copy cookie di bawah ini untuk digunakan pada bot Telegram.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-2 mt-4">
+            <Label className="text-xs font-bold text-muted-foreground">NetflixId Cookie</Label>
+            <ScrollArea className="h-32 w-full rounded-md border p-4 bg-muted/30">
+              <p className="text-sm font-mono break-all select-all">{netflixCookieValue}</p>
+            </ScrollArea>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Tutup</Button>
+            </DialogClose>
+            <Button
+              className="gap-2"
+              onClick={() => {
+                navigator.clipboard.writeText(netflixCookieValue)
+                toast.success('Cookie berhasil disalin!')
+              }}
+            >
+              <Copy className="size-4" />
+              Copy
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

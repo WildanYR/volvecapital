@@ -2098,6 +2098,63 @@ export class AccountService {
       throw error;
     }
   }
+  async getNetflixCookies(tenantId: string, accountId: string) {
+    const transaction = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema(tenantId, transaction);
+      const account = await this.accountRepository.findByPk(accountId, {
+        include: [{ model: Email, as: 'email' }],
+        transaction,
+      });
+
+      if (!account) {
+        throw new NotFoundException('Account not found');
+      }
+      
+      const emailFileName = account.email.email.replace('@', '_').replace('.', '_');
+      
+      let cloudDataDir = '';
+      try {
+        const fs = require('fs');
+        const path = require('path');
+        const configPath = path.resolve(process.cwd(), '../bot2/config.toml');
+        if (fs.existsSync(configPath)) {
+          const configContent = fs.readFileSync(configPath, 'utf-8');
+          const match = configContent.match(/cloud_data_dir\s*=\s*"([^"]+)"/);
+          if (match && match[1]) {
+            cloudDataDir = match[1].replace(/\\\\/g, '\\');
+          }
+        }
+      } catch (e) {
+        // ignore
+      }
+
+      const path = require('path');
+      const fs = require('fs');
+      
+      const sessionPath = cloudDataDir 
+        ? path.join(cloudDataDir, 'session_data', `netflix_${emailFileName}.json`)
+        : path.resolve(process.cwd(), `../bot2/session_data/netflix_${emailFileName}.json`);
+
+      if (!fs.existsSync(sessionPath)) {
+        throw new BadRequestException('Session cookies not found for this account. Please login first.');
+      }
+
+      const sessionData = JSON.parse(fs.readFileSync(sessionPath, 'utf-8'));
+      const netflixIdCookie = sessionData.cookies?.find((c: any) => c.name === 'NetflixId');
+
+      if (!netflixIdCookie) {
+        throw new BadRequestException('NetflixId cookie not found in session.');
+      }
+
+      await transaction.commit();
+      return { cookie: netflixIdCookie.value };
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
+
   async getMoveHistoryByProduct(tenantId: string, productId: string) {
     const transaction = await this.postgresProvider.transaction();
     try {
