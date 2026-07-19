@@ -450,7 +450,7 @@ export class Connector {
         : path.join(process.cwd(), "session_data", `netflix_${emailFileName}.json`);
 
       if (!fs.existsSync(sessionPath)) {
-        return callback({ error: "Session cookies not found for this account on bot." });
+        return callback({ error: `Session cookies not found for this account on bot. Searched path: ${sessionPath}` });
       }
 
       const sessionData = JSON.parse(fs.readFileSync(sessionPath, "utf-8"));
