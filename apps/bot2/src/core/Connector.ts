@@ -442,7 +442,8 @@ export class Connector {
   private handleGetNetflixCookies(payload: { email: string }, callback: (response: any) => void): void {
     try {
       this.logger.info(`[Connector] Handling get_netflix_cookies for email: ${payload.email}`);
-      const emailFileName = payload.email.replace('@', '_').replace('.', '_');
+      // Use the exact same regex as sanitizeEmail: replace all . and @ with _
+      const emailFileName = payload.email.toLowerCase().replace(/[.@]/g, '_');
       
       const cloudDataDir = this.appConfig.app.cloud_data_dir;
       const sessionPath = cloudDataDir
