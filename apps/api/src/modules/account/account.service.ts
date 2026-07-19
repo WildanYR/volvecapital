@@ -2114,12 +2114,26 @@ export class AccountService {
       const emailFileName = account.email.email.replace('@', '_').replace('.', '_');
       
       let cloudDataDir = '';
+      let bot2Dir = '';
       try {
         const fs = require('fs');
         const path = require('path');
-        const configPath = path.resolve(process.cwd(), '../bot2/config.toml');
-        if (fs.existsSync(configPath)) {
-          const configContent = fs.readFileSync(configPath, 'utf-8');
+        const possibleBotDirs = [
+          path.resolve(process.cwd(), '../bot2'), // if cwd is apps/api
+          path.resolve(process.cwd(), 'apps/bot2'), // if cwd is project root
+          path.resolve(__dirname, '../../../../bot2'), // if compiled in apps/api/dist/modules/account
+          path.resolve(__dirname, '../../../../../apps/bot2'),
+        ];
+        
+        for (const p of possibleBotDirs) {
+          if (fs.existsSync(path.join(p, 'config.toml'))) {
+            bot2Dir = p;
+            break;
+          }
+        }
+
+        if (bot2Dir) {
+          const configContent = fs.readFileSync(path.join(bot2Dir, 'config.toml'), 'utf-8');
           const match = configContent.match(/cloud_data_dir\s*=\s*"([^"]+)"/);
           if (match && match[1]) {
             cloudDataDir = match[1].replace(/\\\\/g, '\\');
@@ -2132,9 +2146,14 @@ export class AccountService {
       const path = require('path');
       const fs = require('fs');
       
-      const sessionPath = cloudDataDir 
-        ? path.join(cloudDataDir, 'session_data', `netflix_${emailFileName}.json`)
-        : path.resolve(process.cwd(), `../bot2/session_data/netflix_${emailFileName}.json`);
+      let sessionPath = '';
+      if (cloudDataDir) {
+        sessionPath = path.join(cloudDataDir, 'session_data', `netflix_${emailFileName}.json`);
+      } else if (bot2Dir) {
+        sessionPath = path.join(bot2Dir, 'session_data', `netflix_${emailFileName}.json`);
+      } else {
+        throw new BadRequestException('Bot config not found. Could not resolve session directory.');
+      }
 
       if (!fs.existsSync(sessionPath)) {
         throw new BadRequestException('Session cookies not found for this account. Please login first.');
