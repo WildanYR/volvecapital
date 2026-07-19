@@ -52,6 +52,7 @@ import { NetflixResetPasswordMetadata } from './types/netflix-reset-password-met
 import { SubsEndNotifyMetadata } from './types/subs-end-notify-metadata.type';
 import { AppLoggerService } from '../logger/logger.service';
 import { AccountingService } from '../accounting/accounting.service';
+import { SocketGateway } from '../socket/socket.gateway';
 
 @Injectable()
 export class AccountService {
@@ -63,6 +64,7 @@ export class AccountService {
     private readonly dateConverterProvider: DateConverterProvider,
     private readonly postgresProvider: PostgresProvider,
     private readonly taskQueueService: TaskQueueService,
+    private readonly socketGateway: SocketGateway,
     @Inject(ACCOUNT_REPOSITORY)
     private readonly accountRepository: typeof Account,
     @Inject(ACCOUNT_PROFILE_REPOSITORY)
@@ -2110,64 +2112,14 @@ export class AccountService {
       if (!account) {
         throw new NotFoundException('Account not found');
       }
+
+      const email = account.email.email;
       
-      const emailFileName = account.email.email.replace('@', '_').replace('.', '_');
-      
-      let cloudDataDir = '';
-      let bot2Dir = '';
-      try {
-        const fs = require('fs');
-        const path = require('path');
-        const possibleBotDirs = [
-          path.resolve(process.cwd(), '../bot2'), // if cwd is apps/api
-          path.resolve(process.cwd(), 'apps/bot2'), // if cwd is project root
-          path.resolve(__dirname, '../../../../bot2'), // if compiled in apps/api/dist/modules/account
-          path.resolve(__dirname, '../../../../../apps/bot2'),
-        ];
-        
-        for (const p of possibleBotDirs) {
-          if (fs.existsSync(path.join(p, 'config.toml'))) {
-            bot2Dir = p;
-            break;
-          }
-        }
-
-        if (bot2Dir) {
-          const configContent = fs.readFileSync(path.join(bot2Dir, 'config.toml'), 'utf-8');
-          const match = configContent.match(/cloud_data_dir\s*=\s*"([^"]+)"/);
-          if (match && match[1]) {
-            cloudDataDir = match[1].replace(/\\\\/g, '\\');
-          }
-        }
-      } catch (e) {
-        // ignore
-      }
-
-      const path = require('path');
-      const fs = require('fs');
-      
-      let sessionPath = '';
-      if (cloudDataDir) {
-        sessionPath = path.join(cloudDataDir, 'session_data', `netflix_${emailFileName}.json`);
-      } else if (bot2Dir) {
-        sessionPath = path.join(bot2Dir, 'session_data', `netflix_${emailFileName}.json`);
-      } else {
-        throw new BadRequestException('Bot config not found. Could not resolve session directory.');
-      }
-
-      if (!fs.existsSync(sessionPath)) {
-        throw new BadRequestException('Session cookies not found for this account. Please login first.');
-      }
-
-      const sessionData = JSON.parse(fs.readFileSync(sessionPath, 'utf-8'));
-      const netflixIdCookie = sessionData.cookies?.find((c: any) => c.name === 'NetflixId');
-
-      if (!netflixIdCookie) {
-        throw new BadRequestException('NetflixId cookie not found in session.');
-      }
+      // Request cookies directly from an online bot using WebSocket
+      const cookie = await this.socketGateway.getNetflixCookiesFromBot(tenantId, email);
 
       await transaction.commit();
-      return { cookie: netflixIdCookie.value };
+      return { cookie };
     } catch (error) {
       await transaction.rollback();
       throw error;

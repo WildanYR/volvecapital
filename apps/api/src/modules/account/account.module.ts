@@ -2,11 +2,12 @@ import { Module } from '@nestjs/common';
 import { TaskQueueModule } from '../task-queue/task-queue.module';
 import { UtilityModule } from '../utility/utility.module';
 import { AccountingModule } from '../accounting/accounting.module';
+import { SocketModule } from '../socket/socket.module';
 import { AccountController } from './account.controller';
 import { AccountService } from './account.service';
 
 @Module({
-  imports: [UtilityModule, TaskQueueModule, AccountingModule],
+  imports: [UtilityModule, TaskQueueModule, AccountingModule, SocketModule],
   providers: [AccountService],
   controllers: [AccountController],
   exports: [AccountService],

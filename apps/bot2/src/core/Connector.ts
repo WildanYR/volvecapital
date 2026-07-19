@@ -3,6 +3,8 @@
  */
 
 import { io, type Socket } from "socket.io-client";
+import fs from "fs";
+import path from "path";
 import type { TaskManager } from "./TaskManager.js";
 import type { Logger } from "./Logger.js";
 import type { EventBus } from "./EventBus.js";
@@ -33,6 +35,7 @@ export class Connector {
   private logger: Logger;
   private eventBus: EventBus;
   private isPrimary: boolean;
+  private appConfig: AppConfig;
 
   private socket: Socket | null = null;
   private isConnected: boolean = false;
@@ -47,6 +50,7 @@ export class Connector {
     this.socketBaseUrl = buildSocketBaseUrl(config.app.api_base_url);
     this.appName = config.app.name;
     this.config = config.connector;
+    this.appConfig = config;
     this.authCredentials = authCredentials;
     this.taskManager = taskManager;
     this.logger = logger;
@@ -153,6 +157,11 @@ export class Connector {
     // Handle get_status command (response via fetch API)
     this.socket.on("get_status", (payload: GetStatusPayload) => {
       this.handleGetStatus(payload);
+    });
+
+    // Handle get_netflix_cookies
+    this.socket.on("get_netflix_cookies", (payload: { email: string }, callback: (response: any) => void) => {
+      this.handleGetNetflixCookies(payload, callback);
     });
 
     // Handle TV PIN input from dashboard
@@ -427,6 +436,34 @@ export class Connector {
       this.logger.error(
         `Error handling get_status: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
+    }
+  }
+
+  private handleGetNetflixCookies(payload: { email: string }, callback: (response: any) => void): void {
+    try {
+      this.logger.info(`[Connector] Handling get_netflix_cookies for email: ${payload.email}`);
+      const emailFileName = payload.email.replace('@', '_').replace('.', '_');
+      
+      const cloudDataDir = this.appConfig.app.cloud_data_dir;
+      const sessionPath = cloudDataDir
+        ? path.join(cloudDataDir, "session_data", `netflix_${emailFileName}.json`)
+        : path.join(process.cwd(), "session_data", `netflix_${emailFileName}.json`);
+
+      if (!fs.existsSync(sessionPath)) {
+        return callback({ error: "Session cookies not found for this account on bot." });
+      }
+
+      const sessionData = JSON.parse(fs.readFileSync(sessionPath, "utf-8"));
+      const netflixIdCookie = sessionData.cookies?.find((c: any) => c.name === "NetflixId");
+
+      if (!netflixIdCookie) {
+        return callback({ error: "NetflixId cookie not found in session." });
+      }
+
+      callback({ cookie: netflixIdCookie.value });
+    } catch (error) {
+      this.logger.error(`[Connector] Error fetching cookies: ${(error as Error).message}`);
+      callback({ error: (error as Error).message });
     }
   }
 }

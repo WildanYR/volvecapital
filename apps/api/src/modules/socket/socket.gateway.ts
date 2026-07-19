@@ -236,6 +236,36 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect, 
       .map(c => ({ name: c.name, is_primary: c.is_primary ?? false }));
   }
 
+  async getNetflixCookiesFromBot(tenantId: string, email: string): Promise<string> {
+    // Try to find primary bot first, if not find any bot
+    let availableBot = Array.from(this.connections.values())
+      .find(c => c.tenant_id === tenantId && c.type === 'BOT' && c.is_primary);
+      
+    if (!availableBot) {
+      availableBot = Array.from(this.connections.values())
+        .find(c => c.tenant_id === tenantId && c.type === 'BOT');
+    }
+
+    if (!availableBot) {
+      throw new Error('Tidak ada bot yang aktif (online) saat ini.');
+    }
+
+    return new Promise((resolve, reject) => {
+      // Use socket timeout of 10s
+      availableBot.socket.timeout(10000).emit('get_netflix_cookies', { email }, (err: any, response: any) => {
+        if (err) {
+          reject(new Error('Bot tidak merespons dalam 10 detik (Timeout).'));
+        } else if (response?.error) {
+          reject(new Error(response.error));
+        } else if (response?.cookie) {
+          resolve(response.cookie);
+        } else {
+          reject(new Error('Respon tidak valid dari bot.'));
+        }
+      });
+    });
+  }
+
   async dispatchTask(
     taskId: string,
     tenantId: string,
