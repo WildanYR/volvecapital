@@ -44,7 +44,7 @@ export function Providers({
           {children}
           <Toaster position="top-center" richColors />
         </PersistQueryClientProvider>
-      </ThemeProvider>
+      </AnyThemeProvider>
     </TenantProvider>
   )
 }
