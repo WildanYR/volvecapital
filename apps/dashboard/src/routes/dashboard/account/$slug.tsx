@@ -202,8 +202,8 @@ function RouteComponent() {
   const [dialogFreezeOpen, setDialogFreezeOpen] = useState<boolean>(false)
   const [dialogFinancialDetailOpen, setDialogFinancialDetailOpen] = useState<boolean>(false)
   const [dialogBulkConfirmOpen, setDialogBulkConfirmOpen] = useState<boolean>(false)
-  const [dialogNetflixCookiesOpen, setDialogNetflixCookiesOpen] = useState<boolean>(false)
-  const [netflixCookieValue, setNetflixCookieValue] = useState<string>('')
+  const [dialogNetflixTokenOpen, setDialogNetflixTokenOpen] = useState<boolean>(false)
+  const [netflixTokenValue, setNetflixTokenValue] = useState<string>('')
   const [dialogBulkEditOpen, setDialogBulkEditOpen] = useState<boolean>(false)
   const [bulkActionType, setBulkActionType] = useState<string>('')
   const [bulkModalAmount, setBulkModalAmount] = useState<string>('')
@@ -1042,19 +1042,19 @@ function RouteComponent() {
     },
   })
 
-  const getNetflixCookiesMutation = useMutation({
-    mutationFn: (account: Account) => accountService.getNetflixCookies(account.id),
+  const getNetflixTokenMutation = useMutation({
+    mutationFn: (account: Account) => accountService.getNetflixToken(account.id),
     onSuccess: (data) => {
-      setNetflixCookieValue(data.cookie)
-      setDialogNetflixCookiesOpen(true)
+      setNetflixTokenValue(data.token)
+      setDialogNetflixTokenOpen(true)
     },
     onError: (error) => {
-      toast.error(`Gagal mendapatkan cookies: ${error.message}`)
+      toast.error(`Gagal mendapatkan token: ${error.message}`)
     },
   })
 
-  const handleGetNetflixCookies = (account: Account) => {
-    getNetflixCookiesMutation.mutate(account)
+  const handleGetNetflixToken = (account: Account) => {
+    getNetflixTokenMutation.mutate(account)
   }
 
 
@@ -1641,13 +1641,13 @@ function RouteComponent() {
                                     Login TV
                                   </DropdownMenuItem>
                                   <DropdownMenuItem
-                                    onSelect={() => handleGetNetflixCookies(account)}
+                                    onSelect={() => handleGetNetflixToken(account)}
                                   >
                                     <span>
-                                      <Copy className={getNetflixCookiesMutation.isPending ? 'animate-pulse' : ''} />
+                                      <Link className={getNetflixTokenMutation.isPending ? 'animate-pulse' : ''} />
                                     </span>
                                     {' '}
-                                    Dapatkan Cookies
+                                    Akses Token Login
                                   </DropdownMenuItem>
                                 </>
                               )}
@@ -2367,34 +2367,50 @@ function RouteComponent() {
         progressMessage={tvPinProgress}
       />
 
-      <Dialog open={dialogNetflixCookiesOpen} onOpenChange={setDialogNetflixCookiesOpen}>
+      <Dialog open={dialogNetflixTokenOpen} onOpenChange={setDialogNetflixTokenOpen}>
         <DialogContent className="max-w-xl">
           <DialogHeader>
-            <DialogTitle>Cookies NetflixId</DialogTitle>
+            <DialogTitle>Tautan Token Netflix</DialogTitle>
             <DialogDescription>
-              Silakan copy cookie di bawah ini untuk digunakan pada bot Telegram.
+              Silakan copy link di bawah ini sesuai perangkat tujuan.
             </DialogDescription>
           </DialogHeader>
-          <div className="flex flex-col gap-2 mt-4">
-            <Label className="text-xs font-bold text-muted-foreground">NetflixId Cookie</Label>
-            <ScrollArea className="h-32 w-full rounded-md border p-4 bg-muted/30">
-              <p className="text-sm font-mono break-all select-all">{netflixCookieValue}</p>
-            </ScrollArea>
+          <div className="flex flex-col gap-4 mt-4">
+            {[
+              { label: '💻 PC Link', url: `https://netflix.com/login?nftoken=${netflixTokenValue}` },
+              { label: '📱 Mobile Link', url: `https://www.netflix.com/unsupported?nftoken=${netflixTokenValue}` },
+              { label: '📺 TV Link', url: `https://www.netflix.com/tv9?nftoken=${netflixTokenValue}` },
+              { label: '🔗 General Link', url: `https://www.netflix.com/account?nftoken=${netflixTokenValue}` }
+            ].map((link, idx) => (
+              <div key={idx} className="flex flex-col gap-1">
+                <Label className="text-xs font-bold text-muted-foreground">{link.label}</Label>
+                <div className="flex items-center gap-2">
+                  <Input 
+                    readOnly 
+                    value={link.url} 
+                    className="font-mono text-xs text-muted-foreground w-full"
+                    onClick={(e) => (e.target as HTMLInputElement).select()}
+                  />
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-10 shrink-0"
+                    onClick={() => {
+                      navigator.clipboard.writeText(link.url)
+                      toast.success(`${link.label} berhasil disalin!`)
+                    }}
+                  >
+                    <Copy className="size-4 mr-2" />
+                    Copy
+                  </Button>
+                </div>
+              </div>
+            ))}
           </div>
           <DialogFooter>
             <DialogClose asChild>
               <Button variant="outline">Tutup</Button>
             </DialogClose>
-            <Button
-              className="gap-2"
-              onClick={() => {
-                navigator.clipboard.writeText(netflixCookieValue)
-                toast.success('Cookie berhasil disalin!')
-              }}
-            >
-              <Copy className="size-4" />
-              Copy
-            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

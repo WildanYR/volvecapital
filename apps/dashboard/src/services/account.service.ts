@@ -933,15 +933,15 @@ export function AccountServiceGenerator(apiUrl: string, accessToken: string, ten
       if (!response.ok) throw new Error(data.message || 'Gagal memuat riwayat produk')
       return data
     },
-    getNetflixCookies: async (accountId: string): Promise<{ cookie: string }> => {
+    getNetflixToken: async (accountId: string): Promise<{ token: string }> => {
       const response = await generateApiFetch(
         apiUrl,
         accessToken,
         tenantId,
-        `/account/${accountId}/netflix-cookies`,
+        `/account/${accountId}/netflix-token`,
       )
       const data = await parseApiResponse(response)
-      if (!response.ok) throw new Error(data.message || 'Gagal mengambil cookies')
+      if (!response.ok) throw new Error(data.message || 'Gagal mengambil token')
       return data
     },
   }

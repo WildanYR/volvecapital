@@ -2100,7 +2100,7 @@ export class AccountService {
       throw error;
     }
   }
-  async getNetflixCookies(tenantId: string, accountId: string) {
+  async getNetflixToken(tenantId: string, accountId: string) {
     const transaction = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema(tenantId, transaction);
@@ -2115,11 +2115,11 @@ export class AccountService {
 
       const email = account.email.email;
       
-      // Request cookies directly from an online bot using WebSocket
-      const cookie = await this.socketGateway.getNetflixCookiesFromBot(tenantId, email);
+      // Request token directly from an online bot using WebSocket
+      const token = await this.socketGateway.getNetflixTokenFromBot(tenantId, email);
 
       await transaction.commit();
-      return { cookie };
+      return { token };
     } catch (error) {
       await transaction.rollback();
       throw error;
