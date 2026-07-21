@@ -36,6 +36,7 @@ import {
   Info,
   ListChecks,
   LockKeyholeOpen,
+  Link2,
   ExternalLink,
   Package,
   Monitor,
@@ -1645,7 +1646,7 @@ function RouteComponent() {
                                     onSelect={() => handleGetNetflixToken(account)}
                                   >
                                     <span>
-                                      <Link className={getNetflixTokenMutation.isPending ? 'animate-pulse' : ''} />
+                                      <Link2 className={getNetflixTokenMutation.isPending ? 'animate-pulse' : ''} />
                                     </span>
                                     {' '}
                                     Akses Token Login
