@@ -96,11 +96,13 @@ export function FinancialDetailDialog({
     enabled: !!account && open,
   })
 
-  const { data: coaList } = useQuery({
+  const { data: coaListRaw } = useQuery({
     queryKey: ['accounting-coa-list'],
     queryFn: () => accountingService.getCoaList(),
     enabled: !!account && open,
   })
+
+  const coaList = Array.isArray(coaListRaw) ? coaListRaw : []
 
   const addCapitalMutation = useMutation({
     mutationFn: (payload: AddAccountCapitalPayload) =>
