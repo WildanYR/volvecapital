@@ -31,10 +31,11 @@ export function Providers({
     storage: typeof window !== 'undefined' ? window.localStorage : undefined,
   })
 
+  const AnyThemeProvider = ThemeProvider as any;
+
   return (
     <TenantProvider tenantId={tenantId} hostname={hostname}>
-      {/* @ts-expect-error next-themes missing children type */}
-      <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+      <AnyThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
         <PersistQueryClientProvider 
           client={queryClient}
           persistOptions={{ persister, maxAge: 1000 * 60 * 60 * 24 }}
