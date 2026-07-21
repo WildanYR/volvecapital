@@ -206,6 +206,8 @@ function RouteComponent() {
   const [dialogBulkConfirmOpen, setDialogBulkConfirmOpen] = useState<boolean>(false)
   const [dialogNetflixTokenOpen, setDialogNetflixTokenOpen] = useState<boolean>(false)
   const [netflixTokenValue, setNetflixTokenValue] = useState<string>('')
+  const [dialogImportCookiesOpen, setDialogImportCookiesOpen] = useState<boolean>(false)
+  const [importCookiesValue, setImportCookiesValue] = useState<string>('')
   const [dialogBulkEditOpen, setDialogBulkEditOpen] = useState<boolean>(false)
   const [bulkActionType, setBulkActionType] = useState<string>('')
   const [bulkModalAmount, setBulkModalAmount] = useState<string>('')
@@ -1059,6 +1061,38 @@ function RouteComponent() {
     getNetflixTokenMutation.mutate(account)
   }
 
+  const importNetflixCookiesMutation = useMutation({
+    mutationFn: ({ account, cookies }: { account: Account; cookies: any }) => accountService.importNetflixCookies(account.id, cookies),
+    onSuccess: (data) => {
+      setDialogImportCookiesOpen(false)
+      setImportCookiesValue('')
+      toast.success(data.message || 'Cookies berhasil di-import ke Bot.')
+    },
+    onError: (error) => {
+      toast.error(`Gagal import cookies: ${error.message}`)
+    },
+  })
+
+  const handleOpenImportCookies = (account: Account) => {
+    setSelectedAccount(account)
+    setImportCookiesValue('')
+    setDialogImportCookiesOpen(true)
+  }
+
+  const submitImportCookies = () => {
+    if (!selectedAccountState) return
+    if (!importCookiesValue.trim()) {
+      toast.error('Cookies tidak boleh kosong')
+      return
+    }
+    try {
+      const parsedCookies = JSON.parse(importCookiesValue)
+      importNetflixCookiesMutation.mutate({ account: selectedAccountState, cookies: parsedCookies })
+    } catch (e) {
+      toast.error('Format cookies tidak valid (harus berupa JSON)')
+    }
+  }
+
 
   const handleTriggerReset = (account: Account) => {
     showAlertDialog({
@@ -1650,6 +1684,15 @@ function RouteComponent() {
                                     </span>
                                     {' '}
                                     Akses Token Login
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onSelect={() => handleOpenImportCookies(account)}
+                                  >
+                                    <span>
+                                      <Package className={importNetflixCookiesMutation.isPending ? 'animate-pulse' : ''} />
+                                    </span>
+                                    {' '}
+                                    Import Cookies
                                   </DropdownMenuItem>
                                 </>
                               )}
@@ -2417,10 +2460,42 @@ function RouteComponent() {
               </div>
             ))}
           </div>
-          <DialogFooter>
+          <DialogFooter className="mt-4">
             <DialogClose asChild>
               <Button variant="outline">Tutup</Button>
             </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={dialogImportCookiesOpen} onOpenChange={setDialogImportCookiesOpen}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Import Cookies Netflix</DialogTitle>
+            <DialogDescription>
+              Paste JSON cookies dari ekstensi browser (contoh: EditThisCookie) di bawah ini. Format <b>Direct Array</b> <code>[ ... ]</code> maupun <b>Object</b> <code>{`{"cookies": [ ... ]}`}</code> akan otomatis terdeteksi.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-4 mt-4">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="cookiesJson" className="text-sm font-semibold">JSON Cookies Mentah</Label>
+              <textarea
+                id="cookiesJson"
+                value={importCookiesValue}
+                onChange={(e) => setImportCookiesValue(e.target.value)}
+                placeholder="Paste JSON cookies di sini..."
+                className="w-full h-48 p-3 text-xs font-mono bg-muted/50 rounded-md border focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                spellCheck={false}
+              />
+            </div>
+          </div>
+          <DialogFooter className="mt-4">
+            <DialogClose asChild>
+              <Button variant="outline" disabled={importNetflixCookiesMutation.isPending}>Batal</Button>
+            </DialogClose>
+            <Button onClick={submitImportCookies} disabled={importNetflixCookiesMutation.isPending || !importCookiesValue.trim()}>
+              {importNetflixCookiesMutation.isPending ? 'Menyimpan...' : 'Simpan Cookies'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

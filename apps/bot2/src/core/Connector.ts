@@ -169,6 +169,11 @@ export class Connector {
       this.handleGetNetflixTokenLink(payload, callback);
     });
 
+    // Handle import_netflix_cookies
+    this.socket.on("import_netflix_cookies", (payload: { email: string; cookies: any }, callback: (response: any) => void) => {
+      this.handleImportNetflixCookies(payload, callback);
+    });
+
     // Handle TV PIN input from dashboard
     this.socket.on("tv-pin-input", (payload: { taskId: string; pin: string }) => {
       this.logger.info(`Received TV PIN for task ${payload.taskId}`);
@@ -580,6 +585,65 @@ export class Connector {
       callback({ token: nftoken });
     } catch (error) {
       this.logger.error(`[Connector] Error fetching token link: ${(error as Error).message}`);
+      callback({ error: (error as Error).message });
+    }
+  }
+
+  private async handleImportNetflixCookies(payload: { email: string; cookies: any }, callback: (response: any) => void): Promise<void> {
+    try {
+      this.logger.info(`[Connector] Handling import_netflix_cookies for email: ${payload.email}`);
+      const emailFileName = payload.email.toLowerCase().replace(/[.@]/g, '_');
+      
+      const cloudDataDir = this.appConfig.app.cloud_data_dir;
+      const sessionDir = cloudDataDir
+        ? path.join(cloudDataDir, "session_data")
+        : path.join(process.cwd(), "session_data");
+
+      if (!fs.existsSync(sessionDir)) {
+        fs.mkdirSync(sessionDir, { recursive: true });
+      }
+
+      const sessionPath = path.join(sessionDir, `netflix_${emailFileName}.json`);
+      
+      // Make it smart: handle both Array and { cookies: Array }
+      let cookiesArray = Array.isArray(payload.cookies) ? payload.cookies : (payload.cookies.cookies || []);
+      
+      // Sanitize sameSite for Playwright compatibility
+      cookiesArray = cookiesArray.map((c: any) => {
+        // Handle sameSite
+        if (c.sameSite === null || c.sameSite === undefined) {
+          delete c.sameSite;
+        } else if (typeof c.sameSite === 'string') {
+          const lower = c.sameSite.toLowerCase();
+          if (lower === 'no_restriction' || lower === 'none') {
+            c.sameSite = 'None';
+          } else if (lower === 'lax') {
+            c.sameSite = 'Lax';
+          } else if (lower === 'strict') {
+            c.sameSite = 'Strict';
+          } else {
+            delete c.sameSite;
+          }
+        } else {
+          delete c.sameSite;
+        }
+
+        // Clean up other properties that Playwright might reject from extensions
+        delete c.hostOnly;
+        delete c.session;
+        delete c.storeId;
+        
+        return c;
+      });
+
+      const cookiesToSave = { cookies: cookiesArray };
+
+      fs.writeFileSync(sessionPath, JSON.stringify(cookiesToSave, null, 2), "utf-8");
+      this.logger.info(`[Connector] Successfully imported cookies for ${payload.email} to ${sessionPath}`);
+      
+      callback({ success: true });
+    } catch (error) {
+      this.logger.error(`[Connector] Error importing cookies: ${(error as Error).message}`);
       callback({ error: (error as Error).message });
     }
   }

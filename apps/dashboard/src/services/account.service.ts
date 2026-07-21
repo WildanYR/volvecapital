@@ -944,5 +944,22 @@ export function AccountServiceGenerator(apiUrl: string, accessToken: string, ten
       if (!response.ok) throw new Error(data.message || 'Gagal mengambil token')
       return data
     },
+    importNetflixCookies: async (accountId: string, cookies: any): Promise<{ success: boolean; message: string }> => {
+      const response = await generateApiFetch(
+        apiUrl,
+        accessToken,
+        tenantId,
+        `/account/${accountId}/import-netflix-cookies`,
+        undefined,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cookies }),
+        },
+      )
+      const data = await parseApiResponse(response)
+      if (!response.ok) throw new Error(data.message || 'Gagal mengimpor cookie')
+      return data
+    },
   }
 }

@@ -84,6 +84,16 @@ export class AccountController {
     return this.accountService.getNetflixToken(request.tenant_id!, id);
   }
 
+  @Post(':id/import-netflix-cookies')
+  @RequirePermissions('account.view')
+  importNetflixCookies(
+    @Param('id') id: string, 
+    @Body('cookies') cookies: any, 
+    @Request() request: AppRequest
+  ) {
+    return this.accountService.importNetflixCookies(request.tenant_id!, id, cookies);
+  }
+
   @Post()
   @RequirePermissions('account.create')
   create(

@@ -2122,7 +2122,28 @@ export class AccountService {
       return { token };
     } catch (error) {
       await transaction.rollback();
-      throw error;
+      if (error instanceof NotFoundException) throw error;
+      throw new Error(`Failed to get Netflix token: ${error.message}`);
+    }
+  }
+
+  async importNetflixCookies(tenantId: string, accountId: string, cookies: any) {
+    try {
+      const account = await this.findOne(tenantId, accountId);
+      if (!account) {
+        throw new NotFoundException('Account not found');
+      }
+
+      const email = account.email?.email;
+      if (!email) {
+        throw new Error('Account does not have an email assigned');
+      }
+
+      await this.socketGateway.importNetflixCookiesToBot(tenantId, email, cookies);
+      return { success: true, message: 'Cookies berhasil di-import ke Bot' };
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      throw new Error(`Failed to import Netflix cookies: ${error.message}`);
     }
   }
 
