@@ -1,7 +1,10 @@
-import { QueryInterface, DataTypes } from 'sequelize';
+import type { MigrationContext } from 'migrations/migrator';
+import type { MigrationFn } from 'umzug';
+import { DataTypes } from 'sequelize';
 
-export const up = async (queryInterface: QueryInterface): Promise<void> => {
-  await queryInterface.createTable('short_urls', {
+export const up: MigrationFn<MigrationContext> = async ({ context }) => {
+  const { queryInterface, schema } = context;
+  await queryInterface.createTable({ tableName: 'short_urls', schema }, {
     id: {
       type: DataTypes.STRING,
       primaryKey: true,
@@ -23,9 +26,10 @@ export const up = async (queryInterface: QueryInterface): Promise<void> => {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,
     },
-  }, { schema: 'master' });
+  });
 };
 
-export const down = async (queryInterface: QueryInterface): Promise<void> => {
-  await queryInterface.dropTable({ tableName: 'short_urls', schema: 'master' });
+export const down: MigrationFn<MigrationContext> = async ({ context }) => {
+  const { queryInterface, schema } = context;
+  await queryInterface.dropTable({ tableName: 'short_urls', schema });
 };
