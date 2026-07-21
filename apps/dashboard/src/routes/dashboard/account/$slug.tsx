@@ -80,6 +80,7 @@ import { AccountLabelManager } from '@/dashboard/components/account-label-manage
 import { AccountLabelSelector } from '@/dashboard/components/account-label-selector'
 
 import { PermissionGate } from '@/dashboard/components/permission-gate'
+import { usePermission } from '@/dashboard/lib/permission'
 
 import { useSocket } from '@/dashboard/context-providers/socket.provider'
 import { TvPinModal } from '@/dashboard/components/tv-pin-modal'
@@ -165,9 +166,12 @@ function RouteComponent() {
 
   const isNetflixProduct = product?.name?.toLowerCase().includes('netflix') ?? false;
 
+  const hasAccountingView = usePermission('accounting.view')
+
   const { data: coaList } = useQuery({
     queryKey: ['accounting-coa-list'],
     queryFn: () => accountingService.getCoaList(),
+    enabled: hasAccountingView,
   })
 
   const [filter, setFilter] = useState<AccountFilter>({
