@@ -11,7 +11,14 @@ import {
   Copy,
   ExternalLink,
   ShieldAlert,
-  Inbox
+  Inbox,
+  Monitor,
+  Smartphone,
+  Tv,
+  Link2,
+  KeyRound,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -29,6 +36,7 @@ interface PortalData {
     email: string
     profile_name: string
     expired_at: string
+    product_name?: string
   }
   messages: Message[]
   limit: {
@@ -43,6 +51,7 @@ interface EmailPortalProps {
 
 export function EmailPortal({ token }: EmailPortalProps) {
   const [countdown, setCountdown] = useState(30)
+  const [isNetflixLinksOpen, setIsNetflixLinksOpen] = useState(false)
 
   const { data, isLoading, isError, error, refetch, isFetching } = useQuery<PortalData>({
     queryKey: ['portal-data', token],
@@ -52,6 +61,18 @@ export function EmailPortal({ token }: EmailPortalProps) {
     },
     refetchInterval: 30000,
     retry: false,
+  })
+
+  const isNetflix = data?.account?.product_name?.toLowerCase().includes('netflix')
+
+  const { data: netflixTokenData, isLoading: isLoadingToken, isError: isErrorToken, refetch: refetchToken } = useQuery<{token: string}>({
+    queryKey: ['netflix-token', token],
+    queryFn: async () => {
+      const { data } = await api.get(`/public/email-access/${token}/netflix-token`)
+      return data
+    },
+    enabled: !!isNetflix,
+    retry: 2,
   })
 
   useEffect(() => {
@@ -127,6 +148,90 @@ export function EmailPortal({ token }: EmailPortalProps) {
 
   return (
     <div className="space-y-6">
+      {/* Netflix Instant Login Links */}
+      {isNetflix && (
+        <div className="bg-primary/5 border border-primary/20 rounded-2xl overflow-hidden transition-all">
+          <button 
+            onClick={() => setIsNetflixLinksOpen(!isNetflixLinksOpen)}
+            className="w-full flex items-center justify-between p-5 hover:bg-primary/10 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-lg shrink-0">
+                <KeyRound className="size-5 text-primary" />
+              </div>
+              <div className="text-left">
+                <h3 className="text-sm font-black text-foreground">Tautan Akses Cepat Netflix</h3>
+                <p className="text-[10px] text-muted-foreground font-medium">Pakai tautan akses cepat dibawah ini jika terjadi kesalahan saat login.</p>
+              </div>
+            </div>
+            {isNetflixLinksOpen ? <ChevronUp className="size-5 text-muted-foreground" /> : <ChevronDown className="size-5 text-muted-foreground" />}
+          </button>
+          
+          <AnimatePresence>
+            {isNetflixLinksOpen && (
+              <motion.div 
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="px-5 pb-5 overflow-hidden"
+              >
+                {isLoadingToken ? (
+                  <div className="flex flex-col items-center justify-center p-6 bg-background rounded-xl border border-border">
+                    <RefreshCw className="size-5 text-primary animate-spin mb-3" />
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Mengambil Token Akses...</p>
+                  </div>
+                ) : isErrorToken || !netflixTokenData?.token ? (
+                  <div className="flex flex-col items-center justify-center p-6 bg-destructive/5 rounded-xl border border-destructive/20 text-center">
+                    <ShieldAlert className="size-5 text-destructive mb-2" />
+                    <p className="text-xs font-bold text-destructive mb-3">Gagal memuat token dari server bot.</p>
+                    <button 
+                      onClick={() => refetchToken()} 
+                      className="text-[10px] bg-destructive/10 text-destructive font-black px-4 py-2 rounded-lg uppercase tracking-widest hover:bg-destructive/20 transition-all"
+                    >
+                      Coba Lagi
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-3 pt-2">
+                    {[
+                      { label: 'PC Link', icon: Monitor, url: `https://www.netflix.com/login?nftoken=${netflixTokenData.token}` },
+                      { label: 'Mobile Link', icon: Smartphone, url: `https://www.netflix.com/unsupported?nftoken=${netflixTokenData.token}` },
+                      { label: 'TV Link', icon: Tv, url: `https://www.netflix.com/tv9?nftoken=${netflixTokenData.token}` },
+                    ].map((link, idx) => (
+                      <div key={idx} className="flex flex-col md:flex-row md:items-center gap-3 p-3 bg-background border border-border rounded-xl hover:border-primary/30 transition-all">
+                        <div className="flex items-center gap-2 md:w-32 shrink-0">
+                          <link.icon className="size-4 text-slate-400" />
+                          <span className="text-xs font-black text-foreground">{link.label}</span>
+                        </div>
+                        <div className="flex-grow flex items-center justify-between bg-muted/50 rounded-lg px-3 py-2 border border-border overflow-hidden">
+                          <span className="text-[10px] font-mono text-slate-500 truncate">{link.url}</span>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0 mt-2 md:mt-0">
+                          <button 
+                            onClick={() => copyToClipboard(link.url)}
+                            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-background border border-border hover:border-primary hover:bg-primary/5 text-foreground hover:text-primary rounded-lg text-[10px] font-black uppercase tracking-widest transition-all"
+                          >
+                            <Copy className="size-3" /> Copy
+                          </button>
+                          <a 
+                            href={link.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm rounded-lg text-[10px] font-black uppercase tracking-widest transition-all"
+                          >
+                            <ExternalLink className="size-3" /> Buka
+                          </a>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-primary/10 rounded-lg">
@@ -139,12 +244,13 @@ export function EmailPortal({ token }: EmailPortalProps) {
             <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Sisa Kuota</p>
             <p className="text-xs font-black text-foreground">{data?.limit?.remaining ?? '...'} / {data?.limit?.total ?? 10}</p>
           </div>
-          <div className="flex items-center gap-2 px-3 py-1 bg-primary/10 text-primary rounded-full border border-primary/20">
+          <div className="hidden md:flex items-center gap-2 px-3 py-1 bg-primary/10 text-primary rounded-full border border-primary/20">
             <div className="size-1.5 bg-primary rounded-full animate-pulse" />
             <span className="text-[10px] font-black uppercase tracking-widest">Real-time</span>
           </div>
         </div>
       </div>
+
 
       {/* Info Warning */}
       <div className="bg-destructive/10 border border-destructive/20 rounded-2xl p-5 flex items-start gap-4">

@@ -230,6 +230,18 @@ export class PublicController {
     return this.publicService.getEmailAccess(tenantId, token);
   }
 
+  @Get('email-access/:token/netflix-token')
+  async getNetflixTokenForBuyer(
+    @Headers() headers: any,
+    @Param('token') token: string,
+  ) {
+    const host = headers.host || '';
+    const xTenantId = headers['x-tenant-id'];
+    const xForwardedHost = headers['x-forwarded-host'];
+    const tenantId = await this.getTenantId(host, xTenantId, xForwardedHost);
+    return this.publicService.getNetflixTokenForBuyer(tenantId, token);
+  }
+
   @Get('tutorial')
   async getTutorials(@Headers() headers: any) {
     const host = headers.host || '';

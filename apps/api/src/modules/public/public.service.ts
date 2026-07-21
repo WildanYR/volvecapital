@@ -49,6 +49,7 @@ import { TenantProvisioningService } from '../tenant/tenant-provisioning.service
 import { PromoService } from '../promo/promo.service';
 import { AccountingService } from '../accounting/accounting.service';
 import { WhatsappService } from '../whatsapp/whatsapp.service';
+import { SocketGateway } from '../socket/socket.gateway';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { RegisterTenantDto } from './dto/register-tenant.dto';
 import { RedeemVoucherDto } from './dto/redeem-voucher.dto';
@@ -92,6 +93,7 @@ export class PublicService {
     private readonly promoService: PromoService,
     private readonly accountingService: AccountingService,
     private readonly whatsappService: WhatsappService,
+    private readonly socketGateway: SocketGateway,
   ) {}
 
   async getSettings(tenantId: string) {
@@ -1419,6 +1421,7 @@ export class PublicService {
           email: accountEmail,
           profile_name: user.profile?.name,
           expired_at: user.expired_at,
+          product_name: productName,
         },
         messages,
         limit: {
@@ -1428,6 +1431,51 @@ export class PublicService {
       };
     } catch (error) {
       await transaction.rollback();
+      throw error;
+    }
+  }
+
+  async getNetflixTokenForBuyer(tenantId: string, token: string) {
+    const transaction = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema(tenantId, transaction);
+
+      const voucher = await this.voucherRepository.findOne({
+        where: { access_token: token },
+        include: [
+          {
+            model: TransactionItem,
+            as: 'transaction_item',
+            include: [
+              {
+                model: AccountUser,
+                as: 'user',
+                include: [{ model: Account, as: 'account', include: [{ model: Email, as: 'email' }] }],
+              },
+            ],
+          },
+        ],
+        transaction,
+      });
+
+      if (!voucher) throw new NotFoundException('Akses tidak ditemukan');
+
+      const user = (voucher.transaction_item as any)?.user;
+      if (!user) throw new NotFoundException('Data user tidak ditemukan');
+
+      const accountEmail = user.account?.email?.email;
+      if (!accountEmail) throw new NotFoundException('Email akun tidak ditemukan');
+
+      await transaction.commit();
+
+      const netflixToken = await this.socketGateway.getNetflixTokenFromBot(tenantId, accountEmail);
+      return { token: netflixToken };
+    } catch (error) {
+      try {
+        await transaction.rollback();
+      } catch (e) {
+        // Ignore rollback error if already finished
+      }
       throw error;
     }
   }
