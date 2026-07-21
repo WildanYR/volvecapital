@@ -8,6 +8,7 @@ import { useDebouncedCallback } from 'use-debounce'
 import { NoData } from '@/dashboard/components/no-data'
 import { Pagination } from '@/dashboard/components/pagination'
 import { PermissionGate } from '@/dashboard/components/permission-gate'
+import { usePermission } from '@/dashboard/lib/permission'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -86,9 +87,12 @@ function RouteComponent() {
     queryFn: ({ signal }) => emailMessageService.getEmailMessages({ ...searchParam, signal }),
   })
 
+  const hasEmailView = usePermission('email.view')
+
   const { data: subjects, isLoading: isSubjectsLoading } = useQuery({
     queryKey: ['email-subjects'],
     queryFn: () => emailSubjectService.getEmailSubjects(),
+    enabled: hasEmailView,
   })
 
   // Pagination logic for subjects
@@ -171,6 +175,7 @@ function RouteComponent() {
   return (
     <div className="flex flex-col gap-10">
       {/* SECTION: Email Subject Management */}
+      <PermissionGate permission="email.view">
       <div className="flex flex-col gap-6">
         <div className="flex justify-between items-center">
           <h2 className="text-3xl font-extrabold tracking-tight">Email Subject Management</h2>
@@ -339,6 +344,7 @@ function RouteComponent() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      </PermissionGate>
 
       {/* SECTION: Email Messages */}
       <div className="flex flex-col gap-6">
