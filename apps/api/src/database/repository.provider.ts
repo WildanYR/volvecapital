@@ -37,6 +37,7 @@ import {
   SHIFT_REPOSITORY,
   SHOP_REPOSITORY,
   SYSLOG_REPOSITORY,
+  SHORT_URL_REPOSITORY,
 
   TASK_QUEUE_REPOSITORY,
   TENANT_BANK_ACCOUNT_REPOSITORY,
@@ -104,6 +105,7 @@ import { Voucher } from './models/voucher.model';
 import { WeeklyOffRequest } from './models/weekly-off-request.model';
 import { WeeklyOffSchedule } from './models/weekly-off-schedule.model';
 import { WithdrawalRequest } from './models/withdrawal-request.model';
+import { ShortUrl } from './models/short-url.model';
 
 export const RepositoryProvider: Provider[] = [
   { provide: TENANT_REPOSITORY, useValue: Tenant },
@@ -160,6 +162,7 @@ export const RepositoryProvider: Provider[] = [
     provide: PLATFORM_ACCOUNTING_SETTING_REPOSITORY,
     useValue: PlatformAccountingSetting,
   },
+  { provide: SHORT_URL_REPOSITORY, useValue: ShortUrl },
   {
     provide: JOURNAL_TEMPLATE_REPOSITORY,
     useValue: JournalTemplate,

@@ -13,5 +13,6 @@ import { PublicService } from './public.service';
   imports: [DatabaseModule, TenantModule, SocketModule, AccountModule, PromoModule, AccountingModule, WhatsappModule],
   controllers: [PublicController],
   providers: [PublicService],
+  exports: [PublicService],
 })
 export class PublicModule {}

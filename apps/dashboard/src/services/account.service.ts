@@ -933,7 +933,7 @@ export function AccountServiceGenerator(apiUrl: string, accessToken: string, ten
       if (!response.ok) throw new Error(data.message || 'Gagal memuat riwayat produk')
       return data
     },
-    getNetflixToken: async (accountId: string): Promise<{ token: string }> => {
+    getNetflixToken: async (accountId: string): Promise<{ token: string, pcLink?: string, mobileLink?: string, tvLink?: string, generalLink?: string }> => {
       const response = await generateApiFetch(
         apiUrl,
         accessToken,

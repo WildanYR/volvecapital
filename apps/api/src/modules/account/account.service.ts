@@ -14,6 +14,7 @@ import {
   EMAIL_REPOSITORY,
   ACCOUNT_LABEL_REPOSITORY,
   ACCOUNT_USER_MOVE_HISTORY_REPOSITORY,
+  SHORT_URL_REPOSITORY,
 } from 'src/constants/database.const';
 import {
   NETFLIX_RESET_PASSWORD,
@@ -36,6 +37,7 @@ import { Product } from 'src/database/models/product.model';
 import { Label } from 'src/database/models/label.model';
 import { AccountLabel } from 'src/database/models/account-label.model';
 import { AccountUserMoveHistory } from 'src/database/models/account-user-move-history.model';
+import { ShortUrl } from 'src/database/models/short-url.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
 import { UpsertTaskQueueDto } from '../task-queue/dto/upsert-task-queue.dto';
 import { TaskQueueService } from '../task-queue/task-queue.service';
@@ -83,6 +85,8 @@ export class AccountService {
     private readonly accountUserMoveHistoryRepository: typeof AccountUserMoveHistory,
     private readonly logger: AppLoggerService,
     private readonly accountingService: AccountingService,
+    @Inject(SHORT_URL_REPOSITORY)
+    private readonly shortUrlRepository: typeof ShortUrl,
   ) {}
 
   async findAll(
@@ -2102,6 +2106,7 @@ export class AccountService {
   }
   async getNetflixToken(tenantId: string, accountId: string) {
     const transaction = await this.postgresProvider.transaction();
+    let shortUrlTx: any = null;
     try {
       await this.postgresProvider.setSchema(tenantId, transaction);
       const account = await this.accountRepository.findByPk(accountId, {
@@ -2118,10 +2123,76 @@ export class AccountService {
       // Request token directly from an online bot using WebSocket
       const token = await this.socketGateway.getNetflixTokenFromBot(tenantId, email);
 
+      // Save short URLs
+      const pcUrl = `https://www.netflix.com/login?nftoken=${token}`;
+      const mobileUrl = `https://www.netflix.com/unsupported?nftoken=${token}`;
+      const tvUrl = `https://www.netflix.com/tv9?nftoken=${token}`;
+      const generalUrl = `https://www.netflix.com/account?nftoken=${token}`;
+
+      shortUrlTx = await this.postgresProvider.transaction();
+      await this.postgresProvider.setSchema('master', shortUrlTx);
+
+      const generateShort = async (url: string) => {
+        const code = (await import('node:crypto')).randomBytes(4).toString('hex');
+        const expiresAt = new Date();
+        expiresAt.setHours(expiresAt.getHours() + 24);
+        await this.shortUrlRepository.create(
+          { id: code, target_url: url, expires_at: expiresAt },
+          { transaction: shortUrlTx }
+        );
+        return code;
+      };
+
+      const [pcCode, mobileCode, tvCode, generalCode] = await Promise.all([
+        generateShort(pcUrl),
+        generateShort(mobileUrl),
+        generateShort(tvUrl),
+        generateShort(generalUrl)
+      ]);
+
       await transaction.commit();
-      return { token };
+      await shortUrlTx.commit();
+      
+      let landingUrl = process.env.LANDING_URL || 'digitalpremium.id';
+      if (!landingUrl.startsWith('http')) {
+        landingUrl = `https://${landingUrl}`;
+      }
+      let baseUrl = landingUrl;
+      try {
+        const url = new URL(landingUrl);
+        if (!url.hostname.startsWith(`${tenantId}.`)) {
+          url.hostname = `${tenantId}.${url.hostname}`;
+        }
+        baseUrl = url.toString().replace(/\/$/, '');
+      } catch (e) {
+        const cleanBase = landingUrl.replace('https://', '').replace('http://', '');
+        baseUrl = `https://${tenantId}.${cleanBase}`;
+      }
+
+      try {
+        const tx = await this.postgresProvider.transaction();
+        await this.postgresProvider.setSchema('master', tx);
+        const Tenant = (await import('src/database/models/tenant.model')).Tenant;
+        const tenant = await Tenant.findByPk(tenantId, { transaction: tx });
+        if (tenant && tenant.custom_domain) {
+          baseUrl = `https://${tenant.custom_domain.toLowerCase()}`;
+        }
+        await tx.commit();
+      } catch (e) {
+        // ignore
+      }
+
+      return {
+        token,
+        pcLink: `${baseUrl}/l/${pcCode}`,
+        mobileLink: `${baseUrl}/l/${mobileCode}`,
+        tvLink: `${baseUrl}/l/${tvCode}`,
+        generalLink: `${baseUrl}/l/${generalCode}`
+      };
     } catch (error) {
       await transaction.rollback();
+      // shortUrlTx might be defined but not committed yet if error happened during generation
+      try { await shortUrlTx?.rollback(); } catch (e) {}
       if (error instanceof NotFoundException) throw error;
       throw new Error(`Failed to get Netflix token: ${error.message}`);
     }

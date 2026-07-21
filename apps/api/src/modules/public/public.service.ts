@@ -27,6 +27,7 @@ import {
   TUTORIAL_REPOSITORY,
   TENANT_OWNER_REPOSITORY,
   ARTICLE_REPOSITORY,
+  SHORT_URL_REPOSITORY,
 } from 'src/constants/database.const';
 import { AccountProfile } from 'src/database/models/account-profile.model';
 import { AccountUser } from 'src/database/models/account-user.model';
@@ -44,6 +45,7 @@ import { TenantOwner } from 'src/database/models/tenant-owner.model';
 import { Tenant } from 'src/database/models/tenant.model';
 import { Tutorial } from 'src/database/models/tutorial.model';
 import { Article } from 'src/database/models/article.model';
+import { ShortUrl } from 'src/database/models/short-url.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
 import { TenantProvisioningService } from '../tenant/tenant-provisioning.service';
 import { PromoService } from '../promo/promo.service';
@@ -94,6 +96,8 @@ export class PublicService {
     private readonly accountingService: AccountingService,
     private readonly whatsappService: WhatsappService,
     private readonly socketGateway: SocketGateway,
+    @Inject(SHORT_URL_REPOSITORY)
+    private readonly shortUrlRepository: typeof ShortUrl,
   ) {}
 
   async getSettings(tenantId: string) {
@@ -1589,6 +1593,58 @@ export class PublicService {
     } catch (e) {
       const cleanBase = frontendBaseUrl.replace('https://', '').replace('http://', '');
       return `https://${tenantId}.${cleanBase}`;
+    }
+  }
+
+  async createShortUrl(targetUrl: string): Promise<{ code: string }> {
+    const transaction = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema('master', transaction);
+
+      // Generate random 8 character string
+      const code = crypto.randomBytes(4).toString('hex');
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + 24); // Expires in 24h
+
+      await this.shortUrlRepository.create(
+        {
+          id: code,
+          target_url: targetUrl,
+          expires_at: expiresAt,
+        },
+        { transaction }
+      );
+
+      await transaction.commit();
+      return { code };
+    } catch (error) {
+      await transaction.rollback();
+      this.logger.error(`Failed to create short url: ${error.message}`);
+      throw new ServiceUnavailableException('Gagal membuat short url');
+    }
+  }
+
+  async getShortUrl(code: string): Promise<{ target_url: string }> {
+    const transaction = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema('master', transaction);
+
+      const shortUrl = await this.shortUrlRepository.findOne({
+        where: { id: code },
+        transaction,
+      });
+
+      if (!shortUrl) {
+        throw new NotFoundException('Link tidak ditemukan atau sudah kadaluarsa');
+      }
+
+      await transaction.commit();
+      return { target_url: shortUrl.target_url };
+    } catch (error) {
+      await transaction.rollback();
+      if (error instanceof NotFoundException) throw error;
+      this.logger.error(`Failed to get short url: ${error.message}`);
+      throw new ServiceUnavailableException('Gagal mengambil short url');
     }
   }
 }

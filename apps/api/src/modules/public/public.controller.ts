@@ -342,4 +342,19 @@ export class PublicController {
 
     return { message: 'Reload cancelled, bot will stop.' };
   }
+
+  @Post('short-url')
+  async createShortUrl(
+    @Body('target_url') targetUrl: string,
+  ) {
+    if (!targetUrl) throw new BadRequestException('target_url is required');
+    return this.publicService.createShortUrl(targetUrl);
+  }
+
+  @Get('short-url/:code')
+  async getShortUrl(
+    @Param('code') code: string,
+  ) {
+    return this.publicService.getShortUrl(code);
+  }
 }

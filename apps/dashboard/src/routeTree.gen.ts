@@ -16,6 +16,7 @@ import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as DashboardRouteRouteImport } from './routes/dashboard/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
+import { Route as LCodeRouteImport } from './routes/l/$code'
 import { Route as DashboardAccountingRouteRouteImport } from './routes/dashboard/accounting/route'
 import { Route as DashboardWalletIndexRouteImport } from './routes/dashboard/wallet/index'
 import { Route as DashboardVoucherGeneratorIndexRouteImport } from './routes/dashboard/voucher-generator/index'
@@ -101,6 +102,11 @@ const DashboardIndexRoute = DashboardIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => DashboardRouteRoute,
+} as any)
+const LCodeRoute = LCodeRouteImport.update({
+  id: '/l/$code',
+  path: '/l/$code',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardAccountingRouteRoute =
   DashboardAccountingRouteRouteImport.update({
@@ -400,6 +406,7 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/dashboard/accounting': typeof DashboardAccountingRouteRouteWithChildren
+  '/l/$code': typeof LCodeRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/dashboard/accountsetting/shift': typeof DashboardAccountsettingShiftRouteRoute
   '/dashboard/attendance/me': typeof DashboardAttendanceMeRouteRoute
@@ -457,6 +464,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/l/$code': typeof LCodeRoute
   '/dashboard': typeof DashboardIndexRoute
   '/dashboard/accountsetting/shift': typeof DashboardAccountsettingShiftRouteRoute
   '/dashboard/attendance/me': typeof DashboardAttendanceMeRouteRoute
@@ -517,6 +525,7 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/dashboard/accounting': typeof DashboardAccountingRouteRouteWithChildren
+  '/l/$code': typeof LCodeRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/dashboard/accountsetting/shift': typeof DashboardAccountsettingShiftRouteRoute
   '/dashboard/attendance/me': typeof DashboardAttendanceMeRouteRoute
@@ -578,6 +587,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/dashboard/accounting'
+    | '/l/$code'
     | '/dashboard/'
     | '/dashboard/accountsetting/shift'
     | '/dashboard/attendance/me'
@@ -635,6 +645,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/reset-password'
+    | '/l/$code'
     | '/dashboard'
     | '/dashboard/accountsetting/shift'
     | '/dashboard/attendance/me'
@@ -694,6 +705,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/dashboard/accounting'
+    | '/l/$code'
     | '/dashboard/'
     | '/dashboard/accountsetting/shift'
     | '/dashboard/attendance/me'
@@ -753,6 +765,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  LCodeRoute: typeof LCodeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -805,6 +818,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard/'
       preLoaderRoute: typeof DashboardIndexRouteImport
       parentRoute: typeof DashboardRouteRoute
+    }
+    '/l/$code': {
+      id: '/l/$code'
+      path: '/l/$code'
+      fullPath: '/l/$code'
+      preLoaderRoute: typeof LCodeRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/dashboard/accounting': {
       id: '/dashboard/accounting'
@@ -1305,6 +1325,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  LCodeRoute: LCodeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

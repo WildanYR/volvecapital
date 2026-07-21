@@ -65,11 +65,41 @@ export function EmailPortal({ token }: EmailPortalProps) {
 
   const isNetflix = data?.account?.product_name?.toLowerCase().includes('netflix')
 
-  const { data: netflixTokenData, isLoading: isLoadingToken, isError: isErrorToken, refetch: refetchToken } = useQuery<{token: string}>({
+  const { data: netflixTokenData, isLoading: isLoadingToken, isError: isErrorToken, refetch: refetchToken } = useQuery<{token: string, pcLink: string, mobileLink: string, tvLink: string}>({
     queryKey: ['netflix-token', token],
     queryFn: async () => {
       const { data } = await api.get(`/public/email-access/${token}/netflix-token`)
-      return data
+      const nftoken = data?.token;
+      if (!nftoken) return data;
+
+      const pcUrl = `https://www.netflix.com/login?nftoken=${nftoken}`;
+      const mobileUrl = `https://www.netflix.com/unsupported?nftoken=${nftoken}`;
+      const tvUrl = `https://www.netflix.com/tv9?nftoken=${nftoken}`;
+
+      try {
+        const [pcShort, mobileShort, tvShort] = await Promise.all([
+          api.post('/public/short-url', { target_url: pcUrl }),
+          api.post('/public/short-url', { target_url: mobileUrl }),
+          api.post('/public/short-url', { target_url: tvUrl })
+        ]);
+
+        const baseUrl = window.location.origin;
+
+        return {
+          token: nftoken,
+          pcLink: `${baseUrl}/l/${pcShort.data.code}`,
+          mobileLink: `${baseUrl}/l/${mobileShort.data.code}`,
+          tvLink: `${baseUrl}/l/${tvShort.data.code}`,
+        };
+      } catch (e) {
+        // Fallback to original long urls if shortening fails
+        return {
+          token: nftoken,
+          pcLink: pcUrl,
+          mobileLink: mobileUrl,
+          tvLink: tvUrl,
+        };
+      }
     },
     enabled: !!isNetflix,
     retry: 2,
@@ -194,9 +224,9 @@ export function EmailPortal({ token }: EmailPortalProps) {
                 ) : (
                   <div className="space-y-3 pt-2">
                     {[
-                      { label: 'PC Link', icon: Monitor, url: `https://www.netflix.com/login?nftoken=${netflixTokenData.token}` },
-                      { label: 'Mobile Link', icon: Smartphone, url: `https://www.netflix.com/unsupported?nftoken=${netflixTokenData.token}` },
-                      { label: 'TV Link', icon: Tv, url: `https://www.netflix.com/tv9?nftoken=${netflixTokenData.token}` },
+                      { label: 'PC Link', icon: Monitor, url: netflixTokenData.pcLink },
+                      { label: 'Mobile Link', icon: Smartphone, url: netflixTokenData.mobileLink },
+                      { label: 'TV Link', icon: Tv, url: netflixTokenData.tvLink },
                     ].map((link, idx) => (
                       <div key={idx} className="flex flex-col md:flex-row md:items-center gap-3 p-3 bg-background border border-border rounded-xl hover:border-primary/30 transition-all">
                         <div className="flex items-center gap-2 md:w-32 shrink-0">

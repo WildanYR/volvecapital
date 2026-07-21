@@ -205,7 +205,7 @@ function RouteComponent() {
   const [dialogFinancialDetailOpen, setDialogFinancialDetailOpen] = useState<boolean>(false)
   const [dialogBulkConfirmOpen, setDialogBulkConfirmOpen] = useState<boolean>(false)
   const [dialogNetflixTokenOpen, setDialogNetflixTokenOpen] = useState<boolean>(false)
-  const [netflixTokenValue, setNetflixTokenValue] = useState<string>('')
+  const [netflixTokenData, setNetflixTokenData] = useState<{token: string, pcLink?: string, mobileLink?: string, tvLink?: string, generalLink?: string} | null>(null)
   const [dialogImportCookiesOpen, setDialogImportCookiesOpen] = useState<boolean>(false)
   const [importCookiesValue, setImportCookiesValue] = useState<string>('')
   const [dialogBulkEditOpen, setDialogBulkEditOpen] = useState<boolean>(false)
@@ -1049,7 +1049,7 @@ function RouteComponent() {
   const getNetflixTokenMutation = useMutation({
     mutationFn: (account: Account) => accountService.getNetflixToken(account.id),
     onSuccess: (data) => {
-      setNetflixTokenValue(data.token)
+      setNetflixTokenData(data)
       setDialogNetflixTokenOpen(true)
     },
     onError: (error) => {
@@ -2422,17 +2422,17 @@ function RouteComponent() {
           </DialogHeader>
           <div className="flex flex-col gap-4 mt-4">
             {[
-              { label: '💻 PC Link', url: `netflix.com/login?nftoken=${netflixTokenValue}` },
-              { label: '📱 Mobile Link', url: `netflix.com/unsupported?nftoken=${netflixTokenValue}` },
-              { label: '📺 TV Link', url: `netflix.com/tv9?nftoken=${netflixTokenValue}` },
-              { label: '🔗 General Link', url: `netflix.com/account?nftoken=${netflixTokenValue}` }
+              { label: '💻 PC Link', url: netflixTokenData?.pcLink || `netflix.com/login?nftoken=${netflixTokenData?.token}` },
+              { label: '📱 Mobile Link', url: netflixTokenData?.mobileLink || `netflix.com/unsupported?nftoken=${netflixTokenData?.token}` },
+              { label: '📺 TV Link', url: netflixTokenData?.tvLink || `netflix.com/tv9?nftoken=${netflixTokenData?.token}` },
+              { label: '🔗 General Link', url: netflixTokenData?.generalLink || `netflix.com/account?nftoken=${netflixTokenData?.token}` }
             ].map((link, idx) => (
               <div key={idx} className="flex flex-col gap-1">
                 <Label className="text-xs font-bold text-muted-foreground">{link.label}</Label>
                 <div className="flex items-center gap-2">
                   <Input 
                     readOnly 
-                    value={link.url} 
+                    value={link.url.replace(/^https?:\/\//, '')} 
                     className="font-mono text-xs text-muted-foreground w-full"
                     onClick={(e) => (e.target as HTMLInputElement).select()}
                   />
@@ -2441,7 +2441,7 @@ function RouteComponent() {
                     variant="outline"
                     className="h-10 shrink-0"
                     onClick={() => {
-                      navigator.clipboard.writeText(link.url)
+                      navigator.clipboard.writeText(link.url.replace(/^https?:\/\//, ''))
                       toast.success(`${link.label} berhasil disalin!`)
                     }}
                   >
@@ -2451,7 +2451,7 @@ function RouteComponent() {
                   <Button
                     size="sm"
                     className="h-10 shrink-0"
-                    onClick={() => window.open(`https://${link.url}`, '_blank')}
+                    onClick={() => window.open(link.url.startsWith('http') ? link.url : `https://${link.url}`, '_blank')}
                   >
                     <ExternalLink className="size-4 mr-2" />
                     Buka
