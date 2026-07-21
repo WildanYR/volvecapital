@@ -36,6 +36,7 @@ import {
   Info,
   ListChecks,
   LockKeyholeOpen,
+  ExternalLink,
   Package,
   Monitor,
   Pin,
@@ -2377,10 +2378,10 @@ function RouteComponent() {
           </DialogHeader>
           <div className="flex flex-col gap-4 mt-4">
             {[
-              { label: '💻 PC Link', url: `https://netflix.com/login?nftoken=${netflixTokenValue}` },
-              { label: '📱 Mobile Link', url: `https://www.netflix.com/unsupported?nftoken=${netflixTokenValue}` },
-              { label: '📺 TV Link', url: `https://www.netflix.com/tv9?nftoken=${netflixTokenValue}` },
-              { label: '🔗 General Link', url: `https://www.netflix.com/account?nftoken=${netflixTokenValue}` }
+              { label: '💻 PC Link', url: `netflix.com/login?nftoken=${netflixTokenValue}` },
+              { label: '📱 Mobile Link', url: `netflix.com/unsupported?nftoken=${netflixTokenValue}` },
+              { label: '📺 TV Link', url: `netflix.com/tv9?nftoken=${netflixTokenValue}` },
+              { label: '🔗 General Link', url: `netflix.com/account?nftoken=${netflixTokenValue}` }
             ].map((link, idx) => (
               <div key={idx} className="flex flex-col gap-1">
                 <Label className="text-xs font-bold text-muted-foreground">{link.label}</Label>
@@ -2402,6 +2403,14 @@ function RouteComponent() {
                   >
                     <Copy className="size-4 mr-2" />
                     Copy
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="h-10 shrink-0"
+                    onClick={() => window.open(`https://${link.url}`, '_blank')}
+                  >
+                    <ExternalLink className="size-4 mr-2" />
+                    Buka
                   </Button>
                 </div>
               </div>
