@@ -1726,47 +1726,49 @@ function RouteComponent() {
                             <AccountLabelSelector account={account} />
                           </div>
                           
-                          <div className="space-y-1 w-full px-3 border-l-2 border-secondary col-span-full bg-card py-3 rounded-r-md mt-2">
-                            <div className="flex items-center justify-between gap-2 mb-2">
-                              <div className="flex items-center gap-2">
-                                <Banknote className="size-4 text-muted-foreground" />
-                                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Statistik Finansial</p>
+                          <PermissionGate permission="accounting.view">
+                            <div className="space-y-1 w-full px-3 border-l-2 border-secondary col-span-full bg-card py-3 rounded-r-md mt-2">
+                              <div className="flex items-center justify-between gap-2 mb-2">
+                                <div className="flex items-center gap-2">
+                                  <Banknote className="size-4 text-muted-foreground" />
+                                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Statistik Finansial</p>
+                                </div>
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  className="size-9 rounded-md hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 cursor-pointer"
+                                  onClick={() => {
+                                    setSelectedAccount(account)
+                                    setDialogFinancialDetailOpen(true)
+                                  }}
+                                >
+                                  <EllipsisVertical className="size-4" />
+                                </Button>
                               </div>
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="size-9 rounded-md hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 cursor-pointer"
-                                onClick={() => {
-                                  setSelectedAccount(account)
-                                  setDialogFinancialDetailOpen(true)
-                                }}
-                              >
-                                <EllipsisVertical className="size-4" />
-                              </Button>
+                              <div className="grid grid-cols-2 gap-y-3 gap-x-4">
+                                <div>
+                                  <p className="text-[10px] text-muted-foreground uppercase font-medium">Modal (Total)</p>
+                                  <p className="font-bold text-sm">{formatRupiah(account.total_capital || account.capital_price)}</p>
+                                </div>
+                                <div>
+                                  <p className="text-[10px] text-muted-foreground uppercase font-medium">Pendapatan</p>
+                                  <p className="font-bold text-sm text-muted-foreground dark:text-muted-foreground">{formatRupiah(account.total_revenue || 0)}</p>
+                                </div>
+                                <div>
+                                  <p className="text-[10px] text-muted-foreground uppercase font-medium">Laba Bersih</p>
+                                  <p className="font-bold text-sm text-muted-foreground">
+                                    {formatRupiah(account.profit || 0)}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-[10px] text-muted-foreground uppercase font-medium">ROI</p>
+                                  <p className="font-bold text-sm text-muted-foreground">
+                                    {account.roi || 0}%
+                                  </p>
+                                </div>
+                              </div>
                             </div>
-                            <div className="grid grid-cols-2 gap-y-3 gap-x-4">
-                              <div>
-                                <p className="text-[10px] text-muted-foreground uppercase font-medium">Modal (Total)</p>
-                                <p className="font-bold text-sm">{formatRupiah(account.total_capital || account.capital_price)}</p>
-                              </div>
-                              <div>
-                                <p className="text-[10px] text-muted-foreground uppercase font-medium">Pendapatan</p>
-                                <p className="font-bold text-sm text-muted-foreground dark:text-muted-foreground">{formatRupiah(account.total_revenue || 0)}</p>
-                              </div>
-                              <div>
-                                <p className="text-[10px] text-muted-foreground uppercase font-medium">Laba Bersih</p>
-                                <p className="font-bold text-sm text-muted-foreground">
-                                  {formatRupiah(account.profit || 0)}
-                                </p>
-                              </div>
-                              <div>
-                                <p className="text-[10px] text-muted-foreground uppercase font-medium">ROI</p>
-                                <p className="font-bold text-sm text-muted-foreground">
-                                  {account.roi || 0}%
-                                </p>
-                              </div>
-                            </div>
-                          </div>
+                          </PermissionGate>
                         </div>
                         <Button
                           variant="outline"
