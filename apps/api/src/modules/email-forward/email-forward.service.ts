@@ -111,32 +111,36 @@ export class EmailForwardService {
   }
 
   async getEmailSubject() {
-    const transaction = await this.postgresProvider.transaction();
+    const schemasTx = await this.postgresProvider.transaction();
+    let schemas: any[] = [];
     try {
       const schemasResult: any = await this.postgresProvider.rawQuery(
         'SELECT schema_name FROM information_schema.schemata WHERE schema_name NOT IN (\'public\', \'master\', \'information_schema\', \'pg_catalog\', \'pg_toast\')',
-        { transaction }
+        { transaction: schemasTx }
       );
-      const schemas = schemasResult[0] || schemasResult;
-      const allSubjects = new Set<string>();
-
-      for (const row of schemas) {
-        try {
-          await this.postgresProvider.setSchema(row.schema_name, transaction);
-          const emailSubject = await this.emailSubjectRepository.findAll({ transaction });
-          emailSubject.forEach(es => allSubjects.add(es.dataValues.subject));
-        }
-        catch (e) {
-          // Ignore if table not found in this schema
-        }
-      }
-
-      await transaction.commit();
-      return { subjects: Array.from(allSubjects) };
-    }
-    catch {
-      await transaction.rollback();
+      schemas = schemasResult[0] || schemasResult;
+      await schemasTx.commit();
+    } catch (error) {
+      await schemasTx.rollback();
+      this.logger.error(`Failed to get schemas: ${error.message}`, error.stack, 'EmailForwardRecieve');
       return { subjects: [] };
     }
+
+    const allSubjects = new Set<string>();
+
+    for (const row of schemas) {
+      const tx = await this.postgresProvider.transaction();
+      try {
+        await this.postgresProvider.setSchema(row.schema_name, tx);
+        const emailSubject = await this.emailSubjectRepository.findAll({ transaction: tx });
+        emailSubject.forEach(es => allSubjects.add(es.dataValues.subject));
+        await tx.commit();
+      }
+      catch (e) {
+        await tx.rollback();
+      }
+    }
+
+    return { subjects: Array.from(allSubjects) };
   }
 }
