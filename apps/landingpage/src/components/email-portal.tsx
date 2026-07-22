@@ -68,6 +68,20 @@ export function EmailPortal({ token }: EmailPortalProps) {
   const { data: netflixTokenData, isLoading: isLoadingToken, isError: isErrorToken, refetch: refetchToken } = useQuery<{token: string, pcLink: string, mobileLink: string, tvLink: string}>({
     queryKey: ['netflix-token', token],
     queryFn: async () => {
+      const cacheKey = `netflix-token-${token}`;
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          // Cache for 12 hours
+          if (Date.now() - parsed.timestamp < 12 * 60 * 60 * 1000) {
+            return parsed.data;
+          }
+        } catch (e) {
+          // ignore parsing error
+        }
+      }
+
       const { data } = await api.get(`/public/email-access/${token}/netflix-token`)
       const nftoken = data?.token;
       if (!nftoken) return data;
@@ -85,20 +99,25 @@ export function EmailPortal({ token }: EmailPortalProps) {
 
         const baseUrl = window.location.origin;
 
-        return {
+        const result = {
           token: nftoken,
           pcLink: `${baseUrl}/l/${pcShort.data.code}`,
           mobileLink: `${baseUrl}/l/${mobileShort.data.code}`,
           tvLink: `${baseUrl}/l/${tvShort.data.code}`,
         };
+
+        localStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), data: result }));
+        return result;
       } catch (e) {
         // Fallback to original long urls if shortening fails
-        return {
+        const result = {
           token: nftoken,
           pcLink: pcUrl,
           mobileLink: mobileUrl,
           tvLink: tvUrl,
         };
+        localStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), data: result }));
+        return result;
       }
     },
     enabled: !!isNetflix,
@@ -215,7 +234,10 @@ export function EmailPortal({ token }: EmailPortalProps) {
                     <ShieldAlert className="size-5 text-destructive mb-2" />
                     <p className="text-xs font-bold text-destructive mb-3">Gagal memuat token dari server bot.</p>
                     <button 
-                      onClick={() => refetchToken()} 
+                      onClick={() => {
+                        localStorage.removeItem(`netflix-token-${token}`);
+                        refetchToken();
+                      }} 
                       className="text-[10px] bg-destructive/10 text-destructive font-black px-4 py-2 rounded-lg uppercase tracking-widest hover:bg-destructive/20 transition-all"
                     >
                       Coba Lagi

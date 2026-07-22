@@ -206,6 +206,7 @@ function RouteComponent() {
   const [dialogBulkConfirmOpen, setDialogBulkConfirmOpen] = useState<boolean>(false)
   const [dialogNetflixTokenOpen, setDialogNetflixTokenOpen] = useState<boolean>(false)
   const [netflixTokenData, setNetflixTokenData] = useState<{token: string, pcLink?: string, mobileLink?: string, tvLink?: string, generalLink?: string} | null>(null)
+  const [netflixTokenCache, setNetflixTokenCache] = useState<Record<string, {token: string, pcLink?: string, mobileLink?: string, tvLink?: string, generalLink?: string}>>({})
   const [dialogImportCookiesOpen, setDialogImportCookiesOpen] = useState<boolean>(false)
   const [importCookiesValue, setImportCookiesValue] = useState<string>('')
   const [dialogBulkEditOpen, setDialogBulkEditOpen] = useState<boolean>(false)
@@ -991,7 +992,12 @@ function RouteComponent() {
       const targetBot = localStorage.getItem('local_target_bot') || undefined
       return accountService.triggerReset(accountId, targetBot)
     },
-    onSuccess: () => {
+    onSuccess: (_, accountId) => {
+      setNetflixTokenCache(prev => {
+        const copy = { ...prev }
+        delete copy[accountId]
+        return copy
+      })
       toast.success('Tugas reset berhasil ditambahkan ke antrian.')
     },
     onError: (error) => {
@@ -1048,7 +1054,8 @@ function RouteComponent() {
 
   const getNetflixTokenMutation = useMutation({
     mutationFn: (account: Account) => accountService.getNetflixToken(account.id),
-    onSuccess: (data) => {
+    onSuccess: (data, account) => {
+      setNetflixTokenCache(prev => ({ ...prev, [account.id]: data }))
       setNetflixTokenData(data)
       setDialogNetflixTokenOpen(true)
     },
@@ -1058,12 +1065,22 @@ function RouteComponent() {
   })
 
   const handleGetNetflixToken = (account: Account) => {
+    if (netflixTokenCache[account.id]) {
+      setNetflixTokenData(netflixTokenCache[account.id])
+      setDialogNetflixTokenOpen(true)
+      return
+    }
     getNetflixTokenMutation.mutate(account)
   }
 
   const importNetflixCookiesMutation = useMutation({
     mutationFn: ({ account, cookies }: { account: Account; cookies: any }) => accountService.importNetflixCookies(account.id, cookies),
-    onSuccess: (data) => {
+    onSuccess: (data, { account }) => {
+      setNetflixTokenCache(prev => {
+        const copy = { ...prev }
+        delete copy[account.id]
+        return copy
+      })
       setDialogImportCookiesOpen(false)
       setImportCookiesValue('')
       toast.success(data.message || 'Cookies berhasil di-import ke Bot.')

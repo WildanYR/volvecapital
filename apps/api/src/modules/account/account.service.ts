@@ -2105,31 +2105,37 @@ export class AccountService {
     }
   }
   async getNetflixToken(tenantId: string, accountId: string) {
-    const transaction = await this.postgresProvider.transaction();
-    let shortUrlTx: any = null;
+    const accountTx = await this.postgresProvider.transaction();
+    let email = '';
     try {
-      await this.postgresProvider.setSchema(tenantId, transaction);
+      await this.postgresProvider.setSchema(tenantId, accountTx);
       const account = await this.accountRepository.findByPk(accountId, {
         include: [{ model: Email, as: 'email' }],
-        transaction,
+        transaction: accountTx,
       });
 
       if (!account) {
         throw new NotFoundException('Account not found');
       }
 
-      const email = account.email.email;
-      
-      // Request token directly from an online bot using WebSocket
-      const token = await this.socketGateway.getNetflixTokenFromBot(tenantId, email);
+      email = account.email.email;
+      await accountTx.commit();
+    } catch (error) {
+      await accountTx.rollback();
+      throw error;
+    }
 
-      // Save short URLs
-      const pcUrl = `https://www.netflix.com/login?nftoken=${token}`;
-      const mobileUrl = `https://www.netflix.com/unsupported?nftoken=${token}`;
-      const tvUrl = `https://www.netflix.com/tv9?nftoken=${token}`;
-      const generalUrl = `https://www.netflix.com/account?nftoken=${token}`;
+    // Request token directly from an online bot using WebSocket (outside any DB transaction)
+    const token = await this.socketGateway.getNetflixTokenFromBot(tenantId, email);
 
-      shortUrlTx = await this.postgresProvider.transaction();
+    // Save short URLs in a separate short-lived transaction
+    const pcUrl = `https://www.netflix.com/login?nftoken=${token}`;
+    const mobileUrl = `https://www.netflix.com/unsupported?nftoken=${token}`;
+    const tvUrl = `https://www.netflix.com/tv9?nftoken=${token}`;
+    const generalUrl = `https://www.netflix.com/account?nftoken=${token}`;
+
+    const shortUrlTx = await this.postgresProvider.transaction();
+    try {
       await this.postgresProvider.setSchema('master', shortUrlTx);
 
       const generateShort = async (url: string) => {
@@ -2150,7 +2156,6 @@ export class AccountService {
         generateShort(generalUrl)
       ]);
 
-      await transaction.commit();
       await shortUrlTx.commit();
       
       let landingUrl = process.env.LANDING_URL || 'digitalpremium.id';
@@ -2168,6 +2173,7 @@ export class AccountService {
         const cleanBase = landingUrl.replace('https://', '').replace('http://', '');
         baseUrl = `https://${tenantId}.${cleanBase}`;
       }
+
 
       try {
         const tx = await this.postgresProvider.transaction();
@@ -2190,8 +2196,6 @@ export class AccountService {
         generalLink: `${baseUrl}/l/${generalCode}`
       };
     } catch (error) {
-      await transaction.rollback();
-      // shortUrlTx might be defined but not committed yet if error happened during generation
       try { await shortUrlTx?.rollback(); } catch (e) {}
       if (error instanceof NotFoundException) throw error;
       throw new Error(`Failed to get Netflix token: ${error.message}`);
