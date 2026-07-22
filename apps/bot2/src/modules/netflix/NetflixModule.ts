@@ -1323,58 +1323,142 @@ export class NetflixModule extends BaseModule {
     const { email, password, accountId } = payload;
     const contextName = sanitizeEmail(email);
 
-    this.logTvProgress(task, accountId, email, "Memulai proses login TV...");
+    this.logTvProgress(task, accountId, email, "Memulai proses login TV dengan Token...");
 
     const context = await this.getOrCreateContext(contextName);
     const page = await context.newPage();
 
     try {
-      // 1. Validasi Sesi Login di halaman /account
-      this.logTvProgress(task, accountId, email, "Memverifikasi sesi login di halaman akun...");
-      await page.goto("https://www.netflix.com/account");
-      await this.sleep(3000);
+      const cookies = await context.cookies();
+      const netflixIdCookie = cookies.find(c => c.name === 'NetflixId');
+      const secureNetflixIdCookie = cookies.find(c => c.name === 'SecureNetflixId');
+      const nfvdidCookie = cookies.find(c => c.name === 'nfvdid');
 
-      // 2. Deteksi status login
-      const loginState = await this.detectLoginState(page);
-      if (loginState === "not_logged_in") {
-        this.logTvProgress(task, accountId, email, "Belum login, mencoba login manual...");
-        const loginOk = await this.attemptManualLogin(page, email, password);
-        if (!loginOk) {
-          this.logger.warn(`[LoginTV][${email}] Login manual gagal, mencoba alur recovery session...`);
-          await this.handleSessionRecovery(page, task, email);
-          
-          // Verifikasi akhir apakah sesi sudah valid setelah recovery
-          await page.goto("https://www.netflix.com/account");
-          await this.sleep(3000);
-          const finalState = await this.detectLoginState(page);
-          if (finalState === "not_logged_in") {
-             this.eventBus.emit('socket:bot-tv-pin-error', {
-               taskId: task.id,
-               message: "Gagal login akun. Akun mungkin bermasalah/hold.",
-             });
-             throw new Error("Gagal mendapatkan sesi login valid.");
-          }
-        }
+      if (!netflixIdCookie) {
+        this.eventBus.emit('socket:bot-tv-pin-error', {
+          taskId: task.id,
+          message: "Cookies tidak valid silahkan import cookies manual terlebih dahulu",
+        });
+        throw new Error("Cookie 'NetflixId' tidak ditemukan di sesi bot.");
       }
 
-      this.logTvProgress(task, accountId, email, "Sesi terbukti valid di /account. Redirect ke TV2...");
-      // 2b. Navigasi ke Halaman TV2
-      await page.goto(TV_LOGIN_URL);
+      // Construct cookie header
+      const cookieStrings: string[] = [];
+      if (netflixIdCookie) cookieStrings.push(`NetflixId=${netflixIdCookie.value}`);
+      if (secureNetflixIdCookie) cookieStrings.push(`SecureNetflixId=${secureNetflixIdCookie.value}`);
+      if (nfvdidCookie) cookieStrings.push(`nfvdid=${nfvdidCookie.value}`);
+      const cookieHeader = cookieStrings.join('; ');
+
+      // Fetch nftoken using iOS FTL API
+      const QUERY_PARAMS: Record<string, string> = {
+        "appVersion": "15.48.1",
+        "config": '{"gamesInTrailersEnabled":"false","isTrailersEvidenceEnabled":"false","cdsMyListSortEnabled":"true","kidsBillboardEnabled":"true","addHorizontalBoxArtToVideoSummariesEnabled":"false","skOverlayTestEnabled":"false","homeFeedTestTVMovieListsEnabled":"false","baselineOnIpadEnabled":"true","trailersVideoIdLoggingFixEnabled":"true","postPlayPreviewsEnabled":"false","bypassContextualAssetsEnabled":"false","roarEnabled":"false","useSeason1AltLabelEnabled":"false","disableCDSSearchPaginationSectionKinds":["searchVideoCarousel"],"cdsSearchHorizontalPaginationEnabled":"true","searchPreQueryGamesEnabled":"true","kidsMyListEnabled":"true","billboardEnabled":"true","useCDSGalleryEnabled":"true","contentWarningEnabled":"true","videosInPopularGamesEnabled":"true","avifFormatEnabled":"false","sharksEnabled":"true"}',
+        "device_type": "NFAPPL-02-",
+        "esn": "NFAPPL-02-IPHONE8=1-PXA-02026U9VV5O8AUKEAEO8PUJETCGDD4PQRI9DEB3MDLEMD0EACM4CS78LMD334MN3MQ3NMJ8SU9O9MVGS6BJCURM1PH1MUTGDPF4S4200",
+        "idiom": "phone",
+        "iosVersion": "15.8.5",
+        "isTablet": "false",
+        "languages": "en-US",
+        "locale": "en-US",
+        "maxDeviceWidth": "375",
+        "model": "saget",
+        "modelType": "IPHONE8-1",
+        "odpAware": "true",
+        "path": '["account","token","default"]',
+        "pathFormat": "graph",
+        "pixelDensity": "2.0",
+        "progressive": "false",
+        "responseFormat": "json"
+      };
+
+      const urlObj = new URL("https://ios.prod.ftl.netflix.com/iosui/user/15.48");
+      for (const [k, v] of Object.entries(QUERY_PARAMS)) {
+        urlObj.searchParams.set(k, v);
+      }
+
+      const headers = {
+        "User-Agent": "Argo/15.48.1 (iPhone; iOS 15.8.5; Scale/2.00)",
+        "x-netflix.request.attempt": "1",
+        "x-netflix.request.client.user.guid": "A4CS633D7VCBPE2GPK2HL4EKOE",
+        "x-netflix.context.profile-guid": "A4CS633D7VCBPE2GPK2HL4EKOE",
+        "x-netflix.request.routing": '{"path":"/nq/mobile/nqios/~15.48.0/user","control_tag":"iosui_argo"}',
+        "x-netflix.context.app-version": "15.48.1",
+        "x-netflix.argo.translated": "true",
+        "x-netflix.context.form-factor": "phone",
+        "x-netflix.context.sdk-version": "2012.4",
+        "x-netflix.client.appversion": "15.48.1",
+        "x-netflix.context.max-device-width": "375",
+        "x-netflix.context.ab-tests": "",
+        "x-netflix.tracing.cl.useractionid": "4DC655F2-9C3C-4343-8229-CA1B003C3053",
+        "x-netflix.client.type": "argo",
+        "x-netflix.client.ftl.esn": "NFAPPL-02-IPHONE8=1-PXA-02026U9VV5O8AUKEAEO8PUJETCGDD4PQRI9DEB3MDLEMD0EACM4CS78LMD334MN3MQ3NMJ8SU9O9MVGS6BJCURM1PH1MUTGDPF4S4200",
+        "x-netflix.context.locales": "en-US",
+        "x-netflix.context.top-level-uuid": "90AFE39F-ADF1-4D8A-B33E-528730990FE3",
+        "x-netflix.client.iosversion": "15.8.5",
+        "accept-language": "en-US;q=1",
+        "x-netflix.argo.abtests": "",
+        "x-netflix.context.os-version": "15.8.5",
+        "x-netflix.request.client.context": '{"appState":"foreground"}',
+        "x-netflix.context.ui-flavor": "argo",
+        "x-netflix.argo.nfnsm": "9",
+        "x-netflix.context.pixel-density": "2.0",
+        "x-netflix.request.toplevel.uuid": "90AFE39F-ADF1-4D8A-B33E-528730990FE3",
+        "x-netflix.request.client.timezoneid": "Asia/Dhaka",
+        "Cookie": cookieHeader
+      };
+
+      const fetchResponse = await fetch(urlObj.toString(), {
+        method: "GET",
+        headers: headers
+      });
+
+      if (!fetchResponse.ok) {
+        this.eventBus.emit('socket:bot-tv-pin-error', {
+          taskId: task.id,
+          message: "Cookies tidak valid silahkan import cookies manual terlebih dahulu",
+        });
+        throw new Error(`Gagal memanggil FTL API: ${fetchResponse.status}`);
+      }
+
+      const resJson = (await fetchResponse.json()) as any;
+      const nfToken = resJson?.value?.account?.token?.default?.token;
+
+      if (!nfToken) {
+        this.eventBus.emit('socket:bot-tv-pin-error', {
+          taskId: task.id,
+          message: "Cookies tidak valid silahkan import cookies manual terlebih dahulu",
+        });
+        throw new Error("Token tidak ditemukan di balasan FTL API.");
+      }
+
+      const tvLink = `https://www.netflix.com/tv2?nftoken=${encodeURIComponent(nfToken)}`;
+      
+      this.logTvProgress(task, accountId, email, "Navigasi langsung ke halaman input kode TV...");
+      await page.goto(tvLink);
       await this.sleep(3000);
 
-      // 3. Tunggu elemen input PIN muncul
+      // Cek apakah cookies dianggap expired/minta login
+      if (page.url().includes(LOGIN_PATH) || (await this.detectLoginState(page)) === "not_logged_in") {
+        this.eventBus.emit('socket:bot-tv-pin-error', {
+          taskId: task.id,
+          message: "Cookies tidak valid silahkan import cookies manual terlebih dahulu",
+        });
+        throw new Error("Cookies tidak valid, sesi login ditolak.");
+      }
+
+      // Tunggu elemen input PIN muncul
       this.logTvProgress(task, accountId, email, "Menunggu form PIN muncul di netflix.com/tv2...");
       await page.waitForSelector(TV_LOGIN_LOCATORS.PIN_INPUTS, { timeout: 30000 });
 
-      // 4. Beritahu Dashboard bahwa Bot siap menerima PIN (Loop hingga 3x)
+      // Beritahu Dashboard bahwa Bot siap menerima PIN (Loop hingga 3x)
       let maxRetries = 3;
       let success = false;
       
       for (let attempt = 1; attempt <= maxRetries; attempt++) {
-        // Jika ini retry (attempt > 1), kita reload halaman TV2 agar bersih dari error state sebelumnya
+        // Jika ini retry, reload halaman TV2
         if (attempt > 1) {
-          this.logTvProgress(task, accountId, email, `Mereload halaman /tv2 untuk percobaan ke-${attempt}...`);
-          await page.goto(TV_LOGIN_URL);
+          this.logTvProgress(task, accountId, email, `Mereload halaman untuk percobaan ke-${attempt}...`);
+          await page.goto(tvLink);
           await this.sleep(3000);
         }
 
@@ -1383,11 +1467,10 @@ export class NetflixModule extends BaseModule {
           accountId,
         });
 
-        // 5. Tunggu PIN dari Dashboard (Timeout 5 menit)
+        // Tunggu PIN dari Dashboard (Timeout 5 menit)
         const pinEventName = `${this.instanceId}:dashboard-send-tv-pin`;
         this.logTvProgress(task, accountId, email, `Menunggu PIN dari dashboard [Attempt ${attempt}/${maxRetries}]...`);
         
-        // Kita gunakan event bus internal untuk menangkap PIN yang diteruskan dari Connector
         const pinData = await this.waitForTaskEvent<{ pin: string }>(task.id, pinEventName);
         const pin = pinData.pin;
 
@@ -1402,7 +1485,7 @@ export class NetflixModule extends BaseModule {
 
         this.logTvProgress(task, accountId, email, `PIN diterima. Memasukkan PIN ke Netflix...`);
 
-        // 6. Masukkan PIN satu per satu
+        // Masukkan PIN satu per satu
         const inputs = page.locator(TV_LOGIN_LOCATORS.PIN_INPUTS);
         for (let i = 0; i < 8; i++) {
           await inputs.nth(i).click();
@@ -1413,7 +1496,7 @@ export class NetflixModule extends BaseModule {
         await page.locator(TV_LOGIN_LOCATORS.SUBMIT_BUTTON).click();
         this.logTvProgress(task, accountId, email, "PIN disubmit, menunggu verifikasi...");
 
-        // 7. Tunggu hasil (Redirect ke success atau Error atau Re-login)
+        // Tunggu hasil
         try {
           await Promise.race([
             page.waitForURL(url => url.toString().includes('/tv/out/success'), { timeout: 30000 }),
@@ -1424,18 +1507,13 @@ export class NetflixModule extends BaseModule {
           this.logger.warn(`[LoginTV][${email}] Timeout menunggu verifikasi PIN. Memeriksa URL saat ini...`);
         }
 
-        // 8. Cek apakah disuruh login ulang setelah isi PIN
+        // Cek apakah cookies dianggap expired/minta login setelah input PIN
         if (page.url().includes(LOGIN_PATH)) {
-          this.logTvProgress(task, accountId, email, "Diminta login ulang setelah isi PIN, mencoba login manual...");
-          const loginOk = await this.attemptManualLogin(page, email, password);
-          if (!loginOk) {
-            this.logger.warn(`[LoginTV][${email}] Login manual gagal, mencoba alur recovery session...`);
-            await this.handleSessionRecovery(page, task, email);
-          }
-          // Setelah login, balik ke tv2 dan ulangi isi PIN
-          await page.goto(TV_LOGIN_URL);
-          await this.sleep(3000);
-          return this.loginTvFlow(task); // Rekursif untuk mencoba lagi setelah login
+          this.eventBus.emit('socket:bot-tv-pin-error', {
+            taskId: task.id,
+            message: "Cookies tidak valid silahkan import cookies manual terlebih dahulu",
+          });
+          throw new Error("Diminta login ulang (Cookies kadaluarsa).");
         }
 
         if (page.url().includes('/tv/out/success')) {
@@ -1447,14 +1525,14 @@ export class NetflixModule extends BaseModule {
             await this.sleep(2000);
           }
 
-          // Emit success event ke dashboard
           this.eventBus.emit('socket:bot-tv-login-success', {
             taskId: task.id,
             accountId,
           });
+          this.logTvProgress(task, accountId, email, "Proses Login TV selesai sepenuhnya.");
           
           success = true;
-          break; // Keluar dari loop retries karena berhasil
+          break;
         } else {
           const errorMsg = await page.locator(TV_LOGIN_LOCATORS.ERROR_MESSAGE).isVisible() 
             ? await page.locator(TV_LOGIN_LOCATORS.ERROR_MESSAGE).innerText() 
