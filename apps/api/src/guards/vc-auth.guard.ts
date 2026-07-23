@@ -74,6 +74,7 @@ export class VcAuthGuard implements CanActivate {
       try {
         tenant = await this.tenantRepository.findOne({
           where: { id: tokenPayload.tenant_id },
+          ...({ searchPath: 'master' } as any),
         });
 
         if (!tokenPayload.session_id) {
@@ -82,6 +83,7 @@ export class VcAuthGuard implements CanActivate {
 
         const session = await this.deviceSessionRepository.findOne({
           where: { id: tokenPayload.session_id },
+          ...({ searchPath: 'master' } as any),
         });
 
         if (!session || session.is_revoked) {

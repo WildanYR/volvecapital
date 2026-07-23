@@ -213,6 +213,7 @@ export class TenantService {
         id: owner.tenant_id,
         token,
         tenant_name: owner.tenant.name,
+        session_id: session.id,
       };
     }
     catch (error) {
