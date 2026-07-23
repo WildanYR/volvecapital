@@ -65,7 +65,7 @@ export function EmailPortal({ token }: EmailPortalProps) {
 
   const isNetflix = data?.account?.product_name?.toLowerCase().includes('netflix')
 
-  const { data: netflixTokenData, isLoading: isLoadingToken, isError: isErrorToken, refetch: refetchToken } = useQuery<{token: string, pcLink: string, mobileLink: string, tvLink: string}>({
+  const { data: netflixTokenData, isLoading: isLoadingToken, isError: isErrorToken, refetch: refetchToken, isFetching: isFetchingToken } = useQuery<{token: string, pcLink: string, mobileLink: string, tvLink: string}>({
     queryKey: ['netflix-token', token],
     queryFn: async () => {
       const cacheKey = `netflix-token-${token}`;
@@ -209,8 +209,8 @@ export function EmailPortal({ token }: EmailPortalProps) {
                 <KeyRound className="size-5 text-primary" />
               </div>
               <div className="text-left">
-                <h3 className="text-sm font-black text-foreground">Tautan Akses Cepat Netflix</h3>
-                <p className="text-[10px] text-muted-foreground font-medium">Pakai tautan akses cepat dibawah ini jika terjadi kesalahan saat login.</p>
+                <h3 className="text-sm font-black text-foreground">Login Tanpa Mengetik Password</h3>
+                <p className="text-[10px] text-muted-foreground font-medium">Pilih perangkat Anda dan klik Buka untuk login otomatis</p>
               </div>
             </div>
             {isNetflixLinksOpen ? <ChevronUp className="size-5 text-muted-foreground" /> : <ChevronDown className="size-5 text-muted-foreground" />}
@@ -245,6 +245,20 @@ export function EmailPortal({ token }: EmailPortalProps) {
                   </div>
                 ) : (
                   <div className="space-y-3 pt-2">
+                    <div className="flex justify-end mb-1">
+                      <button 
+                        onClick={() => {
+                          localStorage.removeItem(`netflix-token-${token}`);
+                          refetchToken();
+                          toast.info('Menyegarkan token...');
+                        }}
+                        disabled={isFetchingToken}
+                        className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-50"
+                      >
+                        <RefreshCw className={`size-3 ${isFetchingToken ? 'animate-spin' : ''}`} />
+                        Segarkan Token
+                      </button>
+                    </div>
                     {[
                       { label: 'PC Link', icon: Monitor, url: netflixTokenData.pcLink },
                       { label: 'Mobile Link', icon: Smartphone, url: netflixTokenData.mobileLink },
