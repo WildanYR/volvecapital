@@ -201,10 +201,12 @@ function formatDateIdStandard(date: Date | string): string {
 /**
  * Copy account template - format account data using template
  */
-export function copyAccountTemplate(
+export async function copyAccountTemplate(
   profile: AccountProfile,
-  account: Account
-): string {
+  account: Account,
+  apiBaseUrl?: string,
+  credentials?: AuthCredentials
+): Promise<string> {
   const template = account.product_variant.copy_template;
 
   if (!template) {
@@ -212,31 +214,72 @@ export function copyAccountTemplate(
   }
 
   const regex = /\$\$([\w.]+)/g;
+  const matches = [...template.matchAll(regex)];
+  let result = template;
 
-  return template.replace(regex, (match: string, placeholderKey: string) => {
+  const needsToken = matches.some(m => {
+    const key = m[1].toLowerCase();
+    return ['pclink', 'mobilelink', 'tvlink', 'generallink'].includes(key);
+  });
+
+  let netflixTokenData: any = null;
+  if (needsToken && apiBaseUrl && credentials) {
+    try {
+      const url = `${apiBaseUrl}/account/${account.id}/netflix-token`;
+      const res = await fetch(url, { headers: authHeaders(credentials) });
+      if (res.ok) {
+        netflixTokenData = await res.json();
+      }
+    } catch (err) {
+      // Ignored: Leave placeholders empty or raw if token fetch fails
+    }
+  }
+
+  for (const match of matches) {
+    const placeholderKey = match[1];
+    let replacement = match[0]; // fallback to raw string
+
     const keyParts = placeholderKey.split('.');
     const mainKey = keyParts[0];
 
     if (mainKey === 'metadata' && keyParts.length === 2) {
       const metaKey = keyParts[1];
       const metadataItem = profile.metadata?.find((item) => item.key === metaKey);
-      return metadataItem?.value ?? '';
+      replacement = metadataItem?.value ?? '';
+    } else {
+      switch (placeholderKey.toLowerCase()) {
+        case 'email':
+          replacement = account.email.email;
+          break;
+        case 'password':
+          replacement = account.account_password;
+          break;
+        case 'expired':
+          replacement = account.batch_end_date ? formatDateIdStandard(account.batch_end_date) : '';
+          break;
+        case 'product':
+          replacement = `${account.product_variant.product?.name || ''} ${account.product_variant.name}`.trim();
+          break;
+        case 'profile':
+          replacement = profile.name;
+          break;
+        case 'pclink':
+          replacement = (netflixTokenData?.pcLink || '').replace(/^https?:\/\//, '');
+          break;
+        case 'mobilelink':
+          replacement = (netflixTokenData?.mobileLink || '').replace(/^https?:\/\//, '');
+          break;
+        case 'tvlink':
+          replacement = (netflixTokenData?.tvLink || '').replace(/^https?:\/\//, '');
+          break;
+        case 'generallink':
+          replacement = (netflixTokenData?.generalLink || '').replace(/^https?:\/\//, '');
+          break;
+      }
     }
 
-    switch (placeholderKey) {
-      case 'email':
-        return account.email.email;
-      case 'password':
-        return account.account_password;
-      case 'expired':
-        if (!account.batch_end_date) return '';
-        return formatDateIdStandard(account.batch_end_date);
-      case 'product':
-        return `${account.product_variant.product?.name || ''} ${account.product_variant.name}`.trim();
-      case 'profile':
-        return profile.name;
-      default:
-        return match;
-    }
-  });
+    result = result.replace(match[0], replacement);
+  }
+
+  return result;
 }

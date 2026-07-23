@@ -1,51 +1,82 @@
 import type { Account, AccountProfile } from '@/dashboard/services/account.service'
 import { formatDateIdStandard } from './time-converter.util'
 
-export function copyAccountTemplate(
+export async function copyAccountTemplate(
   profile: AccountProfile,
   account: Account,
-): string {
+  fetchNetflixToken?: () => Promise<any>
+): Promise<string> {
   const template = account.product_variant.copy_template
 
-  // Jika tidak ada template, kembalikan string kosong
   if (!template) {
     return ''
   }
 
-  // Regex untuk menemukan semua placeholder seperti $$email, $$metadata.pin, dll.
   const regex = /\$\$([\w.]+)/g
+  const matches = [...template.matchAll(regex)]
+  let result = template
 
-  return template.replace(regex, (match, placeholderKey: string) => {
-    // Memisahkan key jika ada tanda titik (untuk kasus metadata)
+  const needsToken = matches.some(m => {
+    const key = m[1].toLowerCase()
+    return ['pclink', 'mobilelink', 'tvlink', 'generallink'].includes(key)
+  })
+
+  let netflixTokenData: any = null
+  if (needsToken && fetchNetflixToken) {
+    try {
+      netflixTokenData = await fetchNetflixToken()
+    } catch (err) {
+      // Ignore if fetch fails, placeholder will be empty or raw
+    }
+  }
+
+  for (const match of matches) {
+    const placeholderKey = match[1]
+    let replacement = match[0]
+
     const keyParts = placeholderKey.split('.')
     const mainKey = keyParts[0]
 
-    // 1. Penanganan untuk metadata dinamis: $$metadata.[key]
     if (mainKey === 'metadata' && keyParts.length === 2) {
       const metaKey = keyParts[1]
       const metadataItem = profile.metadata?.find(
         item => item.key === metaKey,
       )
-      return metadataItem?.value ?? '' // Kembalikan value atau string kosong jika tidak ada
+      replacement = metadataItem?.value ?? ''
+    } else {
+      switch (placeholderKey.toLowerCase()) {
+        case 'email':
+          replacement = account.email.email
+          break
+        case 'password':
+          replacement = account.account_password
+          break
+        case 'expired':
+          replacement = account.batch_end_date ? formatDateIdStandard(account.batch_end_date) : ''
+          break
+        case 'product':
+          replacement = `${account.product_variant.product?.name || ''} ${account.product_variant.name}`.trim()
+          break
+        case 'profile':
+          replacement = profile.name
+          break
+        case 'pclink':
+          replacement = (netflixTokenData?.pcLink || '').replace(/^https?:\/\//, '')
+          break
+        case 'mobilelink':
+          replacement = (netflixTokenData?.mobileLink || '').replace(/^https?:\/\//, '')
+          break
+        case 'tvlink':
+          replacement = (netflixTokenData?.tvLink || '').replace(/^https?:\/\//, '')
+          break
+        case 'generallink':
+          replacement = (netflixTokenData?.generalLink || '').replace(/^https?:\/\//, '')
+          break
+      }
     }
 
-    // 2. Penanganan untuk placeholder statis
-    switch (placeholderKey) {
-      case 'email':
-        return account.email.email
-      case 'password':
-        return account.account_password
-      case 'expired':
-        if (!account.batch_end_date)
-          return ''
-        return formatDateIdStandard(account.batch_end_date)
-      case 'product':
-        return `${account.product_variant.product?.name || ''} ${account.product_variant.name}`.trim()
-      case 'profile':
-        return profile.name
-      default:
-        // Jika placeholder tidak dikenali, kembalikan placeholder aslinya
-        return match
-    }
-  })
+    result = result.replace(match[0], replacement)
+  }
+
+  return result
 }

@@ -366,6 +366,18 @@ export function ProductVariantForm({
                         nya. misal $$metadata.pin
                       </p>
                     </div>
+                    <div className="space-y-1">
+                      <p className="font-bold">$$pclink</p>
+                      <p className="text-neutral-400">link login otomatis untuk PC/Laptop (Netflix)</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="font-bold">$$mobilelink</p>
+                      <p className="text-neutral-400">link login otomatis untuk HP/Mobile (Netflix)</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="font-bold">$$tvlink</p>
+                      <p className="text-neutral-400">link login otomatis untuk TV (Netflix)</p>
+                    </div>
                   </CollapsibleContent>
                 </Collapsible>
               </div>

@@ -71,6 +71,7 @@ import {
   GetTransactionParamsSchema,
   TransactionServiceGenerator,
 } from '@/dashboard/services/transaction.service'
+import { AccountServiceGenerator } from '@/dashboard/services/account.service'
 
 export const Route = createFileRoute('/dashboard/transaction/')({
   component: RouteComponent,
@@ -84,6 +85,11 @@ function RouteComponent() {
   const queryClient = useQueryClient()
   const { showAlertDialog, hideAlertDialog } = useGlobalAlertDialog()
   const transactionService = TransactionServiceGenerator(
+    API_URL,
+    auth.tenant!.accessToken,
+    auth.tenant!.id,
+  )
+  const accountService = AccountServiceGenerator(
     API_URL,
     auth.tenant!.accessToken,
     auth.tenant!.id,
@@ -106,6 +112,7 @@ function RouteComponent() {
 
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction>()
   const [selectedDateRange, setSelectedDateRange] = useState<DateRange>()
+  const [netflixTokenCache, setNetflixTokenCache] = useState<Record<string, any>>({})
 
   const { data: transactions, isLoading: isFetchTransactionLoading } = useQuery(
     {
@@ -153,10 +160,19 @@ function RouteComponent() {
     setDialogTransactionUserOpen(true)
   }
 
-  const handleCopyTemplate = (profile: AccountProfile, account: Account) => {
-    const template = copyAccountTemplate(profile, account)
+  const handleCopyTemplate = async (profile: AccountProfile, account: Account) => {
+    const fetchToken = async () => {
+      if (netflixTokenCache[account.id]) {
+        return netflixTokenCache[account.id]
+      }
+      const data = await accountService.getNetflixToken(account.id)
+      setNetflixTokenCache(prev => ({ ...prev, [account.id]: data }))
+      return data
+    }
     
-    const fallbackCopyTextToClipboard = (text: string) => {
+    toast.promise(
+      copyAccountTemplate(profile, account, fetchToken).then((template) => {
+        const fallbackCopyTextToClipboard = (text: string) => {
       const textArea = document.createElement("textarea")
       textArea.value = text
       textArea.style.top = "0"
@@ -190,6 +206,13 @@ function RouteComponent() {
     } else {
       fallbackCopyTextToClipboard(template)
     }
+      }),
+      {
+        loading: 'Menyiapkan template...',
+        success: 'Selesai disiapkan',
+        error: 'Gagal menyiapkan template akun',
+      }
+    )
   }
 
   const handleSearchCustomer = useDebouncedCallback((value: string) => {

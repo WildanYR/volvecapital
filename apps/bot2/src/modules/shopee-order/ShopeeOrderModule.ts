@@ -419,9 +419,11 @@ export class ShopeeOrderModule extends BaseModule {
                 `${orderId}: gagal generate akun untuk item ${(acc as FailedAccountUser).product_name}. status: ${status}`,
               );
             } else {
-              const template = copyAccountTemplate(
+              const template = await copyAccountTemplate(
                 (acc as AccountUser).profile,
                 (acc as AccountUser).account,
+                this.apiBaseUrl,
+                this.authCredentials
               );
               if (template) messagesToSend.push(template);
             }
