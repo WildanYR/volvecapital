@@ -304,6 +304,31 @@ function RouteComponent() {
     toast.info('PIN terkirim ke bot. Menunggu verifikasi...')
   }
 
+  const handleCloseTvPinModal = () => {
+    showAlertDialog({
+      title: 'Batalkan Login TV?',
+      description: 'Anda yakin ingin membatalkan proses ini?',
+      confirmText: 'Ya, Batalkan',
+      cancelText: 'Tidak',
+      variant: 'destructive',
+      onConfirm: () => {
+        if (socket && currentTvTask) {
+          socket.emit('dashboard-cancel-tv-pin', {
+            taskId: currentTvTask.taskId,
+            botSocketId: currentTvTask.botSocketId,
+          })
+        }
+        setTvPinModalOpen(false)
+        setCurrentTvTask(null)
+        setTvPinError(null)
+        toast.info('Login TV dibatalkan.')
+        hideAlertDialog()
+      },
+      onCancel: () => hideAlertDialog(),
+    })
+  }
+
+
   const { data: accounts, refetch, isLoading: isFetchAccountLoading } = useQuery({
     queryKey: ['account', { ...searchParam, product_slug: slug }],
     queryFn: ({ signal }) => {
@@ -2420,7 +2445,7 @@ function RouteComponent() {
 
       <TvPinModal
         isOpen={tvPinModalOpen}
-        onClose={() => setTvPinModalOpen(false)}
+        onClose={handleCloseTvPinModal}
         onSendPin={handleSendTvPin}
         isSending={false} // Diatur oleh socket flow
         errorMessage={tvPinError}
