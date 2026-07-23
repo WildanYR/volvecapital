@@ -70,20 +70,25 @@ export class VcAuthGuard implements CanActivate {
     }
 
     let tenant: Tenant | null = null;
+    let session: any = null;
+
     if (tokenPayload.role !== 'ADMIN') {
+      const transaction = await this.postgresProvider.transaction();
       try {
+        await this.postgresProvider.setSchema('master', transaction);
+
         tenant = await this.tenantRepository.findOne({
           where: { id: tokenPayload.tenant_id },
-          ...({ searchPath: 'master' } as any),
+          transaction,
         });
 
         if (!tokenPayload.session_id) {
           throw new UnauthorizedException('Session is legacy or invalid');
         }
 
-        const session = await this.deviceSessionRepository.findOne({
+        session = await this.deviceSessionRepository.findOne({
           where: { id: tokenPayload.session_id },
-          ...({ searchPath: 'master' } as any),
+          transaction,
         });
 
         if (!session || session.is_revoked) {
@@ -92,10 +97,13 @@ export class VcAuthGuard implements CanActivate {
 
         const now = new Date();
         if (now.getTime() - session.last_active_at.getTime() > 60000) {
-          await session.update({ last_active_at: now });
+          await session.update({ last_active_at: now }, { transaction });
         }
+
+        await transaction.commit();
       }
       catch (error) {
+        await transaction.rollback();
         this.logger.error(
           `Get Tenant from DB Error: ${(error as Error).message}`,
           (error as Error).stack,

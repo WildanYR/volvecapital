@@ -44,6 +44,19 @@ export class ApiExceptionFilter implements ExceptionFilter {
         (exception as Error).stack,
         'AppException',
       );
+
+      // Auto-restart safeguard: if Sequelize connection timeout occurs, forcefully exit so PM2 can restart
+      if (
+        exception?.name === 'SequelizeConnectionAcquireTimeoutError' ||
+        errorMessage.includes('SequelizeConnectionAcquireTimeoutError')
+      ) {
+        this.logger.error(
+          'CRITICAL: Database connection timeout detected! Exiting process to trigger PM2 auto-restart...',
+          '',
+          'AppException',
+        );
+        setTimeout(() => process.exit(1), 1000);
+      }
     }
     const response: Response = ctx.getResponse();
     httpAdapter.reply(
