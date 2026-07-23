@@ -83,22 +83,13 @@ export class AppLoggerService implements NestLoggerService {
   private async saveLogToDb(level: string, context: string, message: string, stack?: string) {
     const strStack = this.convertToString(stack);
     try {
-      const transaction = await this.postgresProvider.transaction();
-      try {
-        await this.postgresProvider.setSchema('master', transaction);
-        await this.syslogRepository.create({
-          level,
-          context,
-          message,
-          stack: strStack,
-          created_at: new Date(),
-        }, { transaction });
-        await transaction.commit();
-      }
-      catch (error) {
-        await transaction.rollback();
-        this.logger.log({ level: 'error', message: (error as Error).message, context: 'SaveLogToDb' });
-      }
+      await this.syslogRepository.schema('master').create({
+        level,
+        context,
+        message,
+        stack: strStack,
+        created_at: new Date(),
+      });
     } catch (error) {
       this.logger.log({ level: 'error', message: 'Failed to acquire DB connection for logging: ' + (error as Error).message, context: 'SaveLogToDb' });
     }

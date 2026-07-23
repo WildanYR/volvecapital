@@ -71,12 +71,9 @@ export class VcAuthGuard implements CanActivate {
 
     let tenant: Tenant | null = null;
     if (tokenPayload.role !== 'ADMIN') {
-      const transaction = await this.postgresProvider.transaction();
       try {
-        await this.postgresProvider.setSchema('master', transaction);
         tenant = await this.tenantRepository.findOne({
           where: { id: tokenPayload.tenant_id },
-          transaction,
         });
 
         if (!tokenPayload.session_id) {
@@ -85,7 +82,6 @@ export class VcAuthGuard implements CanActivate {
 
         const session = await this.deviceSessionRepository.findOne({
           where: { id: tokenPayload.session_id },
-          transaction,
         });
 
         if (!session || session.is_revoked) {
@@ -94,10 +90,8 @@ export class VcAuthGuard implements CanActivate {
 
         const now = new Date();
         if (now.getTime() - session.last_active_at.getTime() > 60000) {
-          await session.update({ last_active_at: now }, { transaction });
+          await session.update({ last_active_at: now });
         }
-
-        await transaction.commit();
       }
       catch (error) {
         this.logger.error(
@@ -105,7 +99,6 @@ export class VcAuthGuard implements CanActivate {
           (error as Error).stack,
           'VCAuthGuard',
         );
-        await transaction.rollback();
         if (error instanceof UnauthorizedException) {
           throw error;
         }

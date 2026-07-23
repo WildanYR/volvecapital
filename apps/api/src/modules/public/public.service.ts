@@ -1132,11 +1132,11 @@ export class PublicService {
 
       const variants = await this.productVariantRepository.findAll({ 
         include: [{ model: Product, as: 'product' }],
-        transaction 
+        transaction, 
       });
       
-      const result = await Promise.all(
-        variants.map(async (v) => {
+      const result: any[] = [];
+      for (const v of variants) {
           const accounts = await this.accountRepository.findAll({
             where: {
               product_variant_id: v.id,
@@ -1156,21 +1156,20 @@ export class PublicService {
                 where: { account_profile_id: prof.id, status: 'active' },
                 transaction,
               });
-              availableSlots += Math.max(0, prof.max_user - activeUsers);
+              availableSlots += Math.max(0, prof.max_user - Number(activeUsers));
             }
           }
 
           const threshold = v.low_stock_threshold ?? globalThreshold;
 
-          return {
+          result.push({
             product_variant_id: v.id,
             product_name: (v as any).product?.name || 'Unknown',
             variant_name: v.name,
             stock: availableSlots,
             low_stock: availableSlots <= threshold,
-          };
-        }),
-      );
+          });
+      }
 
       await transaction.commit();
       return result;
