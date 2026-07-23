@@ -310,7 +310,6 @@ function RouteComponent() {
       description: 'Anda yakin ingin membatalkan proses ini?',
       confirmText: 'Ya, Batalkan',
       cancelText: 'Tidak',
-      variant: 'destructive',
       onConfirm: () => {
         if (socket && currentTvTask) {
           socket.emit('dashboard-cancel-tv-pin', {
