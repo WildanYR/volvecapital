@@ -323,7 +323,6 @@ function RouteComponent() {
         toast.info('Login TV dibatalkan.')
         hideAlertDialog()
       },
-      onCancel: () => hideAlertDialog(),
     })
   }
 
