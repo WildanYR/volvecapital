@@ -160,6 +160,14 @@ export class NetflixAutoReloadService {
         await getNextButton(page).click();
         await this.ctx.sleep(2000);
 
+        // Cek apakah ada link "Ubah" plan sebelum bisa pilih plan
+        const isChangePlanVisible = await getChangePlanLink(page).isVisible().catch(() => false);
+        if (isChangePlanVisible) {
+          this.ctx.logger.info(`[AutoReload][${email}] Menemukan link Ubah Plan, melakukan klik...`);
+          await getChangePlanLink(page).click();
+          await this.ctx.sleep(2000);
+        }
+
         // STEP 6: Pilih plan
         const isMobilePlan = /harian|mingguan/i.test(variant_name);
         const planLabel = isMobilePlan ? getMobilePlanLabel(page) : getStandardPlanLabel(page);
@@ -174,11 +182,20 @@ export class NetflixAutoReloadService {
         await getNextPlanButton(page).click();
         await this.ctx.sleep(2000);
 
-        // STEP 8: Halaman "Yang terakhir" — klik Berikutnya
-        this.ctx.logger.info(`[AutoReload][${email}] Menunggu halaman Yang Terakhir...`);
-        await getLastStepHeading(page).waitFor({ state: 'visible', timeout: 15000 });
-        await getLastStepNextButton(page).click();
-        await this.ctx.sleep(2000);
+        // STEP 8: Halaman "Yang terakhir" (Opsional, kadang langsung ke checkout)
+        this.ctx.logger.info(`[AutoReload][${email}] Mengecek halaman Yang Terakhir atau langsung Checkout...`);
+        const step8Or9 = await Promise.race([
+          getLastStepHeading(page).waitFor({ state: 'visible', timeout: 10000 }).then(() => 'step8'),
+          getLegalCheckbox(page).waitFor({ state: 'visible', timeout: 10000 }).then(() => 'step9')
+        ]).catch(() => null);
+
+        if (step8Or9 === 'step8') {
+          this.ctx.logger.info(`[AutoReload][${email}] Menemukan halaman Yang Terakhir, klik Berikutnya...`);
+          await getLastStepNextButton(page).click();
+          await this.ctx.sleep(2000);
+        } else {
+          this.ctx.logger.info(`[AutoReload][${email}] Halaman Yang Terakhir dilewati (langsung ke checkout).`);
+        }
       } else {
         throw new Error(`[AutoReload] Gagal mendeteksi halaman selanjutnya setelah klik hero card.`);
       }
