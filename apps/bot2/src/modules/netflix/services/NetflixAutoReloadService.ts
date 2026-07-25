@@ -23,6 +23,9 @@ import {
   getLegalCheckbox,
   getConfirmStartButton,
   getOrderFinalButton,
+  getChangePlanLink,
+  getCurrentPlanText,
+  getChangePlanCheckoutLink,
 } from "../locators/reload.js";
 
 // Import for handleEmailResetFlow if we use fallback reset
@@ -128,11 +131,30 @@ export class NetflixAutoReloadService {
       this.ctx.logger.info(`[AutoReload][${email}] Mendeteksi halaman selanjutnya...`);
       const nextStep = await Promise.race([
         getWelcomeBackHeading(page).waitFor({ state: 'visible', timeout: 15000 }).then(() => 'step5' as const),
+        getChangePlanLink(page).waitFor({ state: 'visible', timeout: 15000 }).then(() => 'newUI' as const),
         getLegalCheckbox(page).waitFor({ state: 'visible', timeout: 15000 }).then(() => 'step9' as const),
       ]).catch(() => 'timeout' as const);
 
       if (nextStep === 'step9') {
         this.ctx.logger.info(`[AutoReload][${email}] Terdeteksi langsung di halaman checkout, melewati Step 5-8.`);
+      } else if (nextStep === 'newUI') {
+        this.ctx.logger.info(`[AutoReload][${email}] Terdeteksi UI baru (ada link Ubah Plan).`);
+        await getChangePlanLink(page).click();
+        await this.ctx.sleep(2000);
+
+        // STEP 6: Pilih plan
+        const isMobilePlan = /harian|mingguan/i.test(variant_name);
+        const planLabel = isMobilePlan ? getMobilePlanLabel(page) : getStandardPlanLabel(page);
+        const planName = isMobilePlan ? `Ponsel (${PLAN_MOBILE_ID})` : `Standar (${PLAN_STANDARD_ID})`;
+        this.ctx.logger.info(`[AutoReload][${email}] Memilih plan: ${planName}`);
+        await planLabel.waitFor({ state: 'visible', timeout: 15000 });
+        await planLabel.click();
+        await this.ctx.sleep(1000);
+
+        // STEP 7: Klik Berikutnya setelah pilih plan
+        await getNextPlanButton(page).waitFor({ state: 'visible', timeout: 10000 });
+        await getNextPlanButton(page).click();
+        await this.ctx.sleep(2000);
       } else if (nextStep === 'step5') {
         this.ctx.logger.info(`[AutoReload][${email}] Menunggu halaman Selamat Datang Kembali...`);
         await getNextButton(page).click();
@@ -162,6 +184,54 @@ export class NetflixAutoReloadService {
       }
 
       // STEP 9: Centang checkbox legal
+      await this.ctx.sleep(2000); // Tunggu sebentar untuk memastikan DOM selesai render
+      this.ctx.logger.info(`[AutoReload][${email}] Mengecek plan sebelum centang checkbox legal...`);
+      
+      const isMobileCheck = /harian|mingguan/i.test(variant_name);
+      const expectedPlanPattern = isMobileCheck ? /ponsel|mobile/i : /standar|standard/i;
+      
+      const currentPlanElement = getCurrentPlanText(page);
+      const planVisible = await currentPlanElement.first().isVisible({ timeout: 5000 }).catch(() => false);
+      
+      if (planVisible) {
+        const planText = await currentPlanElement.first().innerText();
+        this.ctx.logger.info(`[AutoReload][${email}] Plan yang terdeteksi di checkout: ${planText}`);
+        
+        if (!expectedPlanPattern.test(planText)) {
+          this.ctx.logger.warn(`[AutoReload][${email}] Plan tidak sesuai kriteria. Diharapkan: ${isMobileCheck ? 'Ponsel' : 'Standar'}. Mengklik ubah...`);
+          
+          const changeBtn = getChangePlanCheckoutLink(page);
+          await changeBtn.first().waitFor({ state: 'visible', timeout: 5000 });
+          await changeBtn.first().click();
+          await this.ctx.sleep(2000);
+          
+          // Pilih plan baru
+          const planLabel = isMobileCheck ? getMobilePlanLabel(page) : getStandardPlanLabel(page);
+          const planName = isMobileCheck ? `Ponsel (${PLAN_MOBILE_ID})` : `Standar (${PLAN_STANDARD_ID})`;
+          this.ctx.logger.info(`[AutoReload][${email}] Memilih plan: ${planName}`);
+          await planLabel.waitFor({ state: 'visible', timeout: 15000 });
+          await planLabel.click();
+          await this.ctx.sleep(1000);
+
+          // Klik Berikutnya
+          await getNextPlanButton(page).waitFor({ state: 'visible', timeout: 10000 });
+          await getNextPlanButton(page).click();
+          await this.ctx.sleep(2000);
+          
+          // Cek apakah masuk ke halaman Yang Terakhir (Step 8)
+          const isStep8 = await getLastStepHeading(page).isVisible({ timeout: 5000 }).catch(() => false);
+          if (isStep8) {
+             this.ctx.logger.info(`[AutoReload][${email}] Halaman Yang Terakhir muncul, mengklik Berikutnya...`);
+             await getLastStepNextButton(page).click();
+             await this.ctx.sleep(2000);
+          }
+        } else {
+          this.ctx.logger.info(`[AutoReload][${email}] Plan sudah sesuai kriteria.`);
+        }
+      } else {
+        this.ctx.logger.warn(`[AutoReload][${email}] Gagal mendeteksi teks plan di checkout, melanjutkan...`);
+      }
+
       this.ctx.logger.info(`[AutoReload][${email}] Mencentang checkbox legal...`);
       const checkbox = getLegalCheckbox(page);
       await checkbox.waitFor({ state: 'visible', timeout: 10000 });

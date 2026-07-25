@@ -36,6 +36,10 @@ export const getMobilePlanLabel = (page: any) =>
 export const getStandardPlanLabel = (page: any) =>
   page.locator('[data-uia="plan-selection+option+3088"]');
 
+// Langkah 6 (New UI): Link "Ubah" untuk mengubah plan
+export const getChangePlanLink = (page: any) =>
+  page.locator('[data-uia="change-plan-link"]');
+
 // Langkah 7: Tombol "Berikutnya" setelah pilih plan
 export const getNextPlanButton = (page: any) =>
   page.locator('[data-uia="cta-plan-selection"]');
@@ -53,6 +57,15 @@ export const getLastStepNextButton = (page: any) =>
 // Langkah 9: Checkbox persetujuan hukum
 export const getLegalCheckbox = (page: any) =>
   page.locator('[data-uia="legal-checkbox"]');
+
+// Langkah 9: Teks plan saat ini di halaman checkout
+export const getCurrentPlanText = (page: any) =>
+  page.locator('p').filter({ hasText: /Ponsel|Mobile|Standar|Standard|Premium|Dasar|Basic/i });
+
+// Langkah 9: Link "Ubah" plan di halaman checkout
+export const getChangePlanCheckoutLink = (page: any) =>
+  page.locator('a, p, [data-uia="change-plan-link"]').filter({ hasText: /^Ubah$|^Change$/i });
+
 
 // Langkah 11: Tombol "Mulai Keanggotaan" (Confirm Start)
 export const getConfirmStartButton = (page: any) =>
