@@ -96,6 +96,17 @@ export function CheckoutModal({ isOpen, onClose, product, variant, initialData }
       return
     }
 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      setIsShaking(true)
+      toast.error('Mohon isi email dengan benar', {
+        position: 'top-center',
+        className: 'font-bold uppercase text-[10px] tracking-widest'
+      })
+      setTimeout(() => setIsShaking(false), 500)
+      return
+    }
+
     if (!formData.whatsapp.startsWith('08') && !formData.whatsapp.startsWith('62')) {
       setIsShaking(true)
       toast.error('Nomor WhatsApp harus diawali 08 atau 62', {

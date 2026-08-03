@@ -52,6 +52,7 @@ interface EmailPortalProps {
 export function EmailPortal({ token }: EmailPortalProps) {
   const [countdown, setCountdown] = useState(30)
   const [isNetflixLinksOpen, setIsNetflixLinksOpen] = useState(false)
+  const [isOtpInboxOpen, setIsOtpInboxOpen] = useState(true)
 
   const { data, isLoading, isError, error, refetch, isFetching } = useQuery<PortalData>({
     queryKey: ['portal-data', token],
@@ -209,7 +210,7 @@ export function EmailPortal({ token }: EmailPortalProps) {
                 <KeyRound className="size-5 text-primary" />
               </div>
               <div className="text-left">
-                <h3 className="text-sm font-black text-foreground">Login Tanpa Mengetik Password</h3>
+                <h3 className="text-sm font-black text-foreground">Tombol Akses Login Instan</h3>
                 <p className="text-[10px] text-muted-foreground font-medium">Pilih perangkat Anda dan klik Buka untuk login otomatis</p>
               </div>
             </div>
@@ -298,9 +299,12 @@ export function EmailPortal({ token }: EmailPortalProps) {
         </div>
       )}
 
-      <div className="flex items-center justify-between">
+      <button 
+        onClick={() => setIsOtpInboxOpen(!isOtpInboxOpen)}
+        className="w-full flex items-center justify-between py-2 mb-2 group"
+      >
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-primary/10 rounded-lg">
+          <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
             <Mail className="size-5 text-primary" />
           </div>
           <h3 className="text-xl font-black text-foreground tracking-tight">Email OTP Inbox</h3>
@@ -314,9 +318,21 @@ export function EmailPortal({ token }: EmailPortalProps) {
             <div className="size-1.5 bg-primary rounded-full animate-pulse" />
             <span className="text-[10px] font-black uppercase tracking-widest">Real-time</span>
           </div>
+          <div className="p-2 bg-muted/50 rounded-lg group-hover:bg-muted transition-colors">
+            {isOtpInboxOpen ? <ChevronUp className="size-5 text-muted-foreground" /> : <ChevronDown className="size-5 text-muted-foreground" />}
+          </div>
         </div>
-      </div>
+      </button>
 
+      <AnimatePresence>
+        {isOtpInboxOpen && (
+          <motion.div 
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="space-y-4 pt-2">
 
       {/* Info Warning */}
       <div className="bg-destructive/10 border border-destructive/20 rounded-2xl p-5 flex items-start gap-4">
@@ -402,6 +418,10 @@ export function EmailPortal({ token }: EmailPortalProps) {
           </AnimatePresence>
         )}
       </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="flex items-center justify-center gap-2 pt-4 opacity-30 grayscale pointer-events-none">
         <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest italic">Powered by Volve Engine v2</span>

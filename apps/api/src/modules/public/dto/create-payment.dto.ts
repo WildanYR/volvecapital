@@ -9,7 +9,7 @@ export class CreatePaymentDto {
   @IsNotEmpty()
   buyer_name: string;
 
-  @IsEmail()
+  @IsEmail({}, { message: 'mohon isi email dengan benar' })
   @IsNotEmpty()
   buyer_email: string;
 

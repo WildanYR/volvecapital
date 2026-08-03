@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { 
   Activity, 
   AlertTriangle, 
@@ -739,7 +739,7 @@ function RouteComponent() {
                 <div className="relative w-full">
                   <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
                   <Input 
-                    placeholder="Cari voucher/nama/tlp..." 
+                    placeholder="Cari voucher/nama/tlp/email..." 
                     className="pl-9 h-9 text-xs w-full"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
@@ -937,7 +937,16 @@ function RouteComponent() {
                                   </div>
                                   <div className="flex-1">
                                     <p className="text-[10px] text-muted-foreground font-bold uppercase">Email Akun</p>
-                                    <p className="text-sm font-bold">{v.transaction_item.user.account?.email?.email}</p>
+                                    <p className="text-sm font-bold">
+                                      <Link 
+                                        to="/dashboard/account/$slug"
+                                        params={{ slug: v.product_variant?.product?.slug || 'unknown' }}
+                                        search={{ email: v.transaction_item.user.account?.email?.email, page: 1 }}
+                                        className="hover:underline hover:text-emerald-500 transition-colors"
+                                      >
+                                        {v.transaction_item.user.account?.email?.email}
+                                      </Link>
+                                    </p>
                                   </div>
                                 </div>
                                 <div className="flex items-center gap-3">

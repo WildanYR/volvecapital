@@ -1250,14 +1250,14 @@ function RouteComponent() {
               {variant.name}
             </Button>
           ))}
-          {searchParam.product_variant_id && (
-            <div className="ml-auto">
-              <AccountLabelManager 
-                productVariantId={searchParam.product_variant_id}
-                productVariantName={product?.variants?.find(v => v.id === searchParam.product_variant_id)?.name || ''}
-              />
-            </div>
-          )}
+          <div className="ml-auto">
+            <AccountLabelManager 
+              productVariantId={searchParam.product_variant_id || product?.variants?.[0]?.id || ''}
+              productVariantName={searchParam.product_variant_id 
+                ? (product?.variants?.find(v => v.id === searchParam.product_variant_id)?.name || '')
+                : (product?.variants?.[0]?.name || '')}
+            />
+          </div>
         </div>
         {(searchParam as any).label_ids && (
           <div className="flex items-center gap-2 mb-2">
@@ -1575,31 +1575,29 @@ function RouteComponent() {
                       className={selectedIds.includes(account.id) ? 'border-red-600 bg-red-600/5 transition-all duration-300' : 'transition-all duration-300'}
                     >
                       <CardHeader className="relative">
-                        <div className="absolute top-4 right-14">
+                        <CardTitle className="flex items-center gap-2 pr-2">
+                          {account.pinned
+                            ? (
+                                <Pin className="size-5 text-red-600" />
+                              )
+                            : null}
+                          <p className="truncate leading-normal">{account.email.email}</p>
+                        </CardTitle>
+                        <CardDescription>
+                          <p>{account.account_password}</p>
+                        </CardDescription>
+                        <CardAction className="flex items-center gap-2">
                           <Checkbox 
                             checked={selectedIds.includes(account.id)}
                             onCheckedChange={() => toggleSelect(account.id)}
                             className="size-5 border-2"
                           />
-                        </div>
-                        <CardTitle className="flex gap-2 pr-12">
-                          {account.pinned
-                            ? (
-                                <Pin className="size-6 text-red-600" />
-                              )
-                            : null}
-                          <p className="truncate leading-normal pb-[2px] pt-1">{account.email.email}</p>
-                        </CardTitle>
-                        <CardDescription>
-                          <p>{account.account_password}</p>
-                        </CardDescription>
-                        <CardAction>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="cursor-pointer"
+                                className="cursor-pointer -mr-2"
                               >
                                 <EllipsisVertical className="size-4" />
                               </Button>
