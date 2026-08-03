@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, ShieldCheck, Loader2, AlertCircle, Shield } from 'lucide-react'
+import { X, ShieldCheck, Loader2, AlertCircle, Shield, ReceiptText } from 'lucide-react'
 import { Product, ProductVariant } from '@/hooks/use-products'
 import { api } from '@/lib/api'
 import { QrisModal } from './qris-modal'
@@ -250,15 +250,19 @@ export function CheckoutModal({ isOpen, onClose, product, variant, initialData }
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            className="relative bg-background w-full max-w-6xl rounded-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[95vh]"
+            className={`relative bg-background w-full rounded-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[95vh] transition-all duration-300 ${step === 1 ? 'max-w-6xl' : 'max-w-md'}`}
           >
             <div className="p-6 md:px-12 border-b border-border flex items-center justify-between sticky top-0 bg-background z-20 rounded-t-[2rem]">
               <div className="flex items-center gap-3">
                 <div className="bg-primary p-2 rounded-lg">
-                  <ShieldCheck className="size-5 text-primary-foreground" />
+                  {step === 1 ? (
+                    <ReceiptText className="size-5 text-primary-foreground" />
+                  ) : (
+                    <ShieldCheck className="size-5 text-primary-foreground" />
+                  )}
                 </div>
-                <h2 className="text-xl md:text-2xl font-black text-foreground">
-                  {step === 1 ? 'Detail Pesanan' : 'Konfirmasi Pembayaran'}
+                <h2 className="text-xl font-semibold text-foreground">
+                  {step === 1 ? 'Detail Pesanan' : 'Pembayaran Aman'}
                 </h2>
               </div>
               <button onClick={handleClose} className="text-slate-400 hover:text-foreground transition-colors p-2">
@@ -282,16 +286,16 @@ export function CheckoutModal({ isOpen, onClose, product, variant, initialData }
                         className="lg:col-span-3 space-y-6"
                       >
                         <div className="space-y-8">
-                          <h3 className="text-2xl font-black text-foreground">Data Pemesan</h3>
+                          <h3 className="text-xl font-medium text-foreground">Data Pemesan</h3>
                           
                           <div className="space-y-4">
                             <div className="space-y-2">
-                              <label className="text-lg font-bold text-slate-700 ml-1">
+                              <label className="text-sm font-semibold text-slate-700 ml-1">
                                 Nama Lengkap
                               </label>
                               <input 
                                 type="text"
-                                className="w-full bg-background border-2 border-border rounded-2xl py-5 px-6 text-foreground focus:outline-none focus:border-primary focus:bg-background transition-all font-bold placeholder:text-slate-300 text-xl"
+                                className="w-full bg-background border-2 border-border rounded-2xl py-4 px-5 text-foreground focus:outline-none focus:border-primary focus:bg-background transition-all font-medium placeholder:text-slate-400 text-base"
                                 placeholder="Masukkan nama Anda"
                                 value={formData.name}
                                 onChange={e => setFormData({...formData, name: e.target.value})}
@@ -299,25 +303,25 @@ export function CheckoutModal({ isOpen, onClose, product, variant, initialData }
                             </div>
 
                             <div className="space-y-2">
-                              <label className="text-lg font-bold text-slate-700 ml-1">
+                              <label className="text-sm font-semibold text-slate-700 ml-1">
                                 Alamat Email
                               </label>
                               <input 
                                 type="email"
-                                className="w-full bg-background border-2 border-border rounded-2xl py-5 px-6 text-foreground focus:outline-none focus:border-primary focus:bg-background transition-all font-bold placeholder:text-slate-300 text-xl"
-                                placeholder="email@contoh.com"
+                                className="w-full bg-background border-2 border-border rounded-2xl py-4 px-5 text-foreground focus:outline-none focus:border-primary focus:bg-background transition-all font-medium placeholder:text-slate-400 text-base"
+                                placeholder="email@contoh.com (Untuk kirim kode)"
                                 value={formData.email}
                                 onChange={e => setFormData({...formData, email: e.target.value})}
                               />
                             </div>
 
                             <div className="space-y-2">
-                              <label className="text-lg font-bold text-slate-700 ml-1">
+                              <label className="text-sm font-semibold text-slate-700 ml-1">
                                 Nomor WhatsApp
                               </label>
                               <input 
                                 type="tel"
-                                className="w-full bg-background border-2 border-border rounded-2xl py-5 px-6 text-foreground focus:outline-none focus:border-primary focus:bg-background transition-all font-bold placeholder:text-slate-300 text-xl"
+                                className="w-full bg-background border-2 border-border rounded-2xl py-4 px-5 text-foreground focus:outline-none focus:border-primary focus:bg-background transition-all font-medium placeholder:text-slate-400 text-base"
                                 placeholder="0812..."
                                 value={formData.whatsapp}
                                 onChange={e => setFormData({...formData, whatsapp: e.target.value.replace(/[^0-9]/g, '')})}
@@ -330,7 +334,7 @@ export function CheckoutModal({ isOpen, onClose, product, variant, initialData }
                           <div className="bg-primary p-1.5 rounded-full shrink-0">
                             <AlertCircle className="size-3.5 text-primary-foreground" />
                           </div>
-                          <p className="text-xs text-primary font-bold leading-relaxed">
+                          <p className="text-xs text-primary font-medium leading-relaxed">
                             Metode pembayaran QRIS (Dukungan Semua Bank & E-Wallet) tersedia.
                           </p>
                         </div>
@@ -338,7 +342,7 @@ export function CheckoutModal({ isOpen, onClose, product, variant, initialData }
 
                       <div className="lg:col-span-2">
                         <div className="bg-muted/50/50 rounded-2xl p-6 border border-border h-full flex flex-col">
-                          <h4 className="text-lg font-black text-foreground mb-6">Ringkasan</h4>
+                          <h4 className="text-lg font-semibold text-foreground mb-6">Ringkasan</h4>
                           
                           <div className="bg-background rounded-xl p-4 border border-border shadow-sm mb-6">
                             <div className="flex items-center gap-5">
@@ -353,22 +357,22 @@ export function CheckoutModal({ isOpen, onClose, product, variant, initialData }
                           </div>
 
                           <div className="space-y-4 flex-grow">
-                            <div className="flex justify-between text-base font-bold text-muted-foreground">
+                            <div className="flex justify-between text-base font-medium text-muted-foreground">
                               <span>Harga Paket</span>
                               <span className="text-foreground">{formatCurrency(variant?.price || 0)}</span>
                             </div>
-                            <div className="flex justify-between text-base font-bold text-muted-foreground">
+                            <div className="flex justify-between text-base font-medium text-muted-foreground">
                               <span>Biaya Admin</span>
-                              <span className="text-accent-foreground font-black">GRATIS</span>
+                              <span className="text-accent-foreground font-medium">GRATIS</span>
                             </div>
 
                             <div className="pt-6 border-t border-border">
-                              <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Punya Kode Promo?</p>
+                              <p className="text-xs font-medium text-slate-400 uppercase tracking-widest mb-3">Punya Kode Promo?</p>
                               <div className="flex items-stretch border-2 border-border rounded-2xl overflow-hidden focus-within:border-primary transition-all bg-background">
                                 <input 
                                   type="text" 
                                   placeholder="Masukkan kode..."
-                                  className="flex-1 min-w-0 px-5 py-4 text-sm font-black focus:outline-none uppercase placeholder:text-slate-300"
+                                  className="flex-1 min-w-0 px-5 py-4 text-sm font-medium focus:outline-none uppercase placeholder:text-slate-300"
                                   value={promoCode}
                                   onChange={(e) => {
                                     setPromoCode(e.target.value)
@@ -379,7 +383,7 @@ export function CheckoutModal({ isOpen, onClose, product, variant, initialData }
                                 <button 
                                   onClick={handleValidatePromo}
                                   disabled={isPromoLoading || !promoCode || !!promoData}
-                                  className="bg-primary text-primary-foreground px-8 font-black hover:bg-primary/90 transition-colors disabled:opacity-50 shrink-0 flex items-center justify-center border-l-2 border-border text-xs"
+                                  className="bg-primary text-primary-foreground px-8 font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 shrink-0 flex items-center justify-center border-l-2 border-border text-xs"
                                 >
                                   {isPromoLoading ? <Loader2 className="size-4 animate-spin" /> : (promoData ? 'OK' : 'Gunakan')}
                                 </button>
@@ -391,14 +395,14 @@ export function CheckoutModal({ isOpen, onClose, product, variant, initialData }
 
                             <div className="pt-6 border-t-2 border-border border-dashed space-y-4">
                               {promoData && (
-                                <div className="flex justify-between text-sm font-bold text-muted-foreground">
+                                <div className="flex justify-between text-sm font-medium text-muted-foreground">
                                   <span>Potongan Promo</span>
                                   <span className="text-red-500">-{formatCurrency(promoData.discount_amount)}</span>
                                 </div>
                               )}
                               <div className="flex justify-between items-center py-2">
-                                <span className="text-lg font-bold text-slate-400">Total Bayar</span>
-                                <span className="text-3xl font-black text-primary tracking-tight">
+                                <span className="text-lg font-medium text-slate-400">Total Bayar</span>
+                                <span className="text-3xl font-bold text-primary tracking-tight">
                                   {formatCurrency((variant?.price || 0) - (promoData?.discount_amount || 0))}
                                 </span>
                               </div>
@@ -422,7 +426,7 @@ export function CheckoutModal({ isOpen, onClose, product, variant, initialData }
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.95 }}
-                    className="p-8 md:p-16 flex flex-col items-center text-center space-y-10"
+                    className="p-8 md:p-10 flex flex-col items-center text-center space-y-8"
                   >
                     <div className="relative">
                       <div className="absolute inset-0 bg-primary/100/20 blur-[40px] rounded-full animate-pulse" />
@@ -432,15 +436,15 @@ export function CheckoutModal({ isOpen, onClose, product, variant, initialData }
                     </div>
 
                     <div className="max-w-md space-y-4">
-                      <h3 className="text-3xl font-black text-foreground tracking-tight">Konfirmasi Pembayaran</h3>
-                      <p className="text-muted-foreground font-medium leading-relaxed">
-                        Segera selesaikan pembayaran untuk mengamankan pesanan Anda.
+                      <h3 className="text-2xl font-black text-foreground tracking-tight">Pembayaran Aman</h3>
+                      <p className="text-muted-foreground text-sm font-medium leading-relaxed">
+                        Anda akan dialihkan ke DOKU Gateway untuk menyelesaikan pembayaran secara aman.
                       </p>
                     </div>
 
-                    <div className="w-full max-w-sm bg-muted/50 border border-border rounded-3xl p-8 space-y-2">
+                    <div className="w-full max-w-sm bg-muted/30 border border-border rounded-2xl p-6 space-y-2">
                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Tagihan</p>
-                      <p className="text-4xl font-black text-foreground tracking-tighter">
+                      <p className="text-3xl font-black text-foreground tracking-tighter">
                         {formatCurrency((variant?.price || 0) - (promoData?.discount_amount || 0))}
                       </p>
                     </div>
@@ -449,9 +453,9 @@ export function CheckoutModal({ isOpen, onClose, product, variant, initialData }
                       <button 
                         onClick={handleFinalCheckout}
                         disabled={isLoading}
-                        className="w-full py-5 bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-2xl flex items-center justify-center gap-3 shadow-xl transition-all active:scale-95 disabled:opacity-50"
+                        className="w-full py-4 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-sm rounded-xl flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95 disabled:opacity-50"
                       >
-                        {isLoading ? <Loader2 className="size-5 animate-spin" /> : 'Selesaikan Pembayaran'}
+                        {isLoading ? <Loader2 className="size-5 animate-spin" /> : 'Lanjutkan'}
                       </button>
                       <button 
                         onClick={() => setStep(1)}

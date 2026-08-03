@@ -212,9 +212,9 @@ export default function RedeemPage() {
                         )}>
                           {showEmail && (
                             <div className="space-y-3">
-                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-1">Email / Username</label>
+                              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em] ml-1">Email / Username</label>
                               <div className="flex items-center justify-between bg-background p-4 rounded-2xl border border-border group transition-all hover:border-primary">
-                                <span className="text-base font-mono text-foreground font-bold break-all mr-4">{result.account.email}</span>
+                                <span className="text-base font-mono text-foreground font-medium break-all mr-4">{result.account.email}</span>
                                 <button onClick={() => copyToClipboard(result.account.email)} className="text-primary hover:text-[#ef4444] transition-colors shrink-0 p-1">
                                   <Copy className="size-5" />
                                 </button>
@@ -223,9 +223,9 @@ export default function RedeemPage() {
                           )}
                           {showPassword && (
                             <div className="space-y-3">
-                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-1">Password</label>
+                              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em] ml-1">Password</label>
                               <div className="flex items-center justify-between bg-background p-4 rounded-2xl border border-border group transition-all hover:border-primary">
-                                <span className="text-base font-mono text-foreground font-bold break-all mr-4">{result.account.password}</span>
+                                <span className="text-base font-mono text-foreground font-medium break-all mr-4">{result.account.password}</span>
                                 <button onClick={() => copyToClipboard(result.account.password)} className="text-primary hover:text-[#ef4444] transition-colors shrink-0 p-1">
                                   <Copy className="size-5" />
                                 </button>
@@ -243,8 +243,8 @@ export default function RedeemPage() {
                                 <Check className="size-5 text-primary" />
                               </div>
                               <div>
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Nama Profil</p>
-                                <p className="text-base font-black text-foreground">{result.account.profile_name || '-'}</p>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Nama Profil</p>
+                                <p className="text-base font-medium text-foreground">{result.account.profile_name || '-'}</p>
                               </div>
                             </div>
                           )}
@@ -254,8 +254,8 @@ export default function RedeemPage() {
                                 <Check className="size-5 text-primary" />
                               </div>
                               <div>
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Masa Aktif</p>
-                                <p className="text-base font-black text-foreground">{new Date(result.account.expired_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Masa Aktif</p>
+                                <p className="text-base font-medium text-foreground">{new Date(result.account.expired_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
                               </div>
                             </div>
                           )}
@@ -269,9 +269,9 @@ export default function RedeemPage() {
                         )}>
                           {customFields.map((field, idx) => (
                             <div key={idx} className="space-y-3">
-                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-1">{field.label}</label>
+                              <label className="text-[10px] font-medium text-slate-400 uppercase tracking-[0.3em] ml-1">{field.label}</label>
                               <div className="flex items-center justify-between bg-background p-4 rounded-2xl border border-border group transition-all hover:border-primary">
-                                <span className="text-base font-mono text-foreground font-bold break-all mr-4">{resolve(field.value)}</span>
+                                <span className="text-base font-mono text-foreground font-medium break-all mr-4">{resolve(field.value)}</span>
                                 <button onClick={() => copyToClipboard(resolve(field.value))} className="text-primary hover:text-destructive transition-colors shrink-0 p-1">
                                   <Copy className="size-5" />
                                 </button>
