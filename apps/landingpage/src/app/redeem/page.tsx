@@ -9,6 +9,7 @@ import { toast } from 'sonner'
 import { Navbar } from '@/components/navbar'
 import { Footer } from '@/components/footer'
 import { EmailPortal } from '@/components/email-portal'
+import { NetflixLoginGuide } from '@/components/netflix-login-guide'
 import Link from 'next/link'
 import { useTenant } from '@/hooks/use-tenant'
 import { useNotification } from '@/hooks/use-notification'
@@ -201,6 +202,9 @@ export default function RedeemPage() {
 
                   return (
                     <div className="space-y-10">
+                      {result?.voucher?.product_variant?.product?.name?.toLowerCase().includes('netflix') && accessToken && (
+                        <NetflixLoginGuide token={accessToken} email={result.account.email} />
+                      )}
                       {(showEmail || showPassword) && (
                         <div className={cn(
                           "grid gap-8",

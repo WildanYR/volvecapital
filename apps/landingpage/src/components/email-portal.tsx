@@ -18,7 +18,8 @@ import {
   Link2,
   KeyRound,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  CheckCircle2
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -140,6 +141,12 @@ export function EmailPortal({ token }: EmailPortalProps) {
 
     return () => clearInterval(timer)
   }, [isFetching])
+
+  useEffect(() => {
+    const handleOpenOtp = () => setIsOtpInboxOpen(true)
+    window.addEventListener('open-otp-inbox', handleOpenOtp as EventListener)
+    return () => window.removeEventListener('open-otp-inbox', handleOpenOtp as EventListener)
+  }, [])
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
@@ -299,40 +306,32 @@ export function EmailPortal({ token }: EmailPortalProps) {
         </div>
       )}
 
-      <button 
-        onClick={() => setIsOtpInboxOpen(!isOtpInboxOpen)}
-        className="w-full flex items-center justify-between py-2 mb-2 group"
-      >
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
-            <Mail className="size-5 text-primary" />
+      <div id="otp-inbox-section" className="bg-primary/5 border border-primary/20 rounded-2xl overflow-hidden transition-all mt-4">
+        <button 
+          onClick={() => setIsOtpInboxOpen(!isOtpInboxOpen)}
+          className="w-full flex items-center justify-between p-5 hover:bg-primary/10 transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary/10 rounded-lg shrink-0">
+              <Mail className="size-5 text-primary" />
+            </div>
+            <div className="text-left">
+              <h3 className="text-sm font-black text-foreground">Email OTP Inbox</h3>
+              <p className="text-[10px] text-muted-foreground font-medium">Daftar pesan kode OTP yang masuk</p>
+            </div>
           </div>
-          <h3 className="text-xl font-black text-foreground tracking-tight">Email OTP Inbox</h3>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="hidden md:flex flex-col items-end">
-            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Sisa Kuota</p>
-            <p className="text-xs font-black text-foreground">{data?.limit?.remaining ?? '...'} / {data?.limit?.total ?? 10}</p>
-          </div>
-          <div className="hidden md:flex items-center gap-2 px-3 py-1 bg-primary/10 text-primary rounded-full border border-primary/20">
-            <div className="size-1.5 bg-primary rounded-full animate-pulse" />
-            <span className="text-[10px] font-black uppercase tracking-widest">Real-time</span>
-          </div>
-          <div className="p-2 bg-muted/50 rounded-lg group-hover:bg-muted transition-colors">
-            {isOtpInboxOpen ? <ChevronUp className="size-5 text-muted-foreground" /> : <ChevronDown className="size-5 text-muted-foreground" />}
-          </div>
-        </div>
-      </button>
+          {isOtpInboxOpen ? <ChevronUp className="size-5 text-muted-foreground" /> : <ChevronDown className="size-5 text-muted-foreground" />}
+        </button>
 
-      <AnimatePresence>
-        {isOtpInboxOpen && (
-          <motion.div 
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="overflow-hidden"
-          >
-            <div className="space-y-4 pt-2">
+        <AnimatePresence>
+          {isOtpInboxOpen && (
+            <motion.div 
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="px-5 pb-5 overflow-hidden border-t border-primary/10"
+            >
+              <div className="space-y-4 pt-4">
 
       {/* Info Warning */}
       <div className="bg-destructive/10 border border-destructive/20 rounded-2xl p-5 flex items-start gap-4">
@@ -354,9 +353,9 @@ export function EmailPortal({ token }: EmailPortalProps) {
       {/* Messages List */}
       <div className="space-y-4">
         {messages.length === 0 ? (
-          <div className="p-16 border-2 border-dashed border-border rounded-[32px] flex flex-col items-center text-center gap-4 bg-muted/30">
-            <div className="p-4 bg-background rounded-full shadow-sm">
-              <Inbox className="size-8 text-slate-200" />
+          <div className="p-16 border-2 border-dashed border-border rounded-[32px] flex flex-col items-center text-center gap-4 bg-background">
+            <div className="p-4 bg-muted/50 rounded-full shadow-sm">
+              <Inbox className="size-8 text-slate-300" />
             </div>
             <div className="max-w-xs">
               <p className="text-sm font-black text-foreground mb-1">Belum Ada Pesan</p>
@@ -418,10 +417,11 @@ export function EmailPortal({ token }: EmailPortalProps) {
           </AnimatePresence>
         )}
       </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
 
       <div className="flex items-center justify-center gap-2 pt-4 opacity-30 grayscale pointer-events-none">
         <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest italic">Powered by Volve Engine v2</span>

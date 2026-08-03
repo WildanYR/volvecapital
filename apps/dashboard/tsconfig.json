@@ -25,5 +25,6 @@
     "skipLibCheck": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["**/*.ts", "**/*.tsx", "eslint.config.mjs", "prettier.config.js", "vite.config.js"]
+  "include": ["**/*.ts", "**/*.tsx", "eslint.config.mjs", "prettier.config.js", "vite.config.js"],
+  "exclude": ["node_modules", "dist"]
 }
