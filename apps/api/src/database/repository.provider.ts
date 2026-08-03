@@ -60,21 +60,14 @@ import { AccountProfile } from './models/account-profile.model';
 import { AccountUserMoveHistory } from './models/account-user-move-history.model';
 import { AccountUser } from './models/account-user.model';
 import { Account } from './models/account.model';
-import { AccountingPeriod } from './models/accounting-period.model';
 import { Article } from './models/article.model';
 import { AttendanceSetting } from './models/attendance-setting.model';
 import { Attendance } from './models/attendance.model';
-import { Coa } from './models/coa.model';
 import { DashboardUser } from './models/dashboard-user.model';
 import { DeviceSession } from './models/device-session.model';
 import { EmailMessage } from './models/email-message.model';
 import { EmailSubject } from './models/email-subject.model';
 import { Email } from './models/email.model';
-import { JournalEntry } from './models/journal-entry.model';
-import { JournalLine } from './models/journal-line.model';
-import { JournalTemplate } from './models/journal-template.model';
-import { JournalTemplateItem } from './models/journal-template-item.model';
-import { PlatformAccountingSetting } from './models/platform-accounting-setting.model';
 import { Label } from './models/label.model';
 import { ManualBookCategory } from './models/manual-book-category.model';
 import { ManualBook } from './models/manual-book.model';
@@ -154,22 +147,6 @@ export const RepositoryProvider: Provider[] = [
   { provide: ATTENDANCE_SETTING_REPOSITORY, useValue: AttendanceSetting },
   { provide: MANUAL_BOOK_CATEGORY_REPOSITORY, useValue: ManualBookCategory },
   { provide: MANUAL_BOOK_REPOSITORY, useValue: ManualBook },
-  { provide: COA_REPOSITORY, useValue: Coa },
-  { provide: ACCOUNTING_PERIOD_REPOSITORY, useValue: AccountingPeriod },
-  { provide: JOURNAL_ENTRY_REPOSITORY, useValue: JournalEntry },
-  { provide: JOURNAL_LINE_REPOSITORY, useValue: JournalLine },
-  {
-    provide: PLATFORM_ACCOUNTING_SETTING_REPOSITORY,
-    useValue: PlatformAccountingSetting,
-  },
   { provide: SHORT_URL_REPOSITORY, useValue: ShortUrl },
-  {
-    provide: JOURNAL_TEMPLATE_REPOSITORY,
-    useValue: JournalTemplate,
-  },
-  {
-    provide: JOURNAL_TEMPLATE_ITEM_REPOSITORY,
-    useValue: JournalTemplateItem,
-  },
   { provide: SHOP_REPOSITORY, useValue: Shop },
 ];

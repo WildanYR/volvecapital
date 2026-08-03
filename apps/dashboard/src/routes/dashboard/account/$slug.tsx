@@ -82,7 +82,6 @@ import { AccountLabelManager } from '@/dashboard/components/account-label-manage
 import { AccountLabelSelector } from '@/dashboard/components/account-label-selector'
 
 import { PermissionGate } from '@/dashboard/components/permission-gate'
-import { usePermission } from '@/dashboard/lib/permission'
 
 import { useSocket } from '@/dashboard/context-providers/socket.provider'
 import { TvPinModal } from '@/dashboard/components/tv-pin-modal'
@@ -127,7 +126,6 @@ import { convertMetadataObjectToString } from '@/dashboard/lib/metadata-converte
 import { formatRupiah } from '@/dashboard/lib/currency.util'
 import { formatDateIdStandard } from '@/dashboard/lib/time-converter.util'
 import { AccountServiceGenerator, GetAccountsParamsSchema } from '@/dashboard/services/account.service'
-import { AccountingServiceGenerator } from '@/dashboard/services/accounting.service'
 import { ProductServiceGenerator } from '@/dashboard/services/product.service'
 import { API_URL } from '@/dashboard/constants/api-url.cont'
 import { useGlobalAlertDialog } from '@/dashboard/context-providers/alert-dialog.provider'
@@ -150,11 +148,7 @@ function RouteComponent() {
     auth.tenant!.accessToken,
     auth.tenant!.id,
   )
-  const accountingService = AccountingServiceGenerator(
-    API_URL,
-    auth.tenant!.accessToken,
-    auth.tenant!.id,
-  )
+
   const productService = ProductServiceGenerator(
     API_URL,
     auth.tenant!.accessToken,
@@ -168,13 +162,6 @@ function RouteComponent() {
 
   const isNetflixProduct = product?.name?.toLowerCase().includes('netflix') ?? false;
 
-  const hasAccountingView = usePermission('accounting.view')
-
-  const { data: coaList } = useQuery({
-    queryKey: ['accounting-coa-list'],
-    queryFn: () => accountingService.getCoaList(),
-    enabled: hasAccountingView,
-  })
 
   const [filter, setFilter] = useState<AccountFilter>({
     email_id: searchParam.email_id ?? '',
@@ -213,7 +200,6 @@ function RouteComponent() {
   const [bulkActionType, setBulkActionType] = useState<string>('')
   const [bulkModalAmount, setBulkModalAmount] = useState<string>('')
   const [bulkModalNote, setBulkModalNote] = useState<string>('')
-  const [bulkPaymentCoas, setBulkPaymentCoas] = useState<Record<string, string>>({})
   const [bulkAmounts, setBulkAmounts] = useState<Record<string, string>>({})
 
   const [selectedAccountState, setSelectedAccount] = useState<Account>()
@@ -402,7 +388,6 @@ function RouteComponent() {
     setConfirmInput('')
     setBulkModalAmount('')
     setBulkModalNote('')
-    setBulkPaymentCoas({})
     setBulkAmounts({})
     setDialogBulkConfirmOpen(true)
   }
@@ -428,7 +413,6 @@ function RouteComponent() {
       payload = {
         amounts,
         note: bulkModalNote,
-        payment_coas: bulkPaymentCoas
       };
     }
 
@@ -2389,27 +2373,9 @@ function RouteComponent() {
                             onChange={(e) => setBulkAmounts(prev => ({...prev, [account.id]: e.target.value}))}
                           />
                         </div>
-                        <div className="w-full sm:w-[180px] flex-shrink-0">
-                          <Select 
-                            value={bulkPaymentCoas[account.id] || ''} 
-                            onValueChange={(val) => setBulkPaymentCoas(prev => ({...prev, [account.id]: val}))}
-                          >
-                            <SelectTrigger className="h-8 text-xs">
-                              <SelectValue placeholder="Pilih Kas/Bank..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {coaList?.filter((c: any) => c.type === 'ASET' && (c.name.toLowerCase().includes('kas') || c.name.toLowerCase().includes('bank'))).map((c: any) => (
-                                <SelectItem key={c.id} value={c.id} className="text-xs">{c.code} - {c.name}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
                       </div>
                     ))}
                   </div>
-                  <p className="text-[10px] text-muted-foreground">
-                    Kategori Beban/HPP akan diatur secara otomatis mengikuti pengaturan Varian Produk masing-masing akun.
-                  </p>
                 </div>
               </div>
             )}

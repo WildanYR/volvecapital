@@ -4,7 +4,7 @@
 
 import { resolve } from 'node:path';
 import { existsSync, mkdirSync } from 'node:fs';
-import { getDataRoot, setDataRoot } from './utils/path.js';
+import { getDataRoot, setDataRoot, getProjectRoot } from './utils/path.js';
 import { ConfigLoader } from './core/ConfigLoader.js';
 import { Database } from './core/Database.js';
 import { Logger } from './core/Logger.js';
@@ -47,7 +47,7 @@ class Application {
             this.apiBaseUrl = buildApiBaseUrl(this.config.app.api_base_url);
 
             // 2. Initialize database
-            const dbPath = resolve(getDataRoot(), 'storage', 'database.sqlite');
+            const dbPath = resolve(getProjectRoot(), 'storage', 'database.sqlite');
             this.db = new Database(dbPath);
             this.db.initSystemTables();
             console.log('Database initialized');

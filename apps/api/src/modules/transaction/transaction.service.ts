@@ -29,7 +29,6 @@ import {
 } from 'src/database/models/transaction.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
 import { AccountUserService } from '../account-user/account-user.service';
-import { AccountingService } from '../accounting/accounting.service';
 import { DateConverterProvider } from '../utility/date-converter.provider';
 import { PaginationProvider } from '../utility/pagination.provider';
 import { SnowflakeIdProvider } from '../utility/snowflake-id.provider';
@@ -59,7 +58,6 @@ export class TransactionService {
     private readonly tenantSettingRepository: typeof TenantSetting,
     @Inject(SHOP_REPOSITORY)
     private readonly shopRepository: typeof Shop,
-    private readonly accountingService: AccountingService,
     private readonly taskQueueService: TaskQueueService,
   ) {}
 
@@ -370,16 +368,7 @@ export class TransactionService {
       let mdr_fee = 0;
       let platform_fee = 0;
 
-      // Cek apakah ada konfigurasi di platform accounting setting
-      const platformSetting = await this.accountingService.getPlatformSettingByPlatform(tenantId, transactionData.platform, tx);
-      if (platformSetting && Number(platformSetting.fee_amount) > 0) {
-        if (platformSetting.fee_type === 'PERCENTAGE') {
-          // Asumsi fee_amount adalah persentase, contoh 5 untuk 5%
-          mdr_fee = (transactionData.total_price * Number(platformSetting.fee_amount)) / 100;
-        } else {
-          mdr_fee = Number(platformSetting.fee_amount);
-        }
-      } else if (transactionData.platform.toUpperCase() === 'LANDING_PAGE') {
+      if (transactionData.platform.toUpperCase() === 'LANDING_PAGE') {
         // Fallback untuk LANDING_PAGE menggunakan tenant setting Doku
         const settings = await this.tenantSettingRepository.findAll({
           where: { key: ['doku_mdr', 'platform_fee'] },
@@ -440,14 +429,6 @@ export class TransactionService {
         throw new NotFoundException(
           `transaction dengan id: ${transactionId} tidak ditemukan`,
         );
-      }
-
-      // Auto-Journal (semua platform jika dikonfigurasi)
-      try {
-        await this.accountingService.autoJournalTransaction(tenantId, transactionId, tx);
-      } catch (err) {
-        // Log error but don't fail the transaction if accounting mapping is incomplete
-        console.error(`Gagal membuat auto-jurnal untuk transaksi ${transactionId}:`, err);
       }
 
       await tx.commit();

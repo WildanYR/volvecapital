@@ -28,7 +28,7 @@ export class EmailSubjectService {
     }
   }
 
-  async create(tenantId: string, data: { context: string; subject: string; is_public?: boolean }) {
+  async create(tenantId: string, data: { context: string; subject: string; extract_method?: string; is_public?: boolean }) {
     const transaction = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema(tenantId, transaction);
@@ -42,7 +42,7 @@ export class EmailSubjectService {
     }
   }
 
-  async update(tenantId: string, id: string, data: { context?: string; subject?: string; is_public?: boolean }) {
+  async update(tenantId: string, id: string, data: { context?: string; subject?: string; extract_method?: string; is_public?: boolean }) {
     const transaction = await this.postgresProvider.transaction();
     try {
       await this.postgresProvider.setSchema(tenantId, transaction);

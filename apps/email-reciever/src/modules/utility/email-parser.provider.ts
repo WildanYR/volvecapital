@@ -36,4 +36,30 @@ export class EmailParser {
 
     return otpCode;
   }
+
+  extractByMethod(emailText: string, method: string): string | null {
+    const cleanText = emailText.replace(/[\u200C-\u200F]/g, '').trim();
+
+    if (method === 'LINK') {
+      const linkMatch = cleanText.match(/https?:\/\/[^\s>\]\"']+/);
+      return linkMatch ? linkMatch[0] : null;
+    }
+    
+    if (method === 'CODE_4') {
+      const otpMatch = cleanText.match(/\b(\d{4})\b/);
+      return otpMatch ? otpMatch[1] : null;
+    }
+    
+    if (method === 'CODE_6') {
+      const otpMatch = cleanText.match(/\b(\d{6})\b/);
+      return otpMatch ? otpMatch[1] : null;
+    }
+    
+    if (method === 'CODE_8') {
+      const otpMatch = cleanText.match(/\b(\d{8})\b/);
+      return otpMatch ? otpMatch[1] : null;
+    }
+
+    return null;
+  }
 }

@@ -1,4 +1,4 @@
-import { Controller, Get, Query, Request } from '@nestjs/common';
+import { Controller, Get, Delete, Query, Request } from '@nestjs/common';
 import { RequirePermissions } from 'src/guards/permissions.decorator';
 import { AppRequest } from 'src/types/app-request.type';
 import { PaginationProvider } from '../utility/pagination.provider';
@@ -25,5 +25,11 @@ export class EmailMessageController {
       pagination,
       filter,
     );
+  }
+
+  @Delete('cleanup')
+  @RequirePermissions('email.delete')
+  cleanupOldData(@Request() request: AppRequest) {
+    return this.emailMessageService.cleanupOldData(request.tenant_id!);
   }
 }

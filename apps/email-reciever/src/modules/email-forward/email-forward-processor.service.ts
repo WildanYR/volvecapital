@@ -47,23 +47,35 @@ export class EmailForwardProcessorService {
               let data: string | null = null;
               let context: string | null = null;
 
-              if (es.dataValues.context === NETFLIX_OTP) {
-                data = this.emailParser.extractNetflixOtp(e.text);
-                context = NETFLIX_OTP;
-              }
+              if (es.dataValues.extract_method) {
+                console.log(`\n[DEBUG EXTRACT] Subject Match: "${e.subject}"`);
+                console.log(`[DEBUG EXTRACT] Context: ${es.dataValues.context}, Method: ${es.dataValues.extract_method}`);
+                console.log(`[DEBUG EXTRACT] Raw Text Length: ${e.text?.length || 0} characters`);
+                
+                data = this.emailParser.extractByMethod(e.text, es.dataValues.extract_method);
+                context = es.dataValues.context;
 
-              if (es.dataValues.context === DISNEY_OTP) {
-                data = this.emailParser.extractDisneyOtp(e.text);
-                context = DISNEY_OTP;
-              }
+                console.log(`[DEBUG EXTRACT] Result Data: ${data || 'NULL (Gagal menemukan pola)'}`);
+              } else {
+                // Legacy extraction based on predefined context
+                if (es.dataValues.context === NETFLIX_OTP) {
+                  data = this.emailParser.extractNetflixOtp(e.text);
+                  context = NETFLIX_OTP;
+                }
 
-              if (this.netflixUrls.includes(es.dataValues.context)) {
-                data = this.emailParser.extractNetflixUrl(e.text);
-                context = NETFLIX_REQ_RESET_PASSWORD;
+                if (es.dataValues.context === DISNEY_OTP) {
+                  data = this.emailParser.extractDisneyOtp(e.text);
+                  context = DISNEY_OTP;
+                }
+
+                if (this.netflixUrls.includes(es.dataValues.context)) {
+                  data = this.emailParser.extractNetflixUrl(e.text);
+                  context = NETFLIX_REQ_RESET_PASSWORD;
+                }
               }
 
               if (data && context) {
-
+                console.log(`[DEBUG EXTRACT] ✅ Data valid, menyimpan ke database...`);
                 await this.emailMessageRepository.create({
                   tenant_id: payload.tenant,
                   from_email: e.from,

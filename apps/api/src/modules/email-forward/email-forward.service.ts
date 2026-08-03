@@ -48,24 +48,30 @@ export class EmailForwardService {
               let data: string | null = null;
               let context: string | null = null;
 
-              if (es.dataValues.context === NETFLIX_OTP) {
-                data = this.emailParser.extractNetflixOtp(e.text);
-                context = NETFLIX_OTP;
-              }
-
-              if (es.dataValues.context === DISNEY_OTP) {
-                data = this.emailParser.extractDisneyOtp(e.text);
-                context = DISNEY_OTP;
-              }
-
-              if (es.dataValues.context === NETFLIX_REQ_RESET_PASSWORD || es.dataValues.context === NETFLIX_HOUSE_CHANGE) {
-                data = this.emailParser.extractNetflixResetLink(e.text);
+              if (es.dataValues.extract_method) {
+                this.logger.log(`[DEBUG] Context: ${es.dataValues.context}, Method: ${es.dataValues.extract_method}`, 'EmailForwardRecieve');
+                data = this.emailParser.extractByMethod(e.text, es.dataValues.extract_method);
                 context = es.dataValues.context;
-              }
+              } else {
+                if (es.dataValues.context === NETFLIX_OTP) {
+                  data = this.emailParser.extractNetflixOtp(e.text);
+                  context = NETFLIX_OTP;
+                }
 
-              if (es.dataValues.context === 'NETFLIX_GENERAL_NOTIFICATION') {
-                data = e.text; // Save full text for general notifications
-                context = 'NETFLIX_GENERAL_NOTIFICATION';
+                if (es.dataValues.context === DISNEY_OTP) {
+                  data = this.emailParser.extractDisneyOtp(e.text);
+                  context = DISNEY_OTP;
+                }
+
+                if (es.dataValues.context === NETFLIX_REQ_RESET_PASSWORD || es.dataValues.context === NETFLIX_HOUSE_CHANGE) {
+                  data = this.emailParser.extractNetflixResetLink(e.text);
+                  context = es.dataValues.context;
+                }
+
+                if (es.dataValues.context === 'NETFLIX_GENERAL_NOTIFICATION') {
+                  data = e.text; // Save full text for general notifications
+                  context = 'NETFLIX_GENERAL_NOTIFICATION';
+                }
               }
 
               if (data && context) {

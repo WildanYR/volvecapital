@@ -29,12 +29,34 @@ export class EmailParser {
 
   extractDisneyOtp(emailText: string) {
     const cleanText = emailText.replace(/[\u200C-\u200F]/g, '').trim();
-
-    // Ekstrak angka 4 hingga 6 digit pertama yang ada di dalam text
-    // Karena plain-body Disney kadang menyatu dengan teks lain
     const otpMatch = cleanText.match(/\b(\d{4,6})\b/);
     const otpCode = otpMatch ? otpMatch[1] : null;
-
     return otpCode;
+  }
+
+  extractByMethod(emailText: string, method: string) {
+    const cleanText = emailText.replace(/[\u200C-\u200F]/g, '').trim();
+
+    if (method === 'LINK') {
+      const linkMatch = cleanText.match(/https?:\/\/[^\s>\]\"']+/);
+      return linkMatch ? linkMatch[0] : null;
+    }
+
+    if (method === 'CODE_4') {
+      const otpMatch = cleanText.match(/\b(\d{4})\b/);
+      return otpMatch ? otpMatch[1] : null;
+    }
+
+    if (method === 'CODE_6') {
+      const otpMatch = cleanText.match(/\b(\d{6})\b/);
+      return otpMatch ? otpMatch[1] : null;
+    }
+
+    if (method === 'CODE_8') {
+      const otpMatch = cleanText.match(/\b(\d{8})\b/);
+      return otpMatch ? otpMatch[1] : null;
+    }
+
+    return null;
   }
 }

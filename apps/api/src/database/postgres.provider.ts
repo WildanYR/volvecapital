@@ -11,20 +11,14 @@ import { AccountProfile } from './models/account-profile.model';
 import { AccountUserMoveHistory } from './models/account-user-move-history.model';
 import { AccountUser } from './models/account-user.model';
 import { Account } from './models/account.model';
-import { AccountingPeriod } from './models/accounting-period.model';
 import { Article } from './models/article.model';
 import { AttendanceSetting } from './models/attendance-setting.model';
 import { Attendance } from './models/attendance.model';
-import { Coa } from './models/coa.model';
 import { DashboardUser } from './models/dashboard-user.model';
 import { DeviceSession } from './models/device-session.model';
 import { EmailMessage } from './models/email-message.model';
 import { EmailSubject } from './models/email-subject.model';
 import { Email } from './models/email.model';
-import { JournalEntry } from './models/journal-entry.model';
-import { JournalLine } from './models/journal-line.model';
-import { JournalTemplate } from './models/journal-template.model';
-import { JournalTemplateItem } from './models/journal-template-item.model';
 import { Label } from './models/label.model';
 import { ManualBookCategory } from './models/manual-book-category.model';
 import { ManualBook } from './models/manual-book.model';
@@ -43,7 +37,6 @@ import { Shift } from './models/shift.model';
 import { Syslog } from './models/syslog.model';
 import { TaskQueue } from './models/task-queue.model';
 import { TenantBankAccount } from './models/tenant-bank-account.model';
-import { PlatformAccountingSetting } from './models/platform-accounting-setting.model';
 import { TenantOwner } from './models/tenant-owner.model';
 import { TenantSetting } from './models/tenant-setting.model';
 import { Tenant } from './models/tenant.model';
@@ -137,13 +130,6 @@ export class PostgresProvider {
         AttendanceSetting,
         ManualBookCategory,
         ManualBook,
-        Coa,
-        AccountingPeriod,
-        JournalEntry,
-        JournalLine,
-        JournalTemplate,
-        JournalTemplateItem,
-        PlatformAccountingSetting,
         Shop,
         ShortUrl,
       ]);

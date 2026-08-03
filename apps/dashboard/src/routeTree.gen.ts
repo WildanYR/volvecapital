@@ -17,7 +17,6 @@ import { Route as DashboardRouteRouteImport } from './routes/dashboard/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
 import { Route as LCodeRouteImport } from './routes/l/$code'
-import { Route as DashboardAccountingRouteRouteImport } from './routes/dashboard/accounting/route'
 import { Route as DashboardWalletIndexRouteImport } from './routes/dashboard/wallet/index'
 import { Route as DashboardVoucherGeneratorIndexRouteImport } from './routes/dashboard/voucher-generator/index'
 import { Route as DashboardTransactionIndexRouteImport } from './routes/dashboard/transaction/index'
@@ -28,7 +27,6 @@ import { Route as DashboardManualBookIndexRouteImport } from './routes/dashboard
 import { Route as DashboardEmailIndexRouteImport } from './routes/dashboard/email/index'
 import { Route as DashboardEmailMessageIndexRouteImport } from './routes/dashboard/email-message/index'
 import { Route as DashboardAccountsettingIndexRouteImport } from './routes/dashboard/accountsetting/index'
-import { Route as DashboardAccountingIndexRouteImport } from './routes/dashboard/accounting/index'
 import { Route as DashboardAccountIndexRouteImport } from './routes/dashboard/account/index'
 import { Route as DashboardTransactionCreateRouteImport } from './routes/dashboard/transaction/create'
 import { Route as DashboardProductCreateRouteImport } from './routes/dashboard/product/create'
@@ -51,21 +49,10 @@ import { Route as DashboardAccountsettingWithdrawalIndexRouteImport } from './ro
 import { Route as DashboardAccountsettingStaffIndexRouteImport } from './routes/dashboard/accountsetting/staff/index'
 import { Route as DashboardAccountsettingRoleIndexRouteImport } from './routes/dashboard/accountsetting/role/index'
 import { Route as DashboardAccountsettingAttendanceIndexRouteImport } from './routes/dashboard/accountsetting/attendance/index'
-import { Route as DashboardAccountingTrialBalanceIndexRouteImport } from './routes/dashboard/accounting/trial-balance/index'
-import { Route as DashboardAccountingTemplatesIndexRouteImport } from './routes/dashboard/accounting/templates/index'
-import { Route as DashboardAccountingSettingsIndexRouteImport } from './routes/dashboard/accounting/settings/index'
-import { Route as DashboardAccountingPeriodsIndexRouteImport } from './routes/dashboard/accounting/periods/index'
-import { Route as DashboardAccountingLedgerIndexRouteImport } from './routes/dashboard/accounting/ledger/index'
-import { Route as DashboardAccountingJournalIndexRouteImport } from './routes/dashboard/accounting/journal/index'
-import { Route as DashboardAccountingIncomeStatementIndexRouteImport } from './routes/dashboard/accounting/income-statement/index'
-import { Route as DashboardAccountingCoaIndexRouteImport } from './routes/dashboard/accounting/coa/index'
-import { Route as DashboardAccountingCashFlowIndexRouteImport } from './routes/dashboard/accounting/cash-flow/index'
-import { Route as DashboardAccountingBalanceSheetIndexRouteImport } from './routes/dashboard/accounting/balance-sheet/index'
 import { Route as DashboardManualBookEditIdRouteImport } from './routes/dashboard/manual-book/edit.$id'
 import { Route as DashboardAccountsettingStaffCreateRouteImport } from './routes/dashboard/accountsetting/staff/create'
 import { Route as DashboardAccountsettingRoleCreateRouteImport } from './routes/dashboard/accountsetting/role/create'
 import { Route as DashboardAccountsettingRoleRoleIdRouteImport } from './routes/dashboard/accountsetting/role/$roleId'
-import { Route as DashboardAccountingJournalCreateRouteImport } from './routes/dashboard/accounting/journal/create'
 import { Route as DashboardAccountsettingAttendanceReportRouteRouteImport } from './routes/dashboard/accountsetting/attendance/report/route'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -108,12 +95,6 @@ const LCodeRoute = LCodeRouteImport.update({
   path: '/l/$code',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DashboardAccountingRouteRoute =
-  DashboardAccountingRouteRouteImport.update({
-    id: '/accounting',
-    path: '/accounting',
-    getParentRoute: () => DashboardRouteRoute,
-  } as any)
 const DashboardWalletIndexRoute = DashboardWalletIndexRouteImport.update({
   id: '/wallet/',
   path: '/wallet/',
@@ -169,12 +150,6 @@ const DashboardAccountsettingIndexRoute =
     id: '/accountsetting/',
     path: '/accountsetting/',
     getParentRoute: () => DashboardRouteRoute,
-  } as any)
-const DashboardAccountingIndexRoute =
-  DashboardAccountingIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => DashboardAccountingRouteRoute,
   } as any)
 const DashboardAccountIndexRoute = DashboardAccountIndexRouteImport.update({
   id: '/account/',
@@ -301,66 +276,6 @@ const DashboardAccountsettingAttendanceIndexRoute =
     path: '/accountsetting/attendance/',
     getParentRoute: () => DashboardRouteRoute,
   } as any)
-const DashboardAccountingTrialBalanceIndexRoute =
-  DashboardAccountingTrialBalanceIndexRouteImport.update({
-    id: '/trial-balance/',
-    path: '/trial-balance/',
-    getParentRoute: () => DashboardAccountingRouteRoute,
-  } as any)
-const DashboardAccountingTemplatesIndexRoute =
-  DashboardAccountingTemplatesIndexRouteImport.update({
-    id: '/templates/',
-    path: '/templates/',
-    getParentRoute: () => DashboardAccountingRouteRoute,
-  } as any)
-const DashboardAccountingSettingsIndexRoute =
-  DashboardAccountingSettingsIndexRouteImport.update({
-    id: '/settings/',
-    path: '/settings/',
-    getParentRoute: () => DashboardAccountingRouteRoute,
-  } as any)
-const DashboardAccountingPeriodsIndexRoute =
-  DashboardAccountingPeriodsIndexRouteImport.update({
-    id: '/periods/',
-    path: '/periods/',
-    getParentRoute: () => DashboardAccountingRouteRoute,
-  } as any)
-const DashboardAccountingLedgerIndexRoute =
-  DashboardAccountingLedgerIndexRouteImport.update({
-    id: '/ledger/',
-    path: '/ledger/',
-    getParentRoute: () => DashboardAccountingRouteRoute,
-  } as any)
-const DashboardAccountingJournalIndexRoute =
-  DashboardAccountingJournalIndexRouteImport.update({
-    id: '/journal/',
-    path: '/journal/',
-    getParentRoute: () => DashboardAccountingRouteRoute,
-  } as any)
-const DashboardAccountingIncomeStatementIndexRoute =
-  DashboardAccountingIncomeStatementIndexRouteImport.update({
-    id: '/income-statement/',
-    path: '/income-statement/',
-    getParentRoute: () => DashboardAccountingRouteRoute,
-  } as any)
-const DashboardAccountingCoaIndexRoute =
-  DashboardAccountingCoaIndexRouteImport.update({
-    id: '/coa/',
-    path: '/coa/',
-    getParentRoute: () => DashboardAccountingRouteRoute,
-  } as any)
-const DashboardAccountingCashFlowIndexRoute =
-  DashboardAccountingCashFlowIndexRouteImport.update({
-    id: '/cash-flow/',
-    path: '/cash-flow/',
-    getParentRoute: () => DashboardAccountingRouteRoute,
-  } as any)
-const DashboardAccountingBalanceSheetIndexRoute =
-  DashboardAccountingBalanceSheetIndexRouteImport.update({
-    id: '/balance-sheet/',
-    path: '/balance-sheet/',
-    getParentRoute: () => DashboardAccountingRouteRoute,
-  } as any)
 const DashboardManualBookEditIdRoute =
   DashboardManualBookEditIdRouteImport.update({
     id: '/manual-book/edit/$id',
@@ -385,12 +300,6 @@ const DashboardAccountsettingRoleRoleIdRoute =
     path: '/accountsetting/role/$roleId',
     getParentRoute: () => DashboardRouteRoute,
   } as any)
-const DashboardAccountingJournalCreateRoute =
-  DashboardAccountingJournalCreateRouteImport.update({
-    id: '/journal/create',
-    path: '/journal/create',
-    getParentRoute: () => DashboardAccountingRouteRoute,
-  } as any)
 const DashboardAccountsettingAttendanceReportRouteRoute =
   DashboardAccountsettingAttendanceReportRouteRouteImport.update({
     id: '/accountsetting/attendance/report',
@@ -405,7 +314,6 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/dashboard/accounting': typeof DashboardAccountingRouteRouteWithChildren
   '/l/$code': typeof LCodeRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/dashboard/accountsetting/shift': typeof DashboardAccountsettingShiftRouteRoute
@@ -422,7 +330,6 @@ export interface FileRoutesByFullPath {
   '/dashboard/product/create': typeof DashboardProductCreateRoute
   '/dashboard/transaction/create': typeof DashboardTransactionCreateRoute
   '/dashboard/account': typeof DashboardAccountIndexRoute
-  '/dashboard/accounting/': typeof DashboardAccountingIndexRoute
   '/dashboard/accountsetting': typeof DashboardAccountsettingIndexRoute
   '/dashboard/email-message': typeof DashboardEmailMessageIndexRoute
   '/dashboard/email': typeof DashboardEmailIndexRoute
@@ -434,21 +341,10 @@ export interface FileRoutesByFullPath {
   '/dashboard/voucher-generator': typeof DashboardVoucherGeneratorIndexRoute
   '/dashboard/wallet': typeof DashboardWalletIndexRoute
   '/dashboard/accountsetting/attendance/report': typeof DashboardAccountsettingAttendanceReportRouteRoute
-  '/dashboard/accounting/journal/create': typeof DashboardAccountingJournalCreateRoute
   '/dashboard/accountsetting/role/$roleId': typeof DashboardAccountsettingRoleRoleIdRoute
   '/dashboard/accountsetting/role/create': typeof DashboardAccountsettingRoleCreateRoute
   '/dashboard/accountsetting/staff/create': typeof DashboardAccountsettingStaffCreateRoute
   '/dashboard/manual-book/edit/$id': typeof DashboardManualBookEditIdRoute
-  '/dashboard/accounting/balance-sheet': typeof DashboardAccountingBalanceSheetIndexRoute
-  '/dashboard/accounting/cash-flow': typeof DashboardAccountingCashFlowIndexRoute
-  '/dashboard/accounting/coa': typeof DashboardAccountingCoaIndexRoute
-  '/dashboard/accounting/income-statement': typeof DashboardAccountingIncomeStatementIndexRoute
-  '/dashboard/accounting/journal': typeof DashboardAccountingJournalIndexRoute
-  '/dashboard/accounting/ledger': typeof DashboardAccountingLedgerIndexRoute
-  '/dashboard/accounting/periods': typeof DashboardAccountingPeriodsIndexRoute
-  '/dashboard/accounting/settings': typeof DashboardAccountingSettingsIndexRoute
-  '/dashboard/accounting/templates': typeof DashboardAccountingTemplatesIndexRoute
-  '/dashboard/accounting/trial-balance': typeof DashboardAccountingTrialBalanceIndexRoute
   '/dashboard/accountsetting/attendance': typeof DashboardAccountsettingAttendanceIndexRoute
   '/dashboard/accountsetting/role': typeof DashboardAccountsettingRoleIndexRoute
   '/dashboard/accountsetting/staff': typeof DashboardAccountsettingStaffIndexRoute
@@ -480,7 +376,6 @@ export interface FileRoutesByTo {
   '/dashboard/product/create': typeof DashboardProductCreateRoute
   '/dashboard/transaction/create': typeof DashboardTransactionCreateRoute
   '/dashboard/account': typeof DashboardAccountIndexRoute
-  '/dashboard/accounting': typeof DashboardAccountingIndexRoute
   '/dashboard/accountsetting': typeof DashboardAccountsettingIndexRoute
   '/dashboard/email-message': typeof DashboardEmailMessageIndexRoute
   '/dashboard/email': typeof DashboardEmailIndexRoute
@@ -492,21 +387,10 @@ export interface FileRoutesByTo {
   '/dashboard/voucher-generator': typeof DashboardVoucherGeneratorIndexRoute
   '/dashboard/wallet': typeof DashboardWalletIndexRoute
   '/dashboard/accountsetting/attendance/report': typeof DashboardAccountsettingAttendanceReportRouteRoute
-  '/dashboard/accounting/journal/create': typeof DashboardAccountingJournalCreateRoute
   '/dashboard/accountsetting/role/$roleId': typeof DashboardAccountsettingRoleRoleIdRoute
   '/dashboard/accountsetting/role/create': typeof DashboardAccountsettingRoleCreateRoute
   '/dashboard/accountsetting/staff/create': typeof DashboardAccountsettingStaffCreateRoute
   '/dashboard/manual-book/edit/$id': typeof DashboardManualBookEditIdRoute
-  '/dashboard/accounting/balance-sheet': typeof DashboardAccountingBalanceSheetIndexRoute
-  '/dashboard/accounting/cash-flow': typeof DashboardAccountingCashFlowIndexRoute
-  '/dashboard/accounting/coa': typeof DashboardAccountingCoaIndexRoute
-  '/dashboard/accounting/income-statement': typeof DashboardAccountingIncomeStatementIndexRoute
-  '/dashboard/accounting/journal': typeof DashboardAccountingJournalIndexRoute
-  '/dashboard/accounting/ledger': typeof DashboardAccountingLedgerIndexRoute
-  '/dashboard/accounting/periods': typeof DashboardAccountingPeriodsIndexRoute
-  '/dashboard/accounting/settings': typeof DashboardAccountingSettingsIndexRoute
-  '/dashboard/accounting/templates': typeof DashboardAccountingTemplatesIndexRoute
-  '/dashboard/accounting/trial-balance': typeof DashboardAccountingTrialBalanceIndexRoute
   '/dashboard/accountsetting/attendance': typeof DashboardAccountsettingAttendanceIndexRoute
   '/dashboard/accountsetting/role': typeof DashboardAccountsettingRoleIndexRoute
   '/dashboard/accountsetting/staff': typeof DashboardAccountsettingStaffIndexRoute
@@ -524,7 +408,6 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/dashboard/accounting': typeof DashboardAccountingRouteRouteWithChildren
   '/l/$code': typeof LCodeRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/dashboard/accountsetting/shift': typeof DashboardAccountsettingShiftRouteRoute
@@ -541,7 +424,6 @@ export interface FileRoutesById {
   '/dashboard/product/create': typeof DashboardProductCreateRoute
   '/dashboard/transaction/create': typeof DashboardTransactionCreateRoute
   '/dashboard/account/': typeof DashboardAccountIndexRoute
-  '/dashboard/accounting/': typeof DashboardAccountingIndexRoute
   '/dashboard/accountsetting/': typeof DashboardAccountsettingIndexRoute
   '/dashboard/email-message/': typeof DashboardEmailMessageIndexRoute
   '/dashboard/email/': typeof DashboardEmailIndexRoute
@@ -553,21 +435,10 @@ export interface FileRoutesById {
   '/dashboard/voucher-generator/': typeof DashboardVoucherGeneratorIndexRoute
   '/dashboard/wallet/': typeof DashboardWalletIndexRoute
   '/dashboard/accountsetting/attendance/report': typeof DashboardAccountsettingAttendanceReportRouteRoute
-  '/dashboard/accounting/journal/create': typeof DashboardAccountingJournalCreateRoute
   '/dashboard/accountsetting/role/$roleId': typeof DashboardAccountsettingRoleRoleIdRoute
   '/dashboard/accountsetting/role/create': typeof DashboardAccountsettingRoleCreateRoute
   '/dashboard/accountsetting/staff/create': typeof DashboardAccountsettingStaffCreateRoute
   '/dashboard/manual-book/edit/$id': typeof DashboardManualBookEditIdRoute
-  '/dashboard/accounting/balance-sheet/': typeof DashboardAccountingBalanceSheetIndexRoute
-  '/dashboard/accounting/cash-flow/': typeof DashboardAccountingCashFlowIndexRoute
-  '/dashboard/accounting/coa/': typeof DashboardAccountingCoaIndexRoute
-  '/dashboard/accounting/income-statement/': typeof DashboardAccountingIncomeStatementIndexRoute
-  '/dashboard/accounting/journal/': typeof DashboardAccountingJournalIndexRoute
-  '/dashboard/accounting/ledger/': typeof DashboardAccountingLedgerIndexRoute
-  '/dashboard/accounting/periods/': typeof DashboardAccountingPeriodsIndexRoute
-  '/dashboard/accounting/settings/': typeof DashboardAccountingSettingsIndexRoute
-  '/dashboard/accounting/templates/': typeof DashboardAccountingTemplatesIndexRoute
-  '/dashboard/accounting/trial-balance/': typeof DashboardAccountingTrialBalanceIndexRoute
   '/dashboard/accountsetting/attendance/': typeof DashboardAccountsettingAttendanceIndexRoute
   '/dashboard/accountsetting/role/': typeof DashboardAccountsettingRoleIndexRoute
   '/dashboard/accountsetting/staff/': typeof DashboardAccountsettingStaffIndexRoute
@@ -586,7 +457,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/reset-password'
-    | '/dashboard/accounting'
     | '/l/$code'
     | '/dashboard/'
     | '/dashboard/accountsetting/shift'
@@ -603,7 +473,6 @@ export interface FileRouteTypes {
     | '/dashboard/product/create'
     | '/dashboard/transaction/create'
     | '/dashboard/account'
-    | '/dashboard/accounting/'
     | '/dashboard/accountsetting'
     | '/dashboard/email-message'
     | '/dashboard/email'
@@ -615,21 +484,10 @@ export interface FileRouteTypes {
     | '/dashboard/voucher-generator'
     | '/dashboard/wallet'
     | '/dashboard/accountsetting/attendance/report'
-    | '/dashboard/accounting/journal/create'
     | '/dashboard/accountsetting/role/$roleId'
     | '/dashboard/accountsetting/role/create'
     | '/dashboard/accountsetting/staff/create'
     | '/dashboard/manual-book/edit/$id'
-    | '/dashboard/accounting/balance-sheet'
-    | '/dashboard/accounting/cash-flow'
-    | '/dashboard/accounting/coa'
-    | '/dashboard/accounting/income-statement'
-    | '/dashboard/accounting/journal'
-    | '/dashboard/accounting/ledger'
-    | '/dashboard/accounting/periods'
-    | '/dashboard/accounting/settings'
-    | '/dashboard/accounting/templates'
-    | '/dashboard/accounting/trial-balance'
     | '/dashboard/accountsetting/attendance'
     | '/dashboard/accountsetting/role'
     | '/dashboard/accountsetting/staff'
@@ -661,7 +519,6 @@ export interface FileRouteTypes {
     | '/dashboard/product/create'
     | '/dashboard/transaction/create'
     | '/dashboard/account'
-    | '/dashboard/accounting'
     | '/dashboard/accountsetting'
     | '/dashboard/email-message'
     | '/dashboard/email'
@@ -673,21 +530,10 @@ export interface FileRouteTypes {
     | '/dashboard/voucher-generator'
     | '/dashboard/wallet'
     | '/dashboard/accountsetting/attendance/report'
-    | '/dashboard/accounting/journal/create'
     | '/dashboard/accountsetting/role/$roleId'
     | '/dashboard/accountsetting/role/create'
     | '/dashboard/accountsetting/staff/create'
     | '/dashboard/manual-book/edit/$id'
-    | '/dashboard/accounting/balance-sheet'
-    | '/dashboard/accounting/cash-flow'
-    | '/dashboard/accounting/coa'
-    | '/dashboard/accounting/income-statement'
-    | '/dashboard/accounting/journal'
-    | '/dashboard/accounting/ledger'
-    | '/dashboard/accounting/periods'
-    | '/dashboard/accounting/settings'
-    | '/dashboard/accounting/templates'
-    | '/dashboard/accounting/trial-balance'
     | '/dashboard/accountsetting/attendance'
     | '/dashboard/accountsetting/role'
     | '/dashboard/accountsetting/staff'
@@ -704,7 +550,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/reset-password'
-    | '/dashboard/accounting'
     | '/l/$code'
     | '/dashboard/'
     | '/dashboard/accountsetting/shift'
@@ -721,7 +566,6 @@ export interface FileRouteTypes {
     | '/dashboard/product/create'
     | '/dashboard/transaction/create'
     | '/dashboard/account/'
-    | '/dashboard/accounting/'
     | '/dashboard/accountsetting/'
     | '/dashboard/email-message/'
     | '/dashboard/email/'
@@ -733,21 +577,10 @@ export interface FileRouteTypes {
     | '/dashboard/voucher-generator/'
     | '/dashboard/wallet/'
     | '/dashboard/accountsetting/attendance/report'
-    | '/dashboard/accounting/journal/create'
     | '/dashboard/accountsetting/role/$roleId'
     | '/dashboard/accountsetting/role/create'
     | '/dashboard/accountsetting/staff/create'
     | '/dashboard/manual-book/edit/$id'
-    | '/dashboard/accounting/balance-sheet/'
-    | '/dashboard/accounting/cash-flow/'
-    | '/dashboard/accounting/coa/'
-    | '/dashboard/accounting/income-statement/'
-    | '/dashboard/accounting/journal/'
-    | '/dashboard/accounting/ledger/'
-    | '/dashboard/accounting/periods/'
-    | '/dashboard/accounting/settings/'
-    | '/dashboard/accounting/templates/'
-    | '/dashboard/accounting/trial-balance/'
     | '/dashboard/accountsetting/attendance/'
     | '/dashboard/accountsetting/role/'
     | '/dashboard/accountsetting/staff/'
@@ -826,13 +659,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/dashboard/accounting': {
-      id: '/dashboard/accounting'
-      path: '/accounting'
-      fullPath: '/dashboard/accounting'
-      preLoaderRoute: typeof DashboardAccountingRouteRouteImport
-      parentRoute: typeof DashboardRouteRoute
-    }
     '/dashboard/wallet/': {
       id: '/dashboard/wallet/'
       path: '/wallet'
@@ -902,13 +728,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard/accountsetting'
       preLoaderRoute: typeof DashboardAccountsettingIndexRouteImport
       parentRoute: typeof DashboardRouteRoute
-    }
-    '/dashboard/accounting/': {
-      id: '/dashboard/accounting/'
-      path: '/'
-      fullPath: '/dashboard/accounting/'
-      preLoaderRoute: typeof DashboardAccountingIndexRouteImport
-      parentRoute: typeof DashboardAccountingRouteRoute
     }
     '/dashboard/account/': {
       id: '/dashboard/account/'
@@ -1064,76 +883,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardAccountsettingAttendanceIndexRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
-    '/dashboard/accounting/trial-balance/': {
-      id: '/dashboard/accounting/trial-balance/'
-      path: '/trial-balance'
-      fullPath: '/dashboard/accounting/trial-balance'
-      preLoaderRoute: typeof DashboardAccountingTrialBalanceIndexRouteImport
-      parentRoute: typeof DashboardAccountingRouteRoute
-    }
-    '/dashboard/accounting/templates/': {
-      id: '/dashboard/accounting/templates/'
-      path: '/templates'
-      fullPath: '/dashboard/accounting/templates'
-      preLoaderRoute: typeof DashboardAccountingTemplatesIndexRouteImport
-      parentRoute: typeof DashboardAccountingRouteRoute
-    }
-    '/dashboard/accounting/settings/': {
-      id: '/dashboard/accounting/settings/'
-      path: '/settings'
-      fullPath: '/dashboard/accounting/settings'
-      preLoaderRoute: typeof DashboardAccountingSettingsIndexRouteImport
-      parentRoute: typeof DashboardAccountingRouteRoute
-    }
-    '/dashboard/accounting/periods/': {
-      id: '/dashboard/accounting/periods/'
-      path: '/periods'
-      fullPath: '/dashboard/accounting/periods'
-      preLoaderRoute: typeof DashboardAccountingPeriodsIndexRouteImport
-      parentRoute: typeof DashboardAccountingRouteRoute
-    }
-    '/dashboard/accounting/ledger/': {
-      id: '/dashboard/accounting/ledger/'
-      path: '/ledger'
-      fullPath: '/dashboard/accounting/ledger'
-      preLoaderRoute: typeof DashboardAccountingLedgerIndexRouteImport
-      parentRoute: typeof DashboardAccountingRouteRoute
-    }
-    '/dashboard/accounting/journal/': {
-      id: '/dashboard/accounting/journal/'
-      path: '/journal'
-      fullPath: '/dashboard/accounting/journal'
-      preLoaderRoute: typeof DashboardAccountingJournalIndexRouteImport
-      parentRoute: typeof DashboardAccountingRouteRoute
-    }
-    '/dashboard/accounting/income-statement/': {
-      id: '/dashboard/accounting/income-statement/'
-      path: '/income-statement'
-      fullPath: '/dashboard/accounting/income-statement'
-      preLoaderRoute: typeof DashboardAccountingIncomeStatementIndexRouteImport
-      parentRoute: typeof DashboardAccountingRouteRoute
-    }
-    '/dashboard/accounting/coa/': {
-      id: '/dashboard/accounting/coa/'
-      path: '/coa'
-      fullPath: '/dashboard/accounting/coa'
-      preLoaderRoute: typeof DashboardAccountingCoaIndexRouteImport
-      parentRoute: typeof DashboardAccountingRouteRoute
-    }
-    '/dashboard/accounting/cash-flow/': {
-      id: '/dashboard/accounting/cash-flow/'
-      path: '/cash-flow'
-      fullPath: '/dashboard/accounting/cash-flow'
-      preLoaderRoute: typeof DashboardAccountingCashFlowIndexRouteImport
-      parentRoute: typeof DashboardAccountingRouteRoute
-    }
-    '/dashboard/accounting/balance-sheet/': {
-      id: '/dashboard/accounting/balance-sheet/'
-      path: '/balance-sheet'
-      fullPath: '/dashboard/accounting/balance-sheet'
-      preLoaderRoute: typeof DashboardAccountingBalanceSheetIndexRouteImport
-      parentRoute: typeof DashboardAccountingRouteRoute
-    }
     '/dashboard/manual-book/edit/$id': {
       id: '/dashboard/manual-book/edit/$id'
       path: '/manual-book/edit/$id'
@@ -1162,13 +911,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardAccountsettingRoleRoleIdRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
-    '/dashboard/accounting/journal/create': {
-      id: '/dashboard/accounting/journal/create'
-      path: '/journal/create'
-      fullPath: '/dashboard/accounting/journal/create'
-      preLoaderRoute: typeof DashboardAccountingJournalCreateRouteImport
-      parentRoute: typeof DashboardAccountingRouteRoute
-    }
     '/dashboard/accountsetting/attendance/report': {
       id: '/dashboard/accountsetting/attendance/report'
       path: '/accountsetting/attendance/report'
@@ -1179,51 +921,7 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface DashboardAccountingRouteRouteChildren {
-  DashboardAccountingIndexRoute: typeof DashboardAccountingIndexRoute
-  DashboardAccountingJournalCreateRoute: typeof DashboardAccountingJournalCreateRoute
-  DashboardAccountingBalanceSheetIndexRoute: typeof DashboardAccountingBalanceSheetIndexRoute
-  DashboardAccountingCashFlowIndexRoute: typeof DashboardAccountingCashFlowIndexRoute
-  DashboardAccountingCoaIndexRoute: typeof DashboardAccountingCoaIndexRoute
-  DashboardAccountingIncomeStatementIndexRoute: typeof DashboardAccountingIncomeStatementIndexRoute
-  DashboardAccountingJournalIndexRoute: typeof DashboardAccountingJournalIndexRoute
-  DashboardAccountingLedgerIndexRoute: typeof DashboardAccountingLedgerIndexRoute
-  DashboardAccountingPeriodsIndexRoute: typeof DashboardAccountingPeriodsIndexRoute
-  DashboardAccountingSettingsIndexRoute: typeof DashboardAccountingSettingsIndexRoute
-  DashboardAccountingTemplatesIndexRoute: typeof DashboardAccountingTemplatesIndexRoute
-  DashboardAccountingTrialBalanceIndexRoute: typeof DashboardAccountingTrialBalanceIndexRoute
-}
-
-const DashboardAccountingRouteRouteChildren: DashboardAccountingRouteRouteChildren =
-  {
-    DashboardAccountingIndexRoute: DashboardAccountingIndexRoute,
-    DashboardAccountingJournalCreateRoute:
-      DashboardAccountingJournalCreateRoute,
-    DashboardAccountingBalanceSheetIndexRoute:
-      DashboardAccountingBalanceSheetIndexRoute,
-    DashboardAccountingCashFlowIndexRoute:
-      DashboardAccountingCashFlowIndexRoute,
-    DashboardAccountingCoaIndexRoute: DashboardAccountingCoaIndexRoute,
-    DashboardAccountingIncomeStatementIndexRoute:
-      DashboardAccountingIncomeStatementIndexRoute,
-    DashboardAccountingJournalIndexRoute: DashboardAccountingJournalIndexRoute,
-    DashboardAccountingLedgerIndexRoute: DashboardAccountingLedgerIndexRoute,
-    DashboardAccountingPeriodsIndexRoute: DashboardAccountingPeriodsIndexRoute,
-    DashboardAccountingSettingsIndexRoute:
-      DashboardAccountingSettingsIndexRoute,
-    DashboardAccountingTemplatesIndexRoute:
-      DashboardAccountingTemplatesIndexRoute,
-    DashboardAccountingTrialBalanceIndexRoute:
-      DashboardAccountingTrialBalanceIndexRoute,
-  }
-
-const DashboardAccountingRouteRouteWithChildren =
-  DashboardAccountingRouteRoute._addFileChildren(
-    DashboardAccountingRouteRouteChildren,
-  )
-
 interface DashboardRouteRouteChildren {
-  DashboardAccountingRouteRoute: typeof DashboardAccountingRouteRouteWithChildren
   DashboardIndexRoute: typeof DashboardIndexRoute
   DashboardAccountsettingShiftRouteRoute: typeof DashboardAccountsettingShiftRouteRoute
   DashboardAttendanceMeRouteRoute: typeof DashboardAttendanceMeRouteRoute
@@ -1265,7 +963,6 @@ interface DashboardRouteRouteChildren {
 }
 
 const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
-  DashboardAccountingRouteRoute: DashboardAccountingRouteRouteWithChildren,
   DashboardIndexRoute: DashboardIndexRoute,
   DashboardAccountsettingShiftRouteRoute:
     DashboardAccountsettingShiftRouteRoute,

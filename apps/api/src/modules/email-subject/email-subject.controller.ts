@@ -16,7 +16,7 @@ export class EmailSubjectController {
   @RequirePermissions('email.create')
   create(
     @Headers('x-tenant-id') tenantId: string,
-    @Body() data: { context: string; subject: string; is_public?: boolean }
+    @Body() data: { context: string; subject: string; extract_method?: string; is_public?: boolean }
   ) {
     return this.emailSubjectService.create(tenantId, data);
   }
@@ -26,7 +26,7 @@ export class EmailSubjectController {
   update(
     @Headers('x-tenant-id') tenantId: string,
     @Param('id') id: string,
-    @Body() data: { context?: string; subject?: string; is_public?: boolean }
+    @Body() data: { context?: string; subject?: string; extract_method?: string; is_public?: boolean }
   ) {
     return this.emailSubjectService.update(tenantId, id, data);
   }

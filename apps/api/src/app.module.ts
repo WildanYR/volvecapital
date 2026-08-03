@@ -18,7 +18,6 @@ import { VcAuthGuard } from './guards/vc-auth.guard';
 import { AccountProfileModule } from './modules/account-profile/account-profile.module';
 import { AccountUserModule } from './modules/account-user/account-user.module';
 import { AccountModule } from './modules/account/account.module';
-import { AccountingModule } from './modules/accounting/accounting.module';
 import { ArticleModule } from './modules/article/article.module';
 import { AttendanceModule } from './modules/attendance/attendance.module';
 import { BankAccountModule } from './modules/bank-account/bank-account.module';
@@ -113,7 +112,6 @@ import { WithdrawalModule } from './modules/withdrawal/withdrawal.module';
     AttendanceModule,
     ManualBookCategoryModule,
     ManualBookModule,
-    AccountingModule,
     ShopModule,
     WhatsappModule,
   ],

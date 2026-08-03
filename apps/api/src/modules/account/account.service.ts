@@ -53,7 +53,6 @@ import { IAccountGetFilter } from './filter/account-get.filter';
 import { NetflixResetPasswordMetadata } from './types/netflix-reset-password-metadata.type';
 import { SubsEndNotifyMetadata } from './types/subs-end-notify-metadata.type';
 import { AppLoggerService } from '../logger/logger.service';
-import { AccountingService } from '../accounting/accounting.service';
 import { SocketGateway } from '../socket/socket.gateway';
 
 @Injectable()
@@ -84,7 +83,6 @@ export class AccountService {
     @Inject(ACCOUNT_USER_MOVE_HISTORY_REPOSITORY)
     private readonly accountUserMoveHistoryRepository: typeof AccountUserMoveHistory,
     private readonly logger: AppLoggerService,
-    private readonly accountingService: AccountingService,
     @Inject(SHORT_URL_REPOSITORY)
     private readonly shortUrlRepository: typeof ShortUrl,
   ) {}
@@ -1368,14 +1366,6 @@ export class AccountService {
         created_at: dto.date ? new Date(dto.date) : new Date(),
       }, { transaction });
 
-      try {
-        const accountInfo = await this.accountRepository.findOne({ where: { id: accountId }, include: [{ model: Email, as: 'email' }], transaction });
-        const emailStr = (accountInfo?.email as any)?.email || accountId;
-        await this.accountingService.autoJournalCapital(tenantId, capital.id, emailStr, transaction);
-      } catch (err) {
-        this.logger.error(`[AccountService] Failed auto journal capital ${capital.id}: ${err.message}`);
-      }
-
       await transaction.commit();
       return capital;
     } catch (error) {
@@ -1425,14 +1415,6 @@ export class AccountService {
         transaction,
         type: QueryTypes.UPDATE,
       });
-
-      try {
-        const accountInfo = await this.accountRepository.findOne({ where: { id: accountId }, include: [{ model: Email, as: 'email' }], transaction });
-        const emailStr = (accountInfo?.email as any)?.email || accountId;
-        await this.accountingService.autoJournalCapital(tenantId, capitalId, emailStr, transaction);
-      } catch (err) {
-        this.logger.error(`[AccountService] Failed auto journal capital edit ${capitalId}: ${err.message}`);
-      }
 
       await transaction.commit();
       return capital;

@@ -12,6 +12,7 @@ import {
 export interface EmailSubjectAttributes {
   id: string;
   context: string;
+  extract_method: string | null;
   subject: string;
   is_public: boolean;
   created_at: Date;
@@ -21,7 +22,7 @@ export interface EmailSubjectAttributes {
 interface EmailSubjectCreationAttributes
   extends Optional<
     EmailSubjectAttributes,
-    'id' | 'is_public' | 'created_at' | 'updated_at'
+    'id' | 'extract_method' | 'is_public' | 'created_at' | 'updated_at'
   > {}
 
 @Table({ tableName: 'email_subject' })
@@ -34,6 +35,10 @@ export class EmailSubject extends Model<EmailSubjectAttributes, EmailSubjectCrea
   @AllowNull(false)
   @Column(DataType.STRING)
   declare context: string;
+
+  @AllowNull(true)
+  @Column(DataType.STRING)
+  declare extract_method: string | null;
 
   @AllowNull(false)
   @Column(DataType.STRING)

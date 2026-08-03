@@ -18,6 +18,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from '@/dashboard/components/ui/alert-dialog'
 import { Button } from '@/dashboard/components/ui/button'
 import {
@@ -61,7 +62,7 @@ function RouteComponent() {
   // States for Email Subject Management
   const [isSubjectDialogOpen, setIsSubjectDialogOpen] = useState(false)
   const [subjectToDelete, setSubjectToDelete] = useState<string | null>(null)
-  const [newSubject, setNewSubject] = useState({ context: 'NETFLIX_OTP', subject: '', is_public: true })
+  const [newSubject, setNewSubject] = useState({ context: '', subject: '', extract_method: 'LINK', is_public: true })
   const [subjectPage, setSubjectPage] = useState(1)
   const subjectsPerPage = 5
 
@@ -110,7 +111,7 @@ function RouteComponent() {
       queryClient.invalidateQueries({ queryKey: ['email-subjects'] })
       toast.success('Subjek email berhasil ditambahkan')
       setIsSubjectDialogOpen(false)
-      setNewSubject({ context: 'NETFLIX_OTP', subject: '', is_public: true })
+      setNewSubject({ context: '', subject: '', extract_method: 'LINK', is_public: true })
     },
     onError: () => toast.error('Gagal menambahkan subjek email'),
   })
@@ -132,6 +133,15 @@ function RouteComponent() {
       toast.success('Subjek email berhasil dihapus')
     },
     onError: () => toast.error('Gagal menghapus subjek email'),
+  })
+
+  const cleanupMutation = useMutation({
+    mutationFn: () => emailMessageService.cleanupEmailMessages(),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['email-message'] })
+      toast.success(`Berhasil menghapus ${data.deleted} pesan email lama (5 jam+)`)
+    },
+    onError: () => toast.error('Gagal menghapus pesan email lama'),
   })
 
   const handleSearchRecipientEmail = useDebouncedCallback((value: string) => {
@@ -197,19 +207,26 @@ function RouteComponent() {
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
                   <Label>Context</Label>
-                  <Select
+                  <Input
+                    placeholder="Contoh: STEAM_OTP"
                     value={newSubject.context}
-                    onValueChange={val => setNewSubject({ ...newSubject, context: val })}
+                    onChange={e => setNewSubject({ ...newSubject, context: e.target.value.toUpperCase() })}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label>Metode Ekstrak</Label>
+                  <Select
+                    value={newSubject.extract_method}
+                    onValueChange={val => setNewSubject({ ...newSubject, extract_method: val })}
                   >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="NETFLIX_OTP">Netflix OTP</SelectItem>
-                      <SelectItem value="DISNEY_OTP">Disney OTP</SelectItem>
-                      <SelectItem value="NETFLIX_REQ_RESET_PASSWORD">Netflix Reset Link</SelectItem>
-                      <SelectItem value="NETFLIX_HOUSE_CHANGE">Netflix Update Household</SelectItem>
-                      <SelectItem value="NETFLIX_GENERAL_NOTIFICATION">General Notification</SelectItem>
+                      <SelectItem value="LINK">Ekstrak Link (URL)</SelectItem>
+                      <SelectItem value="CODE_4">Kode 4 Digit</SelectItem>
+                      <SelectItem value="CODE_6">Kode 6 Digit</SelectItem>
+                      <SelectItem value="CODE_8">Kode 8 Digit</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -248,6 +265,7 @@ function RouteComponent() {
               <TableRow className="*:p-4">
                 <TableHead>Context</TableHead>
                 <TableHead className="hidden lg:table-cell">Subject Email</TableHead>
+                <TableHead className="hidden lg:table-cell">Metode</TableHead>
                 <TableHead className="text-center">Akses Buyer</TableHead>
                 <TableHead className="text-right">Aksi</TableHead>
               </TableRow>
@@ -265,22 +283,12 @@ function RouteComponent() {
                       paginatedSubjects?.map(s => (
                         <TableRow key={s.id} className="group *:px-2 lg:*:px-4 *:py-4 lg:*:py-6 h-16">
                           <TableCell>
-                            <span className={`text-[11px] font-bold uppercase px-3 py-1 rounded-md ${
-                              s.context === 'NETFLIX_OTP'
-                                ? 'bg-blue-500/20 text-blue-400'
-                                : s.context === 'DISNEY_OTP'
-                                  ? 'bg-blue-500/20 text-blue-400'
-                                  : s.context === 'NETFLIX_REQ_RESET_PASSWORD'
-                                    ? 'bg-purple-500/20 text-purple-400'
-                                    : s.context === 'NETFLIX_HOUSE_CHANGE'
-                                      ? 'bg-green-500/20 text-green-400'
-                                      : 'bg-orange-500/20 text-orange-400'
-                            }`}
-                            >
-                              {s.context.replace('NETFLIX_', '').replace('_', ' ')}
+                            <span className="text-[11px] font-bold uppercase px-3 py-1 rounded-md bg-accent text-accent-foreground">
+                              {s.context.replace(/_/g, ' ')}
                             </span>
                           </TableCell>
                           <TableCell className="font-medium text-base hidden lg:table-cell">{s.subject}</TableCell>
+                          <TableCell className="font-medium text-sm hidden lg:table-cell text-muted-foreground">{s.extract_method || 'LEGACY'}</TableCell>
                           <TableCell className="text-center">
                             <div className="flex justify-center">
                               <PermissionGate permission="email.edit">
@@ -350,13 +358,42 @@ function RouteComponent() {
       <div className="flex flex-col gap-6">
         <div className="flex flex-col md:flex-row gap-6 justify-between items-center">
           <h2 className="text-3xl font-extrabold tracking-tight">Recent Email Messages</h2>
-          <Input
-            className="md:max-w-xs h-10"
-            type="text"
-            defaultValue={filter.recipient_email}
-            placeholder="Cari Akun Email..."
-            onChange={e => handleSearchRecipientEmail(e.target.value)}
-          />
+          <div className="flex gap-2">
+            <PermissionGate permission="email.delete">
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" className="h-10 border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground">
+                    Clear Data (5 Jam+)
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Hapus Data Lama?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Ini akan menghapus seluruh data Email Message yang usianya lebih dari 5 jam. Data tidak dapat dipulihkan kembali. Lanjutkan?
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Batal</AlertDialogCancel>
+                    <AlertDialogAction 
+                      className="bg-destructive hover:bg-destructive/90"
+                      onClick={() => cleanupMutation.mutate()}
+                    >
+                      Ya, Hapus Data
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </PermissionGate>
+            
+            <Input
+              className="md:max-w-xs h-10"
+              type="text"
+              defaultValue={filter.recipient_email}
+              placeholder="Cari Akun Email..."
+              onChange={e => handleSearchRecipientEmail(e.target.value)}
+            />
+          </div>
         </div>
 
         {!!emailMessages && (

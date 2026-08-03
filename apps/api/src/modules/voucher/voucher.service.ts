@@ -23,7 +23,6 @@ import { TransactionItem } from 'src/database/models/transaction-item.model';
 import { Transaction } from 'src/database/models/transaction.model';
 import { Voucher } from 'src/database/models/voucher.model';
 import { PostgresProvider } from 'src/database/postgres.provider';
-import { AccountingService } from '../accounting/accounting.service';
 import { WhatsappService } from '../whatsapp/whatsapp.service';
 
 @Injectable()
@@ -47,7 +46,6 @@ export class VoucherService {
     private readonly tenantSettingRepository: typeof TenantSetting,
     @Inject(SHOP_REPOSITORY)
     private readonly shopRepository: typeof Shop,
-    private readonly accountingService: AccountingService,
     private readonly whatsappService: WhatsappService,
   ) {}
 
@@ -85,15 +83,7 @@ export class VoucherService {
       let platform_fee = 0;
       const total_price = dto.price ? Number(dto.price) : Number(variant.price || 0);
 
-      // Cek apakah ada konfigurasi di platform accounting setting
-      const platformSetting = await this.accountingService.getPlatformSettingByPlatform(tenantId, platform, transaction);
-      if (platformSetting && Number(platformSetting.fee_amount) > 0) {
-        if (platformSetting.fee_type === 'PERCENTAGE') {
-          mdr_fee = (total_price * Number(platformSetting.fee_amount)) / 100;
-        } else {
-          mdr_fee = Number(platformSetting.fee_amount);
-        }
-      } else if (platform.toUpperCase() === 'LANDING_PAGE') {
+      if (platform.toUpperCase() === 'LANDING_PAGE') {
         const settings = await this.tenantSettingRepository.findAll({
           where: { key: ['doku_mdr', 'platform_fee'] },
           transaction,
@@ -167,13 +157,7 @@ export class VoucherService {
         { transaction },
       );
 
-      // 4. Auto-Journal (jika platform-nya dikonfigurasi)
-      try {
-        await this.accountingService.autoJournalTransaction(tenantId, txn.id, transaction);
-      } catch (err) {
-        // Log error but don't fail the voucher generation if accounting mapping is incomplete
-        console.error(`Gagal membuat auto-jurnal untuk transaksi voucher ${txn.id}:`, err);
-      }
+
 
       await transaction.commit();
 

@@ -20,7 +20,6 @@ import {
 
   Ticket,
   User,
-  BookA,
   } from 'lucide-react'
 import { PermissionGate } from '@/dashboard/components/permission-gate'
 import { StockNotification } from '@/dashboard/components/stock-notification'
@@ -100,7 +99,6 @@ const navGroups = [
     title: 'Keuangan',
     items: [
       { title: 'Wallet', url: '/dashboard/wallet', icon: Receipt, permission: 'wallet.view' },
-      { title: 'Akuntansi', url: '/dashboard/accounting', icon: BookA, permission: 'accounting.view' },
     ],
   },
   {

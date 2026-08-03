@@ -55,7 +55,28 @@ export function EmailMessageServiceGenerator(apiUrl: string, accessToken: string
     }
   }
 
+  const cleanupEmailMessages = async () => {
+    const response = await fetch(`${apiUrl}/email-message/cleanup`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'X-Tenant-ID': tenantId,
+      },
+    })
+    
+    if (!response.ok) {
+      const errorData = await parseApiResponse(response)
+      const errorMessage = Array.isArray(errorData.message)
+        ? errorData.message[0]
+        : errorData.message
+      throw new Error(errorMessage || 'Failed to cleanup email messages')
+    }
+    
+    return response.json()
+  }
+
   return {
     getEmailMessages,
+    cleanupEmailMessages,
   }
 }

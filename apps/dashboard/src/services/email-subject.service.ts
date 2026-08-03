@@ -3,6 +3,7 @@ import { generateApiFetch } from '../lib/api-fetch.util'
 export interface EmailSubject {
   id: string
   context: string
+  extract_method: string | null
   subject: string
   is_public: boolean
   created_at: string
@@ -18,7 +19,7 @@ export function EmailSubjectServiceGenerator(apiUrl: string, accessToken: string
     return response.json()
   }
 
-  const createEmailSubject = async (data: { context: string, subject: string, is_public?: boolean }): Promise<EmailSubject> => {
+  const createEmailSubject = async (data: { context: string, subject: string, extract_method?: string, is_public?: boolean }): Promise<EmailSubject> => {
     const response = await generateApiFetch(apiUrl, accessToken, tenantId, '/email-subject', {}, {
       method: 'POST',
       headers: {

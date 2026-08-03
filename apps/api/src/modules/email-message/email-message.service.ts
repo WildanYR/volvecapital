@@ -34,6 +34,9 @@ export class EmailMessageService {
 
       const whereOptions: WhereOptions = {
         tenant_id: tenantId,
+        created_at: {
+          [Op.gte]: new Date(Date.now() - 5 * 60 * 60 * 1000), // Last 5 hours
+        },
       };
       if (filter?.recipient_email) {
         whereOptions.recipient_email = { [Op.iLike]: `%${filter.recipient_email}%` };
@@ -53,6 +56,30 @@ export class EmailMessageService {
         emailMessages.count,
         pagination,
       );
+    }
+    catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
+
+  async cleanupOldData(tenantId: string) {
+    const transaction = await this.postgresProvider.transaction();
+    try {
+      await this.postgresProvider.setSchema(tenantId, transaction);
+      
+      const deletedCount = await this.emailMessageRepository.destroy({
+        where: {
+          tenant_id: tenantId,
+          created_at: {
+            [Op.lt]: new Date(Date.now() - 5 * 60 * 60 * 1000), // Older than 5 hours
+          },
+        },
+        transaction,
+      });
+
+      await transaction.commit();
+      return { success: true, deleted: deletedCount };
     }
     catch (error) {
       await transaction.rollback();
